@@ -152,6 +152,34 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 <div class="wrap" id="app"><div class="spin"></div></div>
 <div id="toast"></div>
 
+<script>
+(function(){
+  var kutu = document.getElementById("app");
+  function yaz(baslik, detay){
+    if(!kutu) return;
+    kutu.innerHTML = '<div class="empty"><b>'+baslik+'</b>'
+      + '<div style="font-size:12px;color:var(--ink-3);margin:10px 0 16px;word-break:break-word">'+detay+'</div>'
+      + '<button class="btn ghost" onclick="location.reload()">Tekrar dene</button></div>';
+  }
+  window.__yaz = yaz;
+  window.addEventListener("error", function(e){
+    if(window.__acildi) return;
+    if(e.target && e.target.tagName === "SCRIPT")
+      return yaz("Kütüphane yüklenemedi", "Engellenen adres: " + (e.target.src||"?") + " — ağ ya da reklam engelleyici olabilir.");
+    yaz("Kod hatası", (e.message||"bilinmiyor") + " (satır " + (e.lineno||"?") + ")");
+  }, true);
+  window.addEventListener("unhandledrejection", function(e){
+    if(window.__acildi) return;
+    yaz("Bağlantı hatası", String((e.reason && e.reason.message) || e.reason || "bilinmiyor"));
+  });
+  setTimeout(function(){
+    if(window.__acildi) return;
+    if(typeof window.supabase === "undefined") return yaz("Supabase kütüphanesi gelmedi", "cdn.jsdelivr.net adresine ulaşılamıyor olabilir.");
+    if(typeof window.L === "undefined") return yaz("Harita kütüphanesi gelmedi", "cdnjs.cloudflare.com adresine ulaşılamıyor olabilir.");
+    if(kutu && kutu.querySelector(".spin")) yaz("Sunucu cevap vermedi", "Supabase'e ulaşılamadı ya da açılış kodu takıldı.");
+  }, 12000);
+})();
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -161,7 +189,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "v0.4";
+const SURUM = "v0.5";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -835,21 +863,19 @@ function acilisHatasi(mesaj){
     <button class="btn ghost" onclick="location.reload()">Tekrar dene</button>
     <button class="btn danger" style="margin-top:10px" onclick="cikis()">Oturumu sıfırla</button></div>`;
 }
-window.addEventListener("error", e => { if(!ME) acilisHatasi("Kod hatası: " + (e.message||"bilinmiyor")); });
-window.addEventListener("unhandledrejection", e => { if(!ME) acilisHatasi("Bağlantı hatası: " + (e.reason?.message || e.reason || "bilinmiyor")); });
-const bekletme = setTimeout(()=>{ if(!ME && app.querySelector(".spin")) acilisHatasi("Sunucu cevap vermedi. İnternet ya da Supabase erişimi engelli olabilir."); }, 12000);
+const bekletme = 0;
 
 (async () => {
  try{
   const { data:{ session } } = await sb.auth.getSession();
-  if(!session){ clearTimeout(bekletme); return girisEkrani(); }
+  if(!session){ window.__acildi = true; return girisEkrani(); }
   let { data:prof } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
   if(!prof){ await new Promise(r=>setTimeout(r,1200));
     ({ data:prof } = await sb.from("profiles").select("*").eq("id", session.user.id).single()); }
-  clearTimeout(bekletme);
+  window.__acildi = true;
   if(!prof) return acilisHatasi("Profil kurulamadı. Oturumu sıfırlayıp tekrar gir.");
   ME = prof; anaMenu();
- }catch(e){ clearTimeout(bekletme); acilisHatasi(String(e.message||e)); }
+ }catch(e){ window.__acildi = true; acilisHatasi(String(e.message||e)); }
 })();
 
 sb.auth.onAuthStateChange((e)=>{ if(e === "SIGNED_IN" && !ME) location.reload(); });
