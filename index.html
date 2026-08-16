@@ -161,6 +161,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
+const SURUM = "v0.4";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -197,6 +198,7 @@ function girisEkrani(){
   app.innerHTML = `
     <div style="padding:64px 0 28px"><div class="brand" style="flex-direction:column;gap:6px;align-items:flex-start">
       <span>tarla · arsa · portföy</span><b style="font-size:32px">ArsaTakip</b>
+      <span style="color:var(--ink-3);letter-spacing:0;text-transform:none">sürüm ${SURUM}</span>
     </div>
     <p style="color:var(--ink-2);margin:14px 0 0;max-width:300px">E-postanı yaz, giriş bağlantısını yollayalım. Şifre yok.</p></div>
     <button class="btn" id="ggl" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px">
@@ -797,6 +799,7 @@ async function ayarlar(){
     <div class="card">
       <div class="kv"><span>Hesap</span><b>${esc(ME.email||"")}</b></div>
       <div class="kv"><span>Yetki</span><b>${rolAd[ME.role]}</b></div>
+      <div class="kv"><span>Sürüm</span><b>${SURUM}</b></div>
     </div>
     <h3 style="font-size:14px;margin:22px 0 10px">Kullanıcılar</h3>
     ${(kisiler||[]).map(k=>`<div class="card" style="display:flex;align-items:center;gap:10px">
@@ -827,6 +830,7 @@ function go(r,arg){ (ekranlar[r]||anaMenu)(arg); window.scrollTo(0,0); }
 
 function acilisHatasi(mesaj){
   app.innerHTML = `<div class="empty"><b>Açılamadı</b>
+    <div style="font-size:11px;color:var(--ink-3)">sürüm ${SURUM}</div>
     <div style="font-size:12px;color:var(--ink-3);margin:10px 0 16px;word-break:break-word">${esc(mesaj)}</div>
     <button class="btn ghost" onclick="location.reload()">Tekrar dene</button>
     <button class="btn danger" style="margin-top:10px" onclick="cikis()">Oturumu sıfırla</button></div>`;
