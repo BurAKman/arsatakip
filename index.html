@@ -210,7 +210,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "v0.7";
+const SURUM = "v0.8";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -234,6 +234,13 @@ const svg = k => `<svg viewBox="0 0 24 24">${ic[k]}</svg>`;
 const esc = s => (s??"").toString().replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
 const nf = n => n==null||n===""?"—":Number(n).toLocaleString("tr-TR");
 const toast = m => { T.innerHTML = `<div class="toast">${esc(m)}</div>`; setTimeout(()=>T.innerHTML="",2600); };
+
+// TKGM alani "7,722.87" gonderir: virgul binlik ayraci, nokta ondalik
+function alanCoz(x){
+  if(x == null) return null;
+  const n = parseFloat(String(x).replace(/\s/g,"").replace(/,/g,""));
+  return isFinite(n) ? n : null;
+}
 
 function payOran(s){
   if(!s) return 1;
@@ -496,7 +503,7 @@ async function harita(){
       <input id="hpar" inputmode="numeric" placeholder="Parsel">
       <button class="btn full" id="sor">Sorgula</button>
     </div>
-    <p class="ipuc">Haritada bir parselin üstüne dokunarak da sorgulayabilirsin. · <a href="#" onclick="sina();return false">bağlantıyı sına</a></p>
+    <p class="ipuc">Haritada bir parselin üstüne dokunarak da sorgulayabilirsin.</p>
     <div id="tani"></div>
     <div id="map"></div><div id="bilgi"></div>`;
 
@@ -508,27 +515,6 @@ async function harita(){
   idariKur("h");
   document.getElementById("sor").onclick = adaParselSorgu;
   HARITA.on("click", e => noktaSorgu(e.latlng.lat, e.latlng.lng));
-}
-
-async function sina(){
-  const kutu = document.getElementById("tani");
-  kutu.innerHTML = `<div class="card"><div class="spin"></div></div>`;
-  const satir = [];
-  const dene = async (baslik, adaylar) => {
-    try{ const { u, d } = await ilkCalisan(adaylar);
-      satir.push(`${baslik}: TAMAM\n  uç: ${u}\n  ${d.length} kayıt · ilk kayıt: ${JSON.stringify(d[0]).slice(0,200)}`);
-      return d;
-    }catch(e){ satir.push(`${baslik}: OLMADI\n${e.detay||e.message}`); return null; }
-  };
-  const iller = await dene("il listesi", IL_UCLARI);
-  if(iller && iller.length){
-    const ilKimlik = kim(iller.find(o=>/kırklareli|kirklareli/i.test(String(ad(o)))) || iller[0]);
-    const ilceler = await dene(`ilçe listesi (il=${ilKimlik})`, ILCE_UCLARI(ilKimlik));
-    if(ilceler && ilceler.length) await dene(`köy listesi (ilçe=${kim(ilceler[0])})`, MAH_UCLARI(kim(ilceler[0])));
-  }
-  await dene("parsel örneği", [`${TB3}/parsel/139070/389/26`]);
-  satir.push(`kullanılan fonksiyon: ${FN||"bulunamadı"}`);
-  taniYaz("Sınama sonucu", satir.join("\n\n"));
 }
 
 async function adaParselSorgu(){
@@ -618,7 +604,7 @@ async function haritadanKaydet(){
 
   let kayitId = var_?.[0]?.id;
   if(!kayitId){
-    const alan = parseFloat(String(p.alan||"").replace(/\./g,"").replace(",",".")) || null;
+    const alan = alanCoz(p.alan);
     const { data:kayit, error } = await sb.from("parcels").insert({
       team_id:ME.team_id, il:p.ilAd||"", ilce:p.ilceAd||"", mahalle:p.mahalleAd||"",
       ada:p.adaNo||null, parsel:String(p.parselNo||""), alan_m2:alan, nitelik:p.nitelik||null,
@@ -639,8 +625,8 @@ async function haritadanKaydet(){
   await sb.from("activity_log").insert({ team_id:ME.team_id, user_id:ME.id, action:"parsel eklendi",
     entity:"parcels", entity_id:kayitId, detail:`${p.ozet||""} (haritadan)` });
   sonucGoster(`${p.mahalleAd||""} ${p.adaNo||""}/${p.parselNo||""} · ${YEAR} yılına kaydedildi`, true);
-  const alan = parseFloat(String(p.alan||"").replace(/\./g,"").replace(",",".")) || 0;
-  hisseSor(yKayit.id, alan);
+  const alanD = alanCoz(p.alan) || 0;
+  hisseSor(yKayit.id, alanD);
 }
 
 // kaydettikten hemen sonra tek soru: tek tapu mu, hisseli mi
@@ -654,40 +640,70 @@ function hisseSor(yilKaydiId, alan){
         <option value="tek">Tek tapu · tamamı bizim</option>
         <option value="hisseli">Hisseli · payımız var</option>
       </select>
-      <div id="khp" style="display:none;margin-top:12px">
-        <label>Hisse payı (tapu senedindeki gibi, örn. 1/4)</label>
-        <input id="khpv" placeholder="1/4">
-        <div id="khph" style="font-size:12px;color:var(--ink-3);margin-top:8px"></div>
-      </div>
+      <div id="khp" style="display:none;margin-top:12px">${hisseAlanlari("k")}</div>
       <button class="btn" style="margin-top:14px" id="khk">Bilgiyi kaydet</button>
-      <p class="ipuc" style="margin:10px 2px 0">Sonra da değiştirebilirsin: Fiyat ve hisse ekranından.</p>
+      <p class="ipuc" style="margin:10px 2px 0">Toplam alan (${nf(alan)} m²) değişmez; sadece payınız kaydedilir.</p>
     </div>`);
 
-  const td = document.getElementById("ktd"), hp = document.getElementById("khp"),
-        hv = document.getElementById("khpv"), hh = document.getElementById("khph");
-  const hesap = () => {
-    const oran = payOran(hv.value);
-    if(oran === null){ hh.innerHTML = `<span style="color:var(--red)">1/4 gibi yaz</span>`; return null; }
-    const pay = Math.round(alan * oran);
-    hh.textContent = `Payınıza düşen: ${nf(pay)} m²`;
-    return pay;
-  };
-  td.onchange = () => { hp.style.display = td.value === "hisseli" ? "block" : "none"; if(td.value==="hisseli") hesap(); };
-  hv.oninput = hesap;
+  const td = document.getElementById("ktd"), hp = document.getElementById("khp");
+  const hesap = hisseBagla("k", alan);
+  td.onchange = () => { hp.style.display = td.value === "hisseli" ? "block" : "none"; hesap(); };
 
   document.getElementById("khk").onclick = async e => {
     const hisseli = td.value === "hisseli";
-    let pay = null;
-    if(hisseli){ pay = hesap(); if(pay === null) return toast("Hisse payını düzelt"); }
+    const yeni = { tapu_durumu: td.value, hisse_pay: null, hisse_m2: null };
+    if(hisseli){
+      const r = hesap(); if(!r) return toast("Hisse bilgisini düzelt");
+      yeni.hisse_pay = r.pay; yeni.hisse_m2 = r.m2;
+    }
     e.target.disabled = true; e.target.textContent = "Kaydediliyor…";
-    const { error } = await sb.from("parcel_years").update({
-      tapu_durumu: td.value, hisse_pay: hisseli ? hv.value.trim() : null, hisse_m2: hisseli ? pay : null
-    }).eq("id", yilKaydiId);
+    const { error } = await sb.from("parcel_years").update(yeni).eq("id", yilKaydiId);
     e.target.disabled = false; e.target.textContent = "Bilgiyi kaydet";
     if(error) return toast("Olmadı: "+error.message);
     e.target.parentElement.innerHTML =
       `<div style="color:var(--green);font-size:13px;font-weight:600;padding-top:12px;border-top:1px solid var(--line)">✓ Tapu bilgisi kaydedildi</div>`;
   };
+}
+
+// pay girisi: tapudaki oran ya da dogrudan metrekare
+function hisseAlanlari(p, mevcutPay, mevcutM2){
+  const oranMi = !mevcutM2 || !!mevcutPay;
+  return `<label>Payınızı nasıl gireceksin?</label>
+    <select id="${p}bic">
+      <option value="oran"${oranMi?" selected":""}>Tapudaki oran · 1/4, 3/16…</option>
+      <option value="m2"${oranMi?"":" selected"}>Doğrudan metrekare</option>
+    </select>
+    <div id="${p}oranK" style="margin-top:10px${oranMi?"":";display:none"}">
+      <label>Hisse payı</label><input id="${p}oran" value="${esc(mevcutPay||"")}" placeholder="1/16"></div>
+    <div id="${p}m2K" style="margin-top:10px${oranMi?";display:none":""}">
+      <label>Payınız (m²)</label><input id="${p}m2" inputmode="decimal" value="${mevcutM2??""}" placeholder="236"></div>
+    <div id="${p}bilgi" style="font-size:12px;color:var(--ink-3);margin-top:8px"></div>`;
+}
+
+// alanlari birbirine bagla; hesaplayan islevi dondur
+function hisseBagla(p, alan){
+  const g = k => document.getElementById(p+k);
+  const hesap = () => {
+    if(!g("bic")) return null;
+    const bic = g("bic").value;
+    g("oranK").style.display = bic === "oran" ? "block" : "none";
+    g("m2K").style.display   = bic === "m2"   ? "block" : "none";
+    if(bic === "oran"){
+      const o = payOran(g("oran").value);
+      if(o === null){ g("bilgi").innerHTML = `<span style="color:var(--red)">1/4 gibi yaz</span>`; return null; }
+      const m2 = Math.round(alan * o);
+      g("bilgi").textContent = `Toplam ${nf(alan)} m² · payınız ${nf(m2)} m²`;
+      return { pay: g("oran").value.trim(), m2 };
+    }
+    const m2 = parseFloat(String(g("m2").value).replace(",","."));
+    if(!isFinite(m2) || m2 <= 0){ g("bilgi").innerHTML = `<span style="color:var(--red)">Metrekare yaz</span>`; return null; }
+    const yuzde = alan ? (m2/alan*100) : 0;
+    g("bilgi").textContent = `Toplam ${nf(alan)} m² · payınız ${nf(Math.round(m2))} m²${alan?` (%${yuzde.toFixed(1)})`:""}`;
+    return { pay: null, m2: Math.round(m2) };
+  };
+  ["bic","oran","m2"].forEach(k => { const el = g(k); if(el){ el.oninput = hesap; el.onchange = hesap; } });
+  hesap();
+  return hesap;
 }
 
 function sonucGoster(mesaj, basarili){
@@ -913,7 +929,7 @@ async function fiyatDuzen(id){
     <div class="field"><label>Tapu durumu</label><select id="td">
       <option value="tek"${r.tapu_durumu!=="hisseli"?" selected":""}>Tek tapu</option>
       <option value="hisseli"${r.tapu_durumu==="hisseli"?" selected":""}>Hisseli</option></select></div>
-    <div class="field"><label>Hisse payı (örn. 1/4)</label><input id="hp" value="${esc(r.hisse_pay||"")}" placeholder="1/4"></div>
+    <div class="field" id="hpAlan">${hisseAlanlari("f", r.hisse_pay, r.hisse_m2)}</div>
     <div class="field"><label>m² fiyatı (₺)</label><input id="mf" inputmode="decimal" value="${r.m2_fiyat??""}"></div>
     <div class="field"><label>sahibinden ilan bağlantısı</label><input id="il2" value="${esc(r.ilan_url||"")}" placeholder="https://..."></div>
     <div class="field"><label>Durum</label><select id="ak">
@@ -922,31 +938,42 @@ async function fiyatDuzen(id){
     <div id="onizle" class="card" style="font-size:13px"></div>
     <button class="btn" id="kay">Kaydet</button>`;
 
+  const alan = +r.parcels.alan_m2 || 0;
+  const hisseHesap = hisseBagla("f", alan);
+  const g = k => document.getElementById(k);
+
   const hesapla = () => {
-    const alan = +r.parcels.alan_m2 || 0;
-    const hisseli = document.getElementById("td").value === "hisseli";
-    const oran = hisseli ? payOran(document.getElementById("hp").value) : 1;
-    const mf = +document.getElementById("mf").value || 0;
-    if(oran === null){ document.getElementById("onizle").innerHTML = `<span style="color:var(--red)">Hisse payını 1/4 gibi yaz</span>`; return null; }
-    const pay = Math.round(alan * oran), toplam = Math.round(pay * mf);
-    document.getElementById("onizle").innerHTML =
-      `<div class="kv"><span>Payınıza düşen</span><b class="mono">${nf(pay)} m²</b></div>
+    const hisseli = g("td").value === "hisseli";
+    g("hpAlan").style.display = hisseli ? "block" : "none";
+    let pay = alan, kod = null;
+    if(hisseli){
+      const rr = hisseHesap();
+      if(!rr){ g("onizle").innerHTML = `<span style="color:var(--red)">Hisse bilgisini düzelt</span>`; return null; }
+      pay = rr.m2; kod = rr.pay;
+    }
+    const mf = +g("mf").value || 0;
+    const toplam = Math.round(pay * mf);
+    g("onizle").innerHTML =
+      `<div class="kv"><span>Parselin toplam alanı</span><b class="mono">${nf(alan)} m²</b></div>
+       <div class="kv"><span>Payınıza düşen</span><b class="mono">${nf(pay)} m²</b></div>
        <div class="kv"><span>Toplam değer</span><b class="mono">${nf(toplam)} ₺</b></div>`;
-    return { pay, toplam };
+    return { pay, toplam, kod };
   };
-  ["td","hp","mf"].forEach(k => document.getElementById(k).oninput = hesapla);
-  document.getElementById("td").onchange = hesapla;
+  ["td","mf","fbic","foran","fm2"].forEach(k => { const el = g(k); if(el){ el.oninput = hesapla; el.onchange = hesapla; } });
   hesapla();
 
   document.getElementById("kay").onclick = async e => {
-    const h = hesapla(); if(!h) return toast("Hisse payını düzelt");
+    const h = hesapla(); if(!h) return toast("Hisse bilgisini düzelt");
+    const hisseli = g("td").value === "hisseli";
     e.target.disabled = true;
     const { error } = await sb.from("parcel_years").update({
-      tapu_durumu: document.getElementById("td").value,
-      hisse_pay: document.getElementById("hp").value.trim() || null,
-      hisse_m2: h.pay, m2_fiyat: +document.getElementById("mf").value || null,
-      toplam_fiyat: h.toplam, ilan_url: document.getElementById("il2").value.trim() || null,
-      aktif: document.getElementById("ak").value === "1"
+      tapu_durumu: g("td").value,
+      hisse_pay: hisseli ? h.kod : null,
+      hisse_m2: hisseli ? h.pay : null,
+      m2_fiyat: +g("mf").value || null,
+      toplam_fiyat: h.toplam,
+      ilan_url: g("il2").value.trim() || null,
+      aktif: g("ak").value === "1"
     }).eq("id", id);
     e.target.disabled = false;
     if(error) return toast("Olmadı: "+error.message);
@@ -1002,20 +1029,25 @@ function acilisHatasi(mesaj){
 }
 const bekletme = 0;
 
-(async () => {
+async function baslat(){
+ if(window.__basliyor) return;
+ window.__basliyor = true;
  try{
-  const { data:{ session } } = await sb.auth.getSession();
-  if(!session){ window.__acildi = true; return girisEkrani(); }
-  let { data:prof } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+  const { data:{ session } } = await zamanAsimi(sb.auth.getSession(), 8000);
+  if(!session){ window.__acildi = true; window.__basliyor = false; return girisEkrani(); }
+  let { data:prof } = await zamanAsimi(sb.from("profiles").select("*").eq("id", session.user.id).single(), 8000);
   if(!prof){ await new Promise(r=>setTimeout(r,1200));
-    ({ data:prof } = await sb.from("profiles").select("*").eq("id", session.user.id).single()); }
-  window.__acildi = true;
+    ({ data:prof } = await zamanAsimi(sb.from("profiles").select("*").eq("id", session.user.id).single(), 8000)); }
+  window.__acildi = true; window.__basliyor = false;
   if(!prof) return acilisHatasi("Profil kurulamadı. Oturumu sıfırlayıp tekrar gir.");
   ME = prof; anaMenu();
- }catch(e){ window.__acildi = true; acilisHatasi(String(e.message||e)); }
-})();
+ }catch(e){ window.__acildi = true; window.__basliyor = false; acilisHatasi(String(e.message||e)); }
+}
+baslat();
 
-sb.auth.onAuthStateChange((e)=>{ if(e === "SIGNED_IN" && !ME) location.reload(); });
+sb.auth.onAuthStateChange((olay) => {
+  if(olay === "SIGNED_IN" && !ME && !window.__basliyor) baslat();
+});
 </script>
 </body>
 </html>
