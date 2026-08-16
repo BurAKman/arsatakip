@@ -127,7 +127,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .kv span{color:var(--ink-2)}
 .fab{position:fixed;right:calc(50% - 260px + 16px);bottom:24px;width:54px;height:54px;border-radius:50%;background:var(--gold);color:#171203;font-size:26px;display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:20}
 @media(max-width:552px){.fab{right:16px}}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;background:var(--surface-2);border:1px solid var(--line-2);border-radius:12px;padding:11px 16px;font-size:13px;z-index:50;max-width:88%;text-align:center}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:110px;background:var(--surface-2);border:1px solid rgba(201,162,39,.5);border-radius:12px;padding:13px 18px;font-size:14px;font-weight:600;z-index:60;max-width:88%;text-align:center;box-shadow:0 8px 28px rgba(0,0,0,.55)}
 .spin{width:22px;height:22px;border:2px solid var(--line-2);border-top-color:var(--gold);border-radius:50%;animation:s .7s linear infinite;margin:40px auto}
 @keyframes s{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -146,6 +146,27 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .acts button{flex:1 1 30%;border:1px solid var(--line-2);border-radius:11px;padding:11px 8px;font-size:13px;font-weight:600;background:var(--surface-2)}
 .acts button.pri{background:var(--gold);color:#171203;border-color:var(--gold)}
 .ipuc{font-size:12px;color:var(--ink-3);margin:-4px 2px 12px}
+
+/* ---- grup listesi ---- */
+.grp{margin-bottom:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.ghd{display:flex;align-items:center;gap:11px;padding:15px 14px;width:100%;text-align:left}
+.ghd .pinico{width:32px;height:32px;border-radius:9px;background:var(--gold-soft);color:var(--gold);display:grid;place-items:center;flex:0 0 auto}
+.ghd .pinico svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ghd .txt{flex:1;min-width:0}
+.ghd .txt b{display:block;font-size:14.5px;font-weight:600;letter-spacing:-.01em}
+.ghd .txt small{display:block;font-size:11.5px;color:var(--ink-3);margin-top:1px}
+.ghd .say{font-size:11px;color:var(--gold);background:var(--gold-soft);border-radius:20px;padding:4px 11px;font-weight:600}
+.ghd .chev{color:var(--ink-3);transition:transform .2s;font-size:17px}
+.ghd.open .chev{transform:rotate(90deg)}
+.rw{display:flex;align-items:center;gap:12px;padding:13px 14px;border-top:1px solid var(--line);background:var(--surface-2)}
+.rw .kod{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:500;color:var(--gold);background:var(--gold-soft);border-radius:8px;padding:7px 10px;flex:0 0 auto;letter-spacing:-.02em}
+.rw .orta{flex:1;min-width:0;text-align:left}
+.rw .orta b{display:block;font-size:14px;font-weight:500}
+.rw .orta small{display:block;font-size:11.5px;color:var(--ink-3);margin-top:1px}
+.rw .sag{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.rw .sil{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);color:var(--ink-3);display:grid;place-items:center}
+.rw .sil svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.rw .sil:active{color:var(--red);border-color:var(--red-soft)}
 </style>
 </head>
 <body>
@@ -189,7 +210,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "v0.5";
+const SURUM = "v0.7";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -206,6 +227,7 @@ const ic = {
   pin:'<path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>',
   note:'<path d="M5 4h14v11l-5 5H5z"/><path d="M19 15h-5v5"/>',
   photo:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="M21 16l-5-5-6 6"/>',
+  trash:'<path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M10 11v6M14 11v6"/>',
   tag:'<path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.2"/>'
 };
 const svg = k => `<svg viewBox="0 0 24 24">${ic[k]}</svg>`;
@@ -587,22 +609,122 @@ function earthAc(){
 async function haritadanKaydet(){
   if(!SONPARSEL) return;
   const p = SONPARSEL.properties||{}, m = merkez(SONPARSEL);
-  const alan = parseFloat(String(p.alan||"").replace(/\./g,"").replace(",",".")) || null;
-  const { data:kayit, error } = await sb.from("parcels").insert({
-    team_id:ME.team_id, il:p.ilAd||"", ilce:p.ilceAd||"", mahalle:p.mahalleAd||"",
-    ada:p.adaNo||null, parsel:String(p.parselNo||""), alan_m2:alan, nitelik:p.nitelik||null,
-    mevkii:p.mevkii||null, lat:m.lat, lng:m.lng, geojson:SONPARSEL, created_by:ME.id
-  }).select().single();
-  if(error) return toast("Olmadı: "+error.message);
-  await sb.from("parcel_years").insert({ parcel_id:kayit.id, team_id:ME.team_id, yil:YEAR, aktif:true });
+  const kutu = document.querySelector("#bilgi .acts");
+  if(kutu) kutu.innerHTML = `<div style="flex:1 1 100%;text-align:center;color:var(--ink-3);font-size:13px">kaydediliyor…</div>`;
+
+  const { data:var_ } = await sb.from("parcels").select("id")
+    .eq("mahalle", p.mahalleAd||"").eq("parsel", String(p.parselNo||""))
+    .eq("ada", p.adaNo||null).limit(1);
+
+  let kayitId = var_?.[0]?.id;
+  if(!kayitId){
+    const alan = parseFloat(String(p.alan||"").replace(/\./g,"").replace(",",".")) || null;
+    const { data:kayit, error } = await sb.from("parcels").insert({
+      team_id:ME.team_id, il:p.ilAd||"", ilce:p.ilceAd||"", mahalle:p.mahalleAd||"",
+      ada:p.adaNo||null, parsel:String(p.parselNo||""), alan_m2:alan, nitelik:p.nitelik||null,
+      mevkii:p.mevkii||null, lat:m.lat, lng:m.lng, geojson:SONPARSEL, created_by:ME.id
+    }).select().single();
+    if(error){ ciz(SONPARSEL); return toast("Olmadı: "+error.message); }
+    kayitId = kayit.id;
+  }
+
+  const { data:yKayit, error:yHata } = await sb.from("parcel_years")
+    .insert({ parcel_id:kayitId, team_id:ME.team_id, yil:YEAR, aktif:true }).select().single();
+
+  if(yHata && /duplicate|unique/i.test(yHata.message)){
+    return sonucGoster(`Bu parsel ${YEAR} yılında zaten kayıtlı`, false);
+  }
+  if(yHata){ ciz(SONPARSEL); return toast("Olmadı: "+yHata.message); }
+
   await sb.from("activity_log").insert({ team_id:ME.team_id, user_id:ME.id, action:"parsel eklendi",
-    entity:"parcels", entity_id:kayit.id, detail:`${p.ozet||""} (haritadan)` });
-  toast(`${YEAR} yılına kaydedildi`);
+    entity:"parcels", entity_id:kayitId, detail:`${p.ozet||""} (haritadan)` });
+  sonucGoster(`${p.mahalleAd||""} ${p.adaNo||""}/${p.parselNo||""} · ${YEAR} yılına kaydedildi`, true);
+  const alan = parseFloat(String(p.alan||"").replace(/\./g,"").replace(",",".")) || 0;
+  hisseSor(yKayit.id, alan);
+}
+
+// kaydettikten hemen sonra tek soru: tek tapu mu, hisseli mi
+function hisseSor(yilKaydiId, alan){
+  const kutu = document.querySelector("#bilgi .acts");
+  if(!kutu) return;
+  kutu.insertAdjacentHTML("beforeend", `
+    <div style="flex:1 1 100%;border-top:1px solid var(--line);margin-top:12px;padding-top:14px">
+      <label>Bu yer sizde nasıl kayıtlı?</label>
+      <select id="ktd">
+        <option value="tek">Tek tapu · tamamı bizim</option>
+        <option value="hisseli">Hisseli · payımız var</option>
+      </select>
+      <div id="khp" style="display:none;margin-top:12px">
+        <label>Hisse payı (tapu senedindeki gibi, örn. 1/4)</label>
+        <input id="khpv" placeholder="1/4">
+        <div id="khph" style="font-size:12px;color:var(--ink-3);margin-top:8px"></div>
+      </div>
+      <button class="btn" style="margin-top:14px" id="khk">Bilgiyi kaydet</button>
+      <p class="ipuc" style="margin:10px 2px 0">Sonra da değiştirebilirsin: Fiyat ve hisse ekranından.</p>
+    </div>`);
+
+  const td = document.getElementById("ktd"), hp = document.getElementById("khp"),
+        hv = document.getElementById("khpv"), hh = document.getElementById("khph");
+  const hesap = () => {
+    const oran = payOran(hv.value);
+    if(oran === null){ hh.innerHTML = `<span style="color:var(--red)">1/4 gibi yaz</span>`; return null; }
+    const pay = Math.round(alan * oran);
+    hh.textContent = `Payınıza düşen: ${nf(pay)} m²`;
+    return pay;
+  };
+  td.onchange = () => { hp.style.display = td.value === "hisseli" ? "block" : "none"; if(td.value==="hisseli") hesap(); };
+  hv.oninput = hesap;
+
+  document.getElementById("khk").onclick = async e => {
+    const hisseli = td.value === "hisseli";
+    let pay = null;
+    if(hisseli){ pay = hesap(); if(pay === null) return toast("Hisse payını düzelt"); }
+    e.target.disabled = true; e.target.textContent = "Kaydediliyor…";
+    const { error } = await sb.from("parcel_years").update({
+      tapu_durumu: td.value, hisse_pay: hisseli ? hv.value.trim() : null, hisse_m2: hisseli ? pay : null
+    }).eq("id", yilKaydiId);
+    e.target.disabled = false; e.target.textContent = "Bilgiyi kaydet";
+    if(error) return toast("Olmadı: "+error.message);
+    e.target.parentElement.innerHTML =
+      `<div style="color:var(--green);font-size:13px;font-weight:600;padding-top:12px;border-top:1px solid var(--line)">✓ Tapu bilgisi kaydedildi</div>`;
+  };
+}
+
+function sonucGoster(mesaj, basarili){
+  const kutu = document.querySelector("#bilgi .acts");
+  if(kutu) kutu.innerHTML = `
+    <div style="flex:1 1 100%;display:flex;align-items:center;gap:10px;background:${basarili?"var(--green-soft)":"var(--gold-soft)"};
+      border-radius:11px;padding:12px 14px;color:${basarili?"var(--green)":"var(--gold)"};font-size:13px;font-weight:600">
+      <span style="font-size:16px">${basarili?"✓":"!"}</span><span style="flex:1">${esc(mesaj)}</span></div>
+    <button style="flex:1 1 100%" onclick="go('araziler')">Arazilerde gör</button>`;
+  toast(mesaj);
 }
 
 /* ================= araziler ================= */
 
 let acikGrup = null;
+const buyuk = x => String(x||"").trim().toLocaleUpperCase("tr");
+const anahtar = p => [buyuk(p.il), buyuk(p.ilce), buyuk(p.mahalle)].join("|");
+const duzgun = x => String(x||"").trim().toLocaleLowerCase("tr")
+  .replace(/(^|[\s\-\/])([a-zçğıöşü])/g, (m,a,b)=>a+b.toLocaleUpperCase("tr"));
+
+// ayni koydeki parselleri tek baslik altinda topla
+function grupla(rows){
+  const g = {};
+  rows.forEach(r=>{
+    const p = r.parcels, k = anahtar(p);
+    (g[k] ||= { il:duzgun(p.il), ilce:duzgun(p.ilce), mah:duzgun(p.mahalle), list:[] }).list.push(r);
+  });
+  return Object.entries(g).sort((a,b)=>a[1].mah.localeCompare(b[1].mah,"tr"));
+}
+
+function grupBasi(k, gr, acik, sayiEk){
+  return `<button class="ghd${acik?" open":""}" onclick="acikGrup=${acik?"null":`'${k.replace(/'/g,"\\'")}'`};${sayiEk}()">
+    <span class="chev">›</span>
+    <span class="pinico">${svg("pin")}</span>
+    <span class="txt"><b>${esc(gr.mah)}</b><small>${esc(gr.il)} · ${esc(gr.ilce)}</small></span>
+    <span class="say">${gr.list.length} parsel</span></button>`;
+}
 
 async function araziler(){
   app.innerHTML = head("Araziler","go('ana')") + `
@@ -634,32 +756,41 @@ async function araziListele(){
     return `${p.il} ${p.ilce} ${p.mahalle} ${p.ada||""}/${p.parsel}`.toLowerCase().includes(q);
   });
   if(!rows.length) return box.innerHTML = `<div class="empty"><b>${YEAR} boş</b>
-    ${ME.role==='admin'?"Sağ alttaki + ile ilk parseli ekle.":"Bu yıl için henüz kayıt yok."}</div>`;
+    ${ME.role==='admin'?"Haritadan ya da sağ alttaki + ile parsel ekle.":"Bu yıl için henüz kayıt yok."}</div>`;
 
-  const gruplar = {};
-  rows.forEach(r=>{
-    const p = r.parcels, k = `${p.il} · ${p.ilce} · ${p.mahalle}`;
-    (gruplar[k] ||= []).push(r);
-  });
-  box.innerHTML = Object.entries(gruplar).map(([k,list])=>{
-    const open = acikGrup === k;
-    return `<div class="group">
-      <button class="ghead${open?" open":""}" onclick="acikGrup=${open?"null":`'${k.replace(/'/g,"\\'")}'`};araziListele()">
-        <span class="chev">›</span><b>${esc(k)}</b><small>${list.length} parsel</small></button>
-      ${open?list.map((r,i)=>parselSatir(r,i+1)).join(""):""}
-    </div>`;
+  box.innerHTML = grupla(rows).map(([k,gr])=>{
+    const acik = acikGrup === k;
+    return `<div class="grp">${grupBasi(k, gr, acik, "araziListele")}
+      ${acik ? gr.list.map(parselSatir).join("") : ""}</div>`;
   }).join("");
 }
 
-function parselSatir(r,i){
+function parselSatir(r){
   const p = r.parcels;
-  return `<button class="pr" onclick="go('parsel','${p.id}')">
-    <div class="prtop"><span class="n mono">${i}</span>
-      <b>Ada ${esc(p.ada||"—")} · Parsel ${esc(p.parsel)}</b>
-      <span class="m2 mono">${nf(p.alan_m2)} m²</span></div>
-    <div class="meta">
-      <span>${svg("file")}0</span><span>${svg("photo")}0</span><span>${svg("tag")}0</span>
-      <span class="dot ${r.aktif?"on":"off"}"></span></div></button>`;
+  return `<div class="rw">
+    <span class="kod">${esc(p.ada||"—")}/${esc(p.parsel)}</span>
+    <button class="orta" onclick="go('parsel','${p.id}')">
+      <b>${esc(p.nitelik||"Parsel")}</b>
+      <small>${nf(p.alan_m2)} m²${r.aktif?"":" · pasif"}</small></button>
+    <span class="sag">
+      <span class="dot ${r.aktif?"on":"off"}"></span>
+      ${ME.role==='admin'?`<button class="sil" aria-label="Sil" onclick="parselSil('${r.id}','${p.id}','${esc(p.mahalle)} ${esc(p.ada||"")}/${esc(p.parsel)}')">${svg("trash")}</button>`:""}
+    </span></div>`;
+}
+
+async function parselSil(yilKaydiId, parselId, etiket){
+  if(!confirm(`${etiket}\n\n${YEAR} kaydından silinsin mi? Diğer yıllardaki kaydı ve belgeleri durur.`)) return;
+  const { error } = await sb.from("parcel_years").delete().eq("id", yilKaydiId);
+  if(error) return toast("Olmadı: "+error.message);
+  const { data: kalan } = await sb.from("parcel_years").select("id").eq("parcel_id", parselId);
+  if(!kalan || !kalan.length){
+    if(confirm("Bu parselin başka yıl kaydı kalmadı. Parseli notları ve belgeleriyle birlikte tamamen silelim mi?"))
+      await sb.from("parcels").delete().eq("id", parselId);
+  }
+  await sb.from("activity_log").insert({ team_id:ME.team_id, user_id:ME.id,
+    action:"parsel silindi", entity:"parcels", entity_id:parselId, detail:`${etiket} (${YEAR})` });
+  toast("Silindi");
+  araziListele();
 }
 
 /* ================= yeni parsel ================= */
@@ -750,23 +881,29 @@ async function fiyatListele(){
     .select("*,parcels(id,il,ilce,mahalle,ada,parsel,alan_m2)").eq("yil",YEAR);
   if(error) return box.innerHTML = `<div class="empty">${esc(error.message)}</div>`;
   const rows = (data||[]).filter(r=>r.parcels);
-  if(!rows.length) return box.innerHTML = `<div class="empty"><b>${YEAR} boş</b>Önce Araziler'den parsel ekle.</div>`;
-  box.innerHTML = rows.map(r=>{
-    const p = r.parcels, hisseli = r.tapu_durumu === "hisseli";
-    return `<div class="card" style="${r.aktif?"":"opacity:.55"}">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span class="dot ${r.aktif?"on":"off"}" style="margin:0"></span>
-        <b style="font-size:15px;flex:1">${esc(p.mahalle)} ${esc(p.ada||"—")}/${esc(p.parsel)}</b>
-        <span class="pill ${hisseli?"gold":"on"}">${hisseli?"hisseli · "+esc(r.hisse_pay||"?"):"tek tapu"}</span></div>
-      <div class="kv" style="margin-top:8px"><span>Alan</span><b class="mono">${nf(p.alan_m2)} m²</b></div>
-      <div class="kv"><span>Payınız</span><b class="mono">${hisseli?nf(r.hisse_m2)+" m²":"tamamı"}</b></div>
-      <div class="kv"><span>m² fiyatı</span><b class="mono">${nf(r.m2_fiyat)} ₺</b></div>
-      <div class="kv"><span>Toplam</span><b class="mono">${nf(r.toplam_fiyat)} ₺</b></div>
-      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-        ${r.ilan_url?`<a class="pill gold" href="${esc(r.ilan_url)}" target="_blank">sahibinden ilanı</a>`:""}
-        ${ME.role==='admin'?`<button class="pill gold" onclick="go('fiyatDuzen','${r.id}')">düzenle</button>`:""}
-      </div></div>`;
+  if(!rows.length) return box.innerHTML = `<div class="empty"><b>${YEAR} boş</b>Önce haritadan parsel ekle.</div>`;
+  box.innerHTML = grupla(rows).map(([k,gr])=>{
+    const acik = acikGrup === k;
+    return `<div class="grp">${grupBasi(k, gr, acik, "fiyatListele")}
+      ${acik ? gr.list.map(fiyatSatir).join("") : ""}</div>`;
   }).join("");
+}
+
+function fiyatSatir(r){
+  const p = r.parcels, hisseli = r.tapu_durumu === "hisseli";
+  return `<div style="border-top:1px solid var(--line);background:var(--surface-2);padding:14px" ${r.aktif?"":'data-p="1" style="opacity:.55"'}>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="kod" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--gold);background:var(--gold-soft);border-radius:8px;padding:6px 10px">${esc(p.ada||"—")}/${esc(p.parsel)}</span>
+      <span class="pill ${hisseli?"gold":"on"}">${hisseli?"hisseli · "+esc(r.hisse_pay||"?"):"tek tapu"}</span>
+      <span class="dot ${r.aktif?"on":"off"}" style="margin-left:auto"></span></div>
+    <div class="kv" style="margin-top:10px"><span>Alan</span><b class="mono">${nf(p.alan_m2)} m²</b></div>
+    <div class="kv"><span>Payınız</span><b class="mono">${hisseli?nf(r.hisse_m2)+" m²":"tamamı"}</b></div>
+    <div class="kv"><span>m² fiyatı</span><b class="mono">${nf(r.m2_fiyat)} ₺</b></div>
+    <div class="kv"><span>Toplam</span><b class="mono">${nf(r.toplam_fiyat)} ₺</b></div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      ${r.ilan_url?`<a class="pill gold" href="${esc(r.ilan_url)}" target="_blank">sahibinden ilanı</a>`:""}
+      ${ME.role==='admin'?`<button class="pill gold" onclick="go('fiyatDuzen','${r.id}')">düzenle</button>`:""}
+    </div></div>`;
 }
 
 async function fiyatDuzen(id){
