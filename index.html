@@ -60,10 +60,10 @@ a{color:var(--gold);text-decoration:none}
 /* ---- kur seridi ---- */
 .rates{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;margin:0 -16px 16px;padding-left:16px;padding-right:16px;scrollbar-width:none}
 .rates::-webkit-scrollbar{display:none}
-.rate{flex:0 0 auto;min-width:104px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
-.rate .k{font-size:11px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
-.rate .v{font-size:16px;font-weight:600;margin-top:2px}
-.rate .d{font-size:11px;margin-top:1px;color:var(--ink-3)}
+.rate{flex:0 0 auto;min-width:78px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+.rate .k{font-size:9.5px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase}
+.rate .v{font-size:13px;font-weight:600;margin-top:1px;font-family:"IBM Plex Mono",monospace}
+.rate .d{font-size:9.5px;margin-top:1px;color:var(--ink-3)}
 .up{color:var(--green)} .down{color:var(--red)}
 .stamp{font-size:11px;color:var(--ink-3);margin:-8px 0 18px;display:flex;gap:6px;align-items:center}
 
@@ -210,7 +210,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "v0.9";
+const SURUM = "v1.0";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -301,7 +301,7 @@ async function anaMenu(){
     ${tile("harita","map","Harita","Ada parsel sorgula")}
     ${tile("araziler","folder","Araziler","Köy, ada, parsel")}
     ${tile("fiyat","money","Fiyat ve hisse","m² fiyatı, ilan")}
-    ${tile("ekler","file","Ekler","Vekalet, muvafakat",1)}
+    ${tile("ekler","file","Ekler","Vekalet, muvafakat")}
     ${tile("kml","globe","KML","3B, sokak görünümü",1)}
     ${tile("cap","vector","Çap çiz","Parçala, PDF al",1)}
     <button class="tile wide soon" onclick="toast('Sırası gelince açılacak')"><div class="ic">${svg("spark")}</div>
@@ -314,22 +314,47 @@ const tile = (r,i,t,s,soon) =>
      <div class="ic">${svg(i)}</div><b>${t}</b><small>${s}</small></button>`;
 
 async function kurlar(){
-  const box = document.getElementById("rates");
-  const st = document.getElementById("stamp");
-  const cards = [];
+  const box = document.getElementById("rates"), st = document.getElementById("stamp");
+  const kartlar = [];
+  const ekle = (k,v,birim) => { if(isFinite(v) && v>0) kartlar.push([k, v, birim||"₺"]); };
+
   try{
-    const r = await fetch("https://open.er-api.com/v6/latest/TRY").then(r=>r.json());
-    const usd = 1/r.rates.USD, eur = 1/r.rates.EUR;
-    cards.push(["Dolar", usd], ["Euro", eur]);
+    const t = await zamanAsimi(tkgm("https://finans.truncgil.com/v4/today.json"), 8000);
+    const say = x => { const n = parseFloat(String(x??"").replace(/\./g,"").replace(",",".")); return isFinite(n)?n:NaN; };
+    const al = (...adlar) => {
+      for(const a of adlar){
+        const o = t?.[a];
+        if(o == null) continue;
+        const v = typeof o === "object" ? say(o.Satis ?? o.Alis ?? o.selling ?? o.buying) : say(o);
+        if(isFinite(v)) return v;
+      }
+      return NaN;
+    };
+    ekle("Dolar",   al("USD","Dolar"));
+    ekle("Euro",    al("EUR","Euro"));
+    ekle("Gr altın",al("gram-altin","GRA","Gram Altın"));
+    ekle("Gr gümüş",al("gumus","GUMUS","Gümüş"));
   }catch(e){}
+
+  if(!kartlar.length){
+    try{
+      const r = await zamanAsimi(tkgm("https://open.er-api.com/v6/latest/TRY"), 8000);
+      ekle("Dolar", 1/r.rates.USD); ekle("Euro", 1/r.rates.EUR);
+    }catch(e){}
+  }
+
   try{
-    const c = await fetch("https://api.coinbase.com/v2/exchange-rates?currency=TRY").then(r=>r.json());
+    const c = await zamanAsimi(tkgm("https://api.coinbase.com/v2/exchange-rates?currency=TRY"), 8000);
     const d = c.data.rates;
-    cards.push(["Bitcoin", 1/ +d.BTC], ["Ethereum", 1/ +d.ETH]);
+    ekle("Bitcoin", 1/(+d.BTC)); ekle("Ethereum", 1/(+d.ETH));
   }catch(e){}
-  if(!cards.length){ box.innerHTML = `<div class="rate"><div class="k">Kurlar</div><div class="v">—</div><div class="d">bağlantı yok</div></div>`; }
-  else box.innerHTML = cards.map(([k,v])=>`<div class="rate"><div class="k">${k}</div>
-      <div class="v mono">${v>1000?nf(Math.round(v)):v.toFixed(2)} ₺</div><div class="d">güncel</div></div>`).join("");
+
+  const bicim = v => v >= 1000 ? nf(Math.round(v)) : v.toFixed(2).replace(".",",");
+  box.innerHTML = kartlar.length
+    ? kartlar.map(([k,v,b])=>`<div class="rate"><div class="k">${k}</div>
+        <div class="v">${bicim(v)} ${b}</div></div>`).join("")
+    : `<div class="rate"><div class="k">Kurlar</div><div class="v">—</div><div class="d">bağlantı yok</div></div>`;
+
   const now = new Date();
   st.textContent = now.toLocaleDateString("tr-TR",{day:"2-digit",month:"long",year:"numeric"}) + " · " +
                    now.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
@@ -716,6 +741,49 @@ function sonucGoster(mesaj, basarili){
   toast(mesaj);
 }
 
+/* ================= belgeler ================= */
+
+const BELGE_AD = { tapu:"Tapu", cap:"Çap", kml:"KML", resim:"Fotoğraf",
+                   sunum:"Sunum", vekalet:"Vekalet", muvafakat:"Muvafakatname", diger:"Diğer" };
+
+async function dosyaSec(kabul){
+  return new Promise(res=>{
+    const g = document.createElement("input");
+    g.type = "file"; g.accept = kabul || "image/*,application/pdf";
+    g.onchange = () => res(g.files[0] || null);
+    g.click();
+  });
+}
+
+async function dosyaYukle(file, tur, parselId){
+  const uz = (file.name.split(".").pop() || "bin").toLowerCase();
+  const yol = `${ME.team_id}/${parselId || "genel"}/${tur}-${Date.now()}.${uz}`;
+  const { error } = await sb.storage.from("arsatakip").upload(yol, file);
+  if(error) throw error;
+  const { data, error:e2 } = await sb.from("documents").insert({
+    team_id:ME.team_id, parcel_id:parselId || null, kind:tur, file_path:yol,
+    file_name:file.name, mime_type:file.type, size_bytes:file.size, created_by:ME.id
+  }).select().single();
+  if(e2) throw e2;
+  return data;
+}
+
+async function dosyaAc(yol){
+  const { data, error } = await sb.storage.from("arsatakip").createSignedUrl(yol, 3600);
+  if(error) return toast("Açılamadı: " + error.message);
+  window.open(data.signedUrl, "_blank");
+}
+
+async function belgeSil(belgeId, yol){
+  if(!confirm("Bu belge silinsin mi?")) return false;
+  await sb.storage.from("arsatakip").remove([yol]);
+  const { error } = await sb.from("documents").delete().eq("id", belgeId);
+  if(error){ toast("Olmadı: " + error.message); return false; }
+  toast("Silindi"); return true;
+}
+
+const boyut = b => !b ? "" : b > 1048576 ? (b/1048576).toFixed(1)+" MB" : Math.round(b/1024)+" KB";
+
 /* ================= araziler ================= */
 
 let acikGrup = null;
@@ -855,17 +923,42 @@ async function parselDetay(id){
   app.innerHTML = head("Parsel","go('araziler')") + `<div class="spin"></div>`;
   const { data:p } = await sb.from("parcels").select("*").eq("id",id).single();
   if(!p) return;
-  const { data:notlar } = await sb.from("notes")
-    .select("content,created_at,profiles(full_name)").eq("parcel_id",id).order("created_at",{ascending:false});
+  const [{ data:notlar }, { data:belgeler }] = await Promise.all([
+    sb.from("notes").select("content,created_at,profiles(full_name)").eq("parcel_id",id).order("created_at",{ascending:false}),
+    sb.from("documents").select("*").eq("parcel_id",id).order("created_at",{ascending:false})
+  ]);
+
   app.innerHTML = head(`${p.ada||"—"}/${p.parsel}`,"go('araziler')") + `
     <div class="card">
       <div style="font-size:12px;color:var(--ink-3);margin-bottom:6px">${esc(p.il)} · ${esc(p.ilce)} · ${esc(p.mahalle)}</div>
       <div style="font-size:19px;font-weight:600">Ada ${esc(p.ada||"—")} · Parsel ${esc(p.parsel)}</div>
       <div class="kv" style="margin-top:10px"><span>Yüzölçümü</span><b class="mono">${nf(p.alan_m2)} m²</b></div>
       <div class="kv"><span>Niteliği</span><b>${esc(p.nitelik||"—")}</b></div>
+      <div class="kv"><span>Mevkii</span><b>${esc(p.mevkii||"—")}</b></div>
       ${ME.role==='admin'&&p.lat?`<button class="btn ghost" style="margin-top:12px" id="tazele">TKGM'den tazele</button>
       <p class="ipuc" style="margin:8px 2px 0">Alanı, niteliği ve sınır çizimini kaynaktan yeniden çeker.</p>`:""}
     </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <div style="color:var(--gold)">${svg("file")}</div><b style="font-size:14px">Belgeler ve fotoğraflar</b>
+        <span style="margin-left:auto;font-size:12px;color:var(--ink-3)">${(belgeler||[]).length}</span></div>
+      ${ME.role!=='uye'?`<div class="acts" style="margin:0 0 12px">
+        <button onclick="belgeEkle('${id}','tapu')">Tapu</button>
+        <button onclick="belgeEkle('${id}','cap')">Çap</button>
+        <button onclick="belgeEkle('${id}','resim')">Fotoğraf</button>
+        <button onclick="belgeEkle('${id}','diger')">Diğer</button></div>`:""}
+      ${(belgeler||[]).length ? belgeler.map(b=>`
+        <div style="display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);padding:11px 0">
+          <span class="pill gold">${BELGE_AD[b.kind]||b.kind}</span>
+          <button style="flex:1;min-width:0;text-align:left" onclick="dosyaAc('${esc(b.file_path)}')">
+            <b style="font-size:13.5px;font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(b.file_name||"belge")}</b>
+            <small style="font-size:11px;color:var(--ink-3)">${boyut(b.size_bytes)} · ${new Date(b.created_at).toLocaleDateString("tr-TR")}</small>
+          </button>
+          ${ME.role==='admin'?`<button class="sil" style="width:30px;height:30px;border-radius:8px;border:1px solid var(--line);color:var(--ink-3);display:grid;place-items:center" onclick="belgeSilVeYenile('${b.id}','${esc(b.file_path)}','${id}')">${svg("trash")}</button>`:""}
+        </div>`).join("") : `<div style="color:var(--ink-3);font-size:13px">Henüz belge yok.</div>`}
+    </div>
+
     <div class="card">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <div style="color:var(--gold)">${svg("note")}</div><b style="font-size:14px">Notlar</b>
@@ -877,6 +970,7 @@ async function parselDetay(id){
           <div style="font-size:14px;margin-top:3px">${esc(n.content)}</div></div>`).join("")
         : `<div style="color:var(--ink-3);font-size:13px">Henüz not yok.</div>`}
     </div>`;
+
   const tz = document.getElementById("tazele");
   if(tz) tz.onclick = async e => {
     e.target.disabled = true; e.target.textContent = "TKGM sorgulanıyor…";
@@ -890,8 +984,7 @@ async function parselDetay(id){
         alan_m2: alanCoz(q.alan), nitelik:q.nitelik||null, mevkii:q.mevkii||null, geojson:f
       }).eq("id", id);
       if(error) throw error;
-      toast("Bilgiler tazelendi");
-      parselDetay(id);
+      toast("Bilgiler tazelendi"); parselDetay(id);
     }catch(err){
       e.target.disabled = false; e.target.textContent = "TKGM'den tazele";
       toast("Olmadı: " + (err.message||err));
@@ -906,6 +999,17 @@ async function parselDetay(id){
     if(error) return toast("Olmadı: "+error.message);
     parselDetay(id);
   };
+}
+
+async function belgeEkle(parselId, tur){
+  const f = await dosyaSec();
+  if(!f) return;
+  toast("Yükleniyor…");
+  try{ await dosyaYukle(f, tur, parselId); toast("Yüklendi"); parselDetay(parselId); }
+  catch(e){ toast("Olmadı: " + (e.message||e)); }
+}
+async function belgeSilVeYenile(belgeId, yol, parselId){
+  if(await belgeSil(belgeId, yol)) parselDetay(parselId);
 }
 
 /* ================= fiyat ve hisse ================= */
@@ -1008,6 +1112,111 @@ async function fiyatDuzen(id){
   };
 }
 
+/* ================= ekler ================= */
+
+async function ekler(){
+  app.innerHTML = head("Ekler","go('ana')") + `
+    <p class="ipuc">Vekalet ve muvafakatname belgeleri. Geçerlilik tarihi yaklaşanlar sarı, geçenler kırmızı görünür.</p>
+    <div id="el"><div class="spin"></div></div>
+    ${ME.role==='admin'?`<button class="fab" onclick="kisiEkle()">+</button>`:""}`;
+  eklerListele();
+}
+
+async function eklerListele(){
+  const box = document.getElementById("el");
+  const [{ data:kisiler, error }, { data:belgeler }] = await Promise.all([
+    sb.from("ekler").select("*").order("sira",{nullsFirst:false}).order("created_at"),
+    sb.from("documents").select("id,file_path,file_name").in("kind",["vekalet","muvafakat"])
+  ]);
+  if(error) return box.innerHTML = `<div class="empty">${esc(error.message)}</div>`;
+  if(!kisiler || !kisiler.length) return box.innerHTML =
+    `<div class="empty"><b>Henüz kayıt yok</b>${ME.role==='admin'?"Sağ alttaki + ile kişi ekle.":"Admin kişi eklediğinde burada görünür."}</div>`;
+
+  const bul = id => (belgeler||[]).find(b=>b.id===id);
+  const bugun = new Date(); bugun.setHours(0,0,0,0);
+
+  box.innerHTML = kisiler.map((k,i)=>{
+    let durum = "", renk = "var(--ink-3)";
+    if(k.gecerlilik_tarihi){
+      const t = new Date(k.gecerlilik_tarihi);
+      const gun = Math.round((t - bugun) / 86400000);
+      if(gun < 0){ durum = "süresi geçti"; renk = "var(--red)"; }
+      else if(gun <= 30){ durum = `${gun} gün kaldı`; renk = "var(--gold)"; }
+      else durum = t.toLocaleDateString("tr-TR");
+    }
+    return `<div class="card">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:11px;color:var(--ink-3);font-family:'IBM Plex Mono',monospace">${String(i+1).padStart(2,"0")}</span>
+        <b style="font-size:15px;flex:1">${esc(k.ad_soyad)}</b>
+        ${ME.role==='admin'?`<button class="sil" style="width:30px;height:30px;border-radius:8px;border:1px solid var(--line);color:var(--ink-3);display:grid;place-items:center" onclick="kisiSil('${k.id}','${esc(k.ad_soyad)}')">${svg("trash")}</button>`:""}
+      </div>
+      <div class="kv" style="margin-top:10px"><span>Vekalet</span>
+        ${belgeHucre(bul(k.vekalet_doc_id), k.id, "vekalet")}</div>
+      <div class="kv"><span>Muvafakatname</span>
+        ${belgeHucre(bul(k.muvafakat_doc_id), k.id, "muvafakat")}</div>
+      <div class="kv"><span>Geçerlilik</span>
+        ${ME.role==='admin'
+          ? `<input type="date" style="width:auto;padding:7px 10px;font-size:13px" value="${k.gecerlilik_tarihi||""}"
+               onchange="tarihGuncelle('${k.id}',this.value)">`
+          : `<b>${k.gecerlilik_tarihi ? new Date(k.gecerlilik_tarihi).toLocaleDateString("tr-TR") : "—"}</b>`}</div>
+      ${durum ? `<div style="font-size:12px;color:${renk};margin-top:6px;text-align:right;font-weight:600">${durum}</div>` : ""}
+    </div>`;
+  }).join("");
+}
+
+function belgeHucre(belge, kisiId, tur){
+  if(belge) return `<span style="display:flex;gap:8px;align-items:center">
+    <button class="pill gold" onclick="dosyaAc('${esc(belge.file_path)}')">aç</button>
+    ${ME.role!=='uye'?`<button class="pill" style="background:var(--surface-2);color:var(--ink-3)" onclick="ekBelgeYukle('${kisiId}','${tur}')">değiştir</button>`:""}</span>`;
+  return ME.role!=='uye'
+    ? `<button class="pill gold" onclick="ekBelgeYukle('${kisiId}','${tur}')">yükle</button>`
+    : `<b style="color:var(--ink-3)">—</b>`;
+}
+
+async function ekBelgeYukle(kisiId, tur){
+  const f = await dosyaSec();
+  if(!f) return;
+  toast("Yükleniyor…");
+  try{
+    const b = await dosyaYukle(f, tur, null);
+    const alan = tur === "vekalet" ? "vekalet_doc_id" : "muvafakat_doc_id";
+    const { error } = await sb.from("ekler").update({ [alan]: b.id }).eq("id", kisiId);
+    if(error) throw error;
+    toast("Yüklendi"); eklerListele();
+  }catch(e){ toast("Olmadı: " + (e.message||e)); }
+}
+
+async function tarihGuncelle(kisiId, tarih){
+  const { error } = await sb.from("ekler").update({ gecerlilik_tarihi: tarih || null }).eq("id", kisiId);
+  if(error) return toast("Olmadı: " + error.message);
+  toast("Tarih kaydedildi"); eklerListele();
+}
+
+function kisiEkle(){
+  app.innerHTML = head("Kişi ekle","go('ekler')") + `
+    <div class="field"><label>Ad soyad</label><input id="as" placeholder="Ad ve soyad"></div>
+    <div class="field"><label>Vekalet geçerlilik tarihi</label><input id="gt" type="date"></div>
+    <button class="btn" id="kay">Kaydet</button>
+    <p class="ipuc" style="margin-top:16px">Belgeleri kaydettikten sonra listeden yükleyeceksin.</p>`;
+  document.getElementById("kay").onclick = async e => {
+    const ad2 = document.getElementById("as").value.trim();
+    if(!ad2) return toast("Ad soyad yaz");
+    e.target.disabled = true;
+    const { error } = await sb.from("ekler").insert({ team_id:ME.team_id, ad_soyad:ad2,
+      gecerlilik_tarihi: document.getElementById("gt").value || null });
+    e.target.disabled = false;
+    if(error) return toast("Olmadı: " + error.message);
+    toast("Eklendi"); go("ekler");
+  };
+}
+
+async function kisiSil(kisiId, ad2){
+  if(!confirm(`${ad2} kaydı silinsin mi? Yüklenen belgeler depoda kalır.`)) return;
+  const { error } = await sb.from("ekler").delete().eq("id", kisiId);
+  if(error) return toast("Olmadı: " + error.message);
+  toast("Silindi"); eklerListele();
+}
+
 /* ================= ayarlar ================= */
 
 async function ayarlar(){
@@ -1043,7 +1252,7 @@ async function cikis(){ await sb.auth.signOut(); location.reload(); }
 
 /* ================= yonlendirme ================= */
 
-const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, yeni:yeniParsel, parsel:parselDetay,
+const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, yeni:yeniParsel, parsel:parselDetay,
                    fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
 function go(r,arg){ (ekranlar[r]||anaMenu)(arg); window.scrollTo(0,0); }
 
