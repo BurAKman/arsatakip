@@ -210,7 +210,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "v0.8";
+const SURUM = "v0.9";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -719,8 +719,12 @@ function sonucGoster(mesaj, basarili){
 /* ================= araziler ================= */
 
 let acikGrup = null;
-const buyuk = x => String(x||"").trim().toLocaleUpperCase("tr");
-const anahtar = p => [buyuk(p.il), buyuk(p.ilce), buyuk(p.mahalle)].join("|");
+// TR harflerini sadelestirip karsilastir: "MUHACİRKADI" ile "Muhacırkadı" ayni sayilsin
+const sade = x => String(x||"")
+  .replace(/[İIıi]/g,"i").replace(/[Şş]/g,"s").replace(/[Ğğ]/g,"g")
+  .replace(/[Üü]/g,"u").replace(/[Öö]/g,"o").replace(/[Çç]/g,"c")
+  .toLowerCase().replace(/[^a-z0-9]/g,"");
+const anahtar = p => [sade(p.il), sade(p.ilce), sade(p.mahalle)].join("|");
 const duzgun = x => String(x||"").trim().toLocaleLowerCase("tr")
   .replace(/(^|[\s\-\/])([a-zçğıöşü])/g, (m,a,b)=>a+b.toLocaleUpperCase("tr"));
 
@@ -859,6 +863,8 @@ async function parselDetay(id){
       <div style="font-size:19px;font-weight:600">Ada ${esc(p.ada||"—")} · Parsel ${esc(p.parsel)}</div>
       <div class="kv" style="margin-top:10px"><span>Yüzölçümü</span><b class="mono">${nf(p.alan_m2)} m²</b></div>
       <div class="kv"><span>Niteliği</span><b>${esc(p.nitelik||"—")}</b></div>
+      ${ME.role==='admin'&&p.lat?`<button class="btn ghost" style="margin-top:12px" id="tazele">TKGM'den tazele</button>
+      <p class="ipuc" style="margin:8px 2px 0">Alanı, niteliği ve sınır çizimini kaynaktan yeniden çeker.</p>`:""}
     </div>
     <div class="card">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
@@ -871,6 +877,27 @@ async function parselDetay(id){
           <div style="font-size:14px;margin-top:3px">${esc(n.content)}</div></div>`).join("")
         : `<div style="color:var(--ink-3);font-size:13px">Henüz not yok.</div>`}
     </div>`;
+  const tz = document.getElementById("tazele");
+  if(tz) tz.onclick = async e => {
+    e.target.disabled = true; e.target.textContent = "TKGM sorgulanıyor…";
+    try{
+      const f = await zamanAsimi(tkgm(`${TB3}/parsel/${p.lat}/${p.lng}`));
+      if(!f || !f.geometry) throw new Error("parsel bulunamadı");
+      const q = f.properties || {};
+      const { error } = await sb.from("parcels").update({
+        il:q.ilAd||p.il, ilce:q.ilceAd||p.ilce, mahalle:q.mahalleAd||p.mahalle,
+        ada:q.adaNo||p.ada, parsel:String(q.parselNo||p.parsel),
+        alan_m2: alanCoz(q.alan), nitelik:q.nitelik||null, mevkii:q.mevkii||null, geojson:f
+      }).eq("id", id);
+      if(error) throw error;
+      toast("Bilgiler tazelendi");
+      parselDetay(id);
+    }catch(err){
+      e.target.disabled = false; e.target.textContent = "TKGM'den tazele";
+      toast("Olmadı: " + (err.message||err));
+    }
+  };
+
   const btn = document.getElementById("notEkle");
   if(btn) btn.onclick = async () => {
     const c = document.getElementById("not").value.trim();
@@ -929,7 +956,7 @@ async function fiyatDuzen(id){
     <div class="field"><label>Tapu durumu</label><select id="td">
       <option value="tek"${r.tapu_durumu!=="hisseli"?" selected":""}>Tek tapu</option>
       <option value="hisseli"${r.tapu_durumu==="hisseli"?" selected":""}>Hisseli</option></select></div>
-    <div class="field" id="hpAlan">${hisseAlanlari("f", r.hisse_pay, r.hisse_m2)}</div>
+    <div class="field" id="hpAlan" style="border:1px solid var(--line);border-radius:var(--r);padding:14px;background:var(--surface)">${hisseAlanlari("f", r.hisse_pay, r.hisse_m2)}</div>
     <div class="field"><label>m² fiyatı (₺)</label><input id="mf" inputmode="decimal" value="${r.m2_fiyat??""}"></div>
     <div class="field"><label>sahibinden ilan bağlantısı</label><input id="il2" value="${esc(r.ilan_url||"")}" placeholder="https://..."></div>
     <div class="field"><label>Durum</label><select id="ak">
