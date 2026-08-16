@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B0F0D">
+<title>ArsaTakip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{
+  --bg:#0B0F0D;
+  --surface:#131917;
+  --surface-2:#1A2220;
+  --line:rgba(233,226,208,.10);
+  --line-2:rgba(233,226,208,.18);
+  --ink:#EDE9DE;
+  --ink-2:#9AA39C;
+  --ink-3:#69736C;
+  --gold:#C9A227;
+  --gold-soft:rgba(201,162,39,.14);
+  --green:#4FB783;
+  --green-soft:rgba(79,183,131,.14);
+  --red:#D9614F;
+  --red-soft:rgba(217,97,79,.14);
+  --r:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:Manrope,system-ui,sans-serif;font-size:15px;line-height:1.55;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(rgba(233,226,208,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(233,226,208,.028) 1px,transparent 1px);
+  background-size:56px 56px;
+}
+.wrap{position:relative;max-width:520px;margin:0 auto;padding:0 16px 48px}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
+.mono{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+a{color:var(--gold);text-decoration:none}
+.hide{display:none!important}
+
+/* ---- ust bar ---- */
+.top{display:flex;align-items:center;gap:12px;padding:18px 0 14px;position:relative}
+.top .back{width:38px;height:38px;border-radius:11px;border:1px solid var(--line-2);background:var(--surface);display:grid;place-items:center;font-size:19px;color:var(--ink-2);flex:0 0 auto}
+.top .back svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.top .back.gold{color:var(--gold);border-color:rgba(201,162,39,.35);background:var(--gold-soft)}
+.top h1{font-size:19px;flex:1}
+.brand{display:flex;align-items:baseline;gap:8px}
+.brand b{font-size:20px;font-weight:700;letter-spacing:-.02em}
+.brand span{font-size:11px;color:var(--gold);letter-spacing:.18em;text-transform:uppercase}
+
+/* ---- kur seridi ---- */
+.rates{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;margin:0 -16px 16px;padding-left:16px;padding-right:16px;scrollbar-width:none}
+.rates::-webkit-scrollbar{display:none}
+.rate{flex:0 0 auto;min-width:104px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.rate .k{font-size:11px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
+.rate .v{font-size:16px;font-weight:600;margin-top:2px}
+.rate .d{font-size:11px;margin-top:1px;color:var(--ink-3)}
+.up{color:var(--green)} .down{color:var(--red)}
+.stamp{font-size:11px;color:var(--ink-3);margin:-8px 0 18px;display:flex;gap:6px;align-items:center}
+
+/* ---- kategori kartlari ---- */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 14px;text-align:left;position:relative;overflow:hidden;transition:border-color .18s,transform .18s}
+.tile:active{transform:scale(.985)}
+.tile .ic{width:34px;height:34px;border-radius:10px;background:var(--gold-soft);color:var(--gold);display:grid;place-items:center;margin-bottom:12px}
+.tile .ic svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tile b{display:block;font-size:15px;font-weight:600}
+.tile small{display:block;font-size:12px;color:var(--ink-3);margin-top:2px}
+.tile.wide{grid-column:1/-1;display:flex;align-items:center;gap:14px}
+.tile.wide .ic{margin:0}
+.tile.soon::after{content:"yakında";position:absolute;top:12px;right:12px;font-size:10px;color:var(--ink-3);border:1px solid var(--line);border-radius:20px;padding:2px 8px}
+
+/* ---- form ---- */
+label{display:block;font-size:12px;color:var(--ink-2);margin:0 0 6px}
+input,select,textarea{
+  width:100%;background:var(--surface);border:1px solid var(--line);border-radius:11px;
+  padding:12px 13px;outline:none;transition:border-color .15s
+}
+input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);background-position:calc(100% - 18px) 21px,calc(100% - 13px) 21px;background-size:5px 5px;background-repeat:no-repeat}
+.field{margin-bottom:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{display:block;width:100%;background:var(--gold);color:#171203;font-weight:700;border-radius:12px;padding:14px;text-align:center;letter-spacing:-.01em}
+.btn:active{opacity:.85}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-2);font-weight:600}
+.btn.danger{background:transparent;color:var(--red);border:1px solid var(--red-soft)}
+.btn[disabled]{opacity:.5}
+
+/* ---- listeler ---- */
+.bar{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+.year{border:1px solid var(--line-2);border-radius:20px;padding:7px 14px;font-size:13px;background:var(--surface);width:auto;min-width:96px}
+.search{flex:1}
+.group{margin-bottom:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
+.ghead{display:flex;align-items:center;gap:10px;padding:13px 14px;width:100%;text-align:left;border-bottom:1px solid transparent}
+.ghead.open{border-bottom-color:var(--line)}
+.ghead b{font-size:14px;font-weight:600;flex:1}
+.ghead small{font-size:12px;color:var(--ink-3)}
+.ghead .chev{color:var(--ink-3);transition:transform .2s}
+.ghead.open .chev{transform:rotate(90deg)}
+.pr{padding:13px 14px;border-top:1px solid var(--line);width:100%;text-align:left;display:block}
+.pr:first-child{border-top:none}
+.prtop{display:flex;align-items:baseline;gap:8px}
+.prtop .n{font-size:11px;color:var(--ink-3);width:14px}
+.prtop b{font-size:15px;font-weight:600;flex:1}
+.prtop .m2{font-size:13px;color:var(--ink-2)}
+.meta{display:flex;gap:14px;align-items:center;margin-top:9px;font-size:12px;color:var(--ink-3)}
+.meta svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;vertical-align:-3px;margin-right:4px}
+.dot{width:9px;height:9px;border-radius:50%;margin-left:auto}
+.dot.on{background:var(--green)} .dot.off{background:var(--red)}
+.pill{font-size:11px;border-radius:20px;padding:3px 10px}
+.pill.on{background:var(--green-soft);color:var(--green)}
+.pill.off{background:var(--red-soft);color:var(--red)}
+.pill.gold{background:var(--gold-soft);color:var(--gold)}
+.empty{text-align:center;padding:48px 20px;color:var(--ink-3)}
+.empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:6px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.kv{display:flex;justify-content:space-between;padding:4px 0;font-size:13px}
+.kv span{color:var(--ink-2)}
+.fab{position:fixed;right:calc(50% - 260px + 16px);bottom:24px;width:54px;height:54px;border-radius:50%;background:var(--gold);color:#171203;font-size:26px;display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:20}
+@media(max-width:552px){.fab{right:16px}}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;background:var(--surface-2);border:1px solid var(--line-2);border-radius:12px;padding:11px 16px;font-size:13px;z-index:50;max-width:88%;text-align:center}
+.spin{width:22px;height:22px;border:2px solid var(--line-2);border-top-color:var(--gold);border-radius:50%;animation:s .7s linear infinite;margin:40px auto}
+@keyframes s{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---- harita ---- */
+#map{height:320px;border-radius:var(--r);border:1px solid var(--line);overflow:hidden;background:var(--surface);margin-bottom:14px}
+.leaflet-container{background:#0F1412}
+.leaflet-control-attribution{background:rgba(11,15,13,.75)!important;color:var(--ink-3)!important;font-size:9px!important}
+.leaflet-control-attribution a{color:var(--ink-2)!important}
+.leaflet-bar a{background:var(--surface-2)!important;color:var(--ink)!important;border-color:var(--line)!important}
+.ipt{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.ipt select,.ipt input{width:auto;flex:1 1 46%;padding:11px 12px;font-size:14px}
+.ipt select{background-position:calc(100% - 17px) 20px,calc(100% - 12px) 20px}
+.ipt .full{flex:1 1 100%}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.acts button{flex:1 1 30%;border:1px solid var(--line-2);border-radius:11px;padding:11px 8px;font-size:13px;font-weight:600;background:var(--surface-2)}
+.acts button.pri{background:var(--gold);color:#171203;border-color:var(--gold)}
+.ipuc{font-size:12px;color:var(--ink-3);margin:-4px 2px 12px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="spin"></div></div>
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://fhydzzogwyhfssbnfokw.supabase.co";
+const SUPABASE_KEY = "sb_publishable_63EA1qyRE0yS3_EGGS9KMA_Zq49wbmJ";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const app = document.getElementById("app");
+const T = document.getElementById("toast");
+let ME = null;                       // profil satiri
+let YEAR = new Date().getFullYear();
+
+const ic = {
+  map:'<path d="M9 4 3 7v13l6-3 6 3 6-3V4l-6 3z"/><path d="M9 4v13M15 7v13"/>',
+  folder:'<path d="M4 7a2 2 0 0 1 2-2h3l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/>',
+  money:'<path d="M12 3v18M8 7h6a3 3 0 0 1 0 6H8h7"/>',
+  file:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18"/>',
+  vector:'<path d="M5 5h4v4H5zM15 15h4v4h-4zM9 7h6a2 2 0 0 1 2 2v6"/>',
+  spark:'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
+  gear:'<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v0a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15z"/>',
+  out:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4M6 12h10"/>',
+  pin:'<path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>',
+  note:'<path d="M5 4h14v11l-5 5H5z"/><path d="M19 15h-5v5"/>',
+  photo:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="M21 16l-5-5-6 6"/>',
+  tag:'<path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.2"/>'
+};
+const svg = k => `<svg viewBox="0 0 24 24">${ic[k]}</svg>`;
+const esc = s => (s??"").toString().replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+const nf = n => n==null||n===""?"—":Number(n).toLocaleString("tr-TR");
+const toast = m => { T.innerHTML = `<div class="toast">${esc(m)}</div>`; setTimeout(()=>T.innerHTML="",2600); };
+
+function payOran(s){
+  if(!s) return 1;
+  const m = s.trim().match(/^(\d+)\s*\/\s*(\d+)$/);
+  if(!m || +m[2]===0) return null;
+  return +m[1]/+m[2];
+}
+
+/* ================= giris ================= */
+
+function girisEkrani(){
+  app.innerHTML = `
+    <div style="padding:64px 0 28px"><div class="brand" style="flex-direction:column;gap:6px;align-items:flex-start">
+      <span>tarla · arsa · portföy</span><b style="font-size:32px">ArsaTakip</b>
+    </div>
+    <p style="color:var(--ink-2);margin:14px 0 0;max-width:300px">E-postanı yaz, giriş bağlantısını yollayalım. Şifre yok.</p></div>
+    <button class="btn" id="ggl" style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px">
+      <svg viewBox="0 0 24 24" style="width:19px;height:19px"><path fill="#171203" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.9h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.4z"/><path fill="#171203" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.7-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z"/><path fill="#171203" d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1A10 10 0 0 0 2 12c0 1.6.4 3.2 1.1 4.6L6.4 14z"/><path fill="#171203" d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.8-2.8C16.9 2.9 14.7 2 12 2a10 10 0 0 0-8.9 5.4L6.4 10c.8-2.4 3-4.1 5.6-4.1z"/></svg>
+      Google ile giriş</button>
+    <div style="display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--ink-3);font-size:12px">
+      <span style="flex:1;height:1px;background:var(--line)"></span>veya<span style="flex:1;height:1px;background:var(--line)"></span></div>
+    <div class="field"><label>E-posta</label><input id="mail" type="email" inputmode="email" autocomplete="email" placeholder="ornek@gmail.com"></div>
+    <button class="btn ghost" id="go">Giriş bağlantısı gönder</button>
+    <p style="color:var(--ink-3);font-size:12px;margin-top:18px">Google ile girmen daha hızlı. E-posta bağlantısı saatte iki kez gönderilebiliyor.</p>`;
+  document.getElementById("ggl").onclick = async () => {
+    const { error } = await sb.auth.signInWithOAuth({ provider:"google",
+      options:{ redirectTo: location.origin + location.pathname }});
+    if(error) toast("Google girişi kurulmamış: " + error.message);
+  };
+  document.getElementById("go").onclick = async e => {
+    const mail = document.getElementById("mail").value.trim();
+    if(!mail.includes("@")) return toast("Geçerli bir e-posta yaz");
+    e.target.disabled = true; e.target.textContent = "Gönderiliyor…";
+    const { error } = await sb.auth.signInWithOtp({ email: mail, options:{ emailRedirectTo: location.origin + location.pathname }});
+    e.target.disabled = false; e.target.textContent = "Giriş bağlantısı gönder";
+    toast(error ? "Olmadı: " + error.message : "Bağlantı gitti, e-postana bak");
+  };
+}
+
+/* ================= ust bar ================= */
+
+function head(title, back){
+  return `<div class="top">
+    ${back?`<button class="back" onclick="${back}" aria-label="Geri">‹</button>`:""}
+    ${title?`<h1>${esc(title)}</h1>`:`<div class="brand" style="flex:1"><b>ArsaTakip</b><span>${esc(ME.full_name||"")}</span></div>`}
+    ${!back&&ME.role==='admin'?`<button class="back gold" onclick="go('ayarlar')" aria-label="Ayarlar">${svg("gear")}</button>`:""}
+    ${!back?`<button class="back" onclick="cikisSor()" aria-label="Çıkış yap">${svg("out")}</button>`:""}
+  </div>`;
+}
+function cikisSor(){ if(confirm("Çıkış yapılsın mı?")) cikis(); }
+
+/* ================= ana menu ================= */
+
+async function anaMenu(){
+  app.innerHTML = head() + `<div id="rates" class="rates"></div><div class="stamp" id="stamp"></div>
+  <div class="grid">
+    ${tile("harita","map","Harita","Ada parsel sorgula")}
+    ${tile("araziler","folder","Araziler","Köy, ada, parsel")}
+    ${tile("fiyat","money","Fiyat ve hisse","m² fiyatı, ilan")}
+    ${tile("ekler","file","Ekler","Vekalet, muvafakat",1)}
+    ${tile("kml","globe","KML","3B, sokak görünümü",1)}
+    ${tile("cap","vector","Çap çiz","Parçala, PDF al",1)}
+    <button class="tile wide soon" onclick="toast('Sırası gelince açılacak')"><div class="ic">${svg("spark")}</div>
+      <div><b>Yapay zekâ</b><small>Görsel hazırla, belge oku, soru sor</small></div></button>
+  </div>`;
+  kurlar();
+}
+const tile = (r,i,t,s,soon) =>
+  `<button class="tile${soon?" soon":""}" onclick="${soon?"toast('Sırası gelince açılacak')":`go('${r}')`}">
+     <div class="ic">${svg(i)}</div><b>${t}</b><small>${s}</small></button>`;
+
+async function kurlar(){
+  const box = document.getElementById("rates");
+  const st = document.getElementById("stamp");
+  const cards = [];
+  try{
+    const r = await fetch("https://open.er-api.com/v6/latest/TRY").then(r=>r.json());
+    const usd = 1/r.rates.USD, eur = 1/r.rates.EUR;
+    cards.push(["Dolar", usd], ["Euro", eur]);
+  }catch(e){}
+  try{
+    const c = await fetch("https://api.coinbase.com/v2/exchange-rates?currency=TRY").then(r=>r.json());
+    const d = c.data.rates;
+    cards.push(["Bitcoin", 1/ +d.BTC], ["Ethereum", 1/ +d.ETH]);
+  }catch(e){}
+  if(!cards.length){ box.innerHTML = `<div class="rate"><div class="k">Kurlar</div><div class="v">—</div><div class="d">bağlantı yok</div></div>`; }
+  else box.innerHTML = cards.map(([k,v])=>`<div class="rate"><div class="k">${k}</div>
+      <div class="v mono">${v>1000?nf(Math.round(v)):v.toFixed(2)} ₺</div><div class="d">güncel</div></div>`).join("");
+  const now = new Date();
+  st.textContent = now.toLocaleDateString("tr-TR",{day:"2-digit",month:"long",year:"numeric"}) + " · " +
+                   now.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+}
+
+/* ================= TKGM ================= */
+
+const TB   = "https://cbsapi.tkgm.gov.tr/megsiswebapi.v3.1/api";
+const TB3  = "https://cbsapi.tkgm.gov.tr/megsiswebapi.v3/api";
+
+let FN = null;                              // calisan fonksiyon adi
+const FN_ADAYLARI = ["tkgm","quick-task"];
+
+async function tkgm(u){
+  const adaylar = FN ? [FN] : FN_ADAYLARI;
+  let sonHata = null;
+  for(const ad2 of adaylar){
+    const { data, error } = await sb.functions.invoke(ad2, { body:{ u } });
+    if(error){ sonHata = error; continue; }          // fonksiyon yok, digerini dene
+    FN = ad2;
+    if(data && data.error) throw new Error(data.error);
+    return data;
+  }
+  throw new Error(sonHata?.message || "aracıya ulaşılamadı");
+}
+const dizi = d => {
+  if(Array.isArray(d)) return d;
+  if(!d || typeof d !== "object") return [];
+  if(Array.isArray(d.features)) return d.features;
+  for(const k of ["data","liste","items","result","results","rows","value"])
+    if(Array.isArray(d[k])) return d[k];
+  const ilk = Object.values(d).find(v=>Array.isArray(v));
+  return ilk || [];
+};
+const duz = o => (o && typeof o === "object" && o.properties) ? { ...o.properties, ...o } : o;
+const ad = o => {
+  if(typeof o === "string") return o;
+  o = duz(o); if(!o || typeof o !== "object") return String(o ?? "");
+  const g = Object.keys(o).find(k=>/^(text|ad|adi|ad_i|name|isim|label|title|.*Ad|.*Adi)$/i.test(k) && typeof o[k]==="string" && o[k].trim());
+  if(g) return o[g];
+  const h = Object.entries(o).find(([k,v])=>typeof v==="string" && v.trim() && !/^\d+$/.test(v) && !/id$/i.test(k));
+  return h ? h[1] : "";
+};
+const kim = o => {
+  o = duz(o); if(!o || typeof o !== "object") return "";
+  const g = Object.keys(o).find(k=>/^(id|value|.*Id|kod|no)$/i.test(k) && (typeof o[k]==="number" || /^\d+$/.test(String(o[k]??""))));
+  if(g) return o[g];
+  const h = Object.entries(o).find(([k,v])=>typeof v==="number" || /^\d+$/.test(String(v??"")));
+  return h ? h[1] : "";
+};
+
+const zamanAsimi = (p, ms=9000) => Promise.race([p,
+  new Promise((_,r)=>setTimeout(()=>r(new Error("zaman aşımı")), ms))]);
+
+// adaylari sirayla dener, dolu liste donen ilkini kullanir
+async function ilkCalisan(adaylar){
+  const hatalar = [];
+  for(const u of adaylar){
+    try{
+      const d = dizi(await zamanAsimi(tkgm(u)));
+      if(d.length) return { u, d };
+      hatalar.push(`${u} → boş döndü`);
+    }catch(e){ hatalar.push(`${u} → ${e.message||e}`); }
+  }
+  const hata = new Error("hiçbir uç cevap vermedi");
+  hata.detay = hatalar.join("\n\n");
+  throw hata;
+}
+
+const IL_UCLARI = [
+  `${TB}/idariYapi/ilListe`,
+  `${TB3}/idariYapi/ilListe`,
+  "https://parselsorgu.tkgm.gov.tr/app/modules/administrativeQuery/data/ilListe.json"
+];
+const ILCE_UCLARI = id => [
+  `${TB}/idariYapi/ilceListe?ilId=${id}`,
+  `${TB3}/idariYapi/ilceListe?ilId=${id}`,
+  `${TB}/idariYapi/ilceListe/${id}`,
+  `${TB3}/idariYapi/ilceListe/${id}`,
+  `https://parselsorgu.tkgm.gov.tr/app/modules/administrativeQuery/data/ilceListe/${id}.json`,
+  `https://parselsorgu.tkgm.gov.tr/app/modules/administrativeQuery/data/ilce/${id}.json`
+];
+const MAH_UCLARI = id => [
+  `${TB}/idariYapi/mahalleListe?ilceId=${id}`,
+  `${TB3}/idariYapi/mahalleListe?ilceId=${id}`,
+  `${TB}/idariYapi/mahalleListe/${id}`,
+  `${TB3}/idariYapi/mahalleListe/${id}`,
+  `https://parselsorgu.tkgm.gov.tr/app/modules/administrativeQuery/data/mahalleListe/${id}.json`,
+  `https://parselsorgu.tkgm.gov.tr/app/modules/administrativeQuery/data/mahalle/${id}.json`
+];
+
+function taniYaz(baslik, detay){
+  const kutu = document.getElementById("tani");
+  if(!kutu) return toast(baslik);
+  kutu.innerHTML = `<div class="card"><b style="font-size:13px">${esc(baslik)}</b>
+    <pre style="white-space:pre-wrap;word-break:break-all;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--ink-2);margin:8px 0 0">${esc(detay)}</pre>
+    <button class="btn ghost" style="margin-top:10px" onclick="kopyala(this)">Kopyala</button></div>`;
+}
+function kopyala(btn){
+  const t = btn.parentElement.querySelector("pre").textContent;
+  navigator.clipboard.writeText(t).then(()=>toast("Kopyalandı"),()=>toast("Kopyalanamadı"));
+}
+async function idariKur(pre, sonrasi){
+  const S = k => document.getElementById(pre + k);
+  const doldur = (el, list, bos) => {
+    const temiz = list.map(o=>({ a:String(ad(o)||"").trim(), k:String(kim(o)||"") }))
+                      .filter(o=>o.a && o.k)
+                      .sort((x,y)=>x.a.localeCompare(y.a,"tr"));
+    if(!temiz.length) throw new Error("liste okunamadı");
+    el.innerHTML = `<option value="">${bos}</option>` +
+      temiz.map(o=>`<option value="${esc(o.k)}">${esc(o.a)}</option>`).join("");
+    el.disabled = false;
+  };
+  const coz = () => {
+    ["il","ilce","mah"].forEach(k=>{
+      const el = S(k);
+      el.outerHTML = `<input id="${pre}${k}" class="${el.className}" placeholder="${
+        k==="il"?"İl":k==="ilce"?"İlçe":"Mahalle / köy"}">`;
+    });
+  };
+  try{
+    const { d:iller } = await ilkCalisan(IL_UCLARI);
+    doldur(S("il"), iller, "İl seç");
+    S("ilce").disabled = true; S("mah").disabled = true;
+
+    S("il").onchange = async () => {
+      S("ilce").innerHTML = `<option value="">yükleniyor…</option>`;
+      S("mah").innerHTML = `<option value="">önce ilçe seç</option>`; S("mah").disabled = true;
+      if(!S("il").value) return;
+      try{
+        const { d } = await ilkCalisan(ILCE_UCLARI(S("il").value));
+        doldur(S("ilce"), d, "İlçe seç");
+      }catch(e){
+        S("ilce").innerHTML = `<option value="">gelmedi</option>`;
+        taniYaz("İlçe listesi gelmedi", e.detay || e.message);
+      }
+    };
+    S("ilce").onchange = async () => {
+      S("mah").innerHTML = `<option value="">yükleniyor…</option>`;
+      if(!S("ilce").value) return;
+      try{
+        const { d } = await ilkCalisan(MAH_UCLARI(S("ilce").value));
+        doldur(S("mah"), d, "Mahalle / köy seç");
+      }catch(e){
+        S("mah").innerHTML = `<option value="">gelmedi</option>`;
+        taniYaz("Köy listesi gelmedi", e.detay || e.message);
+      }
+    };
+    if(sonrasi) S("mah").onchange = sonrasi;
+  }catch(e){
+    coz();
+    taniYaz("İl listesi gelmedi, elle yazabilirsin", e.detay || e.message);
+  }
+}
+const secimAdi = (pre,k) => {
+  const el = document.getElementById(pre+k);
+  return el.tagName === "SELECT" ? (el.selectedOptions[0]?.textContent || "") : el.value.trim();
+};
+
+/* ================= harita ================= */
+
+let HARITA = null, KATMAN = null, SONPARSEL = null;
+
+async function harita(){
+  app.innerHTML = head("Harita","go('ana')") + `
+    <div class="ipt">
+      <select id="hil" class="full">${""}</select>
+      <select id="hilce"></select>
+      <select id="hmah" class="full"></select>
+      <input id="hada" inputmode="numeric" placeholder="Ada">
+      <input id="hpar" inputmode="numeric" placeholder="Parsel">
+      <button class="btn full" id="sor">Sorgula</button>
+    </div>
+    <p class="ipuc">Haritada bir parselin üstüne dokunarak da sorgulayabilirsin. · <a href="#" onclick="sina();return false">bağlantıyı sına</a></p>
+    <div id="tani"></div>
+    <div id="map"></div><div id="bilgi"></div>`;
+
+  HARITA = L.map("map", { zoomControl:true }).setView([41.0, 27.1], 9);
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    { maxZoom:19, attribution:"Uydu: Esri · Parsel: TKGM" }).addTo(HARITA);
+  setTimeout(()=>HARITA.invalidateSize(), 250);
+
+  idariKur("h");
+  document.getElementById("sor").onclick = adaParselSorgu;
+  HARITA.on("click", e => noktaSorgu(e.latlng.lat, e.latlng.lng));
+}
+
+async function sina(){
+  const kutu = document.getElementById("tani");
+  kutu.innerHTML = `<div class="card"><div class="spin"></div></div>`;
+  const satir = [];
+  const dene = async (baslik, adaylar) => {
+    try{ const { u, d } = await ilkCalisan(adaylar);
+      satir.push(`${baslik}: TAMAM\n  uç: ${u}\n  ${d.length} kayıt · ilk kayıt: ${JSON.stringify(d[0]).slice(0,200)}`);
+      return d;
+    }catch(e){ satir.push(`${baslik}: OLMADI\n${e.detay||e.message}`); return null; }
+  };
+  const iller = await dene("il listesi", IL_UCLARI);
+  if(iller && iller.length){
+    const ilKimlik = kim(iller.find(o=>/kırklareli|kirklareli/i.test(String(ad(o)))) || iller[0]);
+    const ilceler = await dene(`ilçe listesi (il=${ilKimlik})`, ILCE_UCLARI(ilKimlik));
+    if(ilceler && ilceler.length) await dene(`köy listesi (ilçe=${kim(ilceler[0])})`, MAH_UCLARI(kim(ilceler[0])));
+  }
+  await dene("parsel örneği", [`${TB3}/parsel/139070/389/26`]);
+  satir.push(`kullanılan fonksiyon: ${FN||"bulunamadı"}`);
+  taniYaz("Sınama sonucu", satir.join("\n\n"));
+}
+
+async function adaParselSorgu(){
+  const mah = document.getElementById("hmah").value;
+  const ada = document.getElementById("hada").value.trim();
+  const par = document.getElementById("hpar").value.trim();
+  if(!mah || !par) return toast("Mahalle ve parsel gerekli");
+  document.getElementById("bilgi").innerHTML = `<div class="spin"></div>`;
+  try{ ciz(await tkgm(`${TB3}/parsel/${mah}/${ada||0}/${par}`)); }
+  catch(e){ document.getElementById("bilgi").innerHTML = `<div class="empty">Bulunamadı<br><small>${esc(e.message)}</small></div>`; }
+}
+
+async function noktaSorgu(lat,lng){
+  document.getElementById("bilgi").innerHTML = `<div class="spin"></div>`;
+  try{ ciz(await tkgm(`${TB3}/parsel/${lat}/${lng}`)); }
+  catch(e){ document.getElementById("bilgi").innerHTML = `<div class="empty">Burada kayıtlı parsel yok</div>`; }
+}
+
+function ciz(f){
+  if(!f || !f.geometry) throw new Error("Parsel bulunamadı");
+  SONPARSEL = f;
+  if(KATMAN) HARITA.removeLayer(KATMAN);
+  KATMAN = L.geoJSON(f, { style:{ color:"#C9A227", weight:2.5, fillColor:"#C9A227", fillOpacity:.18 } }).addTo(HARITA);
+  HARITA.fitBounds(KATMAN.getBounds(), { padding:[30,30], maxZoom:18 });
+  const p = f.properties || {};
+  document.getElementById("bilgi").innerHTML = `
+    <div class="card">
+      <div style="font-size:12px;color:var(--ink-3)">${esc(p.ilAd||"")} · ${esc(p.ilceAd||"")} · ${esc(p.mahalleAd||"")}</div>
+      <div style="font-size:18px;font-weight:600;margin-top:3px">Ada ${esc(p.adaNo||"—")} · Parsel ${esc(p.parselNo||"—")}</div>
+      <div class="kv" style="margin-top:10px"><span>Yüzölçümü</span><b class="mono">${esc(p.alan||"—")} m²</b></div>
+      <div class="kv"><span>Niteliği</span><b>${esc(p.nitelik||"—")}</b></div>
+      <div class="kv"><span>Mevkii</span><b>${esc(p.mevkii||"—")}</b></div>
+      <div class="acts">
+        <button onclick="kmlIndir()">KML indir</button>
+        <button onclick="earthAc()">Earth'te aç</button>
+        ${ME.role==='admin'?`<button class="pri" onclick="haritadanKaydet()">Kaydet</button>`:""}
+      </div>
+    </div>`;
+}
+
+function merkez(f){
+  const c = []; JSON.stringify(f.geometry.coordinates).replace(/\[(-?\d+\.?\d*),(-?\d+\.?\d*)\]/g,(m,a,b)=>{c.push([+a,+b]);return m;});
+  const lng = c.reduce((s,p)=>s+p[0],0)/c.length, lat = c.reduce((s,p)=>s+p[1],0)/c.length;
+  return { lat, lng };
+}
+
+function kmlMetni(f){
+  const p = f.properties||{};
+  const halka = g => (g.type==="Polygon"?[g.coordinates]:g.coordinates)
+    .map(poly => poly[0].map(c=>`${c[0]},${c[1]},0`).join(" ")).join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${p.ozet||"parsel"}</name>
+<Style id="s"><LineStyle><color>ff27a2c9</color><width>3</width></LineStyle>
+<PolyStyle><color>4027a2c9</color></PolyStyle></Style>
+<Placemark><name>${p.mahalleAd||""} ${p.adaNo||""}/${p.parselNo||""}</name>
+<description>${p.alan||""} m² · ${p.nitelik||""}</description><styleUrl>#s</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>${halka(f.geometry)}</coordinates>
+</LinearRing></outerBoundaryIs></Polygon></Placemark></Document></kml>`;
+}
+
+function kmlIndir(){
+  if(!SONPARSEL) return;
+  const p = SONPARSEL.properties||{};
+  const b = new Blob([kmlMetni(SONPARSEL)], { type:"application/vnd.google-earth.kml+xml" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(b);
+  a.download = `${(p.mahalleAd||"parsel")}-${p.adaNo||0}-${p.parselNo||0}.kml`.replace(/\s+/g,"_");
+  a.click(); URL.revokeObjectURL(a.href);
+  toast("KML indirildi");
+}
+
+function earthAc(){
+  if(!SONPARSEL) return;
+  const { lat, lng } = merkez(SONPARSEL);
+  window.open(`https://earth.google.com/web/@${lat},${lng},0a,600d,35y,0h,45t,0r`, "_blank");
+}
+
+async function haritadanKaydet(){
+  if(!SONPARSEL) return;
+  const p = SONPARSEL.properties||{}, m = merkez(SONPARSEL);
+  const alan = parseFloat(String(p.alan||"").replace(/\./g,"").replace(",",".")) || null;
+  const { data:kayit, error } = await sb.from("parcels").insert({
+    team_id:ME.team_id, il:p.ilAd||"", ilce:p.ilceAd||"", mahalle:p.mahalleAd||"",
+    ada:p.adaNo||null, parsel:String(p.parselNo||""), alan_m2:alan, nitelik:p.nitelik||null,
+    mevkii:p.mevkii||null, lat:m.lat, lng:m.lng, geojson:SONPARSEL, created_by:ME.id
+  }).select().single();
+  if(error) return toast("Olmadı: "+error.message);
+  await sb.from("parcel_years").insert({ parcel_id:kayit.id, team_id:ME.team_id, yil:YEAR, aktif:true });
+  await sb.from("activity_log").insert({ team_id:ME.team_id, user_id:ME.id, action:"parsel eklendi",
+    entity:"parcels", entity_id:kayit.id, detail:`${p.ozet||""} (haritadan)` });
+  toast(`${YEAR} yılına kaydedildi`);
+}
+
+/* ================= araziler ================= */
+
+let acikGrup = null;
+
+async function araziler(){
+  app.innerHTML = head("Araziler","go('ana')") + `
+    <div class="bar">
+      <select class="year" id="yil">${yilSecenek()}</select>
+      <input class="search" id="ara" placeholder="129/7 veya köy adı">
+    </div><div id="liste"><div class="spin"></div></div>
+    ${ME.role==='admin'?`<button class="fab" onclick="go('yeni')">+</button>`:""}`;
+  document.getElementById("yil").onchange = e => { YEAR = +e.target.value; araziListele(); };
+  document.getElementById("ara").oninput = () => araziListele();
+  araziListele();
+}
+const yilSecenek = () => {
+  const y = new Date().getFullYear(); let o="";
+  for(let i=y+2;i>=y-4;i--) o += `<option value="${i}"${i===YEAR?" selected":""}>${i}</option>`;
+  return o;
+};
+
+async function araziListele(){
+  const box = document.getElementById("liste");
+  const q = (document.getElementById("ara")?.value||"").toLowerCase().trim();
+  const { data, error } = await sb.from("parcel_years")
+    .select("id,aktif,parcels(id,il,ilce,mahalle,ada,parsel,alan_m2,nitelik)")
+    .eq("yil", YEAR);
+  if(error) return box.innerHTML = `<div class="empty">${esc(error.message)}</div>`;
+  let rows = (data||[]).filter(r=>r.parcels);
+  if(q) rows = rows.filter(r=>{
+    const p = r.parcels;
+    return `${p.il} ${p.ilce} ${p.mahalle} ${p.ada||""}/${p.parsel}`.toLowerCase().includes(q);
+  });
+  if(!rows.length) return box.innerHTML = `<div class="empty"><b>${YEAR} boş</b>
+    ${ME.role==='admin'?"Sağ alttaki + ile ilk parseli ekle.":"Bu yıl için henüz kayıt yok."}</div>`;
+
+  const gruplar = {};
+  rows.forEach(r=>{
+    const p = r.parcels, k = `${p.il} · ${p.ilce} · ${p.mahalle}`;
+    (gruplar[k] ||= []).push(r);
+  });
+  box.innerHTML = Object.entries(gruplar).map(([k,list])=>{
+    const open = acikGrup === k;
+    return `<div class="group">
+      <button class="ghead${open?" open":""}" onclick="acikGrup=${open?"null":`'${k.replace(/'/g,"\\'")}'`};araziListele()">
+        <span class="chev">›</span><b>${esc(k)}</b><small>${list.length} parsel</small></button>
+      ${open?list.map((r,i)=>parselSatir(r,i+1)).join(""):""}
+    </div>`;
+  }).join("");
+}
+
+function parselSatir(r,i){
+  const p = r.parcels;
+  return `<button class="pr" onclick="go('parsel','${p.id}')">
+    <div class="prtop"><span class="n mono">${i}</span>
+      <b>Ada ${esc(p.ada||"—")} · Parsel ${esc(p.parsel)}</b>
+      <span class="m2 mono">${nf(p.alan_m2)} m²</span></div>
+    <div class="meta">
+      <span>${svg("file")}0</span><span>${svg("photo")}0</span><span>${svg("tag")}0</span>
+      <span class="dot ${r.aktif?"on":"off"}"></span></div></button>`;
+}
+
+/* ================= yeni parsel ================= */
+
+function yeniParsel(){
+  app.innerHTML = head("Yeni parsel","go('araziler')") + `
+    <div class="ipt">
+      <select id="yil_il" class="full"></select>
+      <select id="yil_ilce" class="full"></select>
+      <select id="yil_mah" class="full"></select>
+    </div>
+    <div class="row2"><div class="field"><label>Ada</label><input id="ada" inputmode="numeric" placeholder="108"></div>
+    <div class="field"><label>Parsel</label><input id="par" inputmode="numeric" placeholder="9"></div></div>
+    <div class="row2"><div class="field"><label>Yüzölçümü (m²)</label><input id="m2" inputmode="decimal" placeholder="1496"></div>
+    <div class="field"><label>Niteliği</label><input id="nit" placeholder="Tarla"></div></div>
+    <div class="field"><label>Kayıt yılı</label><select id="yil2">${yilSecenek()}</select></div>
+    <div id="tani"></div>
+    <button class="btn" id="kaydet">Kaydet</button>
+    <p class="ipuc" style="margin-top:16px">Haritadan eklersen yüzölçümü, niteliği ve sınır çizimi kendiliğinden dolar.</p>`;
+  idariKur("yil_");
+  document.getElementById("kaydet").onclick = async e => {
+    const v = id => document.getElementById(id).value.trim();
+    const il = secimAdi("yil_","il"), ilce = secimAdi("yil_","ilce"), mah = secimAdi("yil_","mah");
+    if(!il||!ilce||!mah||!v("par")) return toast("İl, ilçe, köy ve parsel şart");
+    e.target.disabled = true; e.target.textContent = "Kaydediliyor…";
+    const { data:p, error } = await sb.from("parcels").insert({
+      team_id: ME.team_id, il, ilce, mahalle: mah,
+      ada:v("ada")||null, parsel:v("par"), alan_m2:v("m2")||null, nitelik:v("nit")||null, created_by:ME.id
+    }).select().single();
+    if(error){ e.target.disabled=false; e.target.textContent="Kaydet"; return toast("Olmadı: "+error.message); }
+    const yil = +document.getElementById("yil2").value;
+    await sb.from("parcel_years").insert({ parcel_id:p.id, team_id:ME.team_id, yil, aktif:true });
+    await sb.from("activity_log").insert({ team_id:ME.team_id, user_id:ME.id, action:"parsel eklendi",
+      entity:"parcels", entity_id:p.id, detail:`${p.mahalle} ${p.ada||""}/${p.parsel}` });
+    YEAR = yil; toast("Kaydedildi"); go("araziler");
+  };
+}
+
+/* ================= parsel detay ================= */
+
+async function parselDetay(id){
+  app.innerHTML = head("Parsel","go('araziler')") + `<div class="spin"></div>`;
+  const { data:p } = await sb.from("parcels").select("*").eq("id",id).single();
+  if(!p) return;
+  const { data:notlar } = await sb.from("notes")
+    .select("content,created_at,profiles(full_name)").eq("parcel_id",id).order("created_at",{ascending:false});
+  app.innerHTML = head(`${p.ada||"—"}/${p.parsel}`,"go('araziler')") + `
+    <div class="card">
+      <div style="font-size:12px;color:var(--ink-3);margin-bottom:6px">${esc(p.il)} · ${esc(p.ilce)} · ${esc(p.mahalle)}</div>
+      <div style="font-size:19px;font-weight:600">Ada ${esc(p.ada||"—")} · Parsel ${esc(p.parsel)}</div>
+      <div class="kv" style="margin-top:10px"><span>Yüzölçümü</span><b class="mono">${nf(p.alan_m2)} m²</b></div>
+      <div class="kv"><span>Niteliği</span><b>${esc(p.nitelik||"—")}</b></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="color:var(--gold)">${svg("note")}</div><b style="font-size:14px">Notlar</b>
+        <span style="margin-left:auto;font-size:12px;color:var(--ink-3)">${(notlar||[]).length}</span></div>
+      ${ME.role!=='uye'?`<div style="display:flex;gap:8px;margin-bottom:12px">
+        <input id="not" placeholder="Not yaz…"><button class="btn" style="width:auto;padding:12px 18px" id="notEkle">Ekle</button></div>`:""}
+      ${(notlar||[]).length? notlar.map(n=>`<div style="border-top:1px solid var(--line);padding:10px 0">
+          <div style="font-size:11px;color:var(--ink-3)">${new Date(n.created_at).toLocaleString("tr-TR",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})} · ${esc(n.profiles?.full_name||"")}</div>
+          <div style="font-size:14px;margin-top:3px">${esc(n.content)}</div></div>`).join("")
+        : `<div style="color:var(--ink-3);font-size:13px">Henüz not yok.</div>`}
+    </div>`;
+  const btn = document.getElementById("notEkle");
+  if(btn) btn.onclick = async () => {
+    const c = document.getElementById("not").value.trim();
+    if(!c) return;
+    const { error } = await sb.from("notes").insert({ team_id:ME.team_id, parcel_id:id, user_id:ME.id, content:c });
+    if(error) return toast("Olmadı: "+error.message);
+    parselDetay(id);
+  };
+}
+
+/* ================= fiyat ve hisse ================= */
+
+async function fiyat(){
+  app.innerHTML = head("Fiyat ve hisse","go('ana')") + `
+    <div class="bar"><select class="year" id="yil3">${yilSecenek()}</select></div>
+    <div id="fl"><div class="spin"></div></div>`;
+  document.getElementById("yil3").onchange = e => { YEAR = +e.target.value; fiyatListele(); };
+  fiyatListele();
+}
+
+async function fiyatListele(){
+  const box = document.getElementById("fl");
+  const { data, error } = await sb.from("parcel_years")
+    .select("*,parcels(id,il,ilce,mahalle,ada,parsel,alan_m2)").eq("yil",YEAR);
+  if(error) return box.innerHTML = `<div class="empty">${esc(error.message)}</div>`;
+  const rows = (data||[]).filter(r=>r.parcels);
+  if(!rows.length) return box.innerHTML = `<div class="empty"><b>${YEAR} boş</b>Önce Araziler'den parsel ekle.</div>`;
+  box.innerHTML = rows.map(r=>{
+    const p = r.parcels, hisseli = r.tapu_durumu === "hisseli";
+    return `<div class="card" style="${r.aktif?"":"opacity:.55"}">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="dot ${r.aktif?"on":"off"}" style="margin:0"></span>
+        <b style="font-size:15px;flex:1">${esc(p.mahalle)} ${esc(p.ada||"—")}/${esc(p.parsel)}</b>
+        <span class="pill ${hisseli?"gold":"on"}">${hisseli?"hisseli · "+esc(r.hisse_pay||"?"):"tek tapu"}</span></div>
+      <div class="kv" style="margin-top:8px"><span>Alan</span><b class="mono">${nf(p.alan_m2)} m²</b></div>
+      <div class="kv"><span>Payınız</span><b class="mono">${hisseli?nf(r.hisse_m2)+" m²":"tamamı"}</b></div>
+      <div class="kv"><span>m² fiyatı</span><b class="mono">${nf(r.m2_fiyat)} ₺</b></div>
+      <div class="kv"><span>Toplam</span><b class="mono">${nf(r.toplam_fiyat)} ₺</b></div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        ${r.ilan_url?`<a class="pill gold" href="${esc(r.ilan_url)}" target="_blank">sahibinden ilanı</a>`:""}
+        ${ME.role==='admin'?`<button class="pill gold" onclick="go('fiyatDuzen','${r.id}')">düzenle</button>`:""}
+      </div></div>`;
+  }).join("");
+}
+
+async function fiyatDuzen(id){
+  const { data:r } = await sb.from("parcel_years").select("*,parcels(alan_m2,ada,parsel,mahalle)").eq("id",id).single();
+  if(!r) return;
+  app.innerHTML = head(`${r.parcels.ada||"—"}/${r.parcels.parsel}`,"go('fiyat')") + `
+    <div class="field"><label>Tapu durumu</label><select id="td">
+      <option value="tek"${r.tapu_durumu!=="hisseli"?" selected":""}>Tek tapu</option>
+      <option value="hisseli"${r.tapu_durumu==="hisseli"?" selected":""}>Hisseli</option></select></div>
+    <div class="field"><label>Hisse payı (örn. 1/4)</label><input id="hp" value="${esc(r.hisse_pay||"")}" placeholder="1/4"></div>
+    <div class="field"><label>m² fiyatı (₺)</label><input id="mf" inputmode="decimal" value="${r.m2_fiyat??""}"></div>
+    <div class="field"><label>sahibinden ilan bağlantısı</label><input id="il2" value="${esc(r.ilan_url||"")}" placeholder="https://..."></div>
+    <div class="field"><label>Durum</label><select id="ak">
+      <option value="1"${r.aktif?" selected":""}>Aktif · satışta</option>
+      <option value="0"${!r.aktif?" selected":""}>Pasif · satışta değil</option></select></div>
+    <div id="onizle" class="card" style="font-size:13px"></div>
+    <button class="btn" id="kay">Kaydet</button>`;
+
+  const hesapla = () => {
+    const alan = +r.parcels.alan_m2 || 0;
+    const hisseli = document.getElementById("td").value === "hisseli";
+    const oran = hisseli ? payOran(document.getElementById("hp").value) : 1;
+    const mf = +document.getElementById("mf").value || 0;
+    if(oran === null){ document.getElementById("onizle").innerHTML = `<span style="color:var(--red)">Hisse payını 1/4 gibi yaz</span>`; return null; }
+    const pay = Math.round(alan * oran), toplam = Math.round(pay * mf);
+    document.getElementById("onizle").innerHTML =
+      `<div class="kv"><span>Payınıza düşen</span><b class="mono">${nf(pay)} m²</b></div>
+       <div class="kv"><span>Toplam değer</span><b class="mono">${nf(toplam)} ₺</b></div>`;
+    return { pay, toplam };
+  };
+  ["td","hp","mf"].forEach(k => document.getElementById(k).oninput = hesapla);
+  document.getElementById("td").onchange = hesapla;
+  hesapla();
+
+  document.getElementById("kay").onclick = async e => {
+    const h = hesapla(); if(!h) return toast("Hisse payını düzelt");
+    e.target.disabled = true;
+    const { error } = await sb.from("parcel_years").update({
+      tapu_durumu: document.getElementById("td").value,
+      hisse_pay: document.getElementById("hp").value.trim() || null,
+      hisse_m2: h.pay, m2_fiyat: +document.getElementById("mf").value || null,
+      toplam_fiyat: h.toplam, ilan_url: document.getElementById("il2").value.trim() || null,
+      aktif: document.getElementById("ak").value === "1"
+    }).eq("id", id);
+    e.target.disabled = false;
+    if(error) return toast("Olmadı: "+error.message);
+    toast("Kaydedildi"); go("fiyat");
+  };
+}
+
+/* ================= ayarlar ================= */
+
+async function ayarlar(){
+  app.innerHTML = head("Ayarlar","go('ana')") + `<div class="spin"></div>`;
+  const { data:kisiler } = await sb.from("profiles").select("id,full_name,email,role").order("created_at");
+  const rolAd = { admin:"Admin", yonetici:"Yönetici", uye:"Üye" };
+  app.innerHTML = head("Ayarlar","go('ana')") + `
+    <div class="card">
+      <div class="kv"><span>Hesap</span><b>${esc(ME.email||"")}</b></div>
+      <div class="kv"><span>Yetki</span><b>${rolAd[ME.role]}</b></div>
+    </div>
+    <h3 style="font-size:14px;margin:22px 0 10px">Kullanıcılar</h3>
+    ${(kisiler||[]).map(k=>`<div class="card" style="display:flex;align-items:center;gap:10px">
+      <div style="flex:1;min-width:0"><b style="font-size:14px">${esc(k.full_name||k.email)}</b>
+      <div style="font-size:12px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis">${esc(k.email||"")}</div></div>
+      ${ME.role==='admin' && k.id!==ME.id
+        ? `<select style="width:auto;padding:9px 30px 9px 12px;font-size:13px;background-position:calc(100% - 16px) 18px,calc(100% - 11px) 18px" onchange="rolDegistir('${k.id}',this.value)">
+             <option value="uye"${k.role==='uye'?' selected':''}>Üye</option>
+             <option value="yonetici"${k.role==='yonetici'?' selected':''}>Yönetici</option>
+             <option value="admin"${k.role==='admin'?' selected':''}>Admin</option></select>`
+        : `<span class="pill gold">${rolAd[k.role]}</span>`}</div>`).join("")}
+    <p style="color:var(--ink-3);font-size:12px;margin:2px 2px 0">Uygulamayı kurup giren herkes önce üye olur. Yetkiyi buradan sen verirsin.</p>`;
+}
+async function rolDegistir(id, rol){
+  const { error } = await sb.from("profiles").update({ role: rol }).eq("id", id);
+  if(error) return toast("Olmadı: " + error.message);
+  await sb.from("activity_log").insert({ team_id:ME.team_id, user_id:ME.id,
+    action:"yetki değişti", entity:"profiles", entity_id:id, detail:rol });
+  toast("Yetki güncellendi");
+}
+async function cikis(){ await sb.auth.signOut(); location.reload(); }
+
+/* ================= yonlendirme ================= */
+
+const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, yeni:yeniParsel, parsel:parselDetay,
+                   fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
+function go(r,arg){ (ekranlar[r]||anaMenu)(arg); window.scrollTo(0,0); }
+
+function acilisHatasi(mesaj){
+  app.innerHTML = `<div class="empty"><b>Açılamadı</b>
+    <div style="font-size:12px;color:var(--ink-3);margin:10px 0 16px;word-break:break-word">${esc(mesaj)}</div>
+    <button class="btn ghost" onclick="location.reload()">Tekrar dene</button>
+    <button class="btn danger" style="margin-top:10px" onclick="cikis()">Oturumu sıfırla</button></div>`;
+}
+window.addEventListener("error", e => { if(!ME) acilisHatasi("Kod hatası: " + (e.message||"bilinmiyor")); });
+window.addEventListener("unhandledrejection", e => { if(!ME) acilisHatasi("Bağlantı hatası: " + (e.reason?.message || e.reason || "bilinmiyor")); });
+const bekletme = setTimeout(()=>{ if(!ME && app.querySelector(".spin")) acilisHatasi("Sunucu cevap vermedi. İnternet ya da Supabase erişimi engelli olabilir."); }, 12000);
+
+(async () => {
+ try{
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ clearTimeout(bekletme); return girisEkrani(); }
+  let { data:prof } = await sb.from("profiles").select("*").eq("id", session.user.id).single();
+  if(!prof){ await new Promise(r=>setTimeout(r,1200));
+    ({ data:prof } = await sb.from("profiles").select("*").eq("id", session.user.id).single()); }
+  clearTimeout(bekletme);
+  if(!prof) return acilisHatasi("Profil kurulamadı. Oturumu sıfırlayıp tekrar gir.");
+  ME = prof; anaMenu();
+ }catch(e){ clearTimeout(bekletme); acilisHatasi(String(e.message||e)); }
+})();
+
+sb.auth.onAuthStateChange((e)=>{ if(e === "SIGNED_IN" && !ME) location.reload(); });
+</script>
+</body>
+</html>
