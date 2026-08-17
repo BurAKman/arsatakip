@@ -335,7 +335,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 2.9";
+const SURUM = "beta 3.0";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1507,48 +1507,53 @@ const YOL_AD = { motorway:"Otoyol", trunk:"Devlet yolu", primary:"Ana yol", seco
 const YER_AD = { city:"Şehir", town:"İlçe/kasaba", village:"Köy", hamlet:"Mezra", suburb:"Mahalle" };
 
 const OVER_SUNUCU = [
+  "https://overpass.kumi.systems/api/interpreter?data=",
   "https://overpass-api.de/api/interpreter?data=",
-  "https://overpass.kumi.systems/api/interpreter?data="
+  "https://overpass.osm.ch/api/interpreter?data=",
+  "https://overpass.private.coffee/api/interpreter?data="
 ];
 
-function cevreSorgusu(lat, lng, hafif){
-  if(hafif) return `[out:json][timeout:20];(
-    node(around:10000,${lat},${lng})[place~"^(city|town|village)$"];
-    way(around:1500,${lat},${lng})[highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|track)$"];
-    way(around:2000,${lat},${lng})[waterway~"^(river|stream|canal)$"];
-    way(around:1500,${lat},${lng})[landuse];
-    way(around:3000,${lat},${lng})[power=line];
+// 0 = tam, 1 = orta, 2 = cok hafif
+function cevreSorgusu(lat, lng, kademe){
+  if(kademe === 2) return `[out:json][timeout:15];(
+    node(around:9000,${lat},${lng})[place~"^(town|village)$"];
+    way(around:900,${lat},${lng})[highway];
   );out center tags;`;
-  return `[out:json][timeout:30];(
+  if(kademe === 1) return `[out:json][timeout:20];(
+    node(around:10000,${lat},${lng})[place~"^(city|town|village)$"];
+    way(around:1200,${lat},${lng})[highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|track)$"];
+    way(around:1500,${lat},${lng})[waterway~"^(river|stream|canal)$"];
+    way(around:1200,${lat},${lng})[landuse];
+  );out center tags;`;
+  return `[out:json][timeout:25];(
     node(around:12000,${lat},${lng})[place~"^(city|town|village|hamlet)$"];
-    way(around:2500,${lat},${lng})[highway];
-    way(around:3000,${lat},${lng})[waterway~"^(river|stream|canal|ditch)$"];
-    way(around:3000,${lat},${lng})[natural=water];
-    way(around:2000,${lat},${lng})[landuse];
+    way(around:2000,${lat},${lng})[highway];
+    way(around:2500,${lat},${lng})[waterway~"^(river|stream|canal|ditch)$"];
+    way(around:2500,${lat},${lng})[natural=water];
+    way(around:1800,${lat},${lng})[landuse];
     node(around:8000,${lat},${lng})[amenity~"^(school|hospital|pharmacy|fuel)$"];
-    way(around:5000,${lat},${lng})[power=line];
+    way(around:4000,${lat},${lng})[power=line];
     node(around:8000,${lat},${lng})[man_made=water_well];
   );out center tags;`;
 }
 
-// once tam sorgu, tikanirsa yedek sunucu, o da olmazsa hafif sorgu
+// sunucular ve sorgu kademeleri arasinda sirayla dener
 async function cevreVerisi(lat, lng, bildir){
-  const denemeler = [
-    { s:OVER_SUNUCU[0], hafif:false, sure:45000 },
-    { s:OVER_SUNUCU[1], hafif:false, sure:45000 },
-    { s:OVER_SUNUCU[0], hafif:true,  sure:30000 },
-    { s:OVER_SUNUCU[1], hafif:true,  sure:30000 }
-  ];
+  const denemeler = [];
+  [0,1,2].forEach(kademe=>{
+    OVER_SUNUCU.forEach(s2=>denemeler.push({ s:s2, kademe }));
+  });
   let sonHata = null;
   for(let i=0;i<denemeler.length;i++){
     const d = denemeler[i];
-    if(bildir) bildir(i === 0 ? "Çevre taranıyor…" : `Sunucu meşgul, tekrar deneniyor (${i+1}/4)…`);
+    if(bildir) bildir(i === 0 ? "Çevre taranıyor…"
+      : `Sunucular meşgul, tekrar deneniyor (${i+1}/${denemeler.length})…`);
     try{
-      const r = await zamanAsimi(tkgm(d.s + encodeURIComponent(cevreSorgusu(lat, lng, d.hafif))), d.sure);
+      const r = await zamanAsimi(tkgm(d.s + encodeURIComponent(cevreSorgusu(lat, lng, d.kademe))), 35000);
       if(r?.elements?.length) return r;
       sonHata = new Error("boş cevap");
     }catch(e){ sonHata = e; }
-    await new Promise(r=>setTimeout(r, 1200));
+    await new Promise(r=>setTimeout(r, 800));
   }
   throw sonHata || new Error("çevre verisi alınamadı");
 }
@@ -2443,21 +2448,26 @@ async function musteriSunumu(parselId){
 
     document.getElementById("durum").textContent = "Uydu görüntüsü hazırlanıyor…";
     try{
-      const harita = await uyduGorseli(p.geojson, p.lat, p.lng, 1200, 900);
-      bolumler.splice(1, 0, { baslik:"Taşınmazın konumu (uydu görünümü)", gorsel:harita, oran:900/1200 });
+      const harita = await uyduGorseli(p.geojson, p.lat, p.lng, 1800, 1350);
+      bolumler.splice(1, 0, { baslik:"Taşınmazın konumu (uydu görünümü)", gorsel:harita, oran:1350/1800 });
     }catch(e){}
 
+    // sadece cap gorseli eklensin
     try{
-      const { data:foto } = await sb.from("documents").select("file_path,file_name,kind")
-        .eq("parcel_id", parselId).in("kind",["resim","sunum","cap"]).order("created_at",{ascending:false}).limit(3);
-      for(const f of (foto||[])){
-        const { data:link } = await sb.storage.from("arsatakip").createSignedUrl(f.file_path, 3600);
-        if(!link) continue;
-        try{
+      const { data:capd } = await sb.from("documents").select("file_path,mime_type")
+        .eq("parcel_id", parselId).eq("kind","cap").order("created_at",{ascending:false}).limit(1);
+      const c2 = capd?.[0];
+      if(c2 && !/pdf/i.test(c2.mime_type||"")){
+        const { data:link } = await sb.storage.from("arsatakip").createSignedUrl(c2.file_path, 3600);
+        if(link){
           const im = await yukleGorsel(link.signedUrl);
-          bolumler.push({ baslik: f.kind === "cap" ? "Çap görünümü" : "Taşınmazdan görüntü",
-                          gorsel:im, oran: im.naturalHeight/im.naturalWidth });
-        }catch(e){}
+          bolumler.push({ baslik:"Çap görünümü", gorsel:im, oran: im.naturalHeight/im.naturalWidth });
+        }
+      }else if(p.geojson){
+        const png = capSeffafPng(p, p.cap_config && !Array.isArray(p.cap_config) ? p.cap_config : null,
+                                 p.cap_config ? 3 : 1, { tema:1, dis:"#111111", ic:"#333333" });
+        const im = await yukleGorsel(png);
+        bolumler.push({ baslik:"Çap görünümü", gorsel:im, oran: im.naturalHeight/im.naturalWidth });
       }
     }catch(e){}
 
