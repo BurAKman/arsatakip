@@ -114,6 +114,13 @@ a{color:var(--gold);text-decoration:none}
 .tile.mavi .ic{color:#CFE6FF}
 .tile.sari{background:linear-gradient(155deg,rgba(227,192,90,.28),rgba(227,192,90,.08));border-color:rgba(227,192,90,.42)}
 .tile.sari .ic{color:#F6E3AA}
+.tile .gorsel{position:absolute;right:-6px;bottom:-4px;height:84%;width:64%;
+  background-repeat:no-repeat;background-position:right bottom;background-size:contain;pointer-events:none;opacity:.92}
+.tile .perde{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(100deg,rgba(6,10,8,.86) 0%,rgba(6,10,8,.55) 42%,rgba(6,10,8,0) 78%)}
+.tile .icerik{position:relative;z-index:2}
+.tile.gorselli{min-height:132px;display:flex;flex-direction:column;justify-content:flex-end}
+.tile.wide.gorselli{min-height:120px}
 .tile.soon::after{content:"yakında";position:absolute;top:12px;right:12px;font-size:10px;color:rgba(255,255,255,.6);
   border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:2px 8px}
 
@@ -292,7 +299,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 2.3";
+const SURUM = "beta 2.4";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -404,7 +411,7 @@ function cikisSor(){ if(confirm("Çıkış yapılsın mı?")) cikis(); }
 async function anaMenu(){
   app.innerHTML = head() + `<div class="zaman" id="stamp"></div><div id="rates" class="rates"></div>
   <div class="grid">
-    ${tile("harita","map","Harita","Ada parsel sorgula","kirmizi")}
+    ${tile("harita","map","Harita","Ada parsel sorgula","kirmizi","bg-harita.png")}
     ${tile("araziler","folder","Araziler","Her şey tek yerde","yesil")}
     ${tile("fiyat","money","Tapu bilgileri","Hisse, malik, fiyat","gri")}
     ${tile("ekler","file","Ekler","Vekalet, muvafakat","gri")}
@@ -415,9 +422,10 @@ async function anaMenu(){
   </div>`;
   kurlar();
 }
-const tile = (r,i,t,s2,renk) =>
-  `<button class="tile ${renk||"gri"}" onclick="go('${r}')">
-     <div class="ic">${svg(i)}</div><b>${t}</b><small>${s2}</small></button>`;
+const tile = (r,i,t,s2,renk,gorsel) =>
+  `<button class="tile ${renk||"gri"}${gorsel?" gorselli":""}" onclick="go('${r}')">
+     ${gorsel?`<div class="gorsel" style="background-image:url('${gorsel}')"></div><div class="perde"></div>`:""}
+     <div class="icerik"><div class="ic">${svg(i)}</div><b>${t}</b><small>${s2}</small></div></button>`;
 
 async function kurlar(){
   const box = document.getElementById("rates"), st = document.getElementById("stamp");
