@@ -11,36 +11,37 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{
-  --bg:#0B0F0D;
-  --surface:#131917;
-  --surface-2:#1A2220;
-  --line:rgba(233,226,208,.10);
-  --line-2:rgba(233,226,208,.18);
-  --ink:#EDE9DE;
-  --ink-2:#9AA39C;
-  --ink-3:#69736C;
-  --gold:#C9A227;
-  --gold-soft:rgba(201,162,39,.14);
-  --green:#4FB783;
-  --green-soft:rgba(79,183,131,.14);
-  --red:#D9614F;
-  --red-soft:rgba(217,97,79,.14);
-  --r:14px;
+  --ink:#F2EFE8; --ink-2:#B9C2BB; --ink-3:#7E8A84;
+  --gold:#E3C05A; --gold-soft:rgba(227,192,90,.16);
+  --green:#5FD79A; --green-soft:rgba(95,215,154,.16);
+  --red:#F0705C; --red-soft:rgba(240,112,92,.16);
+  --blue:#6FB0F5; --blue-soft:rgba(111,176,245,.16);
+  --cam:rgba(255,255,255,.065);
+  --cam-2:rgba(255,255,255,.10);
+  --cizgi:rgba(255,255,255,.13);
+  --cizgi-2:rgba(255,255,255,.22);
+  --r:16px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
 body{
-  background:var(--bg);color:var(--ink);
+  min-height:100vh;color:var(--ink);
   font-family:Manrope,system-ui,sans-serif;font-size:15px;line-height:1.55;
   padding-bottom:env(safe-area-inset-bottom);
+  background:
+    radial-gradient(900px 620px at 78% -8%, rgba(95,215,154,.13), transparent 60%),
+    radial-gradient(760px 520px at 8% 12%, rgba(111,176,245,.10), transparent 62%),
+    radial-gradient(700px 700px at 50% 108%, rgba(227,192,90,.07), transparent 60%),
+    #070A09;
+  background-attachment:fixed;
 }
 body::before{
-  content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;
-  background-image:linear-gradient(rgba(233,226,208,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(233,226,208,.028) 1px,transparent 1px);
-  background-size:56px 56px;
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.55;
+  background-image:linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);
+  background-size:62px 62px;
 }
-.wrap{position:relative;max-width:520px;margin:0 auto;padding:0 16px 48px}
-h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
+.wrap{position:relative;max-width:520px;margin:0 auto;padding:0 15px 52px}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.015em}
 .mono{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;border:none;background:none}
@@ -48,124 +49,156 @@ a{color:var(--gold);text-decoration:none}
 .hide{display:none!important}
 
 /* ---- ust bar ---- */
-.top{display:flex;align-items:center;gap:12px;padding:18px 0 14px;position:relative}
-.top .back{width:38px;height:38px;border-radius:11px;border:1px solid var(--line-2);background:var(--surface);display:grid;place-items:center;font-size:19px;color:var(--ink-2);flex:0 0 auto}
-.top .back svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.top .back.gold{color:var(--gold);border-color:rgba(201,162,39,.35);background:var(--gold-soft)}
+.top{display:flex;align-items:center;gap:10px;padding:16px 0 12px}
 .top h1{font-size:19px;flex:1}
-.brand{display:flex;align-items:baseline;gap:8px}
-.brand b{font-size:20px;font-weight:700;letter-spacing:-.02em}
-.brand span{font-size:11px;color:var(--gold);letter-spacing:.18em;text-transform:uppercase}
+.logo{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
+.logo .mark{width:36px;height:36px;border-radius:11px;background:linear-gradient(150deg,rgba(95,215,154,.32),rgba(227,192,90,.20));
+  border:1px solid var(--cizgi-2);display:grid;place-items:center;flex:0 0 auto}
+.logo .mark svg{width:19px;height:19px;stroke:var(--green);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.logo b{font-size:18px;font-weight:700;letter-spacing:-.025em;display:block;line-height:1.1}
+.logo span{font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--green);display:block;margin-top:1px}
+.ibtn{width:38px;height:38px;border-radius:12px;border:1px solid var(--cizgi-2);background:var(--cam);
+  display:grid;place-items:center;flex:0 0 auto;color:var(--ink);backdrop-filter:blur(10px)}
+.ibtn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ibtn.ak{color:#fff;background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.34)}
+.ibtn.cik{color:var(--red);background:var(--red-soft);border-color:rgba(240,112,92,.42)}
+.ibtn.geri{font-size:20px;line-height:1}
+.zaman{text-align:right;font-size:11px;color:var(--ink-3);margin:0 2px 10px;font-family:"IBM Plex Mono",monospace}
 
-/* ---- kur seridi ---- */
-.rates{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:0 0 14px}
-.rate{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:7px 8px;min-width:0}
-.rate .k{font-size:9px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rate .v{font-size:12.5px;font-weight:600;margin-top:1px;font-family:"IBM Plex Mono",monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rate .d{font-size:9.5px;margin-top:1px;color:var(--ink-3)}
-.up{color:var(--green)} .down{color:var(--red)}
-.stamp{font-size:11px;color:var(--ink-3);margin:-8px 0 18px;display:flex;gap:6px;align-items:center}
+/* ---- kur ---- */
+.rates{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:0 0 16px}
+.rate{background:var(--cam);border:1px solid var(--cizgi);border-radius:12px;padding:8px 9px;min-width:0;backdrop-filter:blur(12px)}
+.rate .k{font-size:9px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rate .v{font-size:12.5px;font-weight:600;margin-top:2px;font-family:"IBM Plex Mono",monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ---- kategori kartlari ---- */
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 14px;text-align:left;position:relative;overflow:hidden;transition:border-color .18s,transform .18s}
-.tile:active{transform:scale(.985)}
-.tile .ic{width:34px;height:34px;border-radius:10px;background:var(--gold-soft);color:var(--gold);display:grid;place-items:center;margin-bottom:12px}
-.tile .ic svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.tile b{display:block;font-size:15px;font-weight:600}
-.tile small{display:block;font-size:12px;color:var(--ink-3);margin-top:2px}
+.tile{border-radius:var(--r);padding:16px 14px;text-align:left;position:relative;overflow:hidden;
+  border:1px solid var(--cizgi-2);backdrop-filter:blur(14px);transition:transform .16s,filter .16s;
+  background:linear-gradient(155deg,rgba(255,255,255,.13),rgba(255,255,255,.045))}
+.tile:active{transform:scale(.98);filter:brightness(1.15)}
+.tile .ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;margin-bottom:12px;
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.2)}
+.tile .ic svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tile b{display:block;font-size:15px;font-weight:600;color:#fff}
+.tile small{display:block;font-size:12px;color:rgba(255,255,255,.62);margin-top:2px}
 .tile.wide{grid-column:1/-1;display:flex;align-items:center;gap:14px}
 .tile.wide .ic{margin:0}
-.tile.soon::after{content:"yakında";position:absolute;top:12px;right:12px;font-size:10px;color:var(--ink-3);border:1px solid var(--line);border-radius:20px;padding:2px 8px}
+.tile.kirmizi{background:linear-gradient(155deg,rgba(240,112,92,.30),rgba(240,112,92,.09));border-color:rgba(240,112,92,.42)}
+.tile.kirmizi .ic{color:#FFC9BF}
+.tile.yesil{background:linear-gradient(155deg,rgba(95,215,154,.30),rgba(95,215,154,.09));border-color:rgba(95,215,154,.42)}
+.tile.yesil .ic{color:#C4F5DC}
+.tile.gri{background:linear-gradient(155deg,rgba(255,255,255,.17),rgba(255,255,255,.055));border-color:rgba(255,255,255,.28)}
+.tile.gri .ic{color:#fff}
+.tile.mavi{background:linear-gradient(155deg,rgba(111,176,245,.30),rgba(111,176,245,.09));border-color:rgba(111,176,245,.42)}
+.tile.mavi .ic{color:#CFE6FF}
+.tile.sari{background:linear-gradient(155deg,rgba(227,192,90,.28),rgba(227,192,90,.08));border-color:rgba(227,192,90,.42)}
+.tile.sari .ic{color:#F6E3AA}
+.tile.soon::after{content:"yakında";position:absolute;top:12px;right:12px;font-size:10px;color:rgba(255,255,255,.6);
+  border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:2px 8px}
 
 /* ---- form ---- */
 label{display:block;font-size:12px;color:var(--ink-2);margin:0 0 6px}
 input,select,textarea{
-  width:100%;background:var(--surface);border:1px solid var(--line);border-radius:11px;
-  padding:12px 13px;outline:none;transition:border-color .15s
-}
-input:focus,select:focus,textarea:focus{border-color:var(--gold)}
-select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);background-position:calc(100% - 18px) 21px,calc(100% - 13px) 21px;background-size:5px 5px;background-repeat:no-repeat}
+  width:100%;background:rgba(255,255,255,.07);border:1px solid var(--cizgi);border-radius:12px;
+  padding:12px 13px;outline:none;transition:border-color .15s,background .15s;backdrop-filter:blur(8px)}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);background:rgba(255,255,255,.1)}
+input::placeholder,textarea::placeholder{color:var(--ink-3)}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-2) 50%),linear-gradient(135deg,var(--ink-2) 50%,transparent 50%);
+  background-position:calc(100% - 18px) 21px,calc(100% - 13px) 21px;background-size:5px 5px;background-repeat:no-repeat}
+select option{background:#101614;color:var(--ink)}
 .field{margin-bottom:14px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn{display:block;width:100%;background:var(--gold);color:#171203;font-weight:700;border-radius:12px;padding:14px;text-align:center;letter-spacing:-.01em}
-.btn:active{opacity:.85}
-.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-2);font-weight:600}
-.btn.danger{background:transparent;color:var(--red);border:1px solid var(--red-soft)}
-.btn[disabled]{opacity:.5}
+.btn{display:block;width:100%;background:linear-gradient(160deg,#F0D278,#D9B248);color:#1A1403;font-weight:700;
+  border-radius:13px;padding:14px;text-align:center;letter-spacing:-.01em;border:1px solid rgba(255,255,255,.25)}
+.btn:active{filter:brightness(1.08)}
+.btn.ghost{background:var(--cam-2);color:#fff;border:1px solid var(--cizgi-2);font-weight:600}
+.btn.danger{background:var(--red-soft);color:var(--red);border:1px solid rgba(240,112,92,.4)}
+.btn[disabled]{opacity:.55}
 
-/* ---- listeler ---- */
+/* ---- listeler / kartlar ---- */
 .bar{display:flex;gap:8px;align-items:center;margin-bottom:14px}
-.year{border:1px solid var(--line-2);border-radius:20px;padding:7px 14px;font-size:13px;background:var(--surface);width:auto;min-width:96px}
+.year{border:1px solid var(--cizgi-2);border-radius:22px;padding:8px 15px;font-size:13px;background:var(--cam);width:auto;min-width:98px}
 .search{flex:1}
-.group{margin-bottom:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
-.ghead{display:flex;align-items:center;gap:10px;padding:13px 14px;width:100%;text-align:left;border-bottom:1px solid transparent}
-.ghead.open{border-bottom-color:var(--line)}
-.ghead b{font-size:14px;font-weight:600;flex:1}
-.ghead small{font-size:12px;color:var(--ink-3)}
-.ghead .chev{color:var(--ink-3);transition:transform .2s}
-.ghead.open .chev{transform:rotate(90deg)}
-.pr{padding:13px 14px;border-top:1px solid var(--line);width:100%;text-align:left;display:block}
-.pr:first-child{border-top:none}
-.prtop{display:flex;align-items:baseline;gap:8px}
-.prtop .n{font-size:11px;color:var(--ink-3);width:14px}
-.prtop b{font-size:15px;font-weight:600;flex:1}
-.prtop .m2{font-size:13px;color:var(--ink-2)}
-.meta{display:flex;gap:14px;align-items:center;margin-top:9px;font-size:12px;color:var(--ink-3)}
-.meta svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;vertical-align:-3px;margin-right:4px}
-.dot{width:9px;height:9px;border-radius:50%;margin-left:auto}
-.dot.on{background:var(--green)} .dot.off{background:var(--red)}
-.pill{font-size:11px;border-radius:20px;padding:3px 10px}
-.pill.on{background:var(--green-soft);color:var(--green)}
-.pill.off{background:var(--red-soft);color:var(--red)}
-.pill.gold{background:var(--gold-soft);color:var(--gold)}
+.card{background:var(--cam);border:1px solid var(--cizgi);border-radius:var(--r);padding:15px;margin-bottom:11px;backdrop-filter:blur(14px)}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-size:13.5px}
+.kv span{color:var(--ink-2);flex:0 0 auto}
+.kv b{text-align:right;min-width:0}
 .empty{text-align:center;padding:48px 20px;color:var(--ink-3)}
 .empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:6px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:10px}
-.kv{display:flex;justify-content:space-between;padding:4px 0;font-size:13px}
-.kv span{color:var(--ink-2)}
-.fab{position:fixed;right:calc(50% - 260px + 16px);bottom:24px;width:54px;height:54px;border-radius:50%;background:var(--gold);color:#171203;font-size:26px;display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:20}
-@media(max-width:552px){.fab{right:16px}}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:110px;background:var(--surface-2);border:1px solid rgba(201,162,39,.5);border-radius:12px;padding:13px 18px;font-size:14px;font-weight:600;z-index:60;max-width:88%;text-align:center;box-shadow:0 8px 28px rgba(0,0,0,.55)}
-.spin{width:22px;height:22px;border:2px solid var(--line-2);border-top-color:var(--gold);border-radius:50%;animation:s .7s linear infinite;margin:40px auto}
-@keyframes s{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.grp{margin-bottom:11px;border:1px solid var(--cizgi);border-radius:var(--r);background:var(--cam);overflow:hidden;backdrop-filter:blur(14px)}
+.ghd{display:flex;align-items:center;gap:11px;padding:15px 14px;width:100%;text-align:left}
+.ghd .pinico{width:33px;height:33px;border-radius:10px;background:var(--green-soft);color:var(--green);display:grid;place-items:center;flex:0 0 auto;border:1px solid rgba(95,215,154,.28)}
+.ghd .pinico svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ghd .txt{flex:1;min-width:0}
+.ghd .txt b{display:block;font-size:14.5px;font-weight:600}
+.ghd .txt small{display:block;font-size:11.5px;color:var(--ink-3);margin-top:1px}
+.ghd .say{font-size:11px;color:var(--green);background:var(--green-soft);border-radius:20px;padding:4px 11px;font-weight:600;border:1px solid rgba(95,215,154,.28)}
+.ghd .chev{color:var(--ink-2);transition:transform .2s;font-size:17px}
+.ghd.open .chev{transform:rotate(90deg)}
+.rw{display:flex;align-items:center;gap:11px;padding:13px 14px;border-top:1px solid var(--cizgi);background:rgba(255,255,255,.03)}
+.rw .kod{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:500;color:var(--gold);background:var(--gold-soft);
+  border:1px solid rgba(227,192,90,.3);border-radius:9px;padding:7px 10px;flex:0 0 auto;letter-spacing:-.02em}
+.rw .orta{flex:1;min-width:0;text-align:left}
+.rw .orta b{display:block;font-size:14px;font-weight:500}
+.rw .orta small{display:block;font-size:11.5px;color:var(--ink-3);margin-top:1px}
+.rw .sag{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.sil{width:33px;height:33px;border-radius:10px;border:1px solid rgba(240,112,92,.35);background:var(--red-soft);
+  color:var(--red);display:grid;place-items:center;flex:0 0 auto}
+.sil svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dot{width:9px;height:9px;border-radius:50%}
+.dot.on{background:var(--green);box-shadow:0 0 8px rgba(95,215,154,.6)}
+.dot.off{background:var(--red);box-shadow:0 0 8px rgba(240,112,92,.5)}
+.pill{font-size:11.5px;border-radius:20px;padding:5px 11px;border:1px solid transparent;display:inline-block}
+.pill.on{background:var(--green-soft);color:var(--green);border-color:rgba(95,215,154,.3)}
+.pill.off{background:var(--red-soft);color:var(--red);border-color:rgba(240,112,92,.3)}
+.pill.gold{background:var(--gold-soft);color:var(--gold);border-color:rgba(227,192,90,.32)}
+.pill.sade{background:var(--cam-2);color:var(--ink-2);border-color:var(--cizgi)}
+
+/* ---- belge satirlari ---- */
+.dosya{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--cizgi)}
+.dosya:first-child{border-top:none}
+.dosya .tip{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;
+  background:var(--cam-2);border:1px solid var(--cizgi);color:var(--ink-2)}
+.dosya .tip svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.dosya .bilgi{flex:1;min-width:0;text-align:left}
+.dosya .bilgi b{display:block;font-size:13.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dosya .bilgi small{display:block;font-size:11px;color:var(--ink-3)}
+.dosya .ops{display:flex;gap:6px;flex:0 0 auto}
+.dosya .ops button{width:32px;height:32px;border-radius:9px;border:1px solid var(--cizgi-2);background:var(--cam-2);
+  color:var(--ink);display:grid;place-items:center}
+.dosya .ops button svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dosya .ops button.kirmizi{color:var(--red);border-color:rgba(240,112,92,.35);background:var(--red-soft)}
 
 /* ---- harita ---- */
-#map{height:320px;border-radius:var(--r);border:1px solid var(--line);overflow:hidden;background:var(--surface);margin-bottom:14px}
-.leaflet-container{background:#0F1412}
-.leaflet-control-attribution{background:rgba(11,15,13,.75)!important;color:var(--ink-3)!important;font-size:9px!important}
+#map,#minimap{height:300px;border-radius:var(--r);border:1px solid var(--cizgi-2);overflow:hidden;background:var(--cam);margin-bottom:14px}
+#minimap{height:240px}
+.leaflet-container{background:#0B100E}
+.leaflet-control-attribution{background:rgba(7,10,9,.8)!important;color:var(--ink-3)!important;font-size:9px!important}
 .leaflet-control-attribution a{color:var(--ink-2)!important}
-.leaflet-bar a{background:var(--surface-2)!important;color:var(--ink)!important;border-color:var(--line)!important}
+.leaflet-bar a{background:rgba(20,26,24,.94)!important;color:var(--ink)!important;border-color:var(--cizgi)!important}
 .ipt{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .ipt select,.ipt input{width:auto;flex:1 1 46%;padding:11px 12px;font-size:14px}
 .ipt select{background-position:calc(100% - 17px) 20px,calc(100% - 12px) 20px}
 .ipt .full{flex:1 1 100%}
 .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.acts button{flex:1 1 30%;border:1px solid var(--line-2);border-radius:11px;padding:11px 8px;font-size:13px;font-weight:600;background:var(--surface-2)}
-.acts button.pri{background:var(--gold);color:#171203;border-color:var(--gold)}
+.acts button{flex:1 1 30%;border:1px solid var(--cizgi-2);border-radius:12px;padding:11px 8px;font-size:13px;
+  font-weight:600;background:var(--cam-2);color:var(--ink);backdrop-filter:blur(10px)}
+.acts button:active{background:rgba(255,255,255,.18)}
+.acts button.pri{background:linear-gradient(160deg,#F0D278,#D9B248);color:#1A1403;border-color:rgba(255,255,255,.25)}
 .ipuc{font-size:12px;color:var(--ink-3);margin:-4px 2px 12px}
 
-/* ---- grup listesi ---- */
-.grp{margin-bottom:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow:hidden}
-.ghd{display:flex;align-items:center;gap:11px;padding:15px 14px;width:100%;text-align:left}
-.ghd .pinico{width:32px;height:32px;border-radius:9px;background:var(--gold-soft);color:var(--gold);display:grid;place-items:center;flex:0 0 auto}
-.ghd .pinico svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.ghd .txt{flex:1;min-width:0}
-.ghd .txt b{display:block;font-size:14.5px;font-weight:600;letter-spacing:-.01em}
-.ghd .txt small{display:block;font-size:11.5px;color:var(--ink-3);margin-top:1px}
-.ghd .say{font-size:11px;color:var(--gold);background:var(--gold-soft);border-radius:20px;padding:4px 11px;font-weight:600}
-.ghd .chev{color:var(--ink-3);transition:transform .2s;font-size:17px}
-.ghd.open .chev{transform:rotate(90deg)}
-.rw{display:flex;align-items:center;gap:12px;padding:13px 14px;border-top:1px solid var(--line);background:var(--surface-2)}
-.rw .kod{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:500;color:var(--gold);background:var(--gold-soft);border-radius:8px;padding:7px 10px;flex:0 0 auto;letter-spacing:-.02em}
-.rw .orta{flex:1;min-width:0;text-align:left}
-.rw .orta b{display:block;font-size:14px;font-weight:500}
-.rw .orta small{display:block;font-size:11.5px;color:var(--ink-3);margin-top:1px}
-.rw .sag{display:flex;align-items:center;gap:10px;flex:0 0 auto}
-.rw .sil{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);color:var(--ink-3);display:grid;place-items:center}
-.rw .sil svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.rw .sil:active{color:var(--red);border-color:var(--red-soft)}
+.fab{position:fixed;right:calc(50% - 260px + 16px);bottom:24px;width:56px;height:56px;border-radius:50%;
+  background:linear-gradient(160deg,#F0D278,#D9B248);color:#1A1403;font-size:27px;display:grid;place-items:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.6);z-index:20;border:1px solid rgba(255,255,255,.3)}
+@media(max-width:552px){.fab{right:16px}}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:110px;background:rgba(22,28,26,.96);
+  border:1px solid rgba(227,192,90,.5);border-radius:13px;padding:13px 18px;font-size:14px;font-weight:600;
+  z-index:60;max-width:88%;text-align:center;box-shadow:0 10px 32px rgba(0,0,0,.6);backdrop-filter:blur(14px)}
+.spin{width:24px;height:24px;border:2px solid var(--cizgi-2);border-top-color:var(--gold);border-radius:50%;animation:s .7s linear infinite;margin:44px auto}
+@keyframes s{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -201,6 +234,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 })();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://fhydzzogwyhfssbnfokw.supabase.co";
@@ -209,7 +243,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "v1.1";
+const SURUM = "v1.2";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -223,6 +257,9 @@ const ic = {
   spark:'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
   gear:'<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9v0a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15z"/>',
   out:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4M6 12h10"/>',
+  goz:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+  indir:'<path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/>',
+  kalem:'<path d="M4 20h4l10-10a2.8 2.8 0 0 0-4-4L4 16z"/>',
   pin:'<path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>',
   note:'<path d="M5 4h14v11l-5 5H5z"/><path d="M19 15h-5v5"/>',
   photo:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="M21 16l-5-5-6 6"/>',
@@ -284,10 +321,13 @@ function girisEkrani(){
 
 function head(title, back){
   return `<div class="top">
-    ${back?`<button class="back" onclick="${back}" aria-label="Geri">‹</button>`:""}
-    ${title?`<h1>${esc(title)}</h1>`:`<div class="brand" style="flex:1"><b>ArsaTakip</b><span>${esc(ME.full_name||"")}</span></div>`}
-    ${!back&&ME.role==='admin'?`<button class="back gold" onclick="go('ayarlar')" aria-label="Ayarlar">${svg("gear")}</button>`:""}
-    ${!back?`<button class="back" onclick="cikisSor()" aria-label="Çıkış yap">${svg("out")}</button>`:""}
+    ${back?`<button class="ibtn geri" onclick="${back}" aria-label="Geri">‹</button>`:""}
+    ${title
+      ? `<h1>${esc(title)}</h1>`
+      : `<div class="logo"><span class="mark">${svg("map")}</span>
+           <span><b>ArsaTakip</b><span>çapımız alayınıza yeter</span></span></div>`}
+    ${!back&&ME.role==='admin'?`<button class="ibtn ak" onclick="go('ayarlar')" aria-label="Ayarlar">${svg("gear")}</button>`:""}
+    ${!back?`<button class="ibtn cik" onclick="cikisSor()" aria-label="Çıkış yap">${svg("out")}</button>`:""}
   </div>`;
 }
 function cikisSor(){ if(confirm("Çıkış yapılsın mı?")) cikis(); }
@@ -295,85 +335,42 @@ function cikisSor(){ if(confirm("Çıkış yapılsın mı?")) cikis(); }
 /* ================= ana menu ================= */
 
 async function anaMenu(){
-  app.innerHTML = head() + `<div id="rates" class="rates"></div><div class="stamp" id="stamp"></div>
+  app.innerHTML = head() + `<div class="zaman" id="stamp"></div><div id="rates" class="rates"></div>
   <div class="grid">
-    ${tile("harita","map","Harita","Ada parsel sorgula")}
-    ${tile("araziler","folder","Araziler","Köy, ada, parsel")}
-    ${tile("fiyat","money","Tapu bilgileri","Hisse, malik, fiyat")}
-    ${tile("ekler","file","Ekler","Vekalet, muvafakat")}
-    ${tile("kml","globe","KML","İndir, Earth'te aç")}
-    ${tile("cap","vector","Çap","Çiz veya yükle")}
-    <button class="tile wide soon" onclick="toast('Sırası gelince açılacak')"><div class="ic">${svg("spark")}</div>
+    ${tile("harita","map","Harita","Ada parsel sorgula","kirmizi")}
+    ${tile("araziler","folder","Araziler","Her şey tek yerde","yesil")}
+    ${tile("fiyat","money","Tapu bilgileri","Hisse, malik, fiyat","gri")}
+    ${tile("ekler","file","Ekler","Vekalet, muvafakat","gri")}
+    ${tile("kml","globe","KML","İndir, Earth'te aç","mavi")}
+    ${tile("cap","vector","Çap","Çiz veya yükle","mavi")}
+    <button class="tile wide sari soon" onclick="toast('Sırası gelince açılacak')"><div class="ic">${svg("spark")}</div>
       <div><b>Yapay zekâ</b><small>Görsel hazırla, belge oku, soru sor</small></div></button>
   </div>`;
   kurlar();
 }
-const tile = (r,i,t,s,soon) =>
-  `<button class="tile${soon?" soon":""}" onclick="${soon?"toast('Sırası gelince açılacak')":`go('${r}')`}">
-     <div class="ic">${svg(i)}</div><b>${t}</b><small>${s}</small></button>`;
+const tile = (r,i,t,s2,renk) =>
+  `<button class="tile ${renk||"gri"}" onclick="go('${r}')">
+     <div class="ic">${svg(i)}</div><b>${t}</b><small>${s2}</small></button>`;
 
 async function kurlar(){
   const box = document.getElementById("rates"), st = document.getElementById("stamp");
-  const deger = {};
-  const say = x => {
-    if(x == null) return NaN;
-    let t = String(x).trim().replace(/[^\d.,-]/g,"");
-    if(t.includes(",") && t.includes(".")) t = t.replace(/\./g,"").replace(",",".");
-    else if(t.includes(",")) t = t.replace(",",".");
-    const n = parseFloat(t); return isFinite(n) ? n : NaN;
-  };
-  // hangi anahtar gelirse gelsin yakala
-  const tara = (nesne, kalip) => {
-    for(const [k,v] of Object.entries(nesne||{})){
-      const ad2 = k.toLowerCase().replace(/[^a-z0-9]/g,"");
-      if(!kalip.test(ad2)) continue;
-      const n = (v && typeof v === "object")
-        ? say(v.Satis ?? v.satis ?? v.Alis ?? v.alis ?? v.selling ?? v.buying ?? v.Deger ?? v.value)
-        : say(v);
-      if(isFinite(n) && n > 0) return n;
-    }
-    return NaN;
-  };
+  const now = new Date();
+  st.textContent = now.toLocaleDateString("tr-TR",{day:"2-digit",month:"long",year:"numeric"}) + "  ·  " +
+                   now.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
 
-  for(const adres of ["https://finans.truncgil.com/v4/today.json","https://finans.truncgil.com/today.json"]){
-    try{
-      const t = await zamanAsimi(tkgm(adres), 8000);
-      if(!t || typeof t !== "object") continue;
-      deger.Dolar    = deger.Dolar    || tara(t, /^usd$|^dolar/);
-      deger.Euro     = deger.Euro     || tara(t, /^eur$|^euro/);
-      deger["Gr altın"] = deger["Gr altın"] || tara(t, /gramaltin|^gra$/);
-      deger["Gr gümüş"] = deger["Gr gümüş"] || tara(t, /gumus|silver/);
-      deger.BIST     = deger.BIST     || tara(t, /bist|xu100|borsa/);
-      if(isFinite(deger.Dolar)) break;
-    }catch(e){}
-  }
-
-  if(!isFinite(deger.Dolar)){
-    try{
-      const r = await zamanAsimi(tkgm("https://open.er-api.com/v6/latest/TRY"), 8000);
-      deger.Dolar = 1/r.rates.USD; deger.Euro = 1/r.rates.EUR;
-    }catch(e){}
-  }
+  const d = {};
+  try{
+    const r = await zamanAsimi(tkgm("https://open.er-api.com/v6/latest/TRY"), 8000);
+    d.Dolar = 1/r.rates.USD; d.Euro = 1/r.rates.EUR;
+  }catch(e){}
   try{
     const c = await zamanAsimi(tkgm("https://api.coinbase.com/v2/exchange-rates?currency=TRY"), 8000);
-    deger.Bitcoin  = 1/(+c.data.rates.BTC);
-    deger.Ethereum = 1/(+c.data.rates.ETH);
-    if(!isFinite(deger["Gr altın"]) && c.data.rates.XAU){
-      deger["Gr altın"] = (1/(+c.data.rates.XAU)) / 31.1034768;
-    }
-    if(!isFinite(deger["Gr gümüş"]) && c.data.rates.XAG){
-      deger["Gr gümüş"] = (1/(+c.data.rates.XAG)) / 31.1034768;
-    }
+    d.Bitcoin = 1/(+c.data.rates.BTC); d.Ethereum = 1/(+c.data.rates.ETH);
   }catch(e){}
 
   const bicim = v => !isFinite(v) ? "—" : v >= 1000 ? nf(Math.round(v)) : v.toFixed(2).replace(".",",");
-  const sira = ["Dolar","Euro","Gr altın","Gr gümüş","Bitcoin","Ethereum","BIST"];
-  box.innerHTML = sira.map(k=>`<div class="rate"><div class="k">${k}</div>
-      <div class="v">${bicim(deger[k])}${isFinite(deger[k])&&k!=="BIST"?" ₺":""}</div></div>`).join("");
-
-  const now = new Date();
-  st.textContent = now.toLocaleDateString("tr-TR",{day:"2-digit",month:"long",year:"numeric"}) + " · " +
-                   now.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+  box.innerHTML = ["Dolar","Euro","Bitcoin","Ethereum"].map(k=>
+    `<div class="rate"><div class="k">${k}</div><div class="v">${bicim(d[k])}${isFinite(d[k])?" ₺":""}</div></div>`).join("");
 }
 
 /* ================= TKGM ================= */
@@ -588,6 +585,7 @@ function ciz(f){
       <div class="kv" style="margin-top:10px"><span>Yüzölçümü</span><b class="mono">${esc(p.alan||"—")} m²</b></div>
       <div class="kv"><span>Niteliği</span><b>${esc(p.nitelik||"—")}</b></div>
       <div class="kv"><span>Mevkii</span><b>${esc(p.mevkii||"—")}</b></div>
+      <div id="minikutu"></div>
       <div class="acts">
         <button onclick="kmlIndir()">KML indir</button>
         <button onclick="earthAc()">Earth'te aç</button>
@@ -798,6 +796,31 @@ async function belgeSil(belgeId, yol){
   toast("Silindi"); return true;
 }
 
+const BELGE_IKON = { tapu:"file", cap:"vector", kml:"globe", resim:"photo",
+                     video:"photo", sunum:"photo", vekalet:"file", muvafakat:"file", diger:"file" };
+
+// her yerde ayni gorunen dosya satiri: goruntule + indir (+ sil)
+function dosyaSatiri(b, silHtml){
+  return `<div class="dosya">
+    <span class="tip">${svg(BELGE_IKON[b.kind]||"file")}</span>
+    <button class="bilgi" onclick="dosyaAc('${esc(b.file_path)}')">
+      <b>${esc(b.file_name||"belge")}</b>
+      <small>${BELGE_AD[b.kind]||b.kind}${b.size_bytes?" · "+boyut(b.size_bytes):""}${b.created_at?" · "+new Date(b.created_at).toLocaleDateString("tr-TR"):""}</small></button>
+    <span class="ops">
+      <button onclick="dosyaAc('${esc(b.file_path)}')" aria-label="Görüntüle">${svg("goz")}</button>
+      <button onclick="dosyaIndir('${esc(b.file_path)}','${esc(b.file_name||"belge")}')" aria-label="İndir">${svg("indir")}</button>
+      ${silHtml||""}
+    </span></div>`;
+}
+
+async function dosyaIndir(yol, ad2){
+  const { data, error } = await sb.storage.from("arsatakip").createSignedUrl(yol, 3600, { download: ad2 });
+  if(error) return toast("İndirilemedi: " + error.message);
+  const a = document.createElement("a");
+  a.href = data.signedUrl; a.download = ad2; a.click();
+  toast("İndiriliyor");
+}
+
 const boyut = b => !b ? "" : b > 1048576 ? (b/1048576).toFixed(1)+" MB" : Math.round(b/1024)+" KB";
 
 /* ================= araziler ================= */
@@ -949,7 +972,7 @@ async function parselDetay(id){
   const kisiBelge = {};
   const kimlikler = (kisiler||[]).flatMap(k=>[k.vekalet_doc_id,k.muvafakat_doc_id]).filter(Boolean);
   if(kimlikler.length){
-    const { data:kb } = await sb.from("documents").select("id,file_path,file_name").in("id", kimlikler);
+    const { data:kb } = await sb.from("documents").select("id,file_path,file_name,size_bytes,created_at").in("id", kimlikler);
     (kb||[]).forEach(b=>kisiBelge[b.id]=b);
   }
 
@@ -964,8 +987,9 @@ async function parselDetay(id){
       <div class="kv" style="margin-top:10px"><span>Yüzölçümü</span><b class="mono">${nf(p.alan_m2)} m²</b></div>
       <div class="kv"><span>Niteliği</span><b>${esc(p.nitelik||"—")}</b></div>
       <div class="kv"><span>Mevkii</span><b>${esc(p.mevkii||"—")}</b></div>
+      <div id="minikutu"></div>
       ${p.lat?`<div class="acts" style="margin-top:12px">
-        <button onclick="haritadaGoster('${id}')">Haritada göster</button>
+        <button onclick="miniHarita('${id}')">Haritada göster</button>
         <button onclick="kmlIndirParsel('${id}')">KML indir</button>
         <button onclick="earthAcKoord(${p.lat},${p.lng})">Earth'te aç</button></div>`:""}
     </div>
@@ -987,28 +1011,28 @@ async function parselDetay(id){
     </div>` : ""}
 
     ${(kisiler||[]).length ? `<div class="card">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
         <div style="color:var(--gold)">${svg("file")}</div><b style="font-size:14px">Vekalet ve muvafakatname</b></div>
-      ${kisiler.map(k=>`<div style="border-top:1px solid var(--line);padding:10px 0">
-        <b style="font-size:14px;font-weight:500">${esc(k.ad_soyad)}</b>
-        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
-          ${kisiBelge[k.vekalet_doc_id]?`<button class="pill gold" onclick="dosyaAc('${esc(kisiBelge[k.vekalet_doc_id].file_path)}')">vekalet</button>`:`<span class="pill" style="background:var(--surface-2);color:var(--ink-3)">vekalet yok</span>`}
-          ${kisiBelge[k.muvafakat_doc_id]?`<button class="pill gold" onclick="dosyaAc('${esc(kisiBelge[k.muvafakat_doc_id].file_path)}')">muvafakatname</button>`:`<span class="pill" style="background:var(--surface-2);color:var(--ink-3)">muvafakat yok</span>`}
-          ${k.gecerlilik_tarihi?`<span class="pill" style="background:var(--surface-2);color:var(--ink-3)">${new Date(k.gecerlilik_tarihi).toLocaleDateString("tr-TR")}</span>`:""}
-        </div></div>`).join("")}
+      ${kisiler.map(k=>`<div style="border-top:1px solid var(--cizgi);padding:10px 0 4px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <b style="font-size:14px;font-weight:500;flex:1">${esc(k.ad_soyad)}</b>
+          ${k.gecerlilik_tarihi?`<span class="pill sade">${new Date(k.gecerlilik_tarihi).toLocaleDateString("tr-TR")}</span>`:""}</div>
+        ${kisiBelge[k.vekalet_doc_id] ? dosyaSatiri({...kisiBelge[k.vekalet_doc_id], kind:"vekalet"}) : ""}
+        ${kisiBelge[k.muvafakat_doc_id] ? dosyaSatiri({...kisiBelge[k.muvafakat_doc_id], kind:"muvafakat"}) : ""}
+        ${!kisiBelge[k.vekalet_doc_id] && !kisiBelge[k.muvafakat_doc_id]
+          ? `<div style="font-size:12px;color:var(--ink-3);padding:6px 0">Belge yüklenmemiş.</div>` : ""}
+      </div>`).join("")}
     </div>` : ""}
 
     <div class="card">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
         <div style="color:var(--gold)">${svg("photo")}</div><b style="font-size:14px">Belgeler ve görseller</b>
         <span style="margin-left:auto;font-size:12px;color:var(--ink-3)">${(belgeler||[]).length}</span></div>
       ${(belgeler||[]).length
         ? grupSira.filter(k=>grup[k]).map(k=>`
-            <div style="border-top:1px solid var(--line);padding:10px 0">
-              <div style="font-size:11.5px;color:var(--ink-3);margin-bottom:6px">${BELGE_AD[k]||k}</div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                ${grup[k].map(b=>`<button class="pill gold" onclick="dosyaAc('${esc(b.file_path)}')">${esc((b.file_name||"belge").slice(0,22))}</button>`).join("")}
-              </div></div>`).join("")
+            <div style="border-top:1px solid var(--cizgi);padding:8px 0 2px">
+              <div style="font-size:11px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px">${BELGE_AD[k]||k}</div>
+              ${grup[k].map(b=>dosyaSatiri(b)).join("")}</div>`).join("")
         : `<div style="color:var(--ink-3);font-size:13px">Henüz belge yok. Tapu bilgileri ekranından yükleyebilirsin.</div>`}
     </div>
 
@@ -1127,7 +1151,6 @@ async function fiyatDuzen(id){
     <h3 style="font-size:14px;margin:26px 0 10px">Belgeler ve görseller</h3>
     <div class="acts" style="margin:0 0 12px">
       <button onclick="belgeEkle('${p.id}','tapu','fiyatDuzen','${id}')">Tapu</button>
-      <button onclick="belgeEkle('${p.id}','cap','fiyatDuzen','${id}')">Çap</button>
       <button onclick="belgeEkle('${p.id}','resim','fiyatDuzen','${id}')">Fotoğraf</button>
       <button onclick="belgeEkle('${p.id}','video','fiyatDuzen','${id}')">Video</button>
       <button onclick="belgeEkle('${p.id}','sunum','fiyatDuzen','${id}')">İlan görseli</button>
@@ -1197,15 +1220,9 @@ async function fiyatDuzen(id){
 
 function belgeListesiHtml(belgeler, parselId, donus, donusArg){
   if(!belgeler || !belgeler.length) return `<div style="color:var(--ink-3);font-size:13px">Henüz belge yok.</div>`;
-  return belgeler.map((b,i)=>`
-    <div style="display:flex;align-items:center;gap:10px;${i?"border-top:1px solid var(--line);":""}padding:11px 0">
-      <span class="pill gold">${BELGE_AD[b.kind]||b.kind}</span>
-      <button style="flex:1;min-width:0;text-align:left" onclick="dosyaAc('${esc(b.file_path)}')">
-        <b style="font-size:13.5px;font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(b.file_name||"belge")}</b>
-        <small style="font-size:11px;color:var(--ink-3)">${boyut(b.size_bytes)} · ${new Date(b.created_at).toLocaleDateString("tr-TR")}</small></button>
-      ${ME.role==='admin'?`<button class="sil" style="width:30px;height:30px;border-radius:8px;border:1px solid var(--line);color:var(--ink-3);display:grid;place-items:center"
-        onclick="belgeSilVeYenile('${b.id}','${esc(b.file_path)}','${donus}','${donusArg||parselId}')">${svg("trash")}</button>`:""}
-    </div>`).join("");
+  return belgeler.map(b=>dosyaSatiri(b, ME.role==='admin'
+    ? `<button class="kirmizi" aria-label="Sil" onclick="belgeSilVeYenile('${b.id}','${esc(b.file_path)}','${donus}','${donusArg||parselId}')">${svg("trash")}</button>`
+    : "")).join("");
 }
 
 /* ================= KML ve çap ================= */
@@ -1243,7 +1260,7 @@ async function kmlListele(){
 
 async function capEkran(){
   app.innerHTML = head("Çap","go('ana')") + `
-    <p class="ipuc">Parselin çap dosyasını yükle. Çizdirme sırası yapay zekâ ekranıyla birlikte gelecek.</p>
+    <p class="ipuc">Elindeki çap dosyasını yükle ya da parselin sınır çiziminden yeni bir çap çizdir. Çizilen çap PDF olarak o parselin belgelerine eklenir.</p>
     <div id="cl"><div class="spin"></div></div>`;
   capListele();
 }
@@ -1251,11 +1268,122 @@ async function capListele(){
   document.getElementById("cl").innerHTML = await parselSecici("capListele", p=>`
     <div class="rw">
       <span class="kod">${esc(p.ada||"—")}/${esc(p.parsel)}</span>
-      <span class="orta"><b>${nf(p.alan_m2)} m²</b><small>çap dosyası</small></span>
+      <span class="orta"><b>${nf(p.alan_m2)} m²</b>
+        <small>${p.geojson?"sınır çizimi hazır":"önce TKGM'den tazele"}</small></span>
       <span class="sag">
-        ${ME.role!=='uye'?`<button class="pill gold" onclick="belgeEkle('${p.id}','cap','cap')">yükle</button>`:""}
-        <button class="pill" style="background:var(--surface-2);color:var(--ink-3)" onclick="go('parsel','${p.id}')">gör</button>
+        ${ME.role!=='uye'&&p.geojson?`<button class="pill gold" onclick="capCiz('${p.id}')">çizdir</button>`:""}
+        ${ME.role!=='uye'?`<button class="pill sade" onclick="belgeEkle('${p.id}','cap','cap')">yükle</button>`:""}
       </span></div>`);
+}
+
+// iki koordinat arasi mesafe (metre)
+function mesafe(a, b){
+  const R = 6371000, rad = x => x*Math.PI/180;
+  const dl = rad(b[0]-a[0]) * Math.cos(rad((a[1]+b[1])/2));
+  const df = rad(b[1]-a[1]);
+  return Math.round(Math.sqrt(dl*dl + df*df) * R * 10)/10;
+}
+
+async function capCiz(parselId){
+  const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
+  if(!p || !p.geojson) return toast("Bu parselin sınır çizimi yok");
+  toast("Çap çiziliyor…");
+  try{
+    const png = capCizPng(p);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
+    pdf.addImage(png, "PNG", 10, 10, 190, 190*(1400/1000));
+    const blob = pdf.output("blob");
+    const dosya = new File([blob], `cap-${p.mahalle||""}-${p.ada||0}-${p.parsel}.pdf`.replace(/\s+/g,"_"),
+                           { type:"application/pdf" });
+    await dosyaYukle(dosya, "cap", parselId);
+    toast("Çap hazırlandı ve parsele eklendi");
+    capListele();
+  }catch(e){ toast("Olmadı: " + (e.message||e)); }
+}
+
+// parsel sinirindan olcekli cap cizimi uretir
+function capCizPng(p){
+  const g = p.geojson.geometry;
+  const halka = (g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0]).slice();
+  if(halka.length > 1 &&
+     halka[0][0] === halka[halka.length-1][0] && halka[0][1] === halka[halka.length-1][1]) halka.pop();
+
+  const G = 1000, Y = 1400, ust = 210, alt = 260, kenar = 70;
+  const c = document.createElement("canvas"); c.width = G; c.height = Y;
+  const x = c.getContext("2d");
+
+  x.fillStyle = "#FFFFFF"; x.fillRect(0,0,G,Y);
+
+  // olcekleme
+  const lat0 = halka.reduce((s,k)=>s+k[1],0)/halka.length;
+  const kx = Math.cos(lat0*Math.PI/180);
+  const px = halka.map(k=>[k[0]*kx, k[1]]);
+  const minX = Math.min(...px.map(k=>k[0])), maxX = Math.max(...px.map(k=>k[0]));
+  const minY = Math.min(...px.map(k=>k[1])), maxY = Math.max(...px.map(k=>k[1]));
+  const alanG = G - kenar*2, alanY = Y - ust - alt;
+  const olcek = Math.min(alanG/(maxX-minX || 1e-9), alanY/(maxY-minY || 1e-9));
+  const gX = kenar + (alanG - (maxX-minX)*olcek)/2;
+  const gY = ust  + (alanY - (maxY-minY)*olcek)/2;
+  const N = px.map(k=>[ gX + (k[0]-minX)*olcek, gY + (maxY-k[1])*olcek ]);
+
+  // poligon
+  x.beginPath();
+  N.forEach((k,i)=> i ? x.lineTo(k[0],k[1]) : x.moveTo(k[0],k[1]));
+  x.closePath();
+  x.fillStyle = "#EAF3DE"; x.fill();
+  x.lineWidth = 3.5; x.strokeStyle = "#2F4A22"; x.stroke();
+
+  // kenar uzunluklari
+  x.font = "600 22px Arial"; x.textAlign = "center"; x.textBaseline = "middle";
+  for(let i=0;i<N.length;i++){
+    const j = (i+1) % N.length;
+    const m = mesafe(halka[i], halka[j]);
+    if(m < 1) continue;
+    const ox = (N[i][0]+N[j][0])/2, oy = (N[i][1]+N[j][1])/2;
+    const dx = N[j][0]-N[i][0], dy = N[j][1]-N[i][1];
+    const u = Math.hypot(dx,dy) || 1;
+    const nx = ox + (-dy/u)*24, ny = oy + (dx/u)*24;
+    const yazi = m.toFixed(1).replace(".",",") + " m";
+    const gen = x.measureText(yazi).width + 12;
+    x.fillStyle = "rgba(255,255,255,.92)";
+    x.fillRect(nx-gen/2, ny-15, gen, 30);
+    x.fillStyle = "#20301A"; x.fillText(yazi, nx, ny);
+  }
+
+  // koseler
+  N.forEach(k=>{ x.beginPath(); x.arc(k[0],k[1],5,0,7); x.fillStyle="#2F4A22"; x.fill(); });
+
+  // baslik
+  x.textAlign = "left"; x.fillStyle = "#111";
+  x.font = "700 44px Arial";
+  x.fillText(`Ada ${p.ada||"—"} · Parsel ${p.parsel}`, kenar, 78);
+  x.font = "400 26px Arial"; x.fillStyle = "#444";
+  x.fillText(`${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)}`, kenar, 118);
+  if(p.mevkii) x.fillText(`Mevkii: ${p.mevkii}`, kenar, 155);
+
+  // kuzey oku
+  const kzX = G - kenar - 30, kzY = 110;
+  x.beginPath(); x.moveTo(kzX, kzY-42); x.lineTo(kzX-16, kzY+14); x.lineTo(kzX, kzY+2); x.lineTo(kzX+16, kzY+14);
+  x.closePath(); x.fillStyle = "#2F4A22"; x.fill();
+  x.font = "700 24px Arial"; x.textAlign = "center"; x.fillStyle = "#2F4A22";
+  x.fillText("K", kzX, kzY+38);
+
+  // alt bilgi
+  const ay = Y - alt + 60;
+  x.textAlign = "left"; x.fillStyle = "#111"; x.font = "700 30px Arial";
+  x.fillText(`Yüzölçümü: ${nf(p.alan_m2)} m²`, kenar, ay);
+  x.font = "400 24px Arial"; x.fillStyle = "#444";
+  x.fillText(`Niteliği: ${p.nitelik || "—"}`, kenar, ay + 42);
+  const mBasinaPx = olcek / 111320;
+  x.fillText(`Ölçek: 1 cm ≈ ${Math.round(37.8 / (mBasinaPx || 1))} m`, kenar, ay + 82);
+  x.font = "400 20px Arial"; x.fillStyle = "#777";
+  x.fillText("Temsili çizimdir, resmi belge değildir. Kaynak: TKGM parsel geometrisi.", kenar, ay + 130);
+  x.fillText(new Date().toLocaleDateString("tr-TR"), kenar, ay + 162);
+
+  // cerceve
+  x.strokeStyle = "#CCC"; x.lineWidth = 2; x.strokeRect(20, 20, G-40, Y-40);
+  return c.toDataURL("image/png");
 }
 
 async function kmlIndirParsel(parselId){
@@ -1274,13 +1402,21 @@ function earthAcKoord(lat,lng){
   window.open(`https://earth.google.com/web/@${lat},${lng},0a,600d,35y,0h,45t,0r`, "_blank");
 }
 
-async function haritadaGoster(parselId){
+let MINI = null;
+async function miniHarita(parselId){
+  const kutu = document.getElementById("minikutu");
+  if(!kutu) return;
+  if(kutu.innerHTML){ kutu.innerHTML = ""; MINI = null; return; }
+  kutu.innerHTML = `<div id="minimap" style="margin-top:12px"></div>`;
   const { data:p } = await sb.from("parcels").select("geojson,lat,lng").eq("id",parselId).single();
-  await harita();
-  setTimeout(()=>{
-    if(p?.geojson){ try{ ciz(p.geojson); }catch(e){} }
-    else if(p?.lat) HARITA.setView([p.lat,p.lng], 17);
-  }, 400);
+  MINI = L.map("minimap", { zoomControl:true }).setView([p.lat, p.lng], 16);
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    { maxZoom:19, attribution:"Uydu: Esri · Parsel: TKGM" }).addTo(MINI);
+  if(p.geojson){
+    const kat = L.geoJSON(p.geojson, { style:{ color:"#E3C05A", weight:2.5, fillColor:"#E3C05A", fillOpacity:.18 } }).addTo(MINI);
+    MINI.fitBounds(kat.getBounds(), { padding:[24,24], maxZoom:18 });
+  }
+  setTimeout(()=>MINI.invalidateSize(), 200);
 }
 
 /* ================= ekler ================= */
@@ -1297,7 +1433,7 @@ async function eklerListele(){
   const box = document.getElementById("el");
   const [{ data:kisiler, error }, { data:belgeler }] = await Promise.all([
     sb.from("ekler").select("*").order("sira",{nullsFirst:false}).order("created_at"),
-    sb.from("documents").select("id,file_path,file_name").in("kind",["vekalet","muvafakat","tapu"])
+    sb.from("documents").select("id,file_path,file_name,size_bytes,created_at").in("kind",["vekalet","muvafakat"])
   ]);
   if(error) return box.innerHTML = `<div class="empty">${esc(error.message)}</div>`;
   if(!kisiler || !kisiler.length) return box.innerHTML =
@@ -1325,8 +1461,6 @@ async function eklerListele(){
         ${belgeHucre(bul(k.vekalet_doc_id), k.id, "vekalet")}</div>
       <div class="kv"><span>Muvafakatname</span>
         ${belgeHucre(bul(k.muvafakat_doc_id), k.id, "muvafakat")}</div>
-      <div class="kv"><span>Tapu</span>
-        ${belgeHucre(bul(k.tapu_doc_id), k.id, "tapu")}</div>
       <div class="kv"><span>Geçerlilik</span>
         ${ME.role==='admin'
           ? `<input type="date" style="width:auto;padding:7px 10px;font-size:13px" value="${k.gecerlilik_tarihi||""}"
@@ -1352,7 +1486,7 @@ async function ekBelgeYukle(kisiId, tur){
   toast("Yükleniyor…");
   try{
     const b = await dosyaYukle(f, tur, null);
-    const alan = tur === "vekalet" ? "vekalet_doc_id" : tur === "tapu" ? "tapu_doc_id" : "muvafakat_doc_id";
+    const alan = tur === "vekalet" ? "vekalet_doc_id" : "muvafakat_doc_id";
     const { error } = await sb.from("ekler").update({ [alan]: b.id }).eq("id", kisiId);
     if(error) throw error;
     toast("Yüklendi"); eklerListele();
