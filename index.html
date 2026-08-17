@@ -69,7 +69,7 @@ a{color:var(--gold);text-decoration:none}
 .rates{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:0 0 16px}
 .rate{background:linear-gradient(155deg,rgba(255,255,255,.20),rgba(255,255,255,.07));border:1px solid rgba(255,255,255,.30);border-radius:12px;padding:8px 9px;min-width:0;backdrop-filter:blur(14px)}
 .rate .v{color:#fff}
-.rate .k{font-size:9px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rate .k{font-size:9.5px;color:rgba(255,255,255,.72);font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rate .v{font-size:12.5px;font-weight:600;margin-top:2px;font-family:"IBM Plex Mono",monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ---- kategori kartlari ---- */
@@ -244,7 +244,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "v1.3";
+const SURUM = "v1.4";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -260,6 +260,7 @@ const ic = {
   out:'<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4M6 12h10"/>',
   goz:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
   indir:'<path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/>',
+  paylas:'<path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M12 16V3"/><path d="M8 7l4-4 4 4"/>',
   kalem:'<path d="M4 20h4l10-10a2.8 2.8 0 0 0-4-4L4 16z"/>',
   pin:'<path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>',
   note:'<path d="M5 4h14v11l-5 5H5z"/><path d="M19 15h-5v5"/>',
@@ -299,7 +300,7 @@ function girisEkrani(){
       <svg viewBox="0 0 24 24" style="width:19px;height:19px"><path fill="#171203" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.9h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.4z"/><path fill="#171203" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.7-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z"/><path fill="#171203" d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1A10 10 0 0 0 2 12c0 1.6.4 3.2 1.1 4.6L6.4 14z"/><path fill="#171203" d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.8-2.8C16.9 2.9 14.7 2 12 2a10 10 0 0 0-8.9 5.4L6.4 10c.8-2.4 3-4.1 5.6-4.1z"/></svg>
       Google ile giriş</button>
     <div style="display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--ink-3);font-size:12px">
-      <span style="flex:1;height:1px;background:var(--line)"></span>veya<span style="flex:1;height:1px;background:var(--line)"></span></div>
+      <span style="flex:1;height:1px;background:var(--cizgi)"></span>veya<span style="flex:1;height:1px;background:var(--cizgi)"></span></div>
     <div class="field"><label>E-posta</label><input id="mail" type="email" inputmode="email" autocomplete="email" placeholder="ornek@gmail.com"></div>
     <button class="btn ghost" id="go">Giriş bağlantısı gönder</button>
     <p style="color:var(--ink-3);font-size:12px;margin-top:18px">Google ile girmen daha hızlı. E-posta bağlantısı saatte iki kez gönderilebiliyor.</p>`;
@@ -677,7 +678,7 @@ function hisseSor(yilKaydiId, alan){
   const kutu = document.querySelector("#bilgi .acts");
   if(!kutu) return;
   kutu.insertAdjacentHTML("beforeend", `
-    <div style="flex:1 1 100%;border-top:1px solid var(--line);margin-top:12px;padding-top:14px">
+    <div style="flex:1 1 100%;border-top:1px solid var(--cizgi);margin-top:12px;padding-top:14px">
       <label>Bu yer sizde nasıl kayıtlı?</label>
       <select id="ktd">
         <option value="tek">Tek tapu · tamamı bizim</option>
@@ -704,7 +705,7 @@ function hisseSor(yilKaydiId, alan){
     e.target.disabled = false; e.target.textContent = "Bilgiyi kaydet";
     if(error) return toast("Olmadı: "+error.message);
     e.target.parentElement.innerHTML =
-      `<div style="color:var(--green);font-size:13px;font-weight:600;padding-top:12px;border-top:1px solid var(--line)">✓ Tapu bilgisi kaydedildi</div>`;
+      `<div style="color:var(--green);font-size:13px;font-weight:600;padding-top:12px;border-top:1px solid var(--cizgi)">✓ Tapu bilgisi kaydedildi</div>`;
   };
 }
 
@@ -813,8 +814,33 @@ function dosyaSatiri(b, silHtml){
     <span class="ops">
       <button onclick="dosyaAc('${esc(b.file_path)}')" aria-label="Görüntüle">${svg("goz")}</button>
       <button onclick="dosyaIndir('${esc(b.file_path)}','${esc(b.file_name||"belge")}')" aria-label="İndir">${svg("indir")}</button>
+      <button onclick="dosyaPaylas('${esc(b.file_path)}','${esc(b.file_name||"belge")}')" aria-label="Paylaş">${svg("paylas")}</button>
       ${silHtml||""}
     </span></div>`;
+}
+
+// dosyayi telefonun paylas menusune ver: whatsapp, mail, ne varsa
+async function dosyaPaylas(yol, ad2){
+  const { data, error } = await sb.storage.from("arsatakip").createSignedUrl(yol, 86400);
+  if(error) return toast("Paylaşılamadı: " + error.message);
+  try{
+    if(navigator.canShare){
+      const r = await fetch(data.signedUrl);
+      const blob = await r.blob();
+      const dosya = new File([blob], ad2, { type: blob.type || "application/octet-stream" });
+      if(navigator.canShare({ files:[dosya] })){
+        await navigator.share({ files:[dosya], title: ad2 });
+        return;
+      }
+    }
+    if(navigator.share){ await navigator.share({ title: ad2, url: data.signedUrl }); return; }
+    await navigator.clipboard.writeText(data.signedUrl);
+    toast("Bağlantı kopyalandı, yapıştırıp gönderebilirsin");
+  }catch(e){
+    if(String(e).includes("AbortError")) return;
+    try{ await navigator.clipboard.writeText(data.signedUrl); toast("Bağlantı kopyalandı"); }
+    catch(_){ toast("Paylaşılamadı"); }
+  }
 }
 
 async function dosyaIndir(yol, ad2){
@@ -1009,6 +1035,8 @@ async function parselDetay(id){
         <button onclick="miniHarita('${id}')">Haritada göster</button>
         <button onclick="kmlIndirParsel('${id}')">KML indir</button>
         <button onclick="earthAcKoord(${p.lat},${p.lng})">Earth'te aç</button></div>`:""}
+      ${y && ME.role==='admin' ? `<button class="btn ghost" style="margin-top:10px"
+        onclick="SONPARSELID='${id}';go('fiyatDuzen','${y.id}')">Tapu bilgilerini düzenle</button>` : ""}
     </div>
 
     ${y ? `<div class="card">
@@ -1019,9 +1047,19 @@ async function parselDetay(id){
       <div class="kv"><span>Payınız</span><b class="mono">${y.tapu_durumu==="hisseli"?nf(y.hisse_m2)+" m²":"tamamı"}</b></div>
       <div class="kv"><span>m² fiyatı</span><b class="mono">${nf(y.m2_fiyat)} ₺</b></div>
       <div class="kv"><span>Toplam değer</span><b class="mono">${nf(y.toplam_fiyat)} ₺</b></div>
-      ${y.malik?`<div style="border-top:1px solid var(--line);margin-top:10px;padding-top:10px">
-        <div style="font-size:12px;color:var(--ink-2);margin-bottom:4px">Malik / hissedarlar</div>
-        <div style="font-size:13.5px;white-space:pre-wrap">${esc(y.malik)}</div></div>`:""}
+      ${malikSatir.length?`<div style="border-top:1px solid var(--cizgi);margin-top:10px;padding-top:10px">
+        <div style="font-size:12px;color:var(--ink-2);margin-bottom:6px">Malik / hissedarlar</div>
+        ${malikSatir.map(ad2=>{
+          const k = esles(ad2);
+          const vb = k && kisiBelge[k.vekalet_doc_id], mb = k && kisiBelge[k.muvafakat_doc_id];
+          return `<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:6px 0">
+            <b style="font-size:13.5px;font-weight:500;flex:1;min-width:110px">${esc(ad2)}</b>
+            ${vb?`<button class="pill gold" onclick="dosyaAc('${esc(vb.file_path)}')">vekalet</button>
+                  <button class="pill sade" onclick="dosyaIndir('${esc(vb.file_path)}','${esc(vb.file_name||"vekalet")}')">indir</button>`:""}
+            ${mb?`<button class="pill gold" onclick="dosyaAc('${esc(mb.file_path)}')">muvafakat</button>`:""}
+            ${!k?`<span class="pill sade">belge yok</span>`:""}
+          </div>`;
+        }).join("")}</div>`:""}
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
         ${y.ilan_url?`<a class="pill gold" href="${esc(y.ilan_url)}" target="_blank">sahibinden ilanı</a>`:""}
         ${ME.role==='admin'?`<button class="pill gold" onclick="go('fiyatDuzen','${y.id}')">düzenle</button>`:""}</div>
@@ -1068,7 +1106,7 @@ async function parselDetay(id){
         <span style="margin-left:auto;font-size:12px;color:var(--ink-3)">${(notlar||[]).length}</span></div>
       ${ME.role!=='uye'?`<div style="display:flex;gap:8px;margin-bottom:12px">
         <input id="not" placeholder="Not yaz…"><button class="btn" style="width:auto;padding:12px 18px" id="notEkle">Ekle</button></div>`:""}
-      ${(notlar||[]).length? notlar.map(n=>`<div style="border-top:1px solid var(--line);padding:10px 0">
+      ${(notlar||[]).length? notlar.map(n=>`<div style="border-top:1px solid var(--cizgi);padding:10px 0">
           <div style="font-size:11px;color:var(--ink-3)">${new Date(n.created_at).toLocaleString("tr-TR",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})} · ${esc(n.profiles?.full_name||"")}</div>
           <div style="font-size:14px;margin-top:3px">${esc(n.content)}</div></div>`).join("")
         : `<div style="color:var(--ink-3);font-size:13px">Henüz not yok.</div>`}
@@ -1125,7 +1163,7 @@ async function fiyatListele(){
 
 function fiyatSatir(r){
   const p = r.parcels, hisseli = r.tapu_durumu === "hisseli";
-  return `<div style="border-top:1px solid var(--line);background:var(--surface-2);padding:14px" ${r.aktif?"":'data-p="1" style="opacity:.55"'}>
+  return `<div style="border-top:1px solid var(--cizgi);background:var(--cam-2);padding:14px" ${r.aktif?"":'data-p="1" style="opacity:.55"'}>
     <div style="display:flex;align-items:center;gap:10px">
       <span class="kod" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--gold);background:var(--gold-soft);border-radius:8px;padding:6px 10px">${esc(p.ada||"—")}/${esc(p.parsel)}</span>
       <span class="pill ${hisseli?"gold":"on"}">${hisseli?"hisseli · "+esc(r.hisse_pay||"?"):"tek tapu"}</span>
@@ -1140,15 +1178,16 @@ function fiyatSatir(r){
     </div></div>`;
 }
 
+let SONPARSELID = null;
 async function fiyatDuzen(id){
-  app.innerHTML = head("Tapu kaydı","go('fiyat')") + `<div class="spin"></div>`;
+  app.innerHTML = head("Tapu kaydı", SONPARSELID?`go('parsel','${SONPARSELID}')`:"go('fiyat')") + `<div class="spin"></div>`;
   const { data:r } = await sb.from("parcel_years")
     .select("*,parcels(id,il,ilce,mahalle,ada,parsel,alan_m2,nitelik,lat,lng)").eq("id",id).single();
   if(!r) return;
   const p = r.parcels;
   const { data:belgeler } = await sb.from("documents").select("*").eq("parcel_id", p.id).order("created_at",{ascending:false});
 
-  app.innerHTML = head(`${p.ada||"—"}/${p.parsel}`,"go('fiyat')") + `
+  app.innerHTML = head(`${p.ada||"—"}/${p.parsel}`, SONPARSELID?`go('parsel','${SONPARSELID}')`:"go('fiyat')") + `
     <div class="card">
       <div style="font-size:12px;color:var(--ink-3)">${esc(duzgun(p.il))} · ${esc(duzgun(p.ilce))} · ${esc(duzgun(p.mahalle))}</div>
       <div style="font-size:17px;font-weight:600;margin-top:3px">Ada ${esc(p.ada||"—")} · Parsel ${esc(p.parsel)}</div>
@@ -1161,7 +1200,7 @@ async function fiyatDuzen(id){
     <div class="field"><label>Tapu durumu</label><select id="td">
       <option value="tek"${r.tapu_durumu!=="hisseli"?" selected":""}>Tek tapu · tamamı bizim</option>
       <option value="hisseli"${r.tapu_durumu==="hisseli"?" selected":""}>Hisseli · payımız var</option></select></div>
-    <div class="field" id="hpAlan" style="border:1px solid var(--line);border-radius:var(--r);padding:14px;background:var(--surface)">${hisseAlanlari("f", r.hisse_pay, r.hisse_m2)}</div>
+    <div class="field" id="hpAlan" style="border:1px solid var(--cizgi);border-radius:var(--r);padding:14px;background:var(--cam)">${hisseAlanlari("f", r.hisse_pay, r.hisse_m2)}</div>
     <div class="field"><label>Malik / hissedarlar</label>
       <textarea id="mlk" rows="3" placeholder="Tapudaki isimler, hisseleriyle birlikte">${esc(r.malik||"")}</textarea></div>
 
@@ -1266,6 +1305,7 @@ async function fiyatDuzen(id){
     e.target.disabled = false;
     if(error) return toast("Olmadı: "+error.message);
     toast("Kaydedildi");
+    if(SONPARSELID){ const g2 = SONPARSELID; SONPARSELID = null; go("parsel", g2); }
   };
 }
 
@@ -1440,27 +1480,36 @@ async function capAyar(parselId){
       <div class="kv" style="margin-top:8px"><span>Toplam alan</span><b class="mono">${nf(alan)} m²</b></div>
     </div>
     <div class="field"><label>Kaç parçaya bölünecek?</label>
-      <select id="ps">${Array.from({length:12},(_,i)=>`<option value="${i+1}">${i+1} parça</option>`).join("")}</select></div>
+      <select id="ps">${Array.from({length:12},(_,i)=>`<option value="${i+1}">${i+1} parça</option>`).join("")}
+        <option value="diger">Diğer · elle gir</option></select>
+      <input id="psElle" type="number" min="1" max="200" placeholder="Parça sayısı" style="margin-top:10px;display:none"></div>
     <div id="parcalar"></div>
     <div class="kv" style="padding:10px 2px"><span>Girilen toplam</span><b class="mono" id="tpl">${nf(alan)} m²</b></div>
     <button class="btn" id="ciz">Çapı çiz ve parsele ekle</button>
     <p class="ipuc" style="margin-top:14px">Parçalar, parselin en uzun kenarına dik şeritler halinde bölünür. Metrekareler oransal olarak uygulanır.</p>`;
 
+  const sayi = () => {
+    const v = document.getElementById("ps").value;
+    if(v === "diger") return Math.max(1, Math.min(200, +document.getElementById("psElle").value || 1));
+    return +v;
+  };
   const kur = () => {
-    const n = +document.getElementById("ps").value;
+    document.getElementById("psElle").style.display =
+      document.getElementById("ps").value === "diger" ? "block" : "none";
+    const n = sayi();
     const pay = Math.round(alan/n);
     document.getElementById("parcalar").innerHTML = Array.from({length:n},(_,i)=>`
       <div class="card" style="display:flex;gap:10px;align-items:center;padding:12px">
         <input id="no${i}" value="${i+1}" style="width:52px;text-align:center;padding:10px 4px" aria-label="Parça numarası">
         <input id="m${i}" inputmode="numeric" value="${i===n-1 ? alan-pay*(n-1) : pay}" style="flex:1" aria-label="Metrekare">
-        <input type="color" id="c${i}" value="${["#7FB539","#5B9BD5","#E0A23C","#C0504D","#8064A2","#4BACC6","#9BBB59","#F79646","#2C7C5A","#B85C8A","#6C7A89","#D2691E"][i%12]}"
+        <input type="color" id="c${i}" value="#FFFFFF"
           style="width:46px;height:44px;padding:3px;border-radius:10px" aria-label="Renk">
       </div>`).join("");
     n && topla();
     for(let i=0;i<n;i++) document.getElementById("m"+i).oninput = topla;
   };
   const topla = () => {
-    const n = +document.getElementById("ps").value;
+    const n = sayi();
     let t = 0;
     for(let i=0;i<n;i++) t += +document.getElementById("m"+i).value || 0;
     const el = document.getElementById("tpl");
@@ -1468,10 +1517,11 @@ async function capAyar(parselId){
     el.style.color = Math.abs(t-alan) > alan*0.02 ? "var(--red)" : "var(--green)";
   };
   document.getElementById("ps").onchange = kur;
+  document.getElementById("psElle").oninput = kur;
   kur();
 
   document.getElementById("ciz").onclick = async e => {
-    const n = +document.getElementById("ps").value;
+    const n = sayi();
     const parcalar = Array.from({length:n},(_,i)=>({
       no: document.getElementById("no"+i).value.trim() || String(i+1),
       m2: +document.getElementById("m"+i).value || 0,
@@ -1664,7 +1714,7 @@ async function eklerListele(){
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-size:11px;color:var(--ink-3);font-family:'IBM Plex Mono',monospace">${String(i+1).padStart(2,"0")}</span>
         <b style="font-size:15px;flex:1">${esc(k.ad_soyad)}</b>
-        ${ME.role==='admin'?`<button class="sil" style="width:30px;height:30px;border-radius:8px;border:1px solid var(--line);color:var(--ink-3);display:grid;place-items:center" onclick="kisiSil('${k.id}','${esc(k.ad_soyad)}')">${svg("trash")}</button>`:""}
+        ${ME.role==='admin'?`<button class="sil" style="width:30px;height:30px;border-radius:8px;border:1px solid var(--cizgi);color:var(--ink-3);display:grid;place-items:center" onclick="kisiSil('${k.id}','${esc(k.ad_soyad)}')">${svg("trash")}</button>`:""}
       </div>
       <div class="kv" style="margin-top:10px"><span>Vekalet</span>
         ${belgeHucre(bul(k.vekalet_doc_id), k.id, "vekalet")}</div>
@@ -1687,7 +1737,7 @@ async function eklerListele(){
 function belgeHucre(belge, kisiId, tur){
   if(belge) return `<span style="display:flex;gap:8px;align-items:center">
     <button class="pill gold" onclick="dosyaAc('${esc(belge.file_path)}')">aç</button>
-    ${ME.role!=='uye'?`<button class="pill" style="background:var(--surface-2);color:var(--ink-3)" onclick="ekBelgeYukle('${kisiId}','${tur}')">değiştir</button>`:""}</span>`;
+    ${ME.role!=='uye'?`<button class="pill" style="background:var(--cam-2);color:var(--ink-3)" onclick="ekBelgeYukle('${kisiId}','${tur}')">değiştir</button>`:""}</span>`;
   return ME.role!=='uye'
     ? `<button class="pill gold" onclick="ekBelgeYukle('${kisiId}','${tur}')">yükle</button>`
     : `<b style="color:var(--ink-3)">—</b>`;
