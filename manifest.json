@@ -1,0 +1,15 @@
+{
+  "name": "Çapsız Çapçı",
+  "short_name": "Çapsız Çapçı",
+  "description": "Tarla ve arsa portföy takibi",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#05070A",
+  "theme_color": "#05070A",
+  "icons": [
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
