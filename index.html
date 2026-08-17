@@ -114,13 +114,16 @@ a{color:var(--gold);text-decoration:none}
 .tile.mavi .ic{color:#CFE6FF}
 .tile.sari{background:linear-gradient(155deg,rgba(227,192,90,.28),rgba(227,192,90,.08));border-color:rgba(227,192,90,.42)}
 .tile.sari .ic{color:#F6E3AA}
-.tile .gorsel{position:absolute;right:-6px;bottom:-4px;height:84%;width:64%;
-  background-repeat:no-repeat;background-position:right bottom;background-size:contain;pointer-events:none;opacity:.92}
+.tile .gorsel{position:absolute;inset:0;background-repeat:no-repeat;background-position:center;
+  background-size:cover;pointer-events:none}
 .tile .perde{position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(100deg,rgba(6,10,8,.86) 0%,rgba(6,10,8,.55) 42%,rgba(6,10,8,0) 78%)}
+  background:linear-gradient(0deg,rgba(4,7,6,.92) 0%,rgba(4,7,6,.62) 30%,rgba(4,7,6,.12) 62%,rgba(4,7,6,0) 100%)}
 .tile .icerik{position:relative;z-index:2}
-.tile.gorselli{min-height:132px;display:flex;flex-direction:column;justify-content:flex-end}
-.tile.wide.gorselli{min-height:120px}
+.tile.gorselli{aspect-ratio:1/1;display:flex;flex-direction:column;justify-content:flex-end;padding:14px 13px}
+.tile.gorselli .icerik b{font-size:17px;text-shadow:0 2px 10px rgba(0,0,0,.7)}
+.tile.gorselli .icerik small{color:rgba(255,255,255,.78);text-shadow:0 1px 8px rgba(0,0,0,.7)}
+.tile.wide.gorselli{aspect-ratio:3/1;display:block;padding:14px 15px}
+.tile.wide.gorselli .icerik{position:absolute;left:15px;bottom:13px;right:15px}
 .tile.soon::after{content:"yakında";position:absolute;top:12px;right:12px;font-size:10px;color:rgba(255,255,255,.6);
   border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:2px 8px}
 
@@ -299,7 +302,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 2.4";
+const SURUM = "beta 2.5";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -411,21 +414,22 @@ function cikisSor(){ if(confirm("Çıkış yapılsın mı?")) cikis(); }
 async function anaMenu(){
   app.innerHTML = head() + `<div class="zaman" id="stamp"></div><div id="rates" class="rates"></div>
   <div class="grid">
-    ${tile("harita","map","Harita","Ada parsel sorgula","kirmizi","bg-harita.png")}
-    ${tile("araziler","folder","Araziler","Her şey tek yerde","yesil")}
-    ${tile("fiyat","money","Tapu bilgileri","Hisse, malik, fiyat","gri")}
-    ${tile("ekler","file","Ekler","Vekalet, muvafakat","gri")}
-    ${tile("kml","globe","KML","İndir, Earth'te aç","mavi")}
-    ${tile("cap","vector","Çap","Çiz veya yükle","mavi")}
-    <button class="tile wide sari" onclick="go('yz')"><div class="ic">${svg("spark")}</div>
-      <div><b>Yapay zekâ</b><small>Claude, ChatGPT, Gemini · kendi hesabınla</small></div></button>
+    ${tile("harita","map","Harita","Sorgula · Soruştur · Araştır","kirmizi","bg-harita.jpg")}
+    ${tile("araziler","folder","Araziler","Her şey tek yerde","yesil","bg-araziler.jpg")}
+    ${tile("fiyat","money","Tapu bilgileri","Hisse, malik, fiyat","gri","bg-tapu.jpg")}
+    ${tile("ekler","file","Ekler","Vekalet, muvafakat","gri","bg-ekler.jpg")}
+    ${tile("kml","globe","KML","İndir, Earth'te aç","mavi","bg-kml.jpg")}
+    ${tile("cap","vector","Çap","Çiz veya yükle","mavi","bg-cap.jpg")}
+    <button class="tile wide sari gorselli" onclick="go('yz')">
+      <div class="gorsel" style="background-image:url('bg-yz.jpg')"></div><div class="perde"></div>
+      <div class="icerik"><b>Yapay zekâ</b><small>Claude, ChatGPT, Gemini · kendi hesabınla</small></div></button>
   </div>`;
   kurlar();
 }
 const tile = (r,i,t,s2,renk,gorsel) =>
   `<button class="tile ${renk||"gri"}${gorsel?" gorselli":""}" onclick="go('${r}')">
      ${gorsel?`<div class="gorsel" style="background-image:url('${gorsel}')"></div><div class="perde"></div>`:""}
-     <div class="icerik"><div class="ic">${svg(i)}</div><b>${t}</b><small>${s2}</small></div></button>`;
+     <div class="icerik">${gorsel?"":`<div class="ic">${svg(i)}</div>`}<b>${t}</b><small>${s2}</small></div></button>`;
 
 async function kurlar(){
   const box = document.getElementById("rates"), st = document.getElementById("stamp");
