@@ -244,7 +244,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "v1.6";
+const SURUM = "v1.7";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -278,6 +278,23 @@ function alanCoz(x){
   if(x == null) return null;
   const n = parseFloat(String(x).replace(/\s/g,"").replace(/,/g,""));
   return isFinite(n) ? n : null;
+}
+
+// "599.000" -> 599000 ; "1.496,5" -> 1496.5 ; "22000" -> 22000
+function sayiCoz(x){
+  if(x == null) return NaN;
+  let t = String(x).trim().replace(/\s/g,"").replace(/[^\d.,-]/g,"");
+  if(!t) return NaN;
+  const nokta = t.lastIndexOf("."), virgul = t.lastIndexOf(",");
+  if(nokta > -1 && virgul > -1){
+    t = virgul > nokta ? t.replace(/\./g,"").replace(",",".") : t.replace(/,/g,"");
+  } else if(virgul > -1){
+    t = (t.length - virgul - 1) === 3 && /^\d{1,3}(,\d{3})+$/.test(t) ? t.replace(/,/g,"") : t.replace(",",".");
+  } else if(nokta > -1){
+    if(/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g,"");
+  }
+  const n = parseFloat(t);
+  return isFinite(n) ? n : NaN;
 }
 
 function payOran(s){
@@ -737,7 +754,7 @@ function hisseBagla(p, alan){
       g("bilgi").textContent = `Toplam ${nf(alan)} m² · payınız ${nf(m2)} m²`;
       return { pay: g("oran").value.trim(), m2 };
     }
-    const m2 = parseFloat(String(g("m2").value).replace(",","."));
+    const m2 = sayiCoz(g("m2").value);
     if(!isFinite(m2) || m2 <= 0){ g("bilgi").innerHTML = `<span style="color:var(--red)">Metrekare yaz</span>`; return null; }
     const yuzde = alan ? (m2/alan*100) : 0;
     g("bilgi").textContent = `Toplam ${nf(alan)} m² · payınız ${nf(Math.round(m2))} m²${alan?` (%${yuzde.toFixed(1)})`:""}`;
@@ -973,7 +990,7 @@ function yeniParsel(){
     e.target.disabled = true; e.target.textContent = "Kaydediliyor…";
     const { data:p, error } = await sb.from("parcels").insert({
       team_id: ME.team_id, il, ilce, mahalle: mah,
-      ada:v("ada")||null, parsel:v("par"), alan_m2:v("m2")||null, nitelik:v("nit")||null, created_by:ME.id
+      ada:v("ada")||null, parsel:v("par"), alan_m2:sayiCoz(v("m2"))||null, nitelik:v("nit")||null, created_by:ME.id
     }).select().single();
     if(error){ e.target.disabled=false; e.target.textContent="Kaydet"; return toast("Olmadı: "+error.message); }
     const yil = +document.getElementById("yil2").value;
@@ -1266,7 +1283,7 @@ async function fiyatDuzen(id){
       if(!rr){ g("onizle").innerHTML = `<span style="color:var(--red)">Hisse bilgisini düzelt</span>`; return null; }
       pay = rr.m2; kod = rr.pay;
     }
-    const mf = +g("mf").value || 0, toplam = Math.round(pay * mf);
+    const mf = sayiCoz(g("mf").value) || 0, toplam = Math.round(pay * mf);
     g("onizle").innerHTML =
       `<div class="kv"><span>Parselin toplam alanı</span><b class="mono">${nf(alan)} m²</b></div>
        <div class="kv"><span>Payınıza düşen</span><b class="mono">${nf(pay)} m²</b></div>
@@ -1301,7 +1318,7 @@ async function fiyatDuzen(id){
       hisse_pay: hisseli ? h.kod : null,
       hisse_m2: hisseli ? h.pay : null,
       malik: g("mlk").value.trim() || null,
-      m2_fiyat: +g("mf").value || null,
+      m2_fiyat: sayiCoz(g("mf").value) || null,
       toplam_fiyat: h.toplam,
       ilan_url: g("il2").value.trim() || null,
       aktif: g("ak").value === "1",
@@ -1339,6 +1356,7 @@ async function etiketSil(parselId, tagId){
 /* ================= çevre raporu ve emsal ================= */
 
 const OVER = "https://overpass-api.de/api/interpreter?data=";
+let CEVRE_SON = null;   // son cikarilan cevre ozeti
 
 function uzaklik(a, b){                       // metre
   const R = 6371000, rad = x => x*Math.PI/180;
@@ -1438,21 +1456,30 @@ function raporPng(baslik, altBaslik, bolumler){
   x.font = "400 19px Arial"; x.fillStyle = "#888";
   x.fillText("Kaynak: TKGM parsel verisi ve OpenStreetMap açık verisi · " + new Date().toLocaleString("tr-TR"), 60, Y-50);
   x.strokeStyle = "#DDD"; x.lineWidth = 2; x.strokeRect(20, 20, G-40, Y-40);
-  return { png: c.toDataURL("image/png"), oran: Y/G };
+  return { png: { dataUrl: c.toDataURL("image/png"), canvas: c }, oran: Y/G };
 }
 
-function pngToPdfBlob(png, oran){
+function pngToPdfBlob(kaynak, oran){
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
-  const gen = 190, yuk = gen * oran;
-  if(yuk <= 277){ pdf.addImage(png, "PNG", 10, 10, gen, yuk); }
-  else {
-    // uzun raporu sayfalara bol
-    const sayfa = 277, adet = Math.ceil(yuk/sayfa);
-    for(let i=0;i<adet;i++){
-      if(i) pdf.addPage();
-      pdf.addImage(png, "PNG", 10, 10 - i*sayfa, gen, yuk);
-    }
+  const gen = 190, sayfaMm = 277;
+  const toplamMm = gen * oran;
+  if(toplamMm <= sayfaMm){ pdf.addImage(kaynak.dataUrl, "PNG", 10, 10, gen, toplamMm); return pdf.output("blob"); }
+
+  // uzun raporu gercekten dilimle, ayni parcayi iki kere basma
+  const c = kaynak.canvas;
+  const dilimPx = Math.floor(c.width * (sayfaMm/gen));
+  let y = 0;
+  while(y < c.height){
+    const h = Math.min(dilimPx, c.height - y);
+    const t = document.createElement("canvas");
+    t.width = c.width; t.height = h;
+    const tx = t.getContext("2d");
+    tx.fillStyle = "#FFFFFF"; tx.fillRect(0,0,t.width,t.height);
+    tx.drawImage(c, 0, y, c.width, h, 0, 0, c.width, h);
+    if(y) pdf.addPage();
+    pdf.addImage(t.toDataURL("image/png"), "PNG", 10, 10, gen, gen * (h/c.width));
+    y += h;
   }
   return pdf.output("blob");
 }
@@ -1473,6 +1500,7 @@ async function cevreRaporu(){
   try{
     const veri = await cevreVerisi(m.lat, m.lng);
     const o = cevreOzet(veri, m);
+    CEVRE_SON = { o, p, m, tarih:new Date() };
 
     const yerSatir = o.yerler.map(y=>[`${YER_AD[y.t.place]||y.t.place}: ${y.t.name}`, km(y.u)]);
     const yolSatir = Object.entries(o.yollar).map(([k,v])=>
@@ -1543,148 +1571,198 @@ async function parseleIliskilendir(p, blob, ad2, tur){
 
 let EMSAL_EK = null;   // istege bagli yuklenen cevre raporu
 
-function emsal(){
+async function emsal(){
   const p = SONPARSEL?.properties || null;
+  app.innerHTML = head("Emsal araştır", p ? "go('harita')" : "go('ana')") + `<div class="spin"></div>`;
+
+  // kayitli parselse bilgileri kendimiz cekelim
+  let kayit = null;
+  if(p){
+    const { data } = await sb.from("parcels")
+      .select("id,alan_m2,parcel_years(yil,tapu_durumu,hisse_pay,hisse_m2,m2_fiyat)")
+      .eq("parsel", String(p.parselNo||"")).eq("mahalle", p.mahalleAd||"").limit(1);
+    kayit = data?.[0] || null;
+  }
+  const yilKayit = kayit?.parcel_years?.find(x=>x.yil===YEAR) || kayit?.parcel_years?.[0] || null;
+  const alanVar = kayit?.alan_m2 || alanCoz(p?.alan) || "";
+  const payVar  = yilKayit?.tapu_durumu === "hisseli" ? (yilKayit.hisse_m2 || "") : "";
+
   app.innerHTML = head("Emsal araştır", p ? "go('harita')" : "go('ana')") + `
     ${p?`<div class="card">
       <div style="font-size:12px;color:var(--ink-3)">${esc(p.mahalleAd||"")} · ${esc(p.ilceAd||"")}</div>
       <div style="font-size:17px;font-weight:600;margin-top:2px">Ada ${esc(p.adaNo||"—")} · Parsel ${esc(p.parselNo||"—")}</div>
-      <div class="kv" style="margin-top:6px"><span>Yüzölçümü</span><b class="mono">${nf(alanCoz(p.alan))} m²</b></div>
+      <div class="kv" style="margin-top:6px"><span>Kayıt durumu</span>
+        <b>${kayit ? "Arazilerde kayıtlı" : "Henüz kayıtlı değil"}</b></div>
     </div>`:`<p class="ipuc">Haritadan bir parsel sorgulayıp gelirsen bilgiler kendiliğinden dolar.</p>`}
 
-    <h3 style="font-size:14px;margin:20px 0 10px">Gördüğün emsal ilanlar</h3>
+    <h3 style="font-size:14px;margin:20px 0 10px">Değerlenecek parsel</h3>
+    <div class="card">
+      <div class="row2">
+        <div class="field" style="margin:0"><label>Toplam alan (m²)</label>
+          <input id="bizM2" inputmode="decimal" value="${alanVar?Math.round(alanVar):""}"></div>
+        <div class="field" style="margin:0"><label>Payınız (m², boşsa tamamı)</label>
+          <input id="bizPay" inputmode="decimal" value="${payVar?Math.round(payVar):""}"></div>
+      </div>
+      ${kayit?`<button class="btn ghost" style="margin-top:12px" id="cek">Kayıttan tekrar çek</button>`:""}
+    </div>
+
+    <h3 style="font-size:14px;margin:22px 0 10px">Gördüğün emsal ilanlar</h3>
+    <p class="ipuc">Kaç tane girersen o kadarı hesaba katılır. Hiç girmezsen rakam yerine çevre değerlendirmesi hazırlanır.</p>
     <div id="emsatir"></div>
     <button class="btn ghost" id="emEkle">Emsal ekle</button>
 
-    <h3 style="font-size:14px;margin:24px 0 10px">Bizim parsel</h3>
-    <div class="field"><label>Yüzölçümü (m²)</label>
-      <input id="bizM2" inputmode="decimal" value="${p?Math.round(alanCoz(p.alan)||0):""}"></div>
-    <div class="field"><label>Parselin özellikleri</label>
-      <div id="fakList" style="display:flex;flex-direction:column;gap:9px"></div></div>
+    <h3 style="font-size:14px;margin:24px 0 10px">Gözlemler</h3>
+    <div class="field"><label>Parselin özellikleri (isteğe bağlı)</label>
+      <textarea id="gozlem" rows="4" placeholder="Yola cepheli, köye 800 m, sulama var, hisseli…"></textarea></div>
 
-    <div class="field"><label>Çevre raporu ekle (isteğe bağlı)</label>
-      <button class="btn ghost" id="rapEk">PDF seç</button>
-      <div id="rapAd" class="ipuc" style="margin-top:8px"></div></div>
+    <div class="card" id="cevreKutu">
+      <label style="display:flex;align-items:center;gap:10px;margin:0;font-size:13.5px;color:var(--ink)">
+        <input type="checkbox" id="cevreKat" style="width:20px;height:20px" ${CEVRE_SON?"checked":""} ${CEVRE_SON?"":"disabled"}>
+        <span style="flex:1">Çevre raporunu değerlendirmeye kat</span></label>
+      <div class="ipuc" style="margin:8px 0 0">${CEVRE_SON
+        ? "Bu oturumda çıkarılan çevre verisi kullanılacak."
+        : "Önce harita ekranından çevre raporu çıkarırsan burada kullanılabilir."}</div>
+    </div>
 
     <div id="sonuc" class="card" style="display:none"></div>
     <button class="btn" id="hesapla">Değer tahmini yap</button>`;
 
-  const FAKTOR = [
-    ["Resmi yola cepheli", 12], ["Yol yok, geçit sorunu", -15],
-    ["İmara yakın / gelişme bölgesi", 18], ["Sulama imkânı var", 10],
-    ["Hisseli tapu", -12], ["Muvafakatlı", 6], ["Eğimli arazi", -8],
-    ["Köye çok yakın", 8]
-  ];
-  document.getElementById("fakList").innerHTML = FAKTOR.map(([ad2,yz],i)=>`
-    <label style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--ink);margin:0">
-      <input type="checkbox" id="fk${i}" style="width:20px;height:20px;flex:0 0 auto">
-      <span style="flex:1">${ad2}</span>
-      <span class="pill sade">${yz>0?"+":""}${yz}%</span></label>`).join("");
-
   let sayac = 0;
-  const satirEkle = (deger) => {
+  const satirEkle = () => {
     const i = sayac++;
     document.getElementById("emsatir").insertAdjacentHTML("beforeend", `
-      <div class="card" id="es${i}" style="padding:12px">
+      <div class="card emsatirim" data-i="${i}" style="padding:12px">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-          <input id="ea${i}" placeholder="Ada/parsel ya da açıklama" style="flex:1" value="${deger||""}">
-          <button class="sil" onclick="document.getElementById('es${i}').remove()">${svg("trash")}</button></div>
+          <input id="ea${i}" placeholder="Ada/parsel ya da açıklama" style="flex:1">
+          <button class="sil" onclick="this.closest('.emsatirim').remove()">${svg("trash")}</button></div>
         <div class="row2">
-          <input id="em${i}" inputmode="decimal" placeholder="m²">
+          <input id="em${i}" inputmode="decimal" placeholder="Toplam alan m²">
           <input id="ef${i}" inputmode="decimal" placeholder="İstenen fiyat ₺"></div>
         <div class="ipuc" id="eb${i}" style="margin:8px 2px 0">m² fiyatı: —</div>
       </div>`);
     const g = k => document.getElementById(k+i);
     const gun = () => {
-      const m2 = +g("em").value, f = +g("ef").value;
-      g("eb").textContent = (m2>0 && f>0) ? `m² fiyatı: ${nf(Math.round(f/m2))} ₺` : "m² fiyatı: —";
+      const m2 = sayiCoz(g("em").value), f = sayiCoz(g("ef").value);
+      g("eb").textContent = (m2>0 && f>0)
+        ? `m² fiyatı: ${nf(Math.round(f/m2))} ₺   ·   ${nf(Math.round(m2))} m² / ${nf(Math.round(f))} ₺`
+        : "m² fiyatı: —";
     };
     g("em").oninput = gun; g("ef").oninput = gun;
   };
-  document.getElementById("emEkle").onclick = () => satirEkle();
-  satirEkle(); satirEkle(); satirEkle();
+  document.getElementById("emEkle").onclick = satirEkle;
+  satirEkle(); satirEkle();
 
-  document.getElementById("rapEk").onclick = async () => {
-    const f = await dosyaSec("application/pdf");
-    if(!f) return;
-    EMSAL_EK = f;
-    document.getElementById("rapAd").textContent = "Eklendi: " + f.name;
-  };
+  const cek = document.getElementById("cek");
+  if(cek) cek.onclick = () => { emsal(); toast("Kayıttan çekildi"); };
 
-  document.getElementById("hesapla").onclick = () => emsalHesapla(p, FAKTOR);
+  document.getElementById("hesapla").onclick = () => emsalHesapla(p);
 }
 
-async function emsalHesapla(p, FAKTOR){
+async function emsalHesapla(p){
   const veriler = [];
-  document.querySelectorAll("[id^=es]").forEach(el=>{
-    const i = el.id.slice(2);
-    const m2 = +document.getElementById("em"+i)?.value, f = +document.getElementById("ef"+i)?.value;
+  document.querySelectorAll(".emsatirim").forEach(el=>{
+    const i = el.dataset.i;
+    const m2 = sayiCoz(document.getElementById("em"+i)?.value);
+    const f  = sayiCoz(document.getElementById("ef"+i)?.value);
     const ad2 = document.getElementById("ea"+i)?.value.trim() || "emsal";
     if(m2 > 0 && f > 0) veriler.push({ ad:ad2, m2, fiyat:f, birim: f/m2 });
   });
-  if(veriler.length < 2) return toast("En az iki emsal gir");
 
-  const bizM2 = +document.getElementById("bizM2").value || 0;
-  const birimler = veriler.map(v=>v.birim).sort((a,b)=>a-b);
-  const en_az = birimler[0], en_cok = birimler[birimler.length-1];
-  const ort = birimler.reduce((t,x)=>t+x,0)/birimler.length;
-  const ortanca = birimler.length % 2
-    ? birimler[(birimler.length-1)/2]
-    : (birimler[birimler.length/2-1] + birimler[birimler.length/2])/2;
+  const toplamAlan = sayiCoz(document.getElementById("bizM2").value) || 0;
+  const pay = sayiCoz(document.getElementById("bizPay").value) || toplamAlan;
+  const gozlem = document.getElementById("gozlem").value.trim();
+  const cevreKat = document.getElementById("cevreKat")?.checked && CEVRE_SON;
 
-  let carpan = 0;
-  const secili = [];
-  FAKTOR.forEach(([ad2,yz],i)=>{
-    if(document.getElementById("fk"+i)?.checked){ carpan += yz; secili.push([ad2, (yz>0?"+":"")+yz+"%"]); }
-  });
+  // cevre verisinden yuzde etkisi cikar
+  const etkiler = [];
+  if(cevreKat){
+    const o = CEVRE_SON.o;
+    const anaYol = o.yollar.primary || o.yollar.secondary || o.yollar.trunk || o.yollar.motorway;
+    const koyYol = o.yollar.unclassified || o.yollar.track || o.yollar.residential;
+    if(anaYol && anaYol.u <= 300) etkiler.push(["Ana yola 300 m'den yakın", 14]);
+    else if(anaYol && anaYol.u <= 1000) etkiler.push(["Ana yola 1 km içinde", 7]);
+    if(koyYol && koyYol.u <= 60) etkiler.push(["Yola cepheli (yol " + km(koyYol.u) + ")", 10]);
+    else if(!koyYol || koyYol.u > 400) etkiler.push(["Yola uzak, geçit sorunu olabilir", -12]);
+    const yer = o.yerler[0];
+    if(yer && yer.u <= 1500) etkiler.push([`${yer.t.name} yerleşimine ${km(yer.u)}`, 9]);
+    else if(yer && yer.u > 6000) etkiler.push(["Yerleşime uzak", -8]);
+    if(o.su && o.su.u <= 500) etkiler.push(["Su kaynağına yakın (" + km(o.su.u) + ")", 8]);
+    if(o.elektrik && o.elektrik.u <= 800) etkiler.push(["Elektrik hattı yakın", 5]);
+    if((o.kullanim.residential||0) > 0) etkiler.push(["Çevrede yerleşim alanı var", 10]);
+    if((o.kullanim.industrial||0) > 0) etkiler.push(["Çevrede sanayi alanı var", 8]);
+    if((o.kullanim.forest||0) > 2) etkiler.push(["Çevre ağırlıklı orman", -5]);
+  }
+  let carpan = etkiler.reduce((t,[,y])=>t+y, 0);
   carpan = Math.max(-45, Math.min(60, carpan));
-  const tahmin = ortanca * (1 + carpan/100);
-  const dusuk = Math.min(tahmin, en_az * (1 + carpan/100));
-  const yuksek = Math.max(tahmin, en_cok * (1 + carpan/100));
 
-  document.getElementById("sonuc").style.display = "block";
-  document.getElementById("sonuc").innerHTML = `
-    <div class="kv"><span>Emsal aralığı</span><b class="mono">${nf(Math.round(en_az))} – ${nf(Math.round(en_cok))} ₺/m²</b></div>
-    <div class="kv"><span>Ortanca emsal</span><b class="mono">${nf(Math.round(ortanca))} ₺/m²</b></div>
-    <div class="kv"><span>Özellik etkisi</span><b class="mono">${carpan>0?"+":""}${carpan}%</b></div>
-    <div class="kv" style="border-top:1px solid var(--cizgi);margin-top:6px;padding-top:10px">
-      <span style="color:var(--gold)">Tahmini m² değeri</span><b class="mono" style="color:var(--gold)">${nf(Math.round(tahmin))} ₺</b></div>
-    ${bizM2?`<div class="kv"><span style="color:var(--gold)">Parselin tahmini değeri</span>
-      <b class="mono" style="color:var(--gold)">${nf(Math.round(tahmin*bizM2))} ₺</b></div>`:""}`;
+  const bolumler = [];
+  bolumler.push({ baslik:"Değerlenen parsel", satirlar:[
+    ["Konum", p ? `${p.mahalleAd||""} / ${p.ilceAd||""} / ${p.ilAd||""}` : "—"],
+    ["Ada / parsel", p ? `${p.adaNo||"—"} / ${p.parselNo||"—"}` : "—"],
+    ["Toplam alan", toplamAlan ? nf(Math.round(toplamAlan)) + " m²" : "—"],
+    ["Değerlenen pay", pay ? nf(Math.round(pay)) + " m²" : "—"]
+  ]});
 
-  const bolumler = [
-    { baslik:"Değerlenen parsel", satirlar:[
-      ["Konum", p ? `${p.mahalleAd||""} / ${p.ilceAd||""} / ${p.ilAd||""}` : "—"],
-      ["Ada / parsel", p ? `${p.adaNo||"—"} / ${p.parselNo||"—"}` : "—"],
-      ["Yüzölçümü", bizM2 ? nf(bizM2) + " m²" : "—"]
-    ]},
-    { baslik:"Alınan emsaller", satirlar: veriler.map(v=>
-      [`${v.ad} · ${nf(v.m2)} m²`, `${nf(Math.round(v.birim))} ₺/m² (${nf(v.fiyat)} ₺)`]) },
-    { baslik:"Emsal istatistiği", satirlar:[
+  let tahmin = null, ortanca = null, en_az = null, en_cok = null;
+  if(veriler.length){
+    const b = veriler.map(v=>v.birim).sort((a,c)=>a-c);
+    en_az = b[0]; en_cok = b[b.length-1];
+    ortanca = b.length % 2 ? b[(b.length-1)/2] : (b[b.length/2-1] + b[b.length/2])/2;
+    tahmin = ortanca * (1 + carpan/100);
+
+    bolumler.push({ baslik:"Alınan emsaller", satirlar: veriler.map(v=>
+      [`${v.ad} · ${nf(Math.round(v.m2))} m²`, `${nf(Math.round(v.birim))} ₺/m² (${nf(Math.round(v.fiyat))} ₺)`]) });
+    bolumler.push({ baslik:"Emsal istatistiği", satirlar:[
       ["Emsal sayısı", veriler.length],
       ["En düşük", nf(Math.round(en_az)) + " ₺/m²"],
       ["En yüksek", nf(Math.round(en_cok)) + " ₺/m²"],
-      ["Aritmetik ortalama", nf(Math.round(ort)) + " ₺/m²"],
       ["Ortanca (esas alınan)", nf(Math.round(ortanca)) + " ₺/m²"]
-    ]},
-    { baslik:"Parselin özellik etkisi", satirlar: secili.length ? secili.concat([["Toplam etki", (carpan>0?"+":"")+carpan+"%"]])
-        : [["Özellik işaretlenmedi", "0%"]] },
-    { baslik:"Sonuç", satirlar:[
+    ]});
+  }
+
+  bolumler.push({ baslik: cevreKat ? "Çevre verisinden çıkan etkiler" : "Özellik etkisi",
+    satirlar: etkiler.length
+      ? etkiler.map(([a,y])=>[a, (y>0?"+":"")+y+"%"]).concat([["Toplam etki", (carpan>0?"+":"")+carpan+"%"]])
+      : [["Değerlendirmeye katılan veri yok", "0%"]] });
+
+  if(gozlem) bolumler.push({ baslik:"Gözlemler", satirlar: gozlem.split(/\n/).filter(Boolean).map(t=>[t, ""]) });
+
+  if(tahmin != null){
+    bolumler.push({ baslik:"Sonuç", satirlar:[
       ["Tahmini m² değeri", nf(Math.round(tahmin)) + " ₺"],
-      ["Makul aralık", `${nf(Math.round(dusuk))} – ${nf(Math.round(yuksek))} ₺/m²`],
-      ["Parselin tahmini değeri", bizM2 ? nf(Math.round(tahmin*bizM2)) + " ₺" : "—"],
-      ["Ek belge", EMSAL_EK ? EMSAL_EK.name : "yok"]
-    ]},
-    { baslik:"Yöntem", satirlar:[
+      ["Makul aralık", `${nf(Math.round(Math.min(tahmin, en_az*(1+carpan/100))))} – ${nf(Math.round(Math.max(tahmin, en_cok*(1+carpan/100))))} ₺/m²`],
+      ["Payınızın tahmini değeri", pay ? nf(Math.round(tahmin*pay)) + " ₺" : "—"],
+      ["Parselin tamamı", toplamAlan ? nf(Math.round(tahmin*toplamAlan)) + " ₺" : "—"]
+    ]});
+    bolumler.push({ baslik:"Yöntem", satirlar:[
       ["Esas", "Girilen emsallerin ortanca m² fiyatı"],
-      ["Düzeltme", "İşaretlenen özelliklerin yüzde etkisi toplanır"],
-      ["Sınır", "Toplam düzeltme -45% ile +60% arasına kısılır"],
+      ["Düzeltme", "Çevre verisi ve özelliklerin yüzde etkisi"],
+      ["Sınır", "Toplam düzeltme -45% ile +60% arasında"],
       ["Not", "Emsaller kullanıcının kendi gözlemidir"]
-    ]}
-  ];
+    ]});
+  }else{
+    bolumler.push({ baslik:"Sonuç", satirlar:[
+      ["Rakamsal tahmin", "Emsal girilmediği için verilmedi"],
+      ["Yapılan", cevreKat ? "Konumun güçlü ve zayıf yönleri çıkarıldı" : "Sadece parsel künyesi hazırlandı"],
+      ["Öneri", "Bölgeden 2-3 ilan girildiğinde rakam da hesaplanır"]
+    ]});
+  }
+
+  const s2 = document.getElementById("sonuc");
+  s2.style.display = "block";
+  s2.innerHTML = tahmin != null
+    ? `<div class="kv"><span>Ortanca emsal</span><b class="mono">${nf(Math.round(ortanca))} ₺/m²</b></div>
+       <div class="kv"><span>Çevre / özellik etkisi</span><b class="mono">${carpan>0?"+":""}${carpan}%</b></div>
+       <div class="kv" style="border-top:1px solid var(--cizgi);margin-top:6px;padding-top:10px">
+         <span style="color:var(--gold)">Tahmini m² değeri</span>
+         <b class="mono" style="color:var(--gold)">${nf(Math.round(tahmin))} ₺</b></div>
+       ${pay?`<div class="kv"><span style="color:var(--gold)">Payınızın değeri</span>
+         <b class="mono" style="color:var(--gold)">${nf(Math.round(tahmin*pay))} ₺</b></div>`:""}`
+    : `<div style="font-size:13.5px;color:var(--ink-2)">Emsal girilmedi, rakam üretilmedi.
+       ${cevreKat?"Rapor konumun güçlü ve zayıf yönleriyle hazırlandı.":"En az bir emsal girersen fiyat da çıkar."}</div>`;
 
   const { png, oran } = raporPng(
-    `Emsal ve değer raporu · ${p?`${p.adaNo||"—"}/${p.parselNo||"—"}`:""}`,
+    `Emsal ve değer raporu${p?` · ${p.adaNo||"—"}/${p.parselNo||"—"}`:""}`,
     `${p?`${p.mahalleAd||""} — ${p.ilceAd||""} / ${p.ilAd||""}`:"Konum girilmedi"}\nHazırlayan: ${ME.full_name||""}`,
     bolumler);
 
@@ -1876,7 +1954,7 @@ async function capAyar(parselId){
   const topla = () => {
     const n = sayi();
     let t = 0;
-    for(let i=0;i<n;i++) t += +document.getElementById("m"+i).value || 0;
+    for(let i=0;i<n;i++) t += sayiCoz(document.getElementById("m"+i).value) || 0;
     const el = document.getElementById("tpl");
     el.textContent = nf(t) + " m²";
     el.style.color = Math.abs(t-alan) > alan*0.02 ? "var(--red)" : "var(--green)";
@@ -1889,7 +1967,7 @@ async function capAyar(parselId){
     const n = sayi();
     const parcalar = Array.from({length:n},(_,i)=>({
       no: document.getElementById("no"+i).value.trim() || String(i+1),
-      m2: +document.getElementById("m"+i).value || 0,
+      m2: sayiCoz(document.getElementById("m"+i).value) || 0,
       renk: document.getElementById("c"+i).value
     }));
     if(parcalar.some(x=>x.m2 <= 0)) return toast("Her parçanın metrekaresini yaz");
