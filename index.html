@@ -189,6 +189,7 @@ select option{background:#101614;color:var(--ink)}
 .tut.boy{right:-13px;bottom:-13px;cursor:nwse-resize}
 .tut.don{left:-13px;bottom:-13px}
 .tut.kapat{right:-13px;top:-13px;background:var(--red);color:#fff}
+.tut.kalem{left:-13px;top:-13px;background:#fff;color:#111}
 .sablonlar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
 .sablon{border:1px solid var(--cizgi-2);border-radius:10px;padding:8px 6px;font-size:11px;text-align:center;
   background:var(--cam-2);color:var(--ink)}
@@ -266,7 +267,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "v2.1";
+const SURUM = "v2.2";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1849,6 +1850,130 @@ async function emsalHesapla(p){
 }
 
 
+
+/* ---- parça ayar bileşeni: hem çap çizdirmede hem sunumda ---- */
+
+let PARCA = { duzen:"serit", sutun:2, satir:4, parcalar:[], kilitli:new Set(), toplam:0 };
+
+function parcaAyarHtml(renkGoster){
+  return `
+    <div class="field"><label>Bölme düzeni</label><select id="pduzen">
+      <option value="serit"${PARCA.duzen==="serit"?" selected":""}>Şerit · uzun kenar boyunca sırayla</option>
+      <option value="izgara"${PARCA.duzen==="izgara"?" selected":""}>Izgara · yan yana sütunlar halinde</option>
+    </select></div>
+    <div class="row2" id="pizgara" style="${PARCA.duzen==="izgara"?"":"display:none"}">
+      <div class="field"><label>Sütun (yan yana)</label><input id="psutun" type="number" min="1" max="12" value="${PARCA.sutun}"></div>
+      <div class="field"><label>Satır (alt alta)</label><input id="psatir" type="number" min="1" max="20" value="${PARCA.satir}"></div>
+    </div>
+    <div class="field" id="pseritKutu" style="${PARCA.duzen==="serit"?"":"display:none"}">
+      <label>Parça sayısı</label><input id="padet" type="number" min="1" max="60" value="${PARCA.parcalar.length||4}"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin:6px 2px 10px">
+      <span style="font-size:13px;color:var(--ink-2);flex:1">Girilen toplam</span>
+      <b class="mono" id="ptoplam">—</b>
+      <button class="pill sade" onclick="parcaEsitle()">eşitle</button></div>
+    <div id="plist"></div>
+    <p class="ipuc">Bir parçanın m²'sini değiştirdiğinde kalan alan, dokunmadığın parçalara eşit dağıtılır.</p>`;
+}
+
+function parcaKur(toplam, mevcut, renkGoster){
+  PARCA.toplam = toplam;
+  PARCA.kilitli = new Set();
+  if(mevcut && mevcut.length){
+    PARCA.parcalar = mevcut.map(o=>({ ...o }));
+    mevcut.forEach((_,i)=>PARCA.kilitli.add(i));
+  }
+  const g = k => document.getElementById(k);
+  const sayi = () => PARCA.duzen === "izgara"
+    ? Math.max(1, (+g("psutun").value||1) * (+g("psatir").value||1))
+    : Math.max(1, Math.min(60, +g("padet").value||1));
+
+  const yenile = (adetDegisti) => {
+    PARCA.duzen = g("pduzen").value;
+    PARCA.sutun = +g("psutun").value || 1;
+    PARCA.satir = +g("psatir").value || 1;
+    g("pizgara").style.display  = PARCA.duzen === "izgara" ? "grid" : "none";
+    g("pseritKutu").style.display = PARCA.duzen === "serit" ? "block" : "none";
+    const n = sayi();
+    if(adetDegisti || PARCA.parcalar.length !== n){
+      const pay = Math.round(toplam/n);
+      PARCA.parcalar = Array.from({length:n},(_,i)=>PARCA.parcalar[i] || { no:String(i+1), m2:pay, renk:"#FFFFFF" });
+      PARCA.parcalar.length = n;
+      PARCA.kilitli = new Set();
+      parcaDengele(-1);
+    }
+    parcaListeCiz(renkGoster);
+  };
+
+  g("pduzen").onchange = () => yenile(true);
+  g("psutun").oninput = () => yenile(true);
+  g("psatir").oninput = () => yenile(true);
+  g("padet").oninput  = () => yenile(true);
+  yenile(!mevcut || !mevcut.length);
+}
+
+// elle girilmeyenlere kalan alani esit dagit
+function parcaDengele(sonIx){
+  if(sonIx >= 0) PARCA.kilitli.add(sonIx);
+  const n = PARCA.parcalar.length;
+  if(!n) return;
+  const serbest = [];
+  let kilitliToplam = 0;
+  PARCA.parcalar.forEach((o,i)=>{
+    if(PARCA.kilitli.has(i)) kilitliToplam += +o.m2 || 0; else serbest.push(i);
+  });
+  if(!serbest.length) return;
+  const kalan = Math.max(0, PARCA.toplam - kilitliToplam);
+  const pay = Math.floor(kalan / serbest.length);
+  serbest.forEach((ix,k)=>{
+    PARCA.parcalar[ix].m2 = k === serbest.length-1 ? kalan - pay*(serbest.length-1) : pay;
+  });
+}
+
+function parcaEsitle(){
+  PARCA.kilitli = new Set();
+  parcaDengele(-1);
+  parcaListeCiz(true);
+}
+
+function parcaListeCiz(renkGoster){
+  const kutu = document.getElementById("plist");
+  const n = PARCA.parcalar.length;
+  kutu.innerHTML = n < 2
+    ? `<p class="ipuc">Tek parça, bölme yok.</p>`
+    : PARCA.parcalar.map((o,i)=>`
+      <div class="card" style="display:flex;gap:9px;align-items:center;padding:10px">
+        <input id="pno${i}" value="${esc(o.no)}" style="width:48px;text-align:center;padding:9px 3px">
+        <input id="pm${i}" inputmode="decimal" value="${Math.round(o.m2)}" style="flex:1${PARCA.kilitli.has(i)?";border-color:var(--gold)":""}">
+        ${renkGoster!==false?`<input type="color" id="pr${i}" value="${o.renk||"#FFFFFF"}" style="width:44px;height:42px;padding:3px;border-radius:9px">`:""}
+      </div>`).join("");
+
+  const t = PARCA.parcalar.reduce((a,o)=>a + (+o.m2||0), 0);
+  const el = document.getElementById("ptoplam");
+  el.textContent = nf(Math.round(t)) + " m²  /  " + nf(Math.round(PARCA.toplam)) + " m²";
+  el.style.color = Math.abs(t - PARCA.toplam) > PARCA.toplam*0.01 ? "var(--red)" : "var(--green)";
+
+  PARCA.parcalar.forEach((o,i)=>{
+    const m = document.getElementById("pm"+i);
+    if(m) m.oninput = () => {
+      PARCA.parcalar[i].m2 = sayiCoz(m.value) || 0;
+      parcaDengele(i);
+      const yer = document.activeElement?.id;
+      parcaListeCiz(renkGoster);
+      const geri = document.getElementById(yer);
+      if(geri){ geri.focus(); geri.setSelectionRange(geri.value.length, geri.value.length); }
+    };
+    const no = document.getElementById("pno"+i);
+    if(no) no.oninput = () => { PARCA.parcalar[i].no = no.value; };
+    const r = document.getElementById("pr"+i);
+    if(r) r.oninput = () => { PARCA.parcalar[i].renk = r.value; };
+  });
+}
+
+function parcaCfg(){
+  return { duzen:PARCA.duzen, sutun:PARCA.sutun, satir:PARCA.satir,
+           parcalar: PARCA.parcalar.map(o=>({ no:o.no, m2:+o.m2||1, renk:o.renk||"#FFFFFF" })) };
+}
+
 /* ================= sunum görseli ================= */
 
 /* ---- sunum kutu stilleri ---- */
@@ -1990,7 +2115,8 @@ const ORANLAR = [
 let SUNUM = { parselId:null, ogeler:[], secili:null, arka:null, oranIx:0, kaydir:50 };
 
 // capi seffaf PNG olarak uret: mod 1 sinir, 2 parcali, 3 parcali + yazi
-function capSeffafPng(p, parcalar, mod, ayar){
+function capSeffafPng(p, cfg, mod, ayar){
+  const parcalar = cfg?.parcalar || null;
   const a = ayar || {};
   const tema = CAP_TEMA[a.tema ?? 0];
   const disRenk = a.dis || tema.dis;
@@ -2012,7 +2138,7 @@ function capSeffafPng(p, parcalar, mod, ayar){
   const yol = pts => { x.beginPath(); pts.forEach((k,i)=> i?x.lineTo(k[0],k[1]):x.moveTo(k[0],k[1])); x.closePath(); };
 
   if(mod !== 1 && parcalar && parcalar.length > 1){
-    const dilimler = parcala(M, parcalar.map(o=>+o.m2 || 1));
+    const dilimler = parcalariUret(M, cfg);
     dilimler.forEach((d,i)=>{
       const e2 = d.map(E);
       yol(e2);
@@ -2139,78 +2265,89 @@ async function sunumArka(){
   img.src = url;
 }
 
-function sunumCap(){
-  if(!SUNUM.p.geojson) return toast("Bu parselin sınır çizimi yok");
-  const kayitli = Array.isArray(SUNUM.p.cap_config) ? SUNUM.p.cap_config : null;
-  const toplam = +SUNUM.p.alan_m2 || 0;
+function sunumCap(duzenleIx){
+  const mevcutOge = duzenleIx != null ? SUNUM.ogeler[duzenleIx] : null;
+  const p = SUNUM.p;
+  const kayitliCfg = p.cap_config && !Array.isArray(p.cap_config) ? p.cap_config
+                   : Array.isArray(p.cap_config) ? { duzen:"serit", sutun:1, satir:1, parcalar:p.cap_config } : null;
+  const alan = Math.round(+p.alan_m2 || 0);
+  const a = mevcutOge?.ayar || {};
 
-  app.innerHTML = head("Çap ayarı", "geriSunum()") + `
-    <div class="field"><label>Nasıl görünsün?</label><select id="cmod">
-      <option value="3">Parçalı · numara ve m² yazılı</option>
-      <option value="2">Parçalı · yazısız</option>
-      <option value="1">Sadece sınır çizgisi</option></select></div>
+  app.innerHTML = head(duzenleIx!=null ? "Çapı düzenle" : "Çap ekle", "geriSunum()") + `
+    <div class="field"><label>Çap nereden gelsin?</label><select id="ckaynak">
+      <option value="ciz"${a.kaynak!=="yukle"?" selected":""}>Uygulama çizsin</option>
+      ${kayitliCfg?`<option value="kayit"${a.kaynak==="kayit"?" selected":""}>Çizdirdiğim çapı kullan (${kayitliCfg.parcalar.length} parça)</option>`:""}
+      <option value="yukle"${a.kaynak==="yukle"?" selected":""}>Kendi çap görselimi yükle (PNG)</option>
+    </select></div>
 
-    <div class="field"><label>Tema</label><select id="ctema">
-      ${CAP_TEMA.map((t,i)=>`<option value="${i}">${t.ad}</option>`).join("")}</select></div>
-
-    <div id="parcaBolum">
-      <div class="field"><label>Parçalar nereden gelsin?</label><select id="ckaynak">
-        ${kayitli?`<option value="kayit">Uygulamada çizdiğin çap (${kayitli.length} parça)</option>`:""}
-        <option value="oto">Yeniden böl · parça sayısını gir</option>
-      </select></div>
-      <div class="field" id="cadetKutu" style="${kayitli?"display:none":""}">
-        <label>Parça sayısı</label><input id="cadet" type="number" min="1" max="60" value="${kayitli?kayitli.length:4}"></div>
-      <h3 style="font-size:14px;margin:18px 0 8px">Parça renkleri</h3>
-      <div id="cparcalar"></div>
+    <div id="yukleBolum" style="display:none">
+      <button class="btn ghost" id="capDosya">Çap görselini seç</button>
+      <p class="ipuc" style="margin-top:10px">Arka planı saydam PNG olarak hazırla; renklendirmesi sende olsun. Tuvalde eğip büker, döndürürsün.</p>
     </div>
 
-    <div class="row2">
-      <div class="field"><label>Dış çizgi rengi</label><input type="color" id="cdis" value="#FFFFFF" style="height:46px"></div>
-      <div class="field"><label>Parça çizgi rengi</label><input type="color" id="cic" value="#FFFFFF" style="height:46px"></div>
+    <div id="cizBolum">
+      <div class="field"><label>Nasıl görünsün?</label><select id="cmod">
+        <option value="3"${(a.mod??3)==3?" selected":""}>Parçalı · numara ve m² yazılı</option>
+        <option value="2"${a.mod==2?" selected":""}>Parçalı · yazısız</option>
+        <option value="1"${a.mod==1?" selected":""}>Sadece sınır çizgisi</option></select></div>
+      <div class="field"><label>Tema</label><select id="ctema">
+        ${CAP_TEMA.map((t,i)=>`<option value="${i}"${(a.tema??0)==i?" selected":""}>${t.ad}</option>`).join("")}</select></div>
+      <div id="parcaBolum">${parcaAyarHtml(true)}</div>
+      <div class="row2">
+        <div class="field"><label>Dış çizgi rengi</label><input type="color" id="cdis" value="${a.dis||"#FFFFFF"}" style="height:46px"></div>
+        <div class="field"><label>Parça çizgi rengi</label><input type="color" id="cic" value="${a.ic||"#FFFFFF"}" style="height:46px"></div>
+      </div>
+      <div class="field"><label>Dolgu koyuluğu</label>
+        <input type="range" id="cdolgu" min="0" max="90" value="${Math.round((a.dolgu??.42)*100)}" style="padding:0"></div>
     </div>
-    <div class="field"><label>Dolgu koyuluğu</label>
-      <input type="range" id="cdolgu" min="0" max="90" value="42" style="padding:0"></div>
 
-    <button class="btn" id="capOnay">Çapı tuvale ekle</button>`;
+    <button class="btn" id="capOnay">${duzenleIx!=null ? "Değişikliği uygula" : "Çapı tuvale ekle"}</button>`;
 
   const g = k => document.getElementById(k);
-  const listeCiz = () => {
-    const kayitMi = g("ckaynak") && g("ckaynak").value === "kayit";
-    const n = kayitMi ? kayitli.length : Math.max(1, Math.min(60, +g("cadet").value || 1));
-    g("cadetKutu").style.display = kayitMi ? "none" : "block";
-    const pay = Math.round(toplam/n);
-    g("cparcalar").innerHTML = n < 2 ? `<p class="ipuc">Tek parça, renk seçimine gerek yok.</p>` :
-      Array.from({length:n},(_,i)=>{
-        const k = kayitMi ? kayitli[i] : null;
-        return `<div class="card" style="display:flex;gap:10px;align-items:center;padding:10px">
-          <input id="cno${i}" value="${k?esc(k.no):i+1}" style="width:50px;text-align:center;padding:9px 4px">
-          <input id="cm${i}" inputmode="decimal" value="${k?Math.round(k.m2):(i===n-1?toplam-pay*(n-1):pay)}" style="flex:1">
-          <input type="color" id="cr${i}" value="${k?.renk && k.renk!=="#FFFFFF" ? k.renk : "#FFFFFF"}" style="width:46px;height:42px;padding:3px;border-radius:9px">
-        </div>`;
-      }).join("");
+  let yuklenen = mevcutOge?.ayar?.kaynak === "yukle" ? mevcutOge.src : null;
+
+  const kaynakGun = () => {
+    const k = g("ckaynak").value;
+    g("yukleBolum").style.display = k === "yukle" ? "block" : "none";
+    g("cizBolum").style.display   = k === "yukle" ? "none" : "block";
+    if(k === "kayit" && kayitliCfg){
+      PARCA.duzen = kayitliCfg.duzen || "serit";
+      PARCA.sutun = kayitliCfg.sutun || 1; PARCA.satir = kayitliCfg.satir || 1;
+      parcaKur(alan, kayitliCfg.parcalar, true);
+    }
   };
-  if(g("ckaynak")) g("ckaynak").onchange = listeCiz;
-  g("cadet").oninput = listeCiz;
+  if(g("ckaynak").value !== "yukle") parcaKur(alan, a.cfg?.parcalar || kayitliCfg?.parcalar, true);
+  g("ckaynak").onchange = kaynakGun;
+  kaynakGun();
+
   g("cmod").onchange = () => { g("parcaBolum").style.display = g("cmod").value === "1" ? "none" : "block"; };
-  listeCiz();
+
+  g("capDosya").onclick = async () => {
+    const f = await dosyaSec("image/png,image/*");
+    if(!f) return;
+    yuklenen = await new Promise(res=>{ const r = new FileReader(); r.onload = ()=>res(r.result); r.readAsDataURL(f); });
+    toast("Çap görseli hazır");
+  };
 
   g("capOnay").onclick = () => {
-    const mod = +g("cmod").value;
-    let parcalar = null;
-    if(mod !== 1){
-      const kayitMi = g("ckaynak") && g("ckaynak").value === "kayit";
-      const n = kayitMi ? kayitli.length : Math.max(1, Math.min(60, +g("cadet").value || 1));
-      if(n > 1) parcalar = Array.from({length:n},(_,i)=>({
-        no: g("cno"+i)?.value.trim() || String(i+1),
-        m2: sayiCoz(g("cm"+i)?.value) || 1,
-        renk: g("cr"+i)?.value || "#FFFFFF"
-      }));
+    const kaynak = g("ckaynak").value;
+    let src, ayar;
+    if(kaynak === "yukle"){
+      if(!yuklenen) return toast("Önce çap görselini seç");
+      src = yuklenen; ayar = { kaynak:"yukle" };
+    }else{
+      if(!p.geojson) return toast("Bu parselin sınır çizimi yok");
+      const mod = +g("cmod").value;
+      const cfg = mod === 1 ? null : parcaCfg();
+      ayar = { kaynak, mod, tema:+g("ctema").value, dis:g("cdis").value, ic:g("cic").value,
+               dolgu:(+g("cdolgu").value)/100, cfg };
+      src = capSeffafPng(p, cfg, mod, ayar);
     }
-    const png = capSeffafPng(SUNUM.p, parcalar, mod, {
-      tema:+g("ctema").value, dis:g("cdis").value, ic:g("cic").value, dolgu:(+g("cdolgu").value)/100
-    });
-    SUNUM.ogeler.push({ tur:"cap", rol:"cap", src:png, x:.20, y:.24, w:.60, h:.48, rot:0 });
-    SUNUM.secili = SUNUM.ogeler.length-1;
+    if(mevcutOge){ mevcutOge.src = src; mevcutOge.ayar = ayar; }
+    else{
+      SUNUM.ogeler.push({ tur:"cap", rol:"cap", src, ayar, x:.20, y:.24, w:.60, h:.48, rot:0 });
+      SUNUM.secili = SUNUM.ogeler.length-1;
+    }
     sunumEkran();
   };
 }
@@ -2280,7 +2417,7 @@ function sunumCiz(){
 
     if(SUNUM.secili === i) d.innerHTML +=
       `<div class="tut boy" data-tut="boy">⤢</div><div class="tut don" data-tut="don">⟳</div>
-       <div class="tut kapat" data-tut="kapat">×</div>`;
+       <div class="tut kapat" data-tut="kapat">×</div><div class="tut kalem" data-tut="kalem">✎</div>`;
     t.appendChild(d);
   });
 
@@ -2293,6 +2430,13 @@ function sunumOlaylar(t, W, H){
       const i = +d.dataset.i, o = SUNUM.ogeler[i];
       const tut = e.target.dataset?.tut;
       if(tut === "kapat"){ SUNUM.ogeler.splice(i,1); SUNUM.secili = null; sunumEkran(); return; }
+      if(tut === "kalem"){
+        SUNUM.secili = i;
+        if(o.tur === "cap") return sunumCap(i);
+        sunumEkran();
+        document.getElementById("dzUst")?.scrollIntoView({ behavior:"smooth", block:"center" });
+        return;
+      }
       if(SUNUM.secili !== i){ SUNUM.secili = i; sunumEkran(); return; }
       e.preventDefault(); d.setPointerCapture(e.pointerId);
       const bx = t.getBoundingClientRect();
@@ -2458,8 +2602,8 @@ function kirp(poly, n, d){
   return cik;
 }
 
-// en uzun ekseni bul, o yone dik seritlere bol; her serit hedef alani tutsun
-function parcala(pts, hedefler){
+// parselin en uzun kenar yonu
+function anaYon(pts){
   let enUzun = 0, yon = [1,0];
   for(let i=0;i<pts.length;i++){
     const j = (i+1)%pts.length;
@@ -2467,6 +2611,12 @@ function parcala(pts, hedefler){
     const u = Math.hypot(dx,dy);
     if(u > enUzun){ enUzun = u; yon = [dx/u, dy/u]; }
   }
+  return yon;
+}
+
+// verilen yone dik seritlere bol; her serit hedef alani tutsun
+function parcala(pts, hedefler, yonVer){
+  const yon = yonVer || anaYon(pts);
   const izd = pts.map(p=>p[0]*yon[0]+p[1]*yon[1]);
   let alt = Math.min(...izd), ust = Math.max(...izd);
   const toplam = alanHesap(pts);
@@ -2493,6 +2643,36 @@ function parcala(pts, hedefler){
   return parcalar.filter(p=>p.length > 2);
 }
 
+// izgara: once sutunlara, sonra her sutunu satirlara bol
+function parcalaIzgara(pts, sutun, satir, hedefler){
+  const ana = anaYon(pts);
+  const dik = [-ana[1], ana[0]];
+  const sutunHedef = [];
+  for(let s2=0;s2<sutun;s2++){
+    let t = 0;
+    for(let r=0;r<satir;r++) t += hedefler[s2*satir + r] || 0;
+    sutunHedef.push(t || 1);
+  }
+  const sutunlar = parcala(pts, sutunHedef, dik);
+  const cikti = [];
+  sutunlar.forEach((sp, s2)=>{
+    const satirHedef = [];
+    for(let r=0;r<satir;r++) satirHedef.push(hedefler[s2*satir + r] || 1);
+    const parcalari = satir > 1 ? parcala(sp, satirHedef, ana) : [sp];
+    parcalari.forEach(pp=>cikti.push(pp));
+  });
+  return cikti;
+}
+
+// yerlesim ayarina gore parcalari uret
+function parcalariUret(M, cfg){
+  const hedef = (cfg.parcalar||[]).map(o=>+o.m2 || 1);
+  if(!hedef.length) return [];
+  if(cfg.duzen === "izgara" && cfg.sutun > 1)
+    return parcalaIzgara(M, cfg.sutun, cfg.satir, hedef);
+  return parcala(M, hedef);
+}
+
 function agirlikMerkezi(pts){
   let x=0, y=0, a=0;
   for(let i=0;i<pts.length;i++){
@@ -2508,73 +2688,36 @@ async function capAyar(parselId){
   const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
   if(!p || !p.geojson) return toast("Bu parselin sınır çizimi yok");
   const alan = Math.round(+p.alan_m2 || 0);
+  const eski = p.cap_config;
+  const mevcut = Array.isArray(eski) ? eski : eski?.parcalar;
+  if(eski && !Array.isArray(eski)){ PARCA.duzen = eski.duzen || "serit"; PARCA.sutun = eski.sutun || 2; PARCA.satir = eski.satir || 4; }
+
   app.innerHTML = head("Çap çizdir","go('cap')") + `
     <div class="card">
       <div style="font-size:12px;color:var(--ink-3)">${esc(duzgun(p.mahalle))}</div>
       <div style="font-size:17px;font-weight:600;margin-top:2px">Ada ${esc(p.ada||"—")} · Parsel ${esc(p.parsel)}</div>
       <div class="kv" style="margin-top:8px"><span>Toplam alan</span><b class="mono">${nf(alan)} m²</b></div>
     </div>
-    <div class="field"><label>Kaç parçaya bölünecek?</label>
-      <select id="ps">${Array.from({length:12},(_,i)=>`<option value="${i+1}">${i+1} parça</option>`).join("")}
-        <option value="diger">Diğer · elle gir</option></select>
-      <input id="psElle" type="number" min="1" max="200" placeholder="Parça sayısı" style="margin-top:10px;display:none"></div>
-    <div id="parcalar"></div>
-    <div class="kv" style="padding:10px 2px"><span>Girilen toplam</span><b class="mono" id="tpl">${nf(alan)} m²</b></div>
-    <button class="btn" id="ciz">Çapı çiz ve parsele ekle</button>
-    <p class="ipuc" style="margin-top:14px">Parçalar, parselin en uzun kenarına dik şeritler halinde bölünür. Metrekareler oransal olarak uygulanır.</p>`;
+    ${parcaAyarHtml(true)}
+    <button class="btn" id="ciz">Çapı çiz ve parsele ekle</button>`;
 
-  const sayi = () => {
-    const v = document.getElementById("ps").value;
-    if(v === "diger") return Math.max(1, Math.min(200, +document.getElementById("psElle").value || 1));
-    return +v;
-  };
-  const kur = () => {
-    document.getElementById("psElle").style.display =
-      document.getElementById("ps").value === "diger" ? "block" : "none";
-    const n = sayi();
-    const pay = Math.round(alan/n);
-    document.getElementById("parcalar").innerHTML = Array.from({length:n},(_,i)=>`
-      <div class="card" style="display:flex;gap:10px;align-items:center;padding:12px">
-        <input id="no${i}" value="${i+1}" style="width:52px;text-align:center;padding:10px 4px" aria-label="Parça numarası">
-        <input id="m${i}" inputmode="numeric" value="${i===n-1 ? alan-pay*(n-1) : pay}" style="flex:1" aria-label="Metrekare">
-        <input type="color" id="c${i}" value="#FFFFFF"
-          style="width:46px;height:44px;padding:3px;border-radius:10px" aria-label="Renk">
-      </div>`).join("");
-    n && topla();
-    for(let i=0;i<n;i++) document.getElementById("m"+i).oninput = topla;
-  };
-  const topla = () => {
-    const n = sayi();
-    let t = 0;
-    for(let i=0;i<n;i++) t += sayiCoz(document.getElementById("m"+i).value) || 0;
-    const el = document.getElementById("tpl");
-    el.textContent = nf(t) + " m²";
-    el.style.color = Math.abs(t-alan) > alan*0.02 ? "var(--red)" : "var(--green)";
-  };
-  document.getElementById("ps").onchange = kur;
-  document.getElementById("psElle").oninput = kur;
-  kur();
+  parcaKur(alan, mevcut, true);
 
   document.getElementById("ciz").onclick = async e => {
-    const n = sayi();
-    const parcalar = Array.from({length:n},(_,i)=>({
-      no: document.getElementById("no"+i).value.trim() || String(i+1),
-      m2: sayiCoz(document.getElementById("m"+i).value) || 0,
-      renk: document.getElementById("c"+i).value
-    }));
-    if(parcalar.some(x=>x.m2 <= 0)) return toast("Her parçanın metrekaresini yaz");
+    const cfg = parcaCfg();
+    if(cfg.parcalar.some(x=>x.m2 <= 0)) return toast("Her parçanın metrekaresini yaz");
     e.target.disabled = true; e.target.textContent = "Çiziliyor…";
-    await capCiz(parselId, parcalar);
+    await capCiz(parselId, cfg);
     e.target.disabled = false; e.target.textContent = "Çapı çiz ve parsele ekle";
   };
 }
 
-async function capCiz(parselId, parcalar){
+async function capCiz(parselId, cfg){
   const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
   if(!p || !p.geojson) return toast("Bu parselin sınır çizimi yok");
   toast("Çap çiziliyor…");
   try{
-    const png = capCizPng(p, parcalar);
+    const png = capCizPng(p, cfg);
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
     pdf.addImage(png, "PNG", 10, 10, 190, 190*(1400/1000));
@@ -2582,14 +2725,15 @@ async function capCiz(parselId, parcalar){
     const dosya = new File([blob], `cap-${p.mahalle||""}-${p.ada||0}-${p.parsel}.pdf`.replace(/\s+/g,"_"),
                            { type:"application/pdf" });
     await dosyaYukle(dosya, "cap", parselId);
-    if(parcalar && parcalar.length) await sb.from("parcels").update({ cap_config: parcalar }).eq("id", parselId);
+    if(cfg && cfg.parcalar?.length) await sb.from("parcels").update({ cap_config: cfg }).eq("id", parselId);
     toast("Çap hazırlandı ve parsele eklendi");
     go("cap");
   }catch(e){ toast("Olmadı: " + (e.message||e)); }
 }
 
 // parsel sinirindan olcekli cap cizimi uretir
-function capCizPng(p, parcalar){
+function capCizPng(p, cfg){
+  const parcalar = cfg?.parcalar || null;
   const g = p.geojson.geometry;
   const halka = (g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0]).slice();
   if(halka.length > 1 &&
@@ -2615,7 +2759,7 @@ function capCizPng(p, parcalar){
   // parcalar
   const liste = (parcalar && parcalar.length > 1) ? parcalar : null;
   if(liste){
-    const dilimler = parcala(M, liste.map(o=>o.m2));
+    const dilimler = parcalariUret(M, cfg);
     dilimler.forEach((d,i)=>{
       const ekran = d.map(E);
       yol(ekran);
