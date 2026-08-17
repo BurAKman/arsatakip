@@ -176,7 +176,9 @@ select option{background:#101614;color:var(--ink)}
 /* ---- sunum düzenleyici ---- */
 #tuval{position:relative;width:100%;border-radius:var(--r);overflow:hidden;border:1px solid var(--cizgi-2);
   background:#0B100E;touch-action:none;user-select:none;margin-bottom:12px}
-#tuval img.arka{width:100%;display:block;pointer-events:none}
+#tuval .arka{position:absolute;inset:0;background-size:cover;background-repeat:no-repeat;pointer-events:none}
+#tuval .olcu{position:absolute;right:8px;top:8px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;
+  padding:3px 8px;border-radius:20px;pointer-events:none;font-family:"IBM Plex Mono",monospace}
 .oge{position:absolute;transform-origin:center center;touch-action:none;cursor:move}
 .oge.sec{outline:2px dashed var(--gold);outline-offset:3px}
 .oge img{width:100%;height:100%;display:block;pointer-events:none}
@@ -264,7 +266,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "v2.0";
+const SURUM = "v2.1";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1906,11 +1908,36 @@ function kutuYolu(x, w, h, kose){
 }
 
 // metni kutuya sigdiran punto bul
+const OLCER = document.createElement("canvas").getContext("2d");
 function sigdir(x, metin, genislik, baslangic){
-  let p = baslangic;
+  let p = Math.max(6, Math.round(baslangic));
+  if(!metin) return p;
   x.font = `700 ${p}px Arial`;
-  while(p > 8 && x.measureText(metin).width > genislik){ p -= 1; x.font = `700 ${p}px Arial`; }
+  while(p > 6 && x.measureText(metin).width > genislik){ p -= 1; x.font = `700 ${p}px Arial`; }
   return p;
+}
+
+// kutunun icindeki yazi yerlesimini hesapla (tek kaynak)
+function kutuMetrik(o, w, h){
+  const pad = Math.max(6, Math.min(w*.05, h*.14));
+  const kullan = Math.max(10, w - pad*2);
+  const satirlar = String(o.alt || "").split("\n").filter(t=>t.trim());
+  const SATIR = 1.2;
+
+  let ustP = 0;
+  if(o.ust) ustP = sigdir(OLCER, o.ust, kullan, Math.min(h*.20, 40 + h*.02));
+
+  const ustAlan = ustP ? ustP*1.5 : 0;
+  const kalan = Math.max(8, h - pad*2 - ustAlan);
+  let altP = satirlar.length ? Math.floor(kalan / (satirlar.length * SATIR)) : 0;
+  altP = Math.min(altP, Math.floor(h*.42));
+  const enUzun = satirlar.reduce((a,b)=> a.length>b.length?a:b, "");
+  if(altP > 0) altP = sigdir(OLCER, enUzun, kullan, altP);
+  altP = Math.max(satirlar.length ? 7 : 0, altP);
+
+  const toplam = ustAlan + satirlar.length*altP*SATIR;
+  const bas = Math.max(pad*.6, (h - toplam)/2);
+  return { pad, kullan, satirlar, ustP, altP, SATIR, ustY: bas, altY: bas + ustAlan };
 }
 
 // kutuyu canvas'a ciz
@@ -1932,20 +1959,16 @@ function kutuCiz(x, o, w, h){
   }
   x.restore();
 
-  const pad = Math.max(10, w*.05);
-  const kullan = w - pad*2;
+  const m = kutuMetrik(o, w, h);
   x.textBaseline = "top";
-  const ustP = sigdir(x, o.ust || "", kullan, Math.round(h*.17));
-  x.fillStyle = st.ustRenk; x.font = `700 ${ustP}px Arial`;
-  if(o.ust) x.fillText(o.ust, pad, h*.13);
-
-  const satirlar = String(o.alt || "").split("\n").filter(Boolean);
-  const enUzun = satirlar.reduce((a,b)=> a.length>b.length?a:b, "");
-  const altBas = Math.round(Math.min(h*.34, (h*.62)/Math.max(1,satirlar.length)));
-  const altP = sigdir(x, enUzun, kullan, altBas);
-  x.fillStyle = st.altRenk; x.font = `700 ${altP}px Arial`;
-  const bas = o.ust ? h*.13 + ustP*1.5 : h*.5 - (satirlar.length*altP*1.18)/2;
-  satirlar.forEach((t,i)=> x.fillText(t, pad, bas + i*altP*1.18));
+  if(o.ust && m.ustP){
+    x.fillStyle = st.ustRenk; x.font = `700 ${m.ustP}px Arial`;
+    x.fillText(o.ust, m.pad, m.ustY);
+  }
+  if(m.altP){
+    x.fillStyle = st.altRenk; x.font = `700 ${m.altP}px Arial`;
+    m.satirlar.forEach((t,i)=> x.fillText(t, m.pad, m.altY + i*m.altP*m.SATIR));
+  }
 }
 
 // onizleme icin CSS karsiligi
@@ -1959,7 +1982,12 @@ function kutuCss(o){
 
 
 
-let SUNUM = { parselId:null, ogeler:[], secili:null, sablon:0, arka:null, oran:0.75 };
+const ORANLAR = [
+  { ad:"Story 9:16", w:1080, h:1920 },
+  { ad:"Dikey 4:5",  w:1080, h:1350 },
+  { ad:"Kare 1:1",   w:1080, h:1080 }
+];
+let SUNUM = { parselId:null, ogeler:[], secili:null, arka:null, oranIx:0, kaydir:50 };
 
 // capi seffaf PNG olarak uret: mod 1 sinir, 2 parcali, 3 parcali + yazi
 function capSeffafPng(p, parcalar, mod, ayar){
@@ -2028,7 +2056,7 @@ async function sunum(parselId){
   const { data:et } = await sb.from("parcel_tags").select("tags(name)").eq("parcel_id", parselId);
   const etiketler = (et||[]).map(e=>e.tags?.name).filter(Boolean);
   const { data:yl } = await sb.from("parcel_years").select("*").eq("parcel_id",parselId).order("yil",{ascending:false});
-  SUNUM = { parselId, ogeler:[], secili:null, arka:null, oran:0.75, p, y: yl?.[0] || {}, etiketler };
+  SUNUM = { parselId, ogeler:[], secili:null, arka:null, oranIx:0, kaydir:50, p, y: yl?.[0] || {}, etiketler };
   sunumEkran();
 }
 
@@ -2037,6 +2065,12 @@ function sunumEkran(){
   app.innerHTML = head("Sunum görseli", `go('parsel','${SUNUM.parselId}')`) + `
     <p class="ipuc">Arka planı yükle, parçaları sürükleyip yerleştir. Seçili parçayı sağ alttan büyütür, sol alttan döndürür, sağ üstten silersin.</p>
     <div id="tuval"></div>
+
+    <div class="field"><label>Çıktı oranı</label><select id="oranSec">
+      ${ORANLAR.map((o,i)=>`<option value="${i}"${i===SUNUM.oranIx?" selected":""}>${o.ad} · ${o.w}×${o.h}</option>`).join("")}
+    </select></div>
+    ${SUNUM.arka?`<div class="field"><label>Arka planın hangi kısmı görünsün</label>
+      <input type="range" id="kaydirSec" min="0" max="100" value="${SUNUM.kaydir}" style="padding:0"></div>`:""}
 
     <div class="acts" style="margin-bottom:14px">
       <button class="pri" id="arkaSec">${SUNUM.arka?"Arka planı değiştir":"Arka plan yükle"}</button>
@@ -2071,6 +2105,9 @@ function sunumEkran(){
 
     <button class="btn" id="uret" style="margin-top:8px">Görseli üret ve kaydet</button>`;
 
+  document.getElementById("oranSec").onchange = e => { SUNUM.oranIx = +e.target.value; sunumCiz(); };
+  const ks = document.getElementById("kaydirSec");
+  if(ks) ks.oninput = e => { SUNUM.kaydir = +e.target.value; sunumCiz(); };
   document.getElementById("arkaSec").onclick = sunumArka;
   document.getElementById("capEkle").onclick = sunumCap;
   document.getElementById("yaziEkle").onclick = () => sunumKutu("serbest","","Yazı");
@@ -2097,8 +2134,7 @@ async function sunumArka(){
   const img = new Image();
   img.onload = () => {
     SUNUM.arka = { url, w:img.naturalWidth, h:img.naturalHeight };
-    SUNUM.oran = img.naturalHeight / img.naturalWidth;
-    sunumCiz();
+    sunumEkran();
   };
   img.src = url;
 }
@@ -2213,9 +2249,12 @@ function sunumCiz(){
     t.style.height = "auto";
     return;
   }
-  t.innerHTML = `<img class="arka" src="${SUNUM.arka.url}">`;
-  const W = t.clientWidth, H = W * SUNUM.oran;
+  const oran = ORANLAR[SUNUM.oranIx];
+  const W = t.clientWidth, H = W * (oran.h / oran.w);
   t.style.height = H + "px";
+  t.innerHTML = `<div class="arka" style="background-image:url('${SUNUM.arka.url}');
+     background-position:50% ${SUNUM.kaydir}%"></div>
+     <div class="olcu">${oran.w}×${oran.h}</div>`;
 
   SUNUM.ogeler.forEach((o,i)=>{
     const d = document.createElement("div");
@@ -2228,14 +2267,15 @@ function sunumCiz(){
     if(o.tur === "cap"){
       d.innerHTML = `<img src="${o.src}">`;
     }else{
-      const kh = o.h*H, st = KUTU_STIL[o.stil ?? 0];
-      const satirlar = String(o.alt||"").split("\n").filter(Boolean);
-      const altP = Math.max(9, Math.min(kh*.30, (kh*.60)/Math.max(1,satirlar.length)));
-      d.innerHTML = `<div class="kutu" style="${kutuCss(o)}justify-content:center">
-        ${o.ust?`<div style="color:${st.ustRenk};font-weight:700;letter-spacing:.08em;
-          font-size:${Math.max(8,kh*.16)}px;line-height:1.1;white-space:nowrap;overflow:hidden">${esc(o.ust)}</div>`:""}
-        <div style="color:${st.altRenk};font-weight:700;white-space:pre-line;line-height:1.18;
-          font-size:${altP}px;overflow:hidden">${esc(o.alt||"")}</div></div>`;
+      const kw = o.w*W, kh = o.h*H, st = KUTU_STIL[o.stil ?? 0];
+      const m = kutuMetrik(o, kw, kh);
+      d.innerHTML = `<div class="kutu" style="${kutuCss(o)}justify-content:flex-start;padding:0">
+        <div style="position:absolute;left:${m.pad}px;top:${m.ustY}px;width:${m.kullan}px">
+        ${o.ust&&m.ustP?`<div style="color:${st.ustRenk};font-weight:700;letter-spacing:.06em;
+          font-size:${m.ustP}px;line-height:1.5;white-space:nowrap">${esc(o.ust)}</div>`:""}
+        ${m.altP?`<div style="color:${st.altRenk};font-weight:700;white-space:pre-line;
+          line-height:${m.SATIR};font-size:${m.altP}px">${esc(m.satirlar.join("\n"))}</div>`:""}
+        </div></div>`;
     }
 
     if(SUNUM.secili === i) d.innerHTML +=
@@ -2283,11 +2323,17 @@ function sunumOlaylar(t, W, H){
 async function sunumUret(){
   if(!SUNUM.arka) return toast("Önce arka plan görseli yükle");
   toast("Görsel hazırlanıyor…");
-  const W = SUNUM.arka.w, H = SUNUM.arka.h;
+  const oran = ORANLAR[SUNUM.oranIx];
+  const W = oran.w, H = oran.h;
   const c = document.createElement("canvas"); c.width = W; c.height = H;
   const x = c.getContext("2d");
   const arka = await yukleGorsel(SUNUM.arka.url);
-  x.drawImage(arka, 0, 0, W, H);
+
+  // "cover" kirpma: onizlemedeki background-size:cover ile birebir ayni
+  const ol = Math.max(W/arka.naturalWidth, H/arka.naturalHeight);
+  const dw = arka.naturalWidth*ol, dh = arka.naturalHeight*ol;
+  x.fillStyle = "#000"; x.fillRect(0,0,W,H);
+  x.drawImage(arka, (W-dw)/2, (H-dh)*(SUNUM.kaydir/100), dw, dh);
 
   for(const o of SUNUM.ogeler){
     const ox = o.x*W, oy = o.y*H, ow = o.w*W, oh = o.h*H;
