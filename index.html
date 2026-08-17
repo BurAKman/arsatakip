@@ -264,7 +264,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "v1.9";
+const SURUM = "v2.0";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1849,33 +1849,133 @@ async function emsalHesapla(p){
 
 /* ================= sunum görseli ================= */
 
-const SABLONLAR = [
-  { ad:"Klasik alt bant", fiyat:{x:.06,y:.80,w:.44,h:.11}, ozellik:{x:.06,y:.63,w:.55,h:.14},
-    baslik:{x:.06,y:.05,w:.60,h:.10}, renk:"#0E3B24", yazi:"#FFFFFF", vurgu:"#8DC63F" },
-  { ad:"Sağ üst kart", fiyat:{x:.55,y:.06,w:.39,h:.11}, ozellik:{x:.55,y:.19,w:.39,h:.20},
-    baslik:{x:.06,y:.06,w:.45,h:.09}, renk:"#12263A", yazi:"#FFFFFF", vurgu:"#6FB0F5" },
-  { ad:"Alt geniş şerit", fiyat:{x:.06,y:.85,w:.88,h:.09}, ozellik:{x:.06,y:.72,w:.88,h:.11},
-    baslik:{x:.06,y:.05,w:.70,h:.09}, renk:"#1A1A1A", yazi:"#FFFFFF", vurgu:"#E3C05A" },
-  { ad:"Sol dikey", fiyat:{x:.05,y:.70,w:.36,h:.11}, ozellik:{x:.05,y:.30,w:.36,h:.36},
-    baslik:{x:.05,y:.06,w:.55,h:.09}, renk:"#2F1B12", yazi:"#FFF3E6", vurgu:"#F0A05C" },
-  { ad:"Toprak yeşili", fiyat:{x:.55,y:.80,w:.39,h:.11}, ozellik:{x:.06,y:.80,w:.45,h:.11},
-    baslik:{x:.06,y:.06,w:.60,h:.09}, renk:"#213A1B", yazi:"#F2FFEA", vurgu:"#B7E36B" },
-  { ad:"Sade beyaz", fiyat:{x:.06,y:.82,w:.42,h:.10}, ozellik:{x:.52,y:.82,w:.42,h:.10},
-    baslik:{x:.06,y:.06,w:.60,h:.09}, renk:"#FFFFFF", yazi:"#14201A", vurgu:"#2F7C4F" }
+/* ---- sunum kutu stilleri ---- */
+
+const KUTU_STIL = [
+  { ad:"Metalik plaka",
+    zemin:[[0,"#E9EAEC"],[.38,"#FBFCFD"],[.55,"#BFC3C8"],[1,"#E4E6E9"]],
+    cerceve:"#8A8F96", ic:"#FFFFFF", kalinlik:.045, kose:"duz",
+    ustRenk:"#7A2230", altRenk:"#14181C", golge:true },
+  { ad:"Kırmızı kurdele",
+    zemin:[[0,"#B4232F"],[.5,"#8E1620"],[1,"#5E0C13"]],
+    cerceve:"#F0C24A", ic:"rgba(255,255,255,.35)", kalinlik:.035, kose:"kesik",
+    ustRenk:"#FFD98A", altRenk:"#FFFFFF", golge:true },
+  { ad:"Altın çerçeve",
+    zemin:[[0,"#15181A"],[1,"#0A0C0D"]],
+    cerceve:"#D9B65A", ic:"rgba(217,182,90,.4)", kalinlik:.04, kose:"duz",
+    ustRenk:"#E7C978", altRenk:"#FFFFFF", golge:true },
+  { ad:"Buzlu cam",
+    zemin:[[0,"rgba(255,255,255,.32)"],[1,"rgba(255,255,255,.16)"]],
+    cerceve:"rgba(255,255,255,.75)", ic:null, kalinlik:.02, kose:"yuvarlak",
+    ustRenk:"#FFFFFF", altRenk:"#FFFFFF", golge:true },
+  { ad:"Toprak yeşili",
+    zemin:[[0,"#2C5A2A"],[1,"#14300F"]],
+    cerceve:"#9BD65C", ic:null, kalinlik:.028, kose:"yuvarlak",
+    ustRenk:"#B7E36B", altRenk:"#F2FFEA", golge:true },
+  { ad:"Gece bandı",
+    zemin:[[0,"#101315"],[1,"#05070A"]],
+    cerceve:"#E3C05A", ic:null, kalinlik:.018, kose:"duz",
+    ustRenk:"#E3C05A", altRenk:"#FFFFFF", golge:true },
+  { ad:"Beyaz sade",
+    zemin:[[0,"#FFFFFF"],[1,"#F0F1F0"]],
+    cerceve:"#2F7C4F", ic:null, kalinlik:.022, kose:"yuvarlak",
+    ustRenk:"#2F7C4F", altRenk:"#14201A", golge:false },
+  { ad:"Lacivert kurumsal",
+    zemin:[[0,"#16324C"],[1,"#0A1B2C"]],
+    cerceve:"#6FB0F5", ic:null, kalinlik:.025, kose:"kesik",
+    ustRenk:"#8FC6FF", altRenk:"#FFFFFF", golge:true }
 ];
+
+const CAP_TEMA = [
+  { ad:"Beyaz saydam", dis:"#FFFFFF", ic:"#FFFFFF", dolgu:.42, golge:"rgba(0,0,0,.45)", yaziRenk:"#FFFFFF", yaziGolge:"rgba(0,0,0,.6)" },
+  { ad:"Metalik / siyah şerit", dis:"#111111", ic:"#1B1B1B", dolgu:.62, golge:"rgba(255,255,255,.35)", yaziRenk:"#151515", yaziGolge:"rgba(255,255,255,.75)", metalik:true }
+];
+
+// kutu yolunu ciz (kose bicimine gore)
+function kutuYolu(x, w, h, kose){
+  const r = kose === "yuvarlak" ? Math.min(h*.28, w*.12) : kose === "kesik" ? Math.min(h*.30, w*.10) : 0;
+  x.beginPath();
+  if(kose === "kesik"){
+    x.moveTo(r,0); x.lineTo(w-r,0); x.lineTo(w,r); x.lineTo(w,h-r);
+    x.lineTo(w-r,h); x.lineTo(r,h); x.lineTo(0,h-r); x.lineTo(0,r); x.closePath();
+  }else if(r){
+    x.moveTo(r,0); x.arcTo(w,0,w,h,r); x.arcTo(w,h,0,h,r); x.arcTo(0,h,0,0,r); x.arcTo(0,0,w,0,r); x.closePath();
+  }else{
+    x.rect(0,0,w,h);
+  }
+}
+
+// metni kutuya sigdiran punto bul
+function sigdir(x, metin, genislik, baslangic){
+  let p = baslangic;
+  x.font = `700 ${p}px Arial`;
+  while(p > 8 && x.measureText(metin).width > genislik){ p -= 1; x.font = `700 ${p}px Arial`; }
+  return p;
+}
+
+// kutuyu canvas'a ciz
+function kutuCiz(x, o, w, h){
+  const st = KUTU_STIL[o.stil ?? 0];
+  x.save();
+  if(st.golge){ x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = h*.14; x.shadowOffsetY = h*.05; }
+  const gr = x.createLinearGradient(0,0,w*.25,h);
+  st.zemin.forEach(([d,c])=>gr.addColorStop(d,c));
+  kutuYolu(x, w, h, st.kose); x.fillStyle = gr; x.fill();
+  x.shadowColor = "transparent";
+  x.lineWidth = Math.max(2, h*st.kalinlik); x.strokeStyle = st.cerceve;
+  kutuYolu(x, w, h, st.kose); x.stroke();
+  if(st.ic){
+    const p = Math.max(4, h*.07);
+    x.save(); x.translate(p,p);
+    x.lineWidth = Math.max(1, h*.012); x.strokeStyle = st.ic;
+    kutuYolu(x, w-p*2, h-p*2, st.kose); x.stroke(); x.restore();
+  }
+  x.restore();
+
+  const pad = Math.max(10, w*.05);
+  const kullan = w - pad*2;
+  x.textBaseline = "top";
+  const ustP = sigdir(x, o.ust || "", kullan, Math.round(h*.17));
+  x.fillStyle = st.ustRenk; x.font = `700 ${ustP}px Arial`;
+  if(o.ust) x.fillText(o.ust, pad, h*.13);
+
+  const satirlar = String(o.alt || "").split("\n").filter(Boolean);
+  const enUzun = satirlar.reduce((a,b)=> a.length>b.length?a:b, "");
+  const altBas = Math.round(Math.min(h*.34, (h*.62)/Math.max(1,satirlar.length)));
+  const altP = sigdir(x, enUzun, kullan, altBas);
+  x.fillStyle = st.altRenk; x.font = `700 ${altP}px Arial`;
+  const bas = o.ust ? h*.13 + ustP*1.5 : h*.5 - (satirlar.length*altP*1.18)/2;
+  satirlar.forEach((t,i)=> x.fillText(t, pad, bas + i*altP*1.18));
+}
+
+// onizleme icin CSS karsiligi
+function kutuCss(o){
+  const st = KUTU_STIL[o.stil ?? 0];
+  const gr = st.zemin.map(([d,c])=>`${c} ${Math.round(d*100)}%`).join(",");
+  const kose = st.kose === "yuvarlak" ? "12px" : "0";
+  return `background:linear-gradient(150deg,${gr});border:2px solid ${st.cerceve};border-radius:${kose};
+    box-shadow:${st.golge?"0 6px 18px rgba(0,0,0,.45)":"none"};`;
+}
+
+
 
 let SUNUM = { parselId:null, ogeler:[], secili:null, sablon:0, arka:null, oran:0.75 };
 
-// capi seffaf PNG olarak uret: 1 sinir, 2 parcali, 3 parcali + yazi
-function capSeffafPng(p, parcalar, mod){
+// capi seffaf PNG olarak uret: mod 1 sinir, 2 parcali, 3 parcali + yazi
+function capSeffafPng(p, parcalar, mod, ayar){
+  const a = ayar || {};
+  const tema = CAP_TEMA[a.tema ?? 0];
+  const disRenk = a.dis || tema.dis;
+  const icRenk  = a.ic  || tema.ic;
+
   const g = p.geojson.geometry;
   const halka = (g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0]).slice();
   if(halka.length>1 && halka[0][0]===halka[halka.length-1][0] && halka[0][1]===halka[halka.length-1][1]) halka.pop();
   const M = metreye(halka);
   const minX = Math.min(...M.map(k=>k[0])), maxX = Math.max(...M.map(k=>k[0]));
   const minY = Math.min(...M.map(k=>k[1])), maxY = Math.max(...M.map(k=>k[1]));
-  const G = 1400, pay = 40;
-  const olcek = Math.min((G-pay*2)/((maxX-minX)||1), (G-pay*2)/((maxY-minY)||1));
+  const B = 1600, pay = 50;
+  const olcek = Math.min((B-pay*2)/((maxX-minX)||1), (B-pay*2)/((maxY-minY)||1));
   const W = Math.round((maxX-minX)*olcek + pay*2), H = Math.round((maxY-minY)*olcek + pay*2);
   const c = document.createElement("canvas"); c.width = W; c.height = H;
   const x = c.getContext("2d");
@@ -1884,29 +1984,41 @@ function capSeffafPng(p, parcalar, mod){
   const yol = pts => { x.beginPath(); pts.forEach((k,i)=> i?x.lineTo(k[0],k[1]):x.moveTo(k[0],k[1])); x.closePath(); };
 
   if(mod !== 1 && parcalar && parcalar.length > 1){
-    const dilimler = parcala(M, parcalar.map(o=>o.m2));
+    const dilimler = parcala(M, parcalar.map(o=>+o.m2 || 1));
     dilimler.forEach((d,i)=>{
       const e2 = d.map(E);
       yol(e2);
-      x.fillStyle = parcalar[i]?.renk || "#FFFFFF"; x.globalAlpha = .42; x.fill(); x.globalAlpha = 1;
-      x.lineWidth = 4; x.strokeStyle = "#FFFFFF"; x.stroke();
+      const pr = parcalar[i]?.renk || "#FFFFFF";
+      if(tema.metalik){
+        const gr = x.createLinearGradient(0,0,W*.3,H);
+        gr.addColorStop(0, pr); gr.addColorStop(.42, "#FFFFFF");
+        gr.addColorStop(.58, pr); gr.addColorStop(1, "#DDE0E3");
+        x.fillStyle = gr; x.globalAlpha = tema.dolgu;
+      }else{
+        x.fillStyle = pr; x.globalAlpha = a.dolgu ?? tema.dolgu;
+      }
+      x.fill(); x.globalAlpha = 1;
+      x.lineWidth = 5; x.strokeStyle = icRenk; x.stroke();
+
       if(mod === 3){
         const om = E(agirlikMerkezi(d));
         x.textAlign = "center"; x.textBaseline = "middle";
-        x.lineWidth = 6; x.strokeStyle = "rgba(0,0,0,.55)";
-        x.font = "700 56px Arial";
-        x.strokeText(parcalar[i]?.no ?? (i+1), om[0], om[1]-22);
-        x.fillStyle = "#FFFFFF"; x.fillText(parcalar[i]?.no ?? (i+1), om[0], om[1]-22);
-        x.font = "700 32px Arial";
-        x.strokeText(nf(Math.round(alanHesap(d))) + " m²", om[0], om[1]+28);
-        x.fillText(nf(Math.round(alanHesap(d))) + " m²", om[0], om[1]+28);
+        x.lineWidth = 7; x.strokeStyle = tema.yaziGolge;
+        x.font = "700 60px Arial";
+        const no = String(parcalar[i]?.no ?? (i+1));
+        x.strokeText(no, om[0], om[1]-24); x.fillStyle = tema.yaziRenk; x.fillText(no, om[0], om[1]-24);
+        x.font = "700 34px Arial";
+        const m2 = nf(Math.round(alanHesap(d))) + " m²";
+        x.strokeText(m2, om[0], om[1]+30); x.fillText(m2, om[0], om[1]+30);
       }
     });
+  }else if(mod === 1){
+    yol(N); x.fillStyle = tema.metalik ? "rgba(0,0,0,.18)" : "rgba(255,255,255,.14)"; x.fill();
   }
+
   yol(N);
-  x.lineWidth = 9; x.strokeStyle = "rgba(0,0,0,.45)"; x.stroke();
-  x.lineWidth = 5; x.strokeStyle = "#FFFFFF"; x.stroke();
-  if(mod === 1){ x.fillStyle = "rgba(255,255,255,.12)"; yol(N); x.fill(); }
+  x.lineWidth = 12; x.strokeStyle = tema.golge; x.stroke();
+  x.lineWidth = 6; x.strokeStyle = disRenk; x.stroke();
   return c.toDataURL("image/png");
 }
 
@@ -1916,48 +2028,66 @@ async function sunum(parselId){
   const { data:et } = await sb.from("parcel_tags").select("tags(name)").eq("parcel_id", parselId);
   const etiketler = (et||[]).map(e=>e.tags?.name).filter(Boolean);
   const { data:yl } = await sb.from("parcel_years").select("*").eq("parcel_id",parselId).order("yil",{ascending:false});
-  const y = yl?.[0] || {};
-  SUNUM = { parselId, ogeler:[], secili:null, sablon:0, arka:null, oran:0.75, p, y, etiketler };
+  SUNUM = { parselId, ogeler:[], secili:null, arka:null, oran:0.75, p, y: yl?.[0] || {}, etiketler };
+  sunumEkran();
+}
 
-  app.innerHTML = head("Sunum görseli", `go('parsel','${parselId}')`) + `
-    <p class="ipuc">Önce arka plan görselini yükle, sonra parçaları sürükleyip yerleştir.</p>
-    <div id="tuval"><div style="padding:60px 20px;text-align:center;color:var(--ink-3);font-size:13px">
-      Arka plan görseli seçilmedi</div></div>
+function sunumEkran(){
+  const p = SUNUM.p, etiketler = SUNUM.etiketler || [];
+  app.innerHTML = head("Sunum görseli", `go('parsel','${SUNUM.parselId}')`) + `
+    <p class="ipuc">Arka planı yükle, parçaları sürükleyip yerleştir. Seçili parçayı sağ alttan büyütür, sol alttan döndürür, sağ üstten silersin.</p>
+    <div id="tuval"></div>
 
     <div class="acts" style="margin-bottom:14px">
-      <button class="pri" id="arkaSec">Arka plan yükle</button>
+      <button class="pri" id="arkaSec">${SUNUM.arka?"Arka planı değiştir":"Arka plan yükle"}</button>
       <button id="capEkle">Çap ekle</button>
-      <button id="yaziEkle">Yazı ekle</button>
+      <button id="yaziEkle">Serbest yazı</button>
     </div>
 
-    <h3 style="font-size:14px;margin:18px 0 8px">Şablon</h3>
-    <div class="sablonlar" id="sabList"></div>
-
-    <h3 style="font-size:14px;margin:18px 0 8px">Hazır kutular</h3>
+    <h3 style="font-size:14px;margin:18px 0 8px">Kutu ekle</h3>
+    <div class="field"><label>Kutu tasarımı</label><select id="kstil">
+      ${KUTU_STIL.map((k,i)=>`<option value="${i}">${k.ad}</option>`).join("")}</select></div>
     <div class="acts" style="margin:0 0 14px">
-      <button id="fiyatKutu">Fiyat kutusu</button>
-      <button id="ozellikKutu">Özellik kutusu</button>
       <button id="baslikKutu">Başlık</button>
+      <button id="fiyatKutu">Fiyat</button>
+      <button id="ozellikKutu">Özellikler</button>
+      <button id="serbestKutu">Boş kutu</button>
     </div>
 
     ${etiketler.length?`<h3 style="font-size:14px;margin:18px 0 8px">Etiketler</h3>
     <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
-      ${etiketler.map(t=>`<button class="pill gold" onclick="sunumYazi('${esc(t)}')">${esc(t)}</button>`).join("")}
+      ${etiketler.map(t=>`<button class="pill gold" onclick="sunumKutu('serbest','ÖZELLİK','${esc(t)}')">${esc(t)}</button>`).join("")}
     </div>`:""}
 
-    <button class="btn" id="uret">Görseli üret ve kaydet</button>
-    <p class="ipuc" style="margin-top:12px">Seçili parçayı sağ alttan büyütür, sol alttan döndürür, sağ üstten silersin.</p>`;
+    ${SUNUM.secili!=null && SUNUM.ogeler[SUNUM.secili] && SUNUM.ogeler[SUNUM.secili].tur!=="cap" ? `
+      <h3 style="font-size:14px;margin:18px 0 8px">Seçili kutu</h3>
+      <div class="card">
+        <div class="field"><label>Üst yazı</label><input id="dzUst" value="${esc(SUNUM.ogeler[SUNUM.secili].ust||"")}"></div>
+        <div class="field" style="margin:0"><label>Alt yazı (satır satır yazabilirsin)</label>
+          <textarea id="dzAlt" rows="3">${esc(SUNUM.ogeler[SUNUM.secili].alt||"")}</textarea></div>
+        <div class="field" style="margin:12px 0 0"><label>Tasarım</label><select id="dzStil">
+          ${KUTU_STIL.map((k,i)=>`<option value="${i}"${i===(SUNUM.ogeler[SUNUM.secili].stil??0)?" selected":""}>${k.ad}</option>`).join("")}</select></div>
+      </div>` : ""}
 
-  document.getElementById("sabList").innerHTML = SABLONLAR.map((s2,i)=>
-    `<button class="sablon${i===0?" aktif":""}" onclick="sunumSablon(${i})">${s2.ad}</button>`).join("");
+    <button class="btn" id="uret" style="margin-top:8px">Görseli üret ve kaydet</button>`;
 
   document.getElementById("arkaSec").onclick = sunumArka;
   document.getElementById("capEkle").onclick = sunumCap;
-  document.getElementById("yaziEkle").onclick = () => sunumYazi("");
+  document.getElementById("yaziEkle").onclick = () => sunumKutu("serbest","","Yazı");
+  document.getElementById("baslikKutu").onclick = () => sunumKutu("baslik");
   document.getElementById("fiyatKutu").onclick = () => sunumKutu("fiyat");
   document.getElementById("ozellikKutu").onclick = () => sunumKutu("ozellik");
-  document.getElementById("baslikKutu").onclick = () => sunumKutu("baslik");
+  document.getElementById("serbestKutu").onclick = () => sunumKutu("serbest","BAŞLIK","İçerik");
   document.getElementById("uret").onclick = sunumUret;
+
+  const dzU = document.getElementById("dzUst"), dzA = document.getElementById("dzAlt"), dzS = document.getElementById("dzStil");
+  if(dzU){
+    const o = SUNUM.ogeler[SUNUM.secili];
+    dzU.oninput = () => { o.ust = dzU.value; sunumCiz(); };
+    dzA.oninput = () => { o.alt = dzA.value; sunumCiz(); };
+    dzS.onchange = () => { o.stil = +dzS.value; sunumCiz(); };
+  }
+  sunumCiz();
 }
 
 async function sunumArka(){
@@ -1973,78 +2103,140 @@ async function sunumArka(){
   img.src = url;
 }
 
-function sunumSablon(i){
-  SUNUM.sablon = i;
-  document.querySelectorAll(".sablon").forEach((b,j)=>b.classList.toggle("aktif", i===j));
-  SUNUM.ogeler.filter(o=>o.tur!=="cap").forEach(o=>{
-    const s2 = SABLONLAR[i], k = s2[o.rol];
-    if(k){ o.x=k.x; o.y=k.y; o.w=k.w; o.h=k.h; }
-    o.renk = s2.renk; o.yaziRenk = s2.yazi; o.vurgu = s2.vurgu;
-  });
-  sunumCiz();
-}
-
-async function sunumCap(){
+function sunumCap(){
   if(!SUNUM.p.geojson) return toast("Bu parselin sınır çizimi yok");
-  const mod = +prompt("Çap nasıl gelsin?\n1 = sadece sınır çizgisi\n2 = parçalı, yazısız\n3 = parçalı, numara ve m² yazılı", "3");
-  if(!mod) return;
-  let parcalar = null;
-  if(mod !== 1){
-    const n = +prompt("Kaç parça?", "1") || 1;
-    if(n > 1){
-      const toplam = +SUNUM.p.alan_m2 || 0, pay = Math.round(toplam/n);
-      parcalar = Array.from({length:n},(_,i)=>({ no:String(i+1), m2: i===n-1 ? toplam-pay*(n-1) : pay, renk:"#FFFFFF" }));
+  const kayitli = Array.isArray(SUNUM.p.cap_config) ? SUNUM.p.cap_config : null;
+  const toplam = +SUNUM.p.alan_m2 || 0;
+
+  app.innerHTML = head("Çap ayarı", "geriSunum()") + `
+    <div class="field"><label>Nasıl görünsün?</label><select id="cmod">
+      <option value="3">Parçalı · numara ve m² yazılı</option>
+      <option value="2">Parçalı · yazısız</option>
+      <option value="1">Sadece sınır çizgisi</option></select></div>
+
+    <div class="field"><label>Tema</label><select id="ctema">
+      ${CAP_TEMA.map((t,i)=>`<option value="${i}">${t.ad}</option>`).join("")}</select></div>
+
+    <div id="parcaBolum">
+      <div class="field"><label>Parçalar nereden gelsin?</label><select id="ckaynak">
+        ${kayitli?`<option value="kayit">Uygulamada çizdiğin çap (${kayitli.length} parça)</option>`:""}
+        <option value="oto">Yeniden böl · parça sayısını gir</option>
+      </select></div>
+      <div class="field" id="cadetKutu" style="${kayitli?"display:none":""}">
+        <label>Parça sayısı</label><input id="cadet" type="number" min="1" max="60" value="${kayitli?kayitli.length:4}"></div>
+      <h3 style="font-size:14px;margin:18px 0 8px">Parça renkleri</h3>
+      <div id="cparcalar"></div>
+    </div>
+
+    <div class="row2">
+      <div class="field"><label>Dış çizgi rengi</label><input type="color" id="cdis" value="#FFFFFF" style="height:46px"></div>
+      <div class="field"><label>Parça çizgi rengi</label><input type="color" id="cic" value="#FFFFFF" style="height:46px"></div>
+    </div>
+    <div class="field"><label>Dolgu koyuluğu</label>
+      <input type="range" id="cdolgu" min="0" max="90" value="42" style="padding:0"></div>
+
+    <button class="btn" id="capOnay">Çapı tuvale ekle</button>`;
+
+  const g = k => document.getElementById(k);
+  const listeCiz = () => {
+    const kayitMi = g("ckaynak") && g("ckaynak").value === "kayit";
+    const n = kayitMi ? kayitli.length : Math.max(1, Math.min(60, +g("cadet").value || 1));
+    g("cadetKutu").style.display = kayitMi ? "none" : "block";
+    const pay = Math.round(toplam/n);
+    g("cparcalar").innerHTML = n < 2 ? `<p class="ipuc">Tek parça, renk seçimine gerek yok.</p>` :
+      Array.from({length:n},(_,i)=>{
+        const k = kayitMi ? kayitli[i] : null;
+        return `<div class="card" style="display:flex;gap:10px;align-items:center;padding:10px">
+          <input id="cno${i}" value="${k?esc(k.no):i+1}" style="width:50px;text-align:center;padding:9px 4px">
+          <input id="cm${i}" inputmode="decimal" value="${k?Math.round(k.m2):(i===n-1?toplam-pay*(n-1):pay)}" style="flex:1">
+          <input type="color" id="cr${i}" value="${k?.renk && k.renk!=="#FFFFFF" ? k.renk : "#FFFFFF"}" style="width:46px;height:42px;padding:3px;border-radius:9px">
+        </div>`;
+      }).join("");
+  };
+  if(g("ckaynak")) g("ckaynak").onchange = listeCiz;
+  g("cadet").oninput = listeCiz;
+  g("cmod").onchange = () => { g("parcaBolum").style.display = g("cmod").value === "1" ? "none" : "block"; };
+  listeCiz();
+
+  g("capOnay").onclick = () => {
+    const mod = +g("cmod").value;
+    let parcalar = null;
+    if(mod !== 1){
+      const kayitMi = g("ckaynak") && g("ckaynak").value === "kayit";
+      const n = kayitMi ? kayitli.length : Math.max(1, Math.min(60, +g("cadet").value || 1));
+      if(n > 1) parcalar = Array.from({length:n},(_,i)=>({
+        no: g("cno"+i)?.value.trim() || String(i+1),
+        m2: sayiCoz(g("cm"+i)?.value) || 1,
+        renk: g("cr"+i)?.value || "#FFFFFF"
+      }));
     }
+    const png = capSeffafPng(SUNUM.p, parcalar, mod, {
+      tema:+g("ctema").value, dis:g("cdis").value, ic:g("cic").value, dolgu:(+g("cdolgu").value)/100
+    });
+    SUNUM.ogeler.push({ tur:"cap", rol:"cap", src:png, x:.20, y:.24, w:.60, h:.48, rot:0 });
+    SUNUM.secili = SUNUM.ogeler.length-1;
+    sunumEkran();
+  };
+}
+
+function geriSunum(){ sunumEkran(); }
+
+function sunumKutu(rol, ust, alt){
+  const p = SUNUM.p, y = SUNUM.y || {};
+  const stil = +(document.getElementById("kstil")?.value ?? 0);
+  let u = ust ?? "", a = alt ?? "", k = { x:.08, y:.44, w:.55, h:.13 };
+  if(rol === "baslik"){
+    u = `${duzgun(p.mahalle).toLocaleUpperCase("tr")} · ${p.ada||""}/${p.parsel}`;
+    a = `${nf(p.alan_m2)} m²  ·  ${p.nitelik||""}`;
+    k = { x:.06, y:.04, w:.70, h:.13 };
   }
-  const png = capSeffafPng(SUNUM.p, parcalar, mod);
-  SUNUM.ogeler.push({ tur:"cap", rol:"cap", src:png, x:.22, y:.25, w:.56, h:.45, rot:0 });
+  if(rol === "fiyat"){
+    u = "FİYAT";
+    a = y.toplam_fiyat ? nf(y.toplam_fiyat) + " ₺" : "Fiyat girin";
+    k = { x:.06, y:.82, w:.46, h:.12 };
+  }
+  if(rol === "ozellik"){
+    u = "ÖZELLİKLER";
+    a = (SUNUM.etiketler||[]).slice(0,5).join("\n") || "Özellik ekleyin";
+    k = { x:.52, y:.66, w:.42, h:.24 };
+  }
+  SUNUM.ogeler.push({ tur:"kutu", rol, ust:u, alt:a, stil, ...k, rot:0 });
   SUNUM.secili = SUNUM.ogeler.length-1;
-  sunumCiz();
-}
-
-function sunumYazi(metin){
-  const s2 = SABLONLAR[SUNUM.sablon];
-  SUNUM.ogeler.push({ tur:"yazi", rol:"serbest", metin: metin || "Yazı", x:.10, y:.45, w:.45, h:.09, rot:0,
-    renk:s2.renk, yaziRenk:s2.yazi, vurgu:s2.vurgu, boy:26 });
-  SUNUM.secili = SUNUM.ogeler.length-1;
-  sunumCiz();
-}
-
-function sunumKutu(rol){
-  const s2 = SABLONLAR[SUNUM.sablon], k = s2[rol] || { x:.1, y:.5, w:.5, h:.12 };
-  const y = SUNUM.y || {}, p = SUNUM.p;
-  let ust = "", alt = "";
-  if(rol === "fiyat"){ ust = "FİYAT"; alt = y.toplam_fiyat ? nf(y.toplam_fiyat) + " ₺" : "Fiyat girin"; }
-  if(rol === "baslik"){ ust = `${duzgun(p.mahalle)} ${p.ada||""}/${p.parsel}`; alt = nf(p.alan_m2) + " m² · " + (p.nitelik||""); }
-  if(rol === "ozellik"){ ust = "ÖZELLİKLER"; alt = (SUNUM.etiketler||[]).slice(0,4).join("\n") || "Özellik ekleyin"; }
-  SUNUM.ogeler.push({ tur:"kutu", rol, ust, alt, ...k, rot:0, renk:s2.renk, yaziRenk:s2.yazi, vurgu:s2.vurgu });
-  SUNUM.secili = SUNUM.ogeler.length-1;
-  sunumCiz();
+  sunumEkran();
 }
 
 function sunumCiz(){
   const t = document.getElementById("tuval");
-  if(!SUNUM.arka){ return; }
+  if(!t) return;
+  if(!SUNUM.arka){
+    t.innerHTML = `<div style="padding:60px 20px;text-align:center;color:var(--ink-3);font-size:13px">Arka plan görseli seçilmedi</div>`;
+    t.style.height = "auto";
+    return;
+  }
   t.innerHTML = `<img class="arka" src="${SUNUM.arka.url}">`;
   const W = t.clientWidth, H = W * SUNUM.oran;
+  t.style.height = H + "px";
 
   SUNUM.ogeler.forEach((o,i)=>{
     const d = document.createElement("div");
     d.className = "oge" + (SUNUM.secili===i ? " sec" : "");
-    d.style.left = (o.x*W) + "px"; d.style.top = (o.y*H) + "px";
-    d.style.width = (o.w*W) + "px"; d.style.height = (o.h*H) + "px";
+    d.style.left = (o.x*W)+"px"; d.style.top = (o.y*H)+"px";
+    d.style.width = (o.w*W)+"px"; d.style.height = (o.h*H)+"px";
     d.style.transform = `rotate(${o.rot||0}deg)`;
     d.dataset.i = i;
 
-    if(o.tur === "cap") d.innerHTML = `<img src="${o.src}">`;
-    else if(o.tur === "kutu") d.innerHTML =
-      `<div class="kutu" style="background:${o.renk};color:${o.yaziRenk}">
-         <div style="font-size:11px;letter-spacing:.12em;color:${o.vurgu};font-weight:700">${esc(o.ust)}</div>
-         <div style="font-size:15px;font-weight:700;white-space:pre-line;line-height:1.25">${esc(o.alt)}</div></div>`;
-    else d.innerHTML =
-      `<div class="kutu" style="background:${o.renk};color:${o.yaziRenk};align-items:flex-start">
-         <div contenteditable style="font-size:15px;font-weight:700;outline:none;width:100%"
-              oninput="SUNUM.ogeler[${i}].metin=this.textContent">${esc(o.metin)}</div></div>`;
+    if(o.tur === "cap"){
+      d.innerHTML = `<img src="${o.src}">`;
+    }else{
+      const kh = o.h*H, st = KUTU_STIL[o.stil ?? 0];
+      const satirlar = String(o.alt||"").split("\n").filter(Boolean);
+      const altP = Math.max(9, Math.min(kh*.30, (kh*.60)/Math.max(1,satirlar.length)));
+      d.innerHTML = `<div class="kutu" style="${kutuCss(o)}justify-content:center">
+        ${o.ust?`<div style="color:${st.ustRenk};font-weight:700;letter-spacing:.08em;
+          font-size:${Math.max(8,kh*.16)}px;line-height:1.1;white-space:nowrap;overflow:hidden">${esc(o.ust)}</div>`:""}
+        <div style="color:${st.altRenk};font-weight:700;white-space:pre-line;line-height:1.18;
+          font-size:${altP}px;overflow:hidden">${esc(o.alt||"")}</div></div>`;
+    }
 
     if(SUNUM.secili === i) d.innerHTML +=
       `<div class="tut boy" data-tut="boy">⤢</div><div class="tut don" data-tut="don">⟳</div>
@@ -2052,7 +2244,6 @@ function sunumCiz(){
     t.appendChild(d);
   });
 
-  t.style.height = H + "px";
   sunumOlaylar(t, W, H);
 }
 
@@ -2061,8 +2252,8 @@ function sunumOlaylar(t, W, H){
     d.onpointerdown = e => {
       const i = +d.dataset.i, o = SUNUM.ogeler[i];
       const tut = e.target.dataset?.tut;
-      if(tut === "kapat"){ SUNUM.ogeler.splice(i,1); SUNUM.secili = null; sunumCiz(); return; }
-      SUNUM.secili = i;
+      if(tut === "kapat"){ SUNUM.ogeler.splice(i,1); SUNUM.secili = null; sunumEkran(); return; }
+      if(SUNUM.secili !== i){ SUNUM.secili = i; sunumEkran(); return; }
       e.preventDefault(); d.setPointerCapture(e.pointerId);
       const bx = t.getBoundingClientRect();
       const b = { x:o.x, y:o.y, w:o.w, h:o.h, rot:o.rot||0 };
@@ -2108,23 +2299,7 @@ async function sunumUret(){
       const im = await yukleGorsel(o.src);
       x.drawImage(im, 0, 0, ow, oh);
     }else{
-      const r = Math.min(18, oh*0.22);
-      x.fillStyle = o.renk; x.beginPath();
-      x.moveTo(r,0); x.arcTo(ow,0,ow,oh,r); x.arcTo(ow,oh,0,oh,r);
-      x.arcTo(0,oh,0,0,r); x.arcTo(0,0,ow,0,r); x.closePath(); x.fill();
-      const pad = Math.max(10, ow*0.045);
-      if(o.tur === "kutu"){
-        x.fillStyle = o.vurgu; x.font = `700 ${Math.round(oh*0.16)}px Arial`;
-        x.textBaseline = "top"; x.fillText(o.ust, pad, pad);
-        x.fillStyle = o.yaziRenk;
-        const bY = Math.round(oh*0.30);
-        x.font = `700 ${bY}px Arial`;
-        String(o.alt).split("\n").forEach((t2,i)=> x.fillText(t2, pad, pad + oh*0.26 + i*bY*1.2));
-      }else{
-        x.fillStyle = o.yaziRenk; x.textBaseline = "middle";
-        x.font = `700 ${Math.round(oh*0.42)}px Arial`;
-        x.fillText(o.metin || "", pad, oh/2);
-      }
+      kutuCiz(x, o, ow, oh);
     }
     x.restore();
   }
@@ -2361,6 +2536,7 @@ async function capCiz(parselId, parcalar){
     const dosya = new File([blob], `cap-${p.mahalle||""}-${p.ada||0}-${p.parsel}.pdf`.replace(/\s+/g,"_"),
                            { type:"application/pdf" });
     await dosyaYukle(dosya, "cap", parselId);
+    if(parcalar && parcalar.length) await sb.from("parcels").update({ cap_config: parcalar }).eq("id", parselId);
     toast("Çap hazırlandı ve parsele eklendi");
     go("cap");
   }catch(e){ toast("Olmadı: " + (e.message||e)); }
