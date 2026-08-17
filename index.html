@@ -172,6 +172,26 @@ select option{background:#101614;color:var(--ink)}
 .dosya .ops button svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .dosya .ops button.kirmizi{color:var(--red);border-color:rgba(240,112,92,.35);background:var(--red-soft)}
 
+
+/* ---- sunum düzenleyici ---- */
+#tuval{position:relative;width:100%;border-radius:var(--r);overflow:hidden;border:1px solid var(--cizgi-2);
+  background:#0B100E;touch-action:none;user-select:none;margin-bottom:12px}
+#tuval img.arka{width:100%;display:block;pointer-events:none}
+.oge{position:absolute;transform-origin:center center;touch-action:none;cursor:move}
+.oge.sec{outline:2px dashed var(--gold);outline-offset:3px}
+.oge img{width:100%;height:100%;display:block;pointer-events:none}
+.oge .kutu{width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;
+  padding:8px 12px;border-radius:10px;box-sizing:border-box;overflow:hidden}
+.tut{position:absolute;width:26px;height:26px;border-radius:50%;background:var(--gold);border:2px solid #fff;
+  display:grid;place-items:center;color:#1A1403;font-size:13px;font-weight:700}
+.tut.boy{right:-13px;bottom:-13px;cursor:nwse-resize}
+.tut.don{left:-13px;bottom:-13px}
+.tut.kapat{right:-13px;top:-13px;background:var(--red);color:#fff}
+.sablonlar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.sablon{border:1px solid var(--cizgi-2);border-radius:10px;padding:8px 6px;font-size:11px;text-align:center;
+  background:var(--cam-2);color:var(--ink)}
+.sablon.aktif{border-color:var(--gold);background:var(--gold-soft);color:var(--gold)}
+
 /* ---- harita ---- */
 #map,#minimap{height:300px;border-radius:var(--r);border:1px solid var(--cizgi-2);overflow:hidden;background:var(--cam);margin-bottom:14px}
 #minimap{height:240px}
@@ -244,7 +264,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "v1.8";
+const SURUM = "v1.9";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1051,7 +1071,8 @@ async function parselDetay(id){
         <button onclick="kmlIndirParsel('${id}')">KML indir</button>
         <button onclick="earthAcKoord(${p.lat},${p.lng})">Earth'te aç</button></div>`:""}
       ${y && ME.role==='admin' ? `<button class="btn ghost" style="margin-top:10px"
-        onclick="SONPARSELID='${id}';go('fiyatDuzen','${y.id}')">Tapu bilgilerini düzenle</button>` : ""}
+        onclick="SONPARSELID='${id}';go('fiyatDuzen','${y.id}')">Tapu bilgilerini düzenle</button>
+      <button class="btn ghost" style="margin-top:8px" onclick="go('sunum','${id}')">Sunum görseli hazırla</button>` : ""}
     </div>
 
     ${y ? `<div class="card">
@@ -1421,13 +1442,13 @@ const LANDUSE_AD = { farmland:"Tarım arazisi", meadow:"Çayır", forest:"Orman"
 function raporPng(baslik, altBaslik, bolumler){
   const G = 1000;
   const SAYFA = Math.round(G * 277 / 190);     // A4'te bir sayfanin piksel yuksekligi
-  const UST = 70, ALT = 70, satirY = 34;
+  const UST = 90, ALT = 130, satirY = 34;
 
   const yerlestir = (ciz) => {
     let sayfa = 0, y = 0;
     const dip = () => (sayfa+1)*SAYFA - ALT;
     const yeniSayfa = () => { sayfa++; y = sayfa*SAYFA + UST; };
-    const yer = h => { if(y + h > dip()) yeniSayfa(); };
+    const yer = h => { if(y + h + 26 > dip()) yeniSayfa(); };
 
     // baslik yalnizca ilk sayfada
     y = 100;
@@ -1435,7 +1456,7 @@ function raporPng(baslik, altBaslik, bolumler){
     y = 250;
 
     bolumler.forEach(b=>{
-      yer(56 + satirY);                         // baslik yalniz kalmasin
+      yer(56 + satirY*2);                       // baslik ve ilk iki satir birlikte kalsin
       ciz && ciz.bolum(b.baslik, y, sayfa);
       y += 56;
       b.satirlar.forEach(([k,v])=>{
@@ -1824,6 +1845,304 @@ async function emsalHesapla(p){
   if(p) await parseleIliskilendir(p, blob, ad3, "arastirma");
   toast("Emsal raporu indirildi");
 }
+
+
+/* ================= sunum görseli ================= */
+
+const SABLONLAR = [
+  { ad:"Klasik alt bant", fiyat:{x:.06,y:.80,w:.44,h:.11}, ozellik:{x:.06,y:.63,w:.55,h:.14},
+    baslik:{x:.06,y:.05,w:.60,h:.10}, renk:"#0E3B24", yazi:"#FFFFFF", vurgu:"#8DC63F" },
+  { ad:"Sağ üst kart", fiyat:{x:.55,y:.06,w:.39,h:.11}, ozellik:{x:.55,y:.19,w:.39,h:.20},
+    baslik:{x:.06,y:.06,w:.45,h:.09}, renk:"#12263A", yazi:"#FFFFFF", vurgu:"#6FB0F5" },
+  { ad:"Alt geniş şerit", fiyat:{x:.06,y:.85,w:.88,h:.09}, ozellik:{x:.06,y:.72,w:.88,h:.11},
+    baslik:{x:.06,y:.05,w:.70,h:.09}, renk:"#1A1A1A", yazi:"#FFFFFF", vurgu:"#E3C05A" },
+  { ad:"Sol dikey", fiyat:{x:.05,y:.70,w:.36,h:.11}, ozellik:{x:.05,y:.30,w:.36,h:.36},
+    baslik:{x:.05,y:.06,w:.55,h:.09}, renk:"#2F1B12", yazi:"#FFF3E6", vurgu:"#F0A05C" },
+  { ad:"Toprak yeşili", fiyat:{x:.55,y:.80,w:.39,h:.11}, ozellik:{x:.06,y:.80,w:.45,h:.11},
+    baslik:{x:.06,y:.06,w:.60,h:.09}, renk:"#213A1B", yazi:"#F2FFEA", vurgu:"#B7E36B" },
+  { ad:"Sade beyaz", fiyat:{x:.06,y:.82,w:.42,h:.10}, ozellik:{x:.52,y:.82,w:.42,h:.10},
+    baslik:{x:.06,y:.06,w:.60,h:.09}, renk:"#FFFFFF", yazi:"#14201A", vurgu:"#2F7C4F" }
+];
+
+let SUNUM = { parselId:null, ogeler:[], secili:null, sablon:0, arka:null, oran:0.75 };
+
+// capi seffaf PNG olarak uret: 1 sinir, 2 parcali, 3 parcali + yazi
+function capSeffafPng(p, parcalar, mod){
+  const g = p.geojson.geometry;
+  const halka = (g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0]).slice();
+  if(halka.length>1 && halka[0][0]===halka[halka.length-1][0] && halka[0][1]===halka[halka.length-1][1]) halka.pop();
+  const M = metreye(halka);
+  const minX = Math.min(...M.map(k=>k[0])), maxX = Math.max(...M.map(k=>k[0]));
+  const minY = Math.min(...M.map(k=>k[1])), maxY = Math.max(...M.map(k=>k[1]));
+  const G = 1400, pay = 40;
+  const olcek = Math.min((G-pay*2)/((maxX-minX)||1), (G-pay*2)/((maxY-minY)||1));
+  const W = Math.round((maxX-minX)*olcek + pay*2), H = Math.round((maxY-minY)*olcek + pay*2);
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d");
+  const E = m => [ pay + (m[0]-minX)*olcek, pay + (maxY-m[1])*olcek ];
+  const N = M.map(E);
+  const yol = pts => { x.beginPath(); pts.forEach((k,i)=> i?x.lineTo(k[0],k[1]):x.moveTo(k[0],k[1])); x.closePath(); };
+
+  if(mod !== 1 && parcalar && parcalar.length > 1){
+    const dilimler = parcala(M, parcalar.map(o=>o.m2));
+    dilimler.forEach((d,i)=>{
+      const e2 = d.map(E);
+      yol(e2);
+      x.fillStyle = parcalar[i]?.renk || "#FFFFFF"; x.globalAlpha = .42; x.fill(); x.globalAlpha = 1;
+      x.lineWidth = 4; x.strokeStyle = "#FFFFFF"; x.stroke();
+      if(mod === 3){
+        const om = E(agirlikMerkezi(d));
+        x.textAlign = "center"; x.textBaseline = "middle";
+        x.lineWidth = 6; x.strokeStyle = "rgba(0,0,0,.55)";
+        x.font = "700 56px Arial";
+        x.strokeText(parcalar[i]?.no ?? (i+1), om[0], om[1]-22);
+        x.fillStyle = "#FFFFFF"; x.fillText(parcalar[i]?.no ?? (i+1), om[0], om[1]-22);
+        x.font = "700 32px Arial";
+        x.strokeText(nf(Math.round(alanHesap(d))) + " m²", om[0], om[1]+28);
+        x.fillText(nf(Math.round(alanHesap(d))) + " m²", om[0], om[1]+28);
+      }
+    });
+  }
+  yol(N);
+  x.lineWidth = 9; x.strokeStyle = "rgba(0,0,0,.45)"; x.stroke();
+  x.lineWidth = 5; x.strokeStyle = "#FFFFFF"; x.stroke();
+  if(mod === 1){ x.fillStyle = "rgba(255,255,255,.12)"; yol(N); x.fill(); }
+  return c.toDataURL("image/png");
+}
+
+async function sunum(parselId){
+  const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
+  if(!p) return;
+  const { data:et } = await sb.from("parcel_tags").select("tags(name)").eq("parcel_id", parselId);
+  const etiketler = (et||[]).map(e=>e.tags?.name).filter(Boolean);
+  const { data:yl } = await sb.from("parcel_years").select("*").eq("parcel_id",parselId).order("yil",{ascending:false});
+  const y = yl?.[0] || {};
+  SUNUM = { parselId, ogeler:[], secili:null, sablon:0, arka:null, oran:0.75, p, y, etiketler };
+
+  app.innerHTML = head("Sunum görseli", `go('parsel','${parselId}')`) + `
+    <p class="ipuc">Önce arka plan görselini yükle, sonra parçaları sürükleyip yerleştir.</p>
+    <div id="tuval"><div style="padding:60px 20px;text-align:center;color:var(--ink-3);font-size:13px">
+      Arka plan görseli seçilmedi</div></div>
+
+    <div class="acts" style="margin-bottom:14px">
+      <button class="pri" id="arkaSec">Arka plan yükle</button>
+      <button id="capEkle">Çap ekle</button>
+      <button id="yaziEkle">Yazı ekle</button>
+    </div>
+
+    <h3 style="font-size:14px;margin:18px 0 8px">Şablon</h3>
+    <div class="sablonlar" id="sabList"></div>
+
+    <h3 style="font-size:14px;margin:18px 0 8px">Hazır kutular</h3>
+    <div class="acts" style="margin:0 0 14px">
+      <button id="fiyatKutu">Fiyat kutusu</button>
+      <button id="ozellikKutu">Özellik kutusu</button>
+      <button id="baslikKutu">Başlık</button>
+    </div>
+
+    ${etiketler.length?`<h3 style="font-size:14px;margin:18px 0 8px">Etiketler</h3>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
+      ${etiketler.map(t=>`<button class="pill gold" onclick="sunumYazi('${esc(t)}')">${esc(t)}</button>`).join("")}
+    </div>`:""}
+
+    <button class="btn" id="uret">Görseli üret ve kaydet</button>
+    <p class="ipuc" style="margin-top:12px">Seçili parçayı sağ alttan büyütür, sol alttan döndürür, sağ üstten silersin.</p>`;
+
+  document.getElementById("sabList").innerHTML = SABLONLAR.map((s2,i)=>
+    `<button class="sablon${i===0?" aktif":""}" onclick="sunumSablon(${i})">${s2.ad}</button>`).join("");
+
+  document.getElementById("arkaSec").onclick = sunumArka;
+  document.getElementById("capEkle").onclick = sunumCap;
+  document.getElementById("yaziEkle").onclick = () => sunumYazi("");
+  document.getElementById("fiyatKutu").onclick = () => sunumKutu("fiyat");
+  document.getElementById("ozellikKutu").onclick = () => sunumKutu("ozellik");
+  document.getElementById("baslikKutu").onclick = () => sunumKutu("baslik");
+  document.getElementById("uret").onclick = sunumUret;
+}
+
+async function sunumArka(){
+  const f = await dosyaSec("image/*");
+  if(!f) return;
+  const url = URL.createObjectURL(f);
+  const img = new Image();
+  img.onload = () => {
+    SUNUM.arka = { url, w:img.naturalWidth, h:img.naturalHeight };
+    SUNUM.oran = img.naturalHeight / img.naturalWidth;
+    sunumCiz();
+  };
+  img.src = url;
+}
+
+function sunumSablon(i){
+  SUNUM.sablon = i;
+  document.querySelectorAll(".sablon").forEach((b,j)=>b.classList.toggle("aktif", i===j));
+  SUNUM.ogeler.filter(o=>o.tur!=="cap").forEach(o=>{
+    const s2 = SABLONLAR[i], k = s2[o.rol];
+    if(k){ o.x=k.x; o.y=k.y; o.w=k.w; o.h=k.h; }
+    o.renk = s2.renk; o.yaziRenk = s2.yazi; o.vurgu = s2.vurgu;
+  });
+  sunumCiz();
+}
+
+async function sunumCap(){
+  if(!SUNUM.p.geojson) return toast("Bu parselin sınır çizimi yok");
+  const mod = +prompt("Çap nasıl gelsin?\n1 = sadece sınır çizgisi\n2 = parçalı, yazısız\n3 = parçalı, numara ve m² yazılı", "3");
+  if(!mod) return;
+  let parcalar = null;
+  if(mod !== 1){
+    const n = +prompt("Kaç parça?", "1") || 1;
+    if(n > 1){
+      const toplam = +SUNUM.p.alan_m2 || 0, pay = Math.round(toplam/n);
+      parcalar = Array.from({length:n},(_,i)=>({ no:String(i+1), m2: i===n-1 ? toplam-pay*(n-1) : pay, renk:"#FFFFFF" }));
+    }
+  }
+  const png = capSeffafPng(SUNUM.p, parcalar, mod);
+  SUNUM.ogeler.push({ tur:"cap", rol:"cap", src:png, x:.22, y:.25, w:.56, h:.45, rot:0 });
+  SUNUM.secili = SUNUM.ogeler.length-1;
+  sunumCiz();
+}
+
+function sunumYazi(metin){
+  const s2 = SABLONLAR[SUNUM.sablon];
+  SUNUM.ogeler.push({ tur:"yazi", rol:"serbest", metin: metin || "Yazı", x:.10, y:.45, w:.45, h:.09, rot:0,
+    renk:s2.renk, yaziRenk:s2.yazi, vurgu:s2.vurgu, boy:26 });
+  SUNUM.secili = SUNUM.ogeler.length-1;
+  sunumCiz();
+}
+
+function sunumKutu(rol){
+  const s2 = SABLONLAR[SUNUM.sablon], k = s2[rol] || { x:.1, y:.5, w:.5, h:.12 };
+  const y = SUNUM.y || {}, p = SUNUM.p;
+  let ust = "", alt = "";
+  if(rol === "fiyat"){ ust = "FİYAT"; alt = y.toplam_fiyat ? nf(y.toplam_fiyat) + " ₺" : "Fiyat girin"; }
+  if(rol === "baslik"){ ust = `${duzgun(p.mahalle)} ${p.ada||""}/${p.parsel}`; alt = nf(p.alan_m2) + " m² · " + (p.nitelik||""); }
+  if(rol === "ozellik"){ ust = "ÖZELLİKLER"; alt = (SUNUM.etiketler||[]).slice(0,4).join("\n") || "Özellik ekleyin"; }
+  SUNUM.ogeler.push({ tur:"kutu", rol, ust, alt, ...k, rot:0, renk:s2.renk, yaziRenk:s2.yazi, vurgu:s2.vurgu });
+  SUNUM.secili = SUNUM.ogeler.length-1;
+  sunumCiz();
+}
+
+function sunumCiz(){
+  const t = document.getElementById("tuval");
+  if(!SUNUM.arka){ return; }
+  t.innerHTML = `<img class="arka" src="${SUNUM.arka.url}">`;
+  const W = t.clientWidth, H = W * SUNUM.oran;
+
+  SUNUM.ogeler.forEach((o,i)=>{
+    const d = document.createElement("div");
+    d.className = "oge" + (SUNUM.secili===i ? " sec" : "");
+    d.style.left = (o.x*W) + "px"; d.style.top = (o.y*H) + "px";
+    d.style.width = (o.w*W) + "px"; d.style.height = (o.h*H) + "px";
+    d.style.transform = `rotate(${o.rot||0}deg)`;
+    d.dataset.i = i;
+
+    if(o.tur === "cap") d.innerHTML = `<img src="${o.src}">`;
+    else if(o.tur === "kutu") d.innerHTML =
+      `<div class="kutu" style="background:${o.renk};color:${o.yaziRenk}">
+         <div style="font-size:11px;letter-spacing:.12em;color:${o.vurgu};font-weight:700">${esc(o.ust)}</div>
+         <div style="font-size:15px;font-weight:700;white-space:pre-line;line-height:1.25">${esc(o.alt)}</div></div>`;
+    else d.innerHTML =
+      `<div class="kutu" style="background:${o.renk};color:${o.yaziRenk};align-items:flex-start">
+         <div contenteditable style="font-size:15px;font-weight:700;outline:none;width:100%"
+              oninput="SUNUM.ogeler[${i}].metin=this.textContent">${esc(o.metin)}</div></div>`;
+
+    if(SUNUM.secili === i) d.innerHTML +=
+      `<div class="tut boy" data-tut="boy">⤢</div><div class="tut don" data-tut="don">⟳</div>
+       <div class="tut kapat" data-tut="kapat">×</div>`;
+    t.appendChild(d);
+  });
+
+  t.style.height = H + "px";
+  sunumOlaylar(t, W, H);
+}
+
+function sunumOlaylar(t, W, H){
+  t.querySelectorAll(".oge").forEach(d=>{
+    d.onpointerdown = e => {
+      const i = +d.dataset.i, o = SUNUM.ogeler[i];
+      const tut = e.target.dataset?.tut;
+      if(tut === "kapat"){ SUNUM.ogeler.splice(i,1); SUNUM.secili = null; sunumCiz(); return; }
+      SUNUM.secili = i;
+      e.preventDefault(); d.setPointerCapture(e.pointerId);
+      const bx = t.getBoundingClientRect();
+      const b = { x:o.x, y:o.y, w:o.w, h:o.h, rot:o.rot||0 };
+      const bas = { x:e.clientX, y:e.clientY };
+      const mx = bx.left + (o.x + o.w/2)*W, my = bx.top + (o.y + o.h/2)*H;
+      const basAci = Math.atan2(e.clientY-my, e.clientX-mx) * 180/Math.PI;
+
+      d.onpointermove = ev => {
+        const dx = (ev.clientX - bas.x)/W, dy = (ev.clientY - bas.y)/H;
+        if(tut === "boy"){
+          o.w = Math.max(.06, b.w + dx); o.h = Math.max(.04, b.h + dy);
+        }else if(tut === "don"){
+          const aci = Math.atan2(ev.clientY-my, ev.clientX-mx) * 180/Math.PI;
+          o.rot = Math.round(b.rot + (aci - basAci));
+        }else{
+          o.x = b.x + dx; o.y = b.y + dy;
+        }
+        d.style.left = (o.x*W)+"px"; d.style.top = (o.y*H)+"px";
+        d.style.width = (o.w*W)+"px"; d.style.height = (o.h*H)+"px";
+        d.style.transform = `rotate(${o.rot||0}deg)`;
+      };
+      d.onpointerup = () => { d.onpointermove = null; sunumCiz(); };
+    };
+  });
+}
+
+async function sunumUret(){
+  if(!SUNUM.arka) return toast("Önce arka plan görseli yükle");
+  toast("Görsel hazırlanıyor…");
+  const W = SUNUM.arka.w, H = SUNUM.arka.h;
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const x = c.getContext("2d");
+  const arka = await yukleGorsel(SUNUM.arka.url);
+  x.drawImage(arka, 0, 0, W, H);
+
+  for(const o of SUNUM.ogeler){
+    const ox = o.x*W, oy = o.y*H, ow = o.w*W, oh = o.h*H;
+    x.save();
+    x.translate(ox + ow/2, oy + oh/2);
+    x.rotate((o.rot||0) * Math.PI/180);
+    x.translate(-ow/2, -oh/2);
+    if(o.tur === "cap"){
+      const im = await yukleGorsel(o.src);
+      x.drawImage(im, 0, 0, ow, oh);
+    }else{
+      const r = Math.min(18, oh*0.22);
+      x.fillStyle = o.renk; x.beginPath();
+      x.moveTo(r,0); x.arcTo(ow,0,ow,oh,r); x.arcTo(ow,oh,0,oh,r);
+      x.arcTo(0,oh,0,0,r); x.arcTo(0,0,ow,0,r); x.closePath(); x.fill();
+      const pad = Math.max(10, ow*0.045);
+      if(o.tur === "kutu"){
+        x.fillStyle = o.vurgu; x.font = `700 ${Math.round(oh*0.16)}px Arial`;
+        x.textBaseline = "top"; x.fillText(o.ust, pad, pad);
+        x.fillStyle = o.yaziRenk;
+        const bY = Math.round(oh*0.30);
+        x.font = `700 ${bY}px Arial`;
+        String(o.alt).split("\n").forEach((t2,i)=> x.fillText(t2, pad, pad + oh*0.26 + i*bY*1.2));
+      }else{
+        x.fillStyle = o.yaziRenk; x.textBaseline = "middle";
+        x.font = `700 ${Math.round(oh*0.42)}px Arial`;
+        x.fillText(o.metin || "", pad, oh/2);
+      }
+    }
+    x.restore();
+  }
+
+  const blob = await new Promise(r=>c.toBlob(r, "image/jpeg", 0.92));
+  const p = SUNUM.p;
+  const ad2 = `${p.ada||0}-${p.parsel}-sunum-${Date.now().toString().slice(-5)}.jpg`;
+  indirBlob(blob, ad2);
+  try{
+    await dosyaYukle(new File([blob], ad2, { type:"image/jpeg" }), "sunum", SUNUM.parselId);
+    toast("Sunum görseli kaydedildi");
+  }catch(e){ toast("İndirildi ama kaydedilemedi: " + (e.message||e)); }
+}
+
+const yukleGorsel = src => new Promise((res,rej)=>{
+  const i = new Image(); i.crossOrigin = "anonymous";
+  i.onload = ()=>res(i); i.onerror = rej; i.src = src;
+});
 
 /* ================= KML ve çap ================= */
 
@@ -2355,7 +2674,7 @@ async function cikis(){ await sb.auth.signOut(); location.reload(); }
 
 /* ================= yonlendirme ================= */
 
-const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, emsal:emsal, yeni:yeniParsel, parsel:parselDetay,
+const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, emsal:emsal, sunum:sunum, yeni:yeniParsel, parsel:parselDetay,
                    fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
 function go(r,arg){ (ekranlar[r]||anaMenu)(arg); window.scrollTo(0,0); }
 
