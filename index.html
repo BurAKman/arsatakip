@@ -244,7 +244,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "v1.5";
+const SURUM = "v1.6";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -587,10 +587,6 @@ function ciz(f){
       <div class="kv" style="margin-top:10px"><span>Yüzölçümü</span><b class="mono">${esc(p.alan||"—")} m²</b></div>
       <div class="kv"><span>Niteliği</span><b>${esc(p.nitelik||"—")}</b></div>
       <div class="kv"><span>Mevkii</span><b>${esc(p.mevkii||"—")}</b></div>
-      <div class="kv"><span>Kayıt tarihi</span><b class="mono">${new Date(p.created_at).toLocaleString("tr-TR",{day:"2-digit",month:"long",hour:"2-digit",minute:"2-digit"})}</b></div>
-      ${y && !y.aktif && y.pasif_tarihi ? `<div class="kv"><span style="color:var(--red)">Pasife alındı</span>
-        <b class="mono" style="color:var(--red)">${new Date(y.pasif_tarihi).toLocaleString("tr-TR",{day:"2-digit",month:"long",hour:"2-digit",minute:"2-digit"})}</b></div>` : ""}
-      <div id="minikutu"></div>
       <div class="acts">
         <button onclick="kmlIndir()">KML indir</button>
         <button onclick="earthAc()">Earth'te aç</button>
@@ -2182,17 +2178,42 @@ async function ayarlar(){
       <div class="kv"><span>Sürüm</span><b>${SURUM}</b></div>
     </div>
     <h3 style="font-size:14px;margin:22px 0 10px">Kullanıcılar</h3>
-    ${(kisiler||[]).map(k=>`<div class="card" style="display:flex;align-items:center;gap:10px">
-      <div style="flex:1;min-width:0"><b style="font-size:14px">${esc(k.full_name||k.email)}</b>
-      <div style="font-size:12px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis">${esc(k.email||"")}</div></div>
-      ${ME.role==='admin' && k.id!==ME.id
-        ? `<select style="width:auto;padding:9px 30px 9px 12px;font-size:13px;background-position:calc(100% - 16px) 18px,calc(100% - 11px) 18px" onchange="rolDegistir('${k.id}',this.value)">
-             <option value="uye"${k.role==='uye'?' selected':''}>Üye</option>
-             <option value="yonetici"${k.role==='yonetici'?' selected':''}>Yönetici</option>
-             <option value="admin"${k.role==='admin'?' selected':''}>Admin</option></select>`
-        : `<span class="pill gold">${rolAd[k.role]}</span>`}</div>`).join("")}
+    ${(kisiler||[]).map(k=>{
+      const isim = (k.full_name && !k.full_name.includes("@")) ? k.full_name : (k.email||"").split("@")[0];
+      const bas = (isim||"?").slice(0,2).toLocaleUpperCase("tr");
+      const benMi = k.id === ME.id;
+      return `<div class="card">
+        <div style="display:flex;align-items:center;gap:11px">
+          <span style="width:38px;height:38px;border-radius:50%;background:var(--gold-soft);color:var(--gold);
+            display:grid;place-items:center;font-size:13px;font-weight:700;flex:0 0 auto">${esc(bas)}</span>
+          <div style="flex:1;min-width:0">
+            <b style="font-size:15px;font-weight:600;display:block">${esc(isim)}${benMi?" · sen":""}</b>
+            <div style="font-size:12px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(k.email||"")}</div>
+          </div>
+          <span class="pill ${k.role==='admin'?'gold':'sade'}" style="flex:0 0 auto">${rolAd[k.role]}</span>
+        </div>
+        ${ME.role==='admin' && !benMi ? `<div style="display:flex;gap:8px;align-items:center;margin-top:11px">
+          <select style="flex:1;padding:10px 30px 10px 12px;font-size:13px" onchange="rolDegistir('${k.id}',this.value)">
+            <option value="uye"${k.role==='uye'?' selected':''}>Üye · sadece görüntüler</option>
+            <option value="yonetici"${k.role==='yonetici'?' selected':''}>Yönetici · kullanır, kayıt değiştiremez</option>
+            <option value="admin"${k.role==='admin'?' selected':''}>Admin · tam yetki</option>
+          </select>
+          <button class="sil" onclick="kullaniciSil('${k.id}','${esc(isim)}')" aria-label="Kullanıcıyı çıkar">${svg("trash")}</button>
+        </div>` : ""}
+      </div>`;
+    }).join("")}
     <p style="color:var(--ink-3);font-size:12px;margin:2px 2px 0">Uygulamayı kurup giren herkes önce üye olur. Yetkiyi buradan sen verirsin.</p>`;
 }
+
+async function kullaniciSil(id, isim){
+  if(!confirm(`${isim} ekipten çıkarılsın mı?\n\nEklediği kayıtlar ve notlar durur. Aynı hesapla tekrar girerse üye olarak geri gelir; kalıcı engellemek istersen bana söyle.`)) return;
+  const { error } = await sb.from("profiles").delete().eq("id", id);
+  if(error) return toast("Olmadı: " + error.message);
+  await sb.from("activity_log").insert({ team_id:ME.team_id, user_id:ME.id,
+    action:"kullanıcı çıkarıldı", entity:"profiles", entity_id:id, detail:isim });
+  toast("Çıkarıldı"); ayarlar();
+}
+
 async function rolDegistir(id, rol){
   const { error } = await sb.from("profiles").update({ role: rol }).eq("id", id);
   if(error) return toast("Olmadı: " + error.message);
