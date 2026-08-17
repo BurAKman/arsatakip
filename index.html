@@ -335,7 +335,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 2.8";
+const SURUM = "beta 2.9";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1485,7 +1485,7 @@ async function eplanAc(lat, lng, p){
     : `${(+lat).toFixed(6)}, ${(+lng).toFixed(6)}`;
   try{ await navigator.clipboard.writeText(kunye); toast("Künye kopyalandı, e-Plan'da yapıştır"); }
   catch(e){ toast("e-Plan açılıyor"); }
-  window.open("https://e-plan.gov.tr/e-plan/html/imarDurumu.html", "_blank", "noopener");
+  window.open("https://e-plan.gov.tr/", "_blank", "noopener");
 }
 
 
@@ -1506,8 +1506,20 @@ const YOL_AD = { motorway:"Otoyol", trunk:"Devlet yolu", primary:"Ana yol", seco
   service:"Servis yolu" };
 const YER_AD = { city:"Şehir", town:"İlçe/kasaba", village:"Köy", hamlet:"Mezra", suburb:"Mahalle" };
 
-async function cevreVerisi(lat, lng){
-  const sorgu = `[out:json][timeout:30];(
+const OVER_SUNUCU = [
+  "https://overpass-api.de/api/interpreter?data=",
+  "https://overpass.kumi.systems/api/interpreter?data="
+];
+
+function cevreSorgusu(lat, lng, hafif){
+  if(hafif) return `[out:json][timeout:20];(
+    node(around:10000,${lat},${lng})[place~"^(city|town|village)$"];
+    way(around:1500,${lat},${lng})[highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|track)$"];
+    way(around:2000,${lat},${lng})[waterway~"^(river|stream|canal)$"];
+    way(around:1500,${lat},${lng})[landuse];
+    way(around:3000,${lat},${lng})[power=line];
+  );out center tags;`;
+  return `[out:json][timeout:30];(
     node(around:12000,${lat},${lng})[place~"^(city|town|village|hamlet)$"];
     way(around:2500,${lat},${lng})[highway];
     way(around:3000,${lat},${lng})[waterway~"^(river|stream|canal|ditch)$"];
@@ -1517,7 +1529,28 @@ async function cevreVerisi(lat, lng){
     way(around:5000,${lat},${lng})[power=line];
     node(around:8000,${lat},${lng})[man_made=water_well];
   );out center tags;`;
-  return await zamanAsimi(tkgm(OVER + encodeURIComponent(sorgu)), 40000);
+}
+
+// once tam sorgu, tikanirsa yedek sunucu, o da olmazsa hafif sorgu
+async function cevreVerisi(lat, lng, bildir){
+  const denemeler = [
+    { s:OVER_SUNUCU[0], hafif:false, sure:45000 },
+    { s:OVER_SUNUCU[1], hafif:false, sure:45000 },
+    { s:OVER_SUNUCU[0], hafif:true,  sure:30000 },
+    { s:OVER_SUNUCU[1], hafif:true,  sure:30000 }
+  ];
+  let sonHata = null;
+  for(let i=0;i<denemeler.length;i++){
+    const d = denemeler[i];
+    if(bildir) bildir(i === 0 ? "Çevre taranıyor…" : `Sunucu meşgul, tekrar deneniyor (${i+1}/4)…`);
+    try{
+      const r = await zamanAsimi(tkgm(d.s + encodeURIComponent(cevreSorgusu(lat, lng, d.hafif))), d.sure);
+      if(r?.elements?.length) return r;
+      sonHata = new Error("boş cevap");
+    }catch(e){ sonHata = e; }
+    await new Promise(r=>setTimeout(r, 1200));
+  }
+  throw sonHata || new Error("çevre verisi alınamadı");
 }
 
 function cevreOzet(veri, merkezNokta){
@@ -1711,7 +1744,10 @@ async function cevreRaporu(){
 async function cevreUret(indir){
   const p = SONPARSEL.properties || {};
   const m = merkez(SONPARSEL);
-  const veri = await cevreVerisi(m.lat, m.lng);
+  const veri = await cevreVerisi(m.lat, m.lng, t => {
+    const d = document.getElementById("rapdurum") || document.getElementById("cevreNot");
+    if(d) d.textContent = t;
+  });
   const o = cevreOzet(veri, m);
   let clc = null;
   try{ clc = await corineSinif(m.lat, m.lng); }catch(e){}
@@ -2305,11 +2341,26 @@ async function musteriSunumu(parselId){
     const etiket = (et||[]).map(e=>e.tags?.name).filter(Boolean);
     const m = { lat:p.lat, lng:p.lng };
 
-    const veri = await cevreVerisi(m.lat, m.lng);
-    const o = cevreOzet(veri, m);
-    document.getElementById("durum").textContent = "Arazi örtüsü sorgulanıyor…";
-    let clc = null;
-    try{ clc = await corineSinif(m.lat, m.lng); }catch(e){}
+    const bildir = t => { const d = document.getElementById("durum"); if(d) d.textContent = t; };
+
+    // ayni parselin verisi bu oturumda cikarildiysa tekrar sorgulamayalim
+    let o = null;
+    if(CEVRE_SON && Math.abs(CEVRE_SON.m.lat - m.lat) < 1e-6 && Math.abs(CEVRE_SON.m.lng - m.lng) < 1e-6){
+      o = CEVRE_SON.o;
+      bildir("Kayıtlı çevre verisi kullanılıyor…");
+    }else{
+      try{
+        const veri = await cevreVerisi(m.lat, m.lng, bildir);
+        o = cevreOzet(veri, m);
+      }catch(e){ o = null; }
+    }
+    const bos = { yerler:[], yollar:{}, kullanim:{} };
+    const cevreVar = !!o;
+    o = o || bos;
+
+    bildir("Arazi örtüsü sorgulanıyor…");
+    let clc = (cevreVar && CEVRE_SON?.clc) || null;
+    if(!clc){ try{ clc = await corineSinif(m.lat, m.lng); }catch(e){} }
 
     // --- anlatim metinleri ---
     const yer = o.yerler[0];
@@ -2371,9 +2422,12 @@ async function musteriSunumu(parselId){
 
     const bolumler = [
       { baslik:"Taşınmazın konumu", metin: konum },
-      { baslik:"Ulaşım ve erişim", metin: ulasim },
-      { baslik:"Altyapı ve çevresel olanaklar", metin: altyapi },
-      { baslik:"Arazi yapısı ve çevre kullanımı", metin: cevre },
+      ...(cevreVar ? [
+        { baslik:"Ulaşım ve erişim", metin: ulasim },
+        { baslik:"Altyapı ve çevresel olanaklar", metin: altyapi }
+      ] : []),
+      { baslik:"Arazi yapısı ve çevre kullanımı",
+        metin: cevre || "Bu bölüm için çevre verisi alınamamıştır; taşınmazın çevre koşullarının yerinde incelenmesi önerilir." },
       { baslik:"Tapu ve satış bilgileri", metin: tapu },
       { baslik:"Genel değerlendirme", metin: ozet },
       { baslik:"Künye", satirlar:[
