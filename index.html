@@ -67,7 +67,8 @@ a{color:var(--gold);text-decoration:none}
 
 /* ---- kur ---- */
 .rates{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:0 0 16px}
-.rate{background:var(--cam);border:1px solid var(--cizgi);border-radius:12px;padding:8px 9px;min-width:0;backdrop-filter:blur(12px)}
+.rate{background:linear-gradient(155deg,rgba(255,255,255,.20),rgba(255,255,255,.07));border:1px solid rgba(255,255,255,.30);border-radius:12px;padding:8px 9px;min-width:0;backdrop-filter:blur(14px)}
+.rate .v{color:#fff}
 .rate .k{font-size:9px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rate .v{font-size:12.5px;font-weight:600;margin-top:2px;font-family:"IBM Plex Mono",monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -243,7 +244,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "v1.2";
+const SURUM = "v1.3";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -585,6 +586,9 @@ function ciz(f){
       <div class="kv" style="margin-top:10px"><span>Yüzölçümü</span><b class="mono">${esc(p.alan||"—")} m²</b></div>
       <div class="kv"><span>Niteliği</span><b>${esc(p.nitelik||"—")}</b></div>
       <div class="kv"><span>Mevkii</span><b>${esc(p.mevkii||"—")}</b></div>
+      <div class="kv"><span>Kayıt tarihi</span><b class="mono">${new Date(p.created_at).toLocaleString("tr-TR",{day:"2-digit",month:"long",hour:"2-digit",minute:"2-digit"})}</b></div>
+      ${y && !y.aktif && y.pasif_tarihi ? `<div class="kv"><span style="color:var(--red)">Pasife alındı</span>
+        <b class="mono" style="color:var(--red)">${new Date(y.pasif_tarihi).toLocaleString("tr-TR",{day:"2-digit",month:"long",hour:"2-digit",minute:"2-digit"})}</b></div>` : ""}
       <div id="minikutu"></div>
       <div class="acts">
         <button onclick="kmlIndir()">KML indir</button>
@@ -865,8 +869,8 @@ async function araziler(){
   araziListele();
 }
 const yilSecenek = () => {
-  const y = new Date().getFullYear(); let o="";
-  for(let i=y+2;i>=y-4;i--) o += `<option value="${i}"${i===YEAR?" selected":""}>${i}</option>`;
+  let o = "";
+  for(let i=2060;i>=2020;i--) o += `<option value="${i}"${i===YEAR?" selected":""}>${i}</option>`;
   return o;
 };
 
@@ -965,7 +969,7 @@ async function parselDetay(id){
   const [{ data:yillar }, { data:belgeler }, { data:kisiler }, { data:notlar }] = await Promise.all([
     sb.from("parcel_years").select("*").eq("parcel_id",id).order("yil",{ascending:false}),
     sb.from("documents").select("*").eq("parcel_id",id).order("created_at",{ascending:false}),
-    sb.from("ekler").select("*").eq("parcel_id",id),
+    sb.from("ekler").select("*"),
     sb.from("notes").select("content,created_at,profiles(full_name)").eq("parcel_id",id).order("created_at",{ascending:false})
   ]);
   const y = (yillar||[]).find(x=>x.yil===YEAR) || (yillar||[])[0];
@@ -975,6 +979,16 @@ async function parselDetay(id){
     const { data:kb } = await sb.from("documents").select("id,file_path,file_name,size_bytes,created_at").in("id", kimlikler);
     (kb||[]).forEach(b=>kisiBelge[b.id]=b);
   }
+
+  const { data:etiketler } = await sb.from("parcel_tags").select("tags(name)").eq("parcel_id", id);
+  const etiketAd = (etiketler||[]).map(e=>e.tags?.name).filter(Boolean);
+
+  // malik metnindeki isimleri ekler kayitlariyla esle
+  const malikSatir = (y?.malik||"").split(/\n|,|;/).map(t=>t.trim()).filter(Boolean);
+  const esles = ad2 => (kisiler||[]).find(k=>{
+    const a = sade(k.ad_soyad), b = sade(ad2);
+    return a && b && (a.includes(b) || b.includes(a));
+  });
 
   const grup = {};
   (belgeler||[]).forEach(b=>(grup[b.kind] ||= []).push(b));
@@ -987,6 +1001,9 @@ async function parselDetay(id){
       <div class="kv" style="margin-top:10px"><span>Yüzölçümü</span><b class="mono">${nf(p.alan_m2)} m²</b></div>
       <div class="kv"><span>Niteliği</span><b>${esc(p.nitelik||"—")}</b></div>
       <div class="kv"><span>Mevkii</span><b>${esc(p.mevkii||"—")}</b></div>
+      <div class="kv"><span>Kayıt tarihi</span><b class="mono">${new Date(p.created_at).toLocaleString("tr-TR",{day:"2-digit",month:"long",hour:"2-digit",minute:"2-digit"})}</b></div>
+      ${y && !y.aktif && y.pasif_tarihi ? `<div class="kv"><span style="color:var(--red)">Pasife alındı</span>
+        <b class="mono" style="color:var(--red)">${new Date(y.pasif_tarihi).toLocaleString("tr-TR",{day:"2-digit",month:"long",hour:"2-digit",minute:"2-digit"})}</b></div>` : ""}
       <div id="minikutu"></div>
       ${p.lat?`<div class="acts" style="margin-top:12px">
         <button onclick="miniHarita('${id}')">Haritada göster</button>
@@ -1010,10 +1027,18 @@ async function parselDetay(id){
         ${ME.role==='admin'?`<button class="pill gold" onclick="go('fiyatDuzen','${y.id}')">düzenle</button>`:""}</div>
     </div>` : ""}
 
-    ${(kisiler||[]).length ? `<div class="card">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="color:var(--gold)">${svg("tag")}</div><b style="font-size:14px">Arazi özellikleri</b></div>
+      ${etiketAd.length
+        ? `<div style="display:flex;gap:7px;flex-wrap:wrap">${etiketAd.map(t=>`<span class="pill on">${esc(t)}</span>`).join("")}</div>`
+        : `<div style="color:var(--ink-3);font-size:13px">Etiket eklenmemiş. Tapu bilgileri ekranından ekleyebilirsin.</div>`}
+    </div>
+
+    ${(kisiler||[]).filter(k=>k.parcel_id===id).length ? `<div class="card">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <div style="color:var(--gold)">${svg("file")}</div><b style="font-size:14px">Vekalet ve muvafakatname</b></div>
-      ${kisiler.map(k=>`<div style="border-top:1px solid var(--cizgi);padding:10px 0 4px">
+        <div style="color:var(--gold)">${svg("file")}</div><b style="font-size:14px">Bu parsele bağlı belgeler</b></div>
+      ${kisiler.filter(k=>k.parcel_id===id).map(k=>`<div style="border-top:1px solid var(--cizgi);padding:10px 0 4px">
         <div style="display:flex;align-items:center;gap:8px">
           <b style="font-size:14px;font-weight:500;flex:1">${esc(k.ad_soyad)}</b>
           ${k.gecerlilik_tarihi?`<span class="pill sade">${new Date(k.gecerlilik_tarihi).toLocaleDateString("tr-TR")}</span>`:""}</div>
@@ -1032,7 +1057,8 @@ async function parselDetay(id){
         ? grupSira.filter(k=>grup[k]).map(k=>`
             <div style="border-top:1px solid var(--cizgi);padding:8px 0 2px">
               <div style="font-size:11px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px">${BELGE_AD[k]||k}</div>
-              ${grup[k].map(b=>dosyaSatiri(b)).join("")}</div>`).join("")
+              ${grup[k].map(b=>dosyaSatiri(b, ME.role==='admin'
+                  ? `<button class="kirmizi" aria-label="Sil" onclick="belgeSilVeYenile('${b.id}','${esc(b.file_path)}','parsel','${id}')">${svg("trash")}</button>` : "")).join("")}</div>`).join("")
         : `<div style="color:var(--ink-3);font-size:13px">Henüz belge yok. Tapu bilgileri ekranından yükleyebilirsin.</div>`}
     </div>
 
@@ -1148,6 +1174,14 @@ async function fiyatDuzen(id){
     <div id="onizle" class="card" style="font-size:13px"></div>
     <button class="btn" id="kay">Bilgileri kaydet</button>
 
+    <h3 style="font-size:14px;margin:26px 0 10px">Arazi özellikleri</h3>
+    <div class="card">
+      <div id="etiketKutu" style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px">
+        <input id="etYeni" placeholder="yola cepheli, köye 800 m…">
+        <button class="btn" style="width:auto;padding:12px 18px" id="etEkle">Ekle</button></div>
+    </div>
+
     <h3 style="font-size:14px;margin:26px 0 10px">Belgeler ve görseller</h3>
     <div class="acts" style="margin:0 0 12px">
       <button onclick="belgeEkle('${p.id}','tapu','fiyatDuzen','${id}')">Tapu</button>
@@ -1158,6 +1192,22 @@ async function fiyatDuzen(id){
     </div>
     <div class="card">${belgeListesiHtml(belgeler, p.id, "fiyatDuzen", id)}</div>
     <p class="ipuc" style="margin-top:14px">Buraya yüklediğin her şey Araziler ekranında bu parselin altında toplu görünür.</p>`;
+
+  etiketleriGoster(p.id);
+  document.getElementById("etEkle").onclick = async () => {
+    const ad2 = document.getElementById("etYeni").value.trim();
+    if(!ad2) return;
+    let { data:t } = await sb.from("tags").select("id").eq("team_id",ME.team_id).eq("name",ad2).maybeSingle();
+    if(!t){
+      const { data:yeni, error } = await sb.from("tags").insert({ team_id:ME.team_id, name:ad2 }).select().single();
+      if(error) return toast("Olmadı: "+error.message);
+      t = yeni;
+    }
+    const { error:e2 } = await sb.from("parcel_tags").insert({ parcel_id:p.id, tag_id:t.id, team_id:ME.team_id });
+    if(e2 && !/duplicate/i.test(e2.message)) return toast("Olmadı: "+e2.message);
+    document.getElementById("etYeni").value = "";
+    etiketleriGoster(p.id);
+  };
 
   const alan = +p.alan_m2 || 0;
   const hisseHesap = hisseBagla("f", alan);
@@ -1210,7 +1260,8 @@ async function fiyatDuzen(id){
       m2_fiyat: +g("mf").value || null,
       toplam_fiyat: h.toplam,
       ilan_url: g("il2").value.trim() || null,
-      aktif: g("ak").value === "1"
+      aktif: g("ak").value === "1",
+      pasif_tarihi: g("ak").value === "1" ? null : (r.pasif_tarihi || new Date().toISOString())
     }).eq("id", id);
     e.target.disabled = false;
     if(error) return toast("Olmadı: "+error.message);
@@ -1223,6 +1274,20 @@ function belgeListesiHtml(belgeler, parselId, donus, donusArg){
   return belgeler.map(b=>dosyaSatiri(b, ME.role==='admin'
     ? `<button class="kirmizi" aria-label="Sil" onclick="belgeSilVeYenile('${b.id}','${esc(b.file_path)}','${donus}','${donusArg||parselId}')">${svg("trash")}</button>`
     : "")).join("");
+}
+
+async function etiketleriGoster(parselId){
+  const kutu = document.getElementById("etiketKutu");
+  if(!kutu) return;
+  const { data } = await sb.from("parcel_tags").select("tag_id,tags(name)").eq("parcel_id", parselId);
+  kutu.innerHTML = (data||[]).length
+    ? data.map(e=>`<span class="pill on" style="display:inline-flex;align-items:center;gap:7px">${esc(e.tags?.name||"")}
+        <button style="color:var(--red);font-size:15px;line-height:1" onclick="etiketSil('${parselId}','${e.tag_id}')" aria-label="Kaldır">×</button></span>`).join("")
+    : `<span style="font-size:13px;color:var(--ink-3)">Henüz etiket yok.</span>`;
+}
+async function etiketSil(parselId, tagId){
+  await sb.from("parcel_tags").delete().eq("parcel_id",parselId).eq("tag_id",tagId);
+  etiketleriGoster(parselId);
 }
 
 /* ================= KML ve çap ================= */
@@ -1271,7 +1336,7 @@ async function capListele(){
       <span class="orta"><b>${nf(p.alan_m2)} m²</b>
         <small>${p.geojson?"sınır çizimi hazır":"önce TKGM'den tazele"}</small></span>
       <span class="sag">
-        ${ME.role!=='uye'&&p.geojson?`<button class="pill gold" onclick="capCiz('${p.id}')">çizdir</button>`:""}
+        ${ME.role!=='uye'&&p.geojson?`<button class="pill gold" onclick="go('capAyar','${p.id}')">çizdir</button>`:""}
         ${ME.role!=='uye'?`<button class="pill sade" onclick="belgeEkle('${p.id}','cap','cap')">yükle</button>`:""}
       </span></div>`);
 }
@@ -1284,12 +1349,147 @@ function mesafe(a, b){
   return Math.round(Math.sqrt(dl*dl + df*df) * R * 10)/10;
 }
 
-async function capCiz(parselId){
+
+/* ---- geometri: metreye cevir, alan, yariduzlem kirpma, parcala ---- */
+
+function metreye(halka){
+  const lat0 = halka.reduce((t,k)=>t+k[1],0)/halka.length;
+  const kx = Math.cos(lat0*Math.PI/180) * 111320, ky = 110540;
+  const x0 = halka[0][0], y0 = halka[0][1];
+  return halka.map(k=>[ (k[0]-x0)*kx, (k[1]-y0)*ky ]);
+}
+
+function alanHesap(pts){
+  let a = 0;
+  for(let i=0;i<pts.length;i++){
+    const j = (i+1)%pts.length;
+    a += pts[i][0]*pts[j][1] - pts[j][0]*pts[i][1];
+  }
+  return Math.abs(a)/2;
+}
+
+// n·p <= d yarim duzlemine kirp (Sutherland-Hodgman)
+function kirp(poly, n, d){
+  const cik = [];
+  for(let i=0;i<poly.length;i++){
+    const a = poly[i], b = poly[(i+1)%poly.length];
+    const da = n[0]*a[0]+n[1]*a[1]-d, db = n[0]*b[0]+n[1]*b[1]-d;
+    if(da <= 0) cik.push(a);
+    if((da < 0 && db > 0) || (da > 0 && db < 0)){
+      const t = da/(da-db);
+      cik.push([ a[0]+t*(b[0]-a[0]), a[1]+t*(b[1]-a[1]) ]);
+    }
+  }
+  return cik;
+}
+
+// en uzun ekseni bul, o yone dik seritlere bol; her serit hedef alani tutsun
+function parcala(pts, hedefler){
+  let enUzun = 0, yon = [1,0];
+  for(let i=0;i<pts.length;i++){
+    const j = (i+1)%pts.length;
+    const dx = pts[j][0]-pts[i][0], dy = pts[j][1]-pts[i][1];
+    const u = Math.hypot(dx,dy);
+    if(u > enUzun){ enUzun = u; yon = [dx/u, dy/u]; }
+  }
+  const izd = pts.map(p=>p[0]*yon[0]+p[1]*yon[1]);
+  let alt = Math.min(...izd), ust = Math.max(...izd);
+  const toplam = alanHesap(pts);
+  const oran = hedefler.reduce((t,h)=>t+h,0) || toplam;
+
+  const parcalar = [];
+  let sinir = alt;
+  for(let i=0;i<hedefler.length;i++){
+    if(i === hedefler.length-1){
+      parcalar.push(kirp(pts, [-yon[0],-yon[1]], -sinir));
+      break;
+    }
+    const hedef = toplam * (hedefler[i]/oran);
+    let a = sinir, b = ust, kes = ust;
+    for(let k=0;k<40;k++){
+      kes = (a+b)/2;
+      const dilim = kirp(kirp(pts, yon, kes), [-yon[0],-yon[1]], -sinir);
+      const al = dilim.length > 2 ? alanHesap(dilim) : 0;
+      if(al < hedef) a = kes; else b = kes;
+    }
+    parcalar.push(kirp(kirp(pts, yon, kes), [-yon[0],-yon[1]], -sinir));
+    sinir = kes;
+  }
+  return parcalar.filter(p=>p.length > 2);
+}
+
+function agirlikMerkezi(pts){
+  let x=0, y=0, a=0;
+  for(let i=0;i<pts.length;i++){
+    const j=(i+1)%pts.length;
+    const c = pts[i][0]*pts[j][1] - pts[j][0]*pts[i][1];
+    a += c; x += (pts[i][0]+pts[j][0])*c; y += (pts[i][1]+pts[j][1])*c;
+  }
+  a *= 0.5;
+  return a ? [x/(6*a), y/(6*a)] : [pts[0][0], pts[0][1]];
+}
+
+async function capAyar(parselId){
+  const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
+  if(!p || !p.geojson) return toast("Bu parselin sınır çizimi yok");
+  const alan = Math.round(+p.alan_m2 || 0);
+  app.innerHTML = head("Çap çizdir","go('cap')") + `
+    <div class="card">
+      <div style="font-size:12px;color:var(--ink-3)">${esc(duzgun(p.mahalle))}</div>
+      <div style="font-size:17px;font-weight:600;margin-top:2px">Ada ${esc(p.ada||"—")} · Parsel ${esc(p.parsel)}</div>
+      <div class="kv" style="margin-top:8px"><span>Toplam alan</span><b class="mono">${nf(alan)} m²</b></div>
+    </div>
+    <div class="field"><label>Kaç parçaya bölünecek?</label>
+      <select id="ps">${Array.from({length:12},(_,i)=>`<option value="${i+1}">${i+1} parça</option>`).join("")}</select></div>
+    <div id="parcalar"></div>
+    <div class="kv" style="padding:10px 2px"><span>Girilen toplam</span><b class="mono" id="tpl">${nf(alan)} m²</b></div>
+    <button class="btn" id="ciz">Çapı çiz ve parsele ekle</button>
+    <p class="ipuc" style="margin-top:14px">Parçalar, parselin en uzun kenarına dik şeritler halinde bölünür. Metrekareler oransal olarak uygulanır.</p>`;
+
+  const kur = () => {
+    const n = +document.getElementById("ps").value;
+    const pay = Math.round(alan/n);
+    document.getElementById("parcalar").innerHTML = Array.from({length:n},(_,i)=>`
+      <div class="card" style="display:flex;gap:10px;align-items:center;padding:12px">
+        <input id="no${i}" value="${i+1}" style="width:52px;text-align:center;padding:10px 4px" aria-label="Parça numarası">
+        <input id="m${i}" inputmode="numeric" value="${i===n-1 ? alan-pay*(n-1) : pay}" style="flex:1" aria-label="Metrekare">
+        <input type="color" id="c${i}" value="${["#7FB539","#5B9BD5","#E0A23C","#C0504D","#8064A2","#4BACC6","#9BBB59","#F79646","#2C7C5A","#B85C8A","#6C7A89","#D2691E"][i%12]}"
+          style="width:46px;height:44px;padding:3px;border-radius:10px" aria-label="Renk">
+      </div>`).join("");
+    n && topla();
+    for(let i=0;i<n;i++) document.getElementById("m"+i).oninput = topla;
+  };
+  const topla = () => {
+    const n = +document.getElementById("ps").value;
+    let t = 0;
+    for(let i=0;i<n;i++) t += +document.getElementById("m"+i).value || 0;
+    const el = document.getElementById("tpl");
+    el.textContent = nf(t) + " m²";
+    el.style.color = Math.abs(t-alan) > alan*0.02 ? "var(--red)" : "var(--green)";
+  };
+  document.getElementById("ps").onchange = kur;
+  kur();
+
+  document.getElementById("ciz").onclick = async e => {
+    const n = +document.getElementById("ps").value;
+    const parcalar = Array.from({length:n},(_,i)=>({
+      no: document.getElementById("no"+i).value.trim() || String(i+1),
+      m2: +document.getElementById("m"+i).value || 0,
+      renk: document.getElementById("c"+i).value
+    }));
+    if(parcalar.some(x=>x.m2 <= 0)) return toast("Her parçanın metrekaresini yaz");
+    e.target.disabled = true; e.target.textContent = "Çiziliyor…";
+    await capCiz(parselId, parcalar);
+    e.target.disabled = false; e.target.textContent = "Çapı çiz ve parsele ekle";
+  };
+}
+
+async function capCiz(parselId, parcalar){
   const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
   if(!p || !p.geojson) return toast("Bu parselin sınır çizimi yok");
   toast("Çap çiziliyor…");
   try{
-    const png = capCizPng(p);
+    const png = capCizPng(p, parcalar);
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
     pdf.addImage(png, "PNG", 10, 10, 190, 190*(1400/1000));
@@ -1298,64 +1498,75 @@ async function capCiz(parselId){
                            { type:"application/pdf" });
     await dosyaYukle(dosya, "cap", parselId);
     toast("Çap hazırlandı ve parsele eklendi");
-    capListele();
+    go("cap");
   }catch(e){ toast("Olmadı: " + (e.message||e)); }
 }
 
 // parsel sinirindan olcekli cap cizimi uretir
-function capCizPng(p){
+function capCizPng(p, parcalar){
   const g = p.geojson.geometry;
   const halka = (g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0]).slice();
   if(halka.length > 1 &&
      halka[0][0] === halka[halka.length-1][0] && halka[0][1] === halka[halka.length-1][1]) halka.pop();
 
-  const G = 1000, Y = 1400, ust = 210, alt = 260, kenar = 70;
+  const G = 1000, Y = 1400, ust = 210, alt = 250, kenar = 70;
   const c = document.createElement("canvas"); c.width = G; c.height = Y;
   const x = c.getContext("2d");
-
   x.fillStyle = "#FFFFFF"; x.fillRect(0,0,G,Y);
 
-  // olcekleme
-  const lat0 = halka.reduce((s,k)=>s+k[1],0)/halka.length;
-  const kx = Math.cos(lat0*Math.PI/180);
-  const px = halka.map(k=>[k[0]*kx, k[1]]);
-  const minX = Math.min(...px.map(k=>k[0])), maxX = Math.max(...px.map(k=>k[0]));
-  const minY = Math.min(...px.map(k=>k[1])), maxY = Math.max(...px.map(k=>k[1]));
+  const M = metreye(halka);
+  const minX = Math.min(...M.map(k=>k[0])), maxX = Math.max(...M.map(k=>k[0]));
+  const minY = Math.min(...M.map(k=>k[1])), maxY = Math.max(...M.map(k=>k[1]));
   const alanG = G - kenar*2, alanY = Y - ust - alt;
-  const olcek = Math.min(alanG/(maxX-minX || 1e-9), alanY/(maxY-minY || 1e-9));
+  const olcek = Math.min(alanG/((maxX-minX)||1e-9), alanY/((maxY-minY)||1e-9));
   const gX = kenar + (alanG - (maxX-minX)*olcek)/2;
   const gY = ust  + (alanY - (maxY-minY)*olcek)/2;
-  const N = px.map(k=>[ gX + (k[0]-minX)*olcek, gY + (maxY-k[1])*olcek ]);
+  const E = m => [ gX + (m[0]-minX)*olcek, gY + (maxY-m[1])*olcek ];
+  const N = M.map(E);
 
-  // poligon
-  x.beginPath();
-  N.forEach((k,i)=> i ? x.lineTo(k[0],k[1]) : x.moveTo(k[0],k[1]));
-  x.closePath();
-  x.fillStyle = "#EAF3DE"; x.fill();
-  x.lineWidth = 3.5; x.strokeStyle = "#2F4A22"; x.stroke();
+  const yol = pts => { x.beginPath(); pts.forEach((k,i)=> i ? x.lineTo(k[0],k[1]) : x.moveTo(k[0],k[1])); x.closePath(); };
+
+  // parcalar
+  const liste = (parcalar && parcalar.length > 1) ? parcalar : null;
+  if(liste){
+    const dilimler = parcala(M, liste.map(o=>o.m2));
+    dilimler.forEach((d,i)=>{
+      const ekran = d.map(E);
+      yol(ekran);
+      x.fillStyle = liste[i]?.renk || "#9BBB59"; x.globalAlpha = .45; x.fill(); x.globalAlpha = 1;
+      x.lineWidth = 2.5; x.strokeStyle = "#33482A"; x.stroke();
+      const om = E(agirlikMerkezi(d));
+      x.textAlign = "center"; x.textBaseline = "middle";
+      x.font = "700 40px Arial"; x.fillStyle = "#1B2A14";
+      x.fillText(liste[i]?.no ?? String(i+1), om[0], om[1]-16);
+      x.font = "600 24px Arial";
+      x.fillText(nf(Math.round(alanHesap(d))) + " m²", om[0], om[1]+22);
+    });
+  }else{
+    yol(N); x.fillStyle = "#EAF3DE"; x.fill();
+  }
+
+  // dis sinir
+  yol(N); x.lineWidth = 4; x.strokeStyle = "#2F4A22"; x.stroke();
 
   // kenar uzunluklari
   x.font = "600 22px Arial"; x.textAlign = "center"; x.textBaseline = "middle";
   for(let i=0;i<N.length;i++){
     const j = (i+1) % N.length;
-    const m = mesafe(halka[i], halka[j]);
+    const m = Math.round(Math.hypot(M[j][0]-M[i][0], M[j][1]-M[i][1]) * 10)/10;
     if(m < 1) continue;
     const ox = (N[i][0]+N[j][0])/2, oy = (N[i][1]+N[j][1])/2;
-    const dx = N[j][0]-N[i][0], dy = N[j][1]-N[i][1];
-    const u = Math.hypot(dx,dy) || 1;
-    const nx = ox + (-dy/u)*24, ny = oy + (dx/u)*24;
+    const dx = N[j][0]-N[i][0], dy = N[j][1]-N[i][1], u = Math.hypot(dx,dy) || 1;
+    const nx = ox + (-dy/u)*26, ny = oy + (dx/u)*26;
     const yazi = m.toFixed(1).replace(".",",") + " m";
     const gen = x.measureText(yazi).width + 12;
-    x.fillStyle = "rgba(255,255,255,.92)";
-    x.fillRect(nx-gen/2, ny-15, gen, 30);
+    x.fillStyle = "rgba(255,255,255,.92)"; x.fillRect(nx-gen/2, ny-15, gen, 30);
     x.fillStyle = "#20301A"; x.fillText(yazi, nx, ny);
   }
-
-  // koseler
   N.forEach(k=>{ x.beginPath(); x.arc(k[0],k[1],5,0,7); x.fillStyle="#2F4A22"; x.fill(); });
 
   // baslik
-  x.textAlign = "left"; x.fillStyle = "#111";
+  x.textAlign = "left"; x.textBaseline = "alphabetic"; x.fillStyle = "#111";
   x.font = "700 44px Arial";
   x.fillText(`Ada ${p.ada||"—"} · Parsel ${p.parsel}`, kenar, 78);
   x.font = "400 26px Arial"; x.fillStyle = "#444";
@@ -1366,22 +1577,19 @@ function capCizPng(p){
   const kzX = G - kenar - 30, kzY = 110;
   x.beginPath(); x.moveTo(kzX, kzY-42); x.lineTo(kzX-16, kzY+14); x.lineTo(kzX, kzY+2); x.lineTo(kzX+16, kzY+14);
   x.closePath(); x.fillStyle = "#2F4A22"; x.fill();
-  x.font = "700 24px Arial"; x.textAlign = "center"; x.fillStyle = "#2F4A22";
-  x.fillText("K", kzX, kzY+38);
+  x.font = "700 24px Arial"; x.textAlign = "center"; x.fillStyle = "#2F4A22"; x.fillText("K", kzX, kzY+38);
 
   // alt bilgi
-  const ay = Y - alt + 60;
+  const ay = Y - alt + 56;
   x.textAlign = "left"; x.fillStyle = "#111"; x.font = "700 30px Arial";
   x.fillText(`Yüzölçümü: ${nf(p.alan_m2)} m²`, kenar, ay);
   x.font = "400 24px Arial"; x.fillStyle = "#444";
-  x.fillText(`Niteliği: ${p.nitelik || "—"}`, kenar, ay + 42);
-  const mBasinaPx = olcek / 111320;
-  x.fillText(`Ölçek: 1 cm ≈ ${Math.round(37.8 / (mBasinaPx || 1))} m`, kenar, ay + 82);
+  x.fillText(`Niteliği: ${p.nitelik || "—"}`, kenar, ay + 40);
+  const pxPerM = olcek, pxPerCm = 1000/190*10;
+  x.fillText(`Ölçek: 1 cm ≈ ${Math.round(pxPerCm/(pxPerM||1))} m`, kenar, ay + 78);
   x.font = "400 20px Arial"; x.fillStyle = "#777";
-  x.fillText("Temsili çizimdir, resmi belge değildir. Kaynak: TKGM parsel geometrisi.", kenar, ay + 130);
-  x.fillText(new Date().toLocaleDateString("tr-TR"), kenar, ay + 162);
+  x.fillText(new Date().toLocaleDateString("tr-TR"), kenar, ay + 120);
 
-  // cerceve
   x.strokeStyle = "#CCC"; x.lineWidth = 2; x.strokeRect(20, 20, G-40, Y-40);
   return c.toDataURL("image/png");
 }
@@ -1444,7 +1652,8 @@ async function eklerListele(){
 
   box.innerHTML = kisiler.map((k,i)=>{
     let durum = "", renk = "var(--ink-3)";
-    if(k.gecerlilik_tarihi){
+    if(k.suresiz){ durum = "Süresiz"; renk = "var(--green)"; }
+    else if(k.gecerlilik_tarihi){
       const t = new Date(k.gecerlilik_tarihi);
       const gun = Math.round((t - bugun) / 86400000);
       if(gun < 0){ durum = "süresi geçti"; renk = "var(--red)"; }
@@ -1461,11 +1670,15 @@ async function eklerListele(){
         ${belgeHucre(bul(k.vekalet_doc_id), k.id, "vekalet")}</div>
       <div class="kv"><span>Muvafakatname</span>
         ${belgeHucre(bul(k.muvafakat_doc_id), k.id, "muvafakat")}</div>
-      <div class="kv"><span>Geçerlilik</span>
+      <div class="kv"><span>Vekalet geçerliliği</span>
         ${ME.role==='admin'
-          ? `<input type="date" style="width:auto;padding:7px 10px;font-size:13px" value="${k.gecerlilik_tarihi||""}"
-               onchange="tarihGuncelle('${k.id}',this.value)">`
-          : `<b>${k.gecerlilik_tarihi ? new Date(k.gecerlilik_tarihi).toLocaleDateString("tr-TR") : "—"}</b>`}</div>
+          ? `<span style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+              <select style="width:auto;padding:7px 30px 7px 10px;font-size:13px" onchange="suresizGuncelle('${k.id}',this.value)">
+                <option value="tarih"${k.suresiz?"":" selected"}>Tarihli</option>
+                <option value="suresiz"${k.suresiz?" selected":""}>Süresiz</option></select>
+              ${k.suresiz ? "" : `<input type="date" style="width:auto;padding:7px 10px;font-size:13px" value="${k.gecerlilik_tarihi||""}"
+                 onchange="tarihGuncelle('${k.id}',this.value)">`}</span>`
+          : `<b>${k.suresiz ? "Süresiz" : (k.gecerlilik_tarihi ? new Date(k.gecerlilik_tarihi).toLocaleDateString("tr-TR") : "—")}</b>`}</div>
       ${durum ? `<div style="font-size:12px;color:${renk};margin-top:6px;text-align:right;font-weight:600">${durum}</div>` : ""}
     </div>`;
   }).join("");
@@ -1491,6 +1704,12 @@ async function ekBelgeYukle(kisiId, tur){
     if(error) throw error;
     toast("Yüklendi"); eklerListele();
   }catch(e){ toast("Olmadı: " + (e.message||e)); }
+}
+
+async function suresizGuncelle(kisiId, deger){
+  const { error } = await sb.from("ekler").update({ suresiz: deger === "suresiz" }).eq("id", kisiId);
+  if(error) return toast("Olmadı: " + error.message);
+  eklerListele();
 }
 
 async function tarihGuncelle(kisiId, tarih){
@@ -1566,7 +1785,7 @@ async function cikis(){ await sb.auth.signOut(); location.reload(); }
 
 /* ================= yonlendirme ================= */
 
-const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, yeni:yeniParsel, parsel:parselDetay,
+const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, yeni:yeniParsel, parsel:parselDetay,
                    fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
 function go(r,arg){ (ekranlar[r]||anaMenu)(arg); window.scrollTo(0,0); }
 
