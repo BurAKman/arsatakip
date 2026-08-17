@@ -244,7 +244,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "v1.7";
+const SURUM = "v1.8";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1417,69 +1417,102 @@ const LANDUSE_AD = { farmland:"Tarım arazisi", meadow:"Çayır", forest:"Orman"
   vineyard:"Bağ", residential:"Yerleşim", industrial:"Sanayi", commercial:"Ticaret", quarry:"Taş ocağı",
   cemetery:"Mezarlık", farmyard:"Çiftlik avlusu", grass:"Otlak", village_green:"Köy meydanı" };
 
-// beyaz zemine rapor cizip PNG dondurur
+// beyaz zemine rapor cizer; sayfa sinirlarini bilerek yerlestirir, satir ortadan bolunmez
 function raporPng(baslik, altBaslik, bolumler){
-  const G = 1000, satirY = 34;
-  let Y = 300;
-  bolumler.forEach(b=> Y += 70 + b.satirlar.length * satirY + 24);
-  Y = Math.max(1400, Y + 120);
+  const G = 1000;
+  const SAYFA = Math.round(G * 277 / 190);     // A4'te bir sayfanin piksel yuksekligi
+  const UST = 70, ALT = 70, satirY = 34;
 
+  const yerlestir = (ciz) => {
+    let sayfa = 0, y = 0;
+    const dip = () => (sayfa+1)*SAYFA - ALT;
+    const yeniSayfa = () => { sayfa++; y = sayfa*SAYFA + UST; };
+    const yer = h => { if(y + h > dip()) yeniSayfa(); };
+
+    // baslik yalnizca ilk sayfada
+    y = 100;
+    ciz && ciz.baslik(y);
+    y = 250;
+
+    bolumler.forEach(b=>{
+      yer(56 + satirY);                         // baslik yalniz kalmasin
+      ciz && ciz.bolum(b.baslik, y, sayfa);
+      y += 56;
+      b.satirlar.forEach(([k,v])=>{
+        yer(satirY);
+        ciz && ciz.satir(k, v, y);
+        y += satirY;
+      });
+      y += 34;
+    });
+
+    yer(60);
+    ciz && ciz.dipnot(y);
+    return (sayfa+1) * SAYFA;
+  };
+
+  const Y = yerlestir(null);
   const c = document.createElement("canvas"); c.width = G; c.height = Y;
   const x = c.getContext("2d");
   x.fillStyle = "#FFFFFF"; x.fillRect(0,0,G,Y);
-  x.fillStyle = "#2F4A22"; x.fillRect(0,0,G,10);
 
-  x.textAlign = "left"; x.fillStyle = "#111"; x.font = "700 42px Arial";
-  x.fillText(baslik, 60, 100);
-  x.font = "400 24px Arial"; x.fillStyle = "#555";
-  altBaslik.split("\n").forEach((t,i)=> x.fillText(t, 60, 145 + i*32));
+  // her sayfaya ust serit ve cerceve
+  for(let i=0;i<Y/SAYFA;i++){
+    x.fillStyle = "#2F4A22"; x.fillRect(0, i*SAYFA, G, 10);
+    x.strokeStyle = "#DDD"; x.lineWidth = 2;
+    x.strokeRect(20, i*SAYFA + 20, G-40, SAYFA - 40);
+    if(i){
+      x.fillStyle = "#999"; x.font = "400 18px Arial"; x.textAlign = "right";
+      x.fillText(`sayfa ${i+1}`, G-76, i*SAYFA + 52);
+      x.textAlign = "left";
+    }
+  }
 
-  let y = 250;
-  bolumler.forEach(b=>{
-    x.fillStyle = "#EAF3DE"; x.fillRect(60, y-32, G-120, 46);
-    x.fillStyle = "#2F4A22"; x.font = "700 26px Arial";
-    x.fillText(b.baslik, 76, y);
-    y += 56;
-    x.font = "400 23px Arial";
-    b.satirlar.forEach(([k,v])=>{
-      x.fillStyle = "#555"; x.fillText(k, 76, y);
+  yerlestir({
+    baslik: y => {
+      x.textAlign = "left"; x.fillStyle = "#111"; x.font = "700 42px Arial";
+      x.fillText(baslik, 60, y);
+      x.font = "400 24px Arial"; x.fillStyle = "#555";
+      altBaslik.split("\n").forEach((t,i)=> x.fillText(t, 60, y + 45 + i*32));
+    },
+    bolum: (ad2, y) => {
+      x.fillStyle = "#EAF3DE"; x.fillRect(60, y-32, G-120, 46);
+      x.fillStyle = "#2F4A22"; x.font = "700 26px Arial"; x.textAlign = "left";
+      x.fillText(ad2, 76, y);
+    },
+    satir: (k, v, y) => {
+      x.font = "400 23px Arial";
+      x.fillStyle = "#555"; x.textAlign = "left";
+      x.fillText(String(k).slice(0,62), 76, y);
       x.fillStyle = "#111"; x.textAlign = "right";
       x.fillText(String(v), G-76, y);
       x.textAlign = "left";
       x.strokeStyle = "#EEE"; x.lineWidth = 1;
       x.beginPath(); x.moveTo(76, y+10); x.lineTo(G-76, y+10); x.stroke();
-      y += satirY;
-    });
-    y += 34;
+    },
+    dipnot: y => {
+      x.font = "400 19px Arial"; x.fillStyle = "#888"; x.textAlign = "left";
+      x.fillText("Kaynak: TKGM parsel verisi ve OpenStreetMap açık verisi · " + new Date().toLocaleString("tr-TR"), 60, y);
+    }
   });
 
-  x.font = "400 19px Arial"; x.fillStyle = "#888";
-  x.fillText("Kaynak: TKGM parsel verisi ve OpenStreetMap açık verisi · " + new Date().toLocaleString("tr-TR"), 60, Y-50);
-  x.strokeStyle = "#DDD"; x.lineWidth = 2; x.strokeRect(20, 20, G-40, Y-40);
-  return { png: { dataUrl: c.toDataURL("image/png"), canvas: c }, oran: Y/G };
+  return { png: { dataUrl: c.toDataURL("image/png"), canvas: c, sayfaPx: SAYFA }, oran: Y/G };
 }
 
 function pngToPdfBlob(kaynak, oran){
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
-  const gen = 190, sayfaMm = 277;
-  const toplamMm = gen * oran;
-  if(toplamMm <= sayfaMm){ pdf.addImage(kaynak.dataUrl, "PNG", 10, 10, gen, toplamMm); return pdf.output("blob"); }
+  const gen = 190, c = kaynak.canvas, sayfaPx = kaynak.sayfaPx || c.height;
 
-  // uzun raporu gercekten dilimle, ayni parcayi iki kere basma
-  const c = kaynak.canvas;
-  const dilimPx = Math.floor(c.width * (sayfaMm/gen));
-  let y = 0;
-  while(y < c.height){
-    const h = Math.min(dilimPx, c.height - y);
+  for(let y = 0, i = 0; y < c.height; y += sayfaPx, i++){
+    const h = Math.min(sayfaPx, c.height - y);
     const t = document.createElement("canvas");
     t.width = c.width; t.height = h;
     const tx = t.getContext("2d");
     tx.fillStyle = "#FFFFFF"; tx.fillRect(0,0,t.width,t.height);
     tx.drawImage(c, 0, y, c.width, h, 0, 0, c.width, h);
-    if(y) pdf.addPage();
+    if(i) pdf.addPage();
     pdf.addImage(t.toDataURL("image/png"), "PNG", 10, 10, gen, gen * (h/c.width));
-    y += h;
   }
   return pdf.output("blob");
 }
@@ -1492,61 +1525,63 @@ function dosyaAdi(p, ek){
 
 async function cevreRaporu(){
   if(!SONPARSEL) return toast("Önce bir parsel sorgula");
-  const p = SONPARSEL.properties || {};
-  const m = merkez(SONPARSEL);
   const kutu = document.querySelector("#bilgi .acts");
   if(kutu) kutu.insertAdjacentHTML("beforeend",
     `<div id="rapdurum" style="flex:1 1 100%;text-align:center;color:var(--ink-3);font-size:13px;padding-top:8px">çevre taranıyor…</div>`);
-  try{
-    const veri = await cevreVerisi(m.lat, m.lng);
-    const o = cevreOzet(veri, m);
-    CEVRE_SON = { o, p, m, tarih:new Date() };
+  try{ await cevreUret(true); toast("Çevre raporu indirildi"); }
+  catch(e){ toast("Olmadı: " + (e.message||e)); }
+  document.getElementById("rapdurum")?.remove();
+}
 
-    const yerSatir = o.yerler.map(y=>[`${YER_AD[y.t.place]||y.t.place}: ${y.t.name}`, km(y.u)]);
-    const yolSatir = Object.entries(o.yollar).map(([k,v])=>
-      [YOL_AD[k] + (v.t.name ? ` (${v.t.name})` : ""), km(v.u)]);
-    const kullanimSatir = Object.entries(o.kullanim).sort((a,b)=>b[1]-a[1]).slice(0,6)
-      .map(([k,v])=>[LANDUSE_AD[k]||k, `${v} alan`]);
+// cevre verisini cikarir; indir=true ise PDF de uretir
+async function cevreUret(indir){
+  const p = SONPARSEL.properties || {};
+  const m = merkez(SONPARSEL);
+  const veri = await cevreVerisi(m.lat, m.lng);
+  const o = cevreOzet(veri, m);
+  CEVRE_SON = { o, p, m, tarih:new Date() };
+  if(!indir) return CEVRE_SON;
 
-    const bolumler = [
-      { baslik:"Parsel bilgileri", satirlar:[
-        ["İl / ilçe / mahalle", `${p.ilAd||""} / ${p.ilceAd||""} / ${p.mahalleAd||""}`],
-        ["Ada / parsel", `${p.adaNo||"—"} / ${p.parselNo||"—"}`],
-        ["Yüzölçümü", nf(alanCoz(p.alan)) + " m²"],
-        ["Niteliği", p.nitelik || "—"],
-        ["Mevkii", p.mevkii || "—"],
-        ["Koordinat", `${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}`]
-      ]},
-      { baslik:"Yerleşim yerlerine uzaklık", satirlar: yerSatir.length ? yerSatir : [["Yakında kayıtlı yerleşim yok",""]] },
-      { baslik:"Yol durumu", satirlar: yolSatir.length ? yolSatir : [["Yakında kayıtlı yol yok",""]] },
-      { baslik:"Altyapı ve su", satirlar:[
-        ["En yakın su kaynağı", o.su ? `${o.su.t.name || (o.su.t.waterway ? "akarsu" : "su yüzeyi")} · ${km(o.su.u)}` : "kayıt yok"],
-        ["Su kuyusu", o.kuyu ? km(o.kuyu.u) : "kayıt yok"],
-        ["Elektrik hattı", o.elektrik ? km(o.elektrik.u) : "kayıt yok"],
-        ["Akaryakıt istasyonu", o.akaryakit ? km(o.akaryakit.u) : "kayıt yok"]
-      ]},
-      { baslik:"Sosyal donatı", satirlar:[
-        ["En yakın okul", o.okul ? `${o.okul.t.name||"okul"} · ${km(o.okul.u)}` : "kayıt yok"],
-        ["Sağlık tesisi", o.saglik ? `${o.saglik.t.name||"sağlık"} · ${km(o.saglik.u)}` : "kayıt yok"]
-      ]},
-      { baslik:"Çevredeki arazi kullanımı", satirlar: kullanimSatir.length ? kullanimSatir : [["Kayıt yok",""]] }
-    ];
+  const yerSatir = o.yerler.map(y=>[`${YER_AD[y.t.place]||y.t.place}: ${y.t.name}`, km(y.u)]);
+  const yolSatir = Object.entries(o.yollar).map(([k,v])=>
+    [YOL_AD[k] + (v.t.name ? ` (${v.t.name})` : ""), km(v.u)]);
+  const kullanimSatir = Object.entries(o.kullanim).sort((a,b)=>b[1]-a[1]).slice(0,6)
+    .map(([k,v])=>[LANDUSE_AD[k]||k, `${v} alan`]);
 
-    const { png, oran } = raporPng(
-      `Çevre raporu · ${p.adaNo||"—"}/${p.parselNo||"—"}`,
-      `${p.mahalleAd||""} — ${p.ilceAd||""} / ${p.ilAd||""}\n2 km yarıçapındaki yollar, 12 km yarıçapındaki yerleşimler taranmıştır.`,
-      bolumler);
+  const bolumler = [
+    { baslik:"Parsel bilgileri", satirlar:[
+      ["İl / ilçe / mahalle", `${p.ilAd||""} / ${p.ilceAd||""} / ${p.mahalleAd||""}`],
+      ["Ada / parsel", `${p.adaNo||"—"} / ${p.parselNo||"—"}`],
+      ["Yüzölçümü", nf(alanCoz(p.alan)) + " m²"],
+      ["Niteliği", p.nitelik || "—"],
+      ["Mevkii", p.mevkii || "—"],
+      ["Koordinat", `${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}`]
+    ]},
+    { baslik:"Yerleşim yerlerine uzaklık", satirlar: yerSatir.length ? yerSatir : [["Yakında kayıtlı yerleşim yok",""]] },
+    { baslik:"Yol durumu", satirlar: yolSatir.length ? yolSatir : [["Yakında kayıtlı yol yok",""]] },
+    { baslik:"Altyapı ve su", satirlar:[
+      ["En yakın su kaynağı", o.su ? `${o.su.t.name || (o.su.t.waterway ? "akarsu" : "su yüzeyi")} · ${km(o.su.u)}` : "kayıt yok"],
+      ["Su kuyusu", o.kuyu ? km(o.kuyu.u) : "kayıt yok"],
+      ["Elektrik hattı", o.elektrik ? km(o.elektrik.u) : "kayıt yok"],
+      ["Akaryakıt istasyonu", o.akaryakit ? km(o.akaryakit.u) : "kayıt yok"]
+    ]},
+    { baslik:"Sosyal donatı", satirlar:[
+      ["En yakın okul", o.okul ? `${o.okul.t.name||"okul"} · ${km(o.okul.u)}` : "kayıt yok"],
+      ["Sağlık tesisi", o.saglik ? `${o.saglik.t.name||"sağlık"} · ${km(o.saglik.u)}` : "kayıt yok"]
+    ]},
+    { baslik:"Çevredeki arazi kullanımı", satirlar: kullanimSatir.length ? kullanimSatir : [["Kayıt yok",""]] }
+  ];
 
-    const blob = pngToPdfBlob(png, oran);
-    const ad2 = dosyaAdi(p, "cevre-raporu");
-    indirBlob(blob, ad2);
-    await parseleIliskilendir(p, blob, ad2, "arastirma");
-    document.getElementById("rapdurum")?.remove();
-    toast("Çevre raporu indirildi");
-  }catch(e){
-    document.getElementById("rapdurum")?.remove();
-    toast("Olmadı: " + (e.message||e));
-  }
+  const { png, oran } = raporPng(
+    `Çevre raporu · ${p.adaNo||"—"}/${p.parselNo||"—"}`,
+    `${p.mahalleAd||""} — ${p.ilceAd||""} / ${p.ilAd||""}\n2 km yarıçapındaki yollar, 12 km yarıçapındaki yerleşimler taranmıştır.`,
+    bolumler);
+
+  const blob = pngToPdfBlob(png, oran);
+  const ad2 = dosyaAdi(p, "cevre-raporu");
+  indirBlob(blob, ad2);
+  await parseleIliskilendir(p, blob, ad2, "arastirma");
+  return CEVRE_SON;
 }
 
 function indirBlob(blob, ad2){
@@ -1619,9 +1654,10 @@ async function emsal(){
       <label style="display:flex;align-items:center;gap:10px;margin:0;font-size:13.5px;color:var(--ink)">
         <input type="checkbox" id="cevreKat" style="width:20px;height:20px" ${CEVRE_SON?"checked":""} ${CEVRE_SON?"":"disabled"}>
         <span style="flex:1">Çevre raporunu değerlendirmeye kat</span></label>
-      <div class="ipuc" style="margin:8px 0 0">${CEVRE_SON
-        ? "Bu oturumda çıkarılan çevre verisi kullanılacak."
-        : "Önce harita ekranından çevre raporu çıkarırsan burada kullanılabilir."}</div>
+      <div class="ipuc" id="cevreNot" style="margin:8px 0 0">${CEVRE_SON
+        ? "Çevre verisi hazır, değerlendirmeye katılacak."
+        : "Henüz çevre verisi yok."}</div>
+      ${!CEVRE_SON && p ? `<button class="btn ghost" style="margin-top:11px" id="cevreYap">Çevre raporunu şimdi çıkar</button>` : ""}
     </div>
 
     <div id="sonuc" class="card" style="display:none"></div>
@@ -1651,6 +1687,22 @@ async function emsal(){
   };
   document.getElementById("emEkle").onclick = satirEkle;
   satirEkle(); satirEkle();
+
+  const cy = document.getElementById("cevreYap");
+  if(cy) cy.onclick = async e => {
+    e.target.disabled = true; e.target.textContent = "Çevre taranıyor…";
+    try{
+      await cevreUret(true);
+      const k = document.getElementById("cevreKat");
+      k.disabled = false; k.checked = true;
+      document.getElementById("cevreNot").textContent = "Çevre verisi hazır, değerlendirmeye katılacak. Rapor da indirildi.";
+      e.target.remove();
+      toast("Çevre raporu hazır");
+    }catch(err){
+      e.target.disabled = false; e.target.textContent = "Çevre raporunu şimdi çıkar";
+      toast("Olmadı: " + (err.message||err));
+    }
+  };
 
   const cek = document.getElementById("cek");
   if(cek) cek.onclick = () => { emsal(); toast("Kayıttan çekildi"); };
