@@ -335,7 +335,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 2.7";
+const SURUM = "beta 2.8";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -733,7 +733,7 @@ function kmlIndir(){
 function eplanAcSon(){
   if(!SONPARSEL) return toast("Önce bir parsel sorgula");
   const m = merkez(SONPARSEL);
-  eplanAc(m.lat, m.lng);
+  eplanAc(m.lat, m.lng, SONPARSEL.properties || {});
 }
 
 function earthAc(){
@@ -1141,7 +1141,7 @@ async function parselDetay(id){
         <button class="yesilb" onclick="miniHarita('${id}')">Haritada göster</button>
         <button class="mavib" onclick="kmlIndirParsel('${id}')">KML indir</button>
         <button class="mavib" onclick="earthAcKoord(${p.lat},${p.lng})">Earth'te aç</button>
-        <button class="kirmizi" onclick="eplanAc(${p.lat},${p.lng})">İmar planı</button></div>`:""}
+        <button class="kirmizi" onclick="eplanAc(${p.lat},${p.lng},{il:'${esc(p.il)}',ilce:'${esc(p.ilce)}',mahalle:'${esc(p.mahalle)}',ada:'${esc(p.ada||"")}',parsel:'${esc(p.parsel)}'})">İmar planı</button></div>`:""}
       ${y && ME.role==='admin' ? `<button class="btn ghost" style="margin-top:10px"
         onclick="SONPARSELID='${id}';go('fiyatDuzen','${y.id}')">Tapu bilgilerini düzenle</button>
       <button class="btn ghost" style="margin-top:8px" onclick="go('sunum','${id}')">Sunum görseli hazırla</button>
@@ -1478,9 +1478,14 @@ async function corineSinif(lat, lng){
   return { kod, ad: (kod && CLC_AD[kod]) || sonuc.value || sonuc.layerName || null };
 }
 
-// e-Plan'i parselin noktasinda ac
-function eplanAc(lat, lng){
-  window.open(`https://e-plan.gov.tr/?lat=${lat}&lon=${lng}&zoom=17`, "_blank", "noopener");
+// e-Plan koordinatla acmayi desteklemiyor; kunyeyi panoya alip imar durumu sayfasini aciyoruz
+async function eplanAc(lat, lng, p){
+  const kunye = p
+    ? `${duzgun(p.il||p.ilAd||"")} / ${duzgun(p.ilce||p.ilceAd||"")} / ${duzgun(p.mahalle||p.mahalleAd||"")} · Ada ${p.ada||p.adaNo||"—"} · Parsel ${p.parsel||p.parselNo||"—"} · ${(+lat).toFixed(6)}, ${(+lng).toFixed(6)}`
+    : `${(+lat).toFixed(6)}, ${(+lng).toFixed(6)}`;
+  try{ await navigator.clipboard.writeText(kunye); toast("Künye kopyalandı, e-Plan'da yapıştır"); }
+  catch(e){ toast("e-Plan açılıyor"); }
+  window.open("https://e-plan.gov.tr/e-plan/html/imarDurumu.html", "_blank", "noopener");
 }
 
 
@@ -1568,7 +1573,12 @@ function raporPng(baslik, altBaslik, bolumler){
       yer(56 + satirY*2);
       ciz && ciz.bolum(b.baslik, y, sayfa);
       y += 56;
-      if(b.metin){
+      if(b.gorsel){
+        const gy = (G-152) * b.oran;
+        yer(gy);
+        ciz && ciz.gorsel(b.gorsel, y, gy);
+        y += gy + 10;
+      }else if(b.metin){
         const satirlar = yaziSar(b.metin, G-152, 25);
         satirlar.forEach(t=>{
           yer(38);
@@ -1628,6 +1638,10 @@ function raporPng(baslik, altBaslik, bolumler){
       x.textAlign = "left";
       x.strokeStyle = "#EEE"; x.lineWidth = 1;
       x.beginPath(); x.moveTo(76, y+10); x.lineTo(G-76, y+10); x.stroke();
+    },
+    gorsel: (im, y, gy) => {
+      try{ x.drawImage(im, 76, y - 24, G-152, gy); }catch(e){}
+      x.strokeStyle = "#CFCFCF"; x.lineWidth = 1.5; x.strokeRect(76, y - 24, G-152, gy);
     },
     paragraf: (t, y) => {
       x.font = "400 25px Arial"; x.fillStyle = "#222"; x.textAlign = "left";
@@ -2205,6 +2219,74 @@ async function aiKopyala(parselId){
 
 /* ================= müşteri sunumu ================= */
 
+// Esri uydu karolarindan parselin ustten gorunumunu olustur
+async function uyduGorseli(geojson, lat, lng, G, Y){
+  const karo = (z, la, lo) => {
+    const n = Math.pow(2, z);
+    const x = (lo + 180) / 360 * n;
+    const rad = la * Math.PI/180;
+    const y = (1 - Math.log(Math.tan(rad) + 1/Math.cos(rad))/Math.PI) / 2 * n;
+    return { x, y };
+  };
+  let minLa = lat, maxLa = lat, minLo = lng, maxLo = lng;
+  if(geojson?.geometry){
+    JSON.stringify(geojson.geometry.coordinates).replace(/\[(-?\d+\.?\d*),(-?\d+\.?\d*)\]/g,(t,a,b)=>{
+      minLo = Math.min(minLo, +a); maxLo = Math.max(maxLo, +a);
+      minLa = Math.min(minLa, +b); maxLa = Math.max(maxLa, +b); return t;
+    });
+  }
+  const payLa = (maxLa-minLa)*0.25 || 0.0012, payLo = (maxLo-minLo)*0.25 || 0.0012;
+  minLa -= payLa; maxLa += payLa; minLo -= payLo; maxLo += payLo;
+
+  let z = 18;
+  for(; z > 12; z--){
+    const a = karo(z, maxLa, minLo), b = karo(z, minLa, maxLo);
+    if((b.x-a.x)*256 <= G && (b.y-a.y)*256 <= Y) break;
+  }
+  const ust = karo(z, maxLa, minLo), altk = karo(z, minLa, maxLo);
+  const gen = (altk.x-ust.x)*256, yuk = (altk.y-ust.y)*256;
+  const ol = Math.min(G/gen, Y/yuk);
+  const kx = (G - gen*ol)/2, ky = (Y - yuk*ol)/2;
+
+  const c = document.createElement("canvas"); c.width = G; c.height = Y;
+  const x = c.getContext("2d");
+  x.fillStyle = "#1A1A1A"; x.fillRect(0,0,G,Y);
+
+  const isler = [];
+  for(let tx = Math.floor(ust.x); tx <= Math.floor(altk.x); tx++)
+    for(let ty = Math.floor(ust.y); ty <= Math.floor(altk.y); ty++)
+      isler.push({ tx, ty });
+
+  await Promise.all(isler.map(({tx,ty})=>new Promise(res=>{
+    const im = new Image(); im.crossOrigin = "anonymous";
+    im.onload = () => {
+      const px = kx + (tx - ust.x)*256*ol, py = ky + (ty - ust.y)*256*ol;
+      try{ x.drawImage(im, px, py, 256*ol, 256*ol); }catch(e){}
+      res();
+    };
+    im.onerror = () => res();
+    im.src = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${ty}/${tx}`;
+  })));
+
+  if(geojson?.geometry){
+    const g = geojson.geometry;
+    const halka = g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0];
+    const E = k => {
+      const t = karo(z, k[1], k[0]);
+      return [ kx + (t.x - ust.x)*256*ol, ky + (t.y - ust.y)*256*ol ];
+    };
+    x.beginPath();
+    halka.forEach((k,i)=>{ const e = E(k); i ? x.lineTo(e[0],e[1]) : x.moveTo(e[0],e[1]); });
+    x.closePath();
+    x.fillStyle = "rgba(255,255,255,.16)"; x.fill();
+    x.lineWidth = 7; x.strokeStyle = "rgba(0,0,0,.5)"; x.stroke();
+    x.lineWidth = 4; x.strokeStyle = "#FFFFFF"; x.stroke();
+  }
+  return c;
+}
+
+
+
 async function musteriSunumu(parselId){
   const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
   if(!p) return toast("Parsel bulunamadı");
@@ -2236,7 +2318,7 @@ async function musteriSunumu(parselId){
 
     const konum = [
       `${duzgun(p.mahalle)}, ${duzgun(p.ilce)} ilçesine bağlı bir yerleşimdir ve söz konusu taşınmaz bu sınırlar içinde ${p.ada?`${p.ada} ada `:""}${p.parsel} parselde yer almaktadır.`,
-      `Parselin yüzölçümü ${nf(p.alan_m2)} m² olup tapu kaydındaki niteliği ${(p.nitelik||"belirtilmemiş").toLocaleLowerCase("tr")}tir.` ,
+      `Parselin yüzölçümü ${nf(p.alan_m2)} m² olup tapu kaydındaki niteliği "${p.nitelik || "belirtilmemiş"}" olarak geçmektedir.`,
       p.mevkii ? `Taşınmaz ${p.mevkii} mevkiinde konumlanmaktadır.` : "",
       yer ? `En yakın yerleşim ${yer.t.name} olup parsele kuş uçuşu ${km(yer.u)} mesafededir.` : "",
       o.yerler[1] ? `Bunun dışında ${o.yerler[1].t.name} ${km(o.yerler[1].u)}, ${o.yerler[2]?`${o.yerler[2].t.name} ise ${km(o.yerler[2].u)} `:""}uzaklıktadır.` : ""
@@ -2304,6 +2386,26 @@ async function musteriSunumu(parselId){
         ["Satış bedeli", y.toplam_fiyat ? nf(y.toplam_fiyat) + " ₺" : "—"]
       ]}
     ];
+
+    document.getElementById("durum").textContent = "Uydu görüntüsü hazırlanıyor…";
+    try{
+      const harita = await uyduGorseli(p.geojson, p.lat, p.lng, 1200, 900);
+      bolumler.splice(1, 0, { baslik:"Taşınmazın konumu (uydu görünümü)", gorsel:harita, oran:900/1200 });
+    }catch(e){}
+
+    try{
+      const { data:foto } = await sb.from("documents").select("file_path,file_name,kind")
+        .eq("parcel_id", parselId).in("kind",["resim","sunum","cap"]).order("created_at",{ascending:false}).limit(3);
+      for(const f of (foto||[])){
+        const { data:link } = await sb.storage.from("arsatakip").createSignedUrl(f.file_path, 3600);
+        if(!link) continue;
+        try{
+          const im = await yukleGorsel(link.signedUrl);
+          bolumler.push({ baslik: f.kind === "cap" ? "Çap görünümü" : "Taşınmazdan görüntü",
+                          gorsel:im, oran: im.naturalHeight/im.naturalWidth });
+        }catch(e){}
+      }
+    }catch(e){}
 
     document.getElementById("durum").textContent = "Sunum hazırlanıyor…";
     const { png, oran } = raporPng(
