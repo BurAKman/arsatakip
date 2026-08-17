@@ -4,7 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0B0F0D">
-<title>ArsaTakip</title>
+<title>Çapsız Çapçı</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -48,15 +51,31 @@ button{cursor:pointer;border:none;background:none}
 a{color:var(--gold);text-decoration:none}
 .hide{display:none!important}
 
+/* ---- acilis ekrani ---- */
+#acilis{position:fixed;inset:0;z-index:200;background:#05070A;display:flex;flex-direction:column;
+  justify-content:flex-end;transition:opacity .5s ease}
+#acilis.git{opacity:0;pointer-events:none}
+#acilis .acilisArka{position:absolute;inset:0;background-image:url('loading.png');
+  background-size:cover;background-position:center}
+#acilis .acilisAlt{position:relative;padding:0 30px calc(46px + env(safe-area-inset-bottom))}
+#acilis .acilisBar{height:12px;border-radius:20px;background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.22);overflow:hidden}
+#acilis .acilisBar i{display:block;height:100%;width:0;border-radius:20px;
+  background:linear-gradient(90deg,#8DC63F,#C6F06A);box-shadow:0 0 14px rgba(141,198,63,.8);
+  animation:dolum 3.4s cubic-bezier(.3,.7,.4,1) forwards}
+@keyframes dolum{0%{width:0}18%{width:22%}45%{width:52%}72%{width:78%}100%{width:100%}}
+
 /* ---- ust bar ---- */
 .top{display:flex;align-items:center;gap:10px;padding:16px 0 12px}
 .top h1{font-size:19px;flex:1}
 .logo{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
-.logo .mark{width:36px;height:36px;border-radius:11px;background:linear-gradient(150deg,rgba(95,215,154,.32),rgba(227,192,90,.20));
-  border:1px solid var(--cizgi-2);display:grid;place-items:center;flex:0 0 auto}
-.logo .mark svg{width:19px;height:19px;stroke:var(--green);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.logo b{font-size:18px;font-weight:700;letter-spacing:-.025em;display:block;line-height:1.1}
-.logo span{font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--green);display:block;margin-top:1px}
+.logo .mark{width:42px;height:42px;border-radius:50%;overflow:hidden;flex:0 0 auto;
+  border:1.5px solid rgba(255,255,255,.55);background:#0A0C0B;box-shadow:0 2px 12px rgba(0,0,0,.5)}
+.logo .mark img{width:100%;height:100%;object-fit:cover;display:block}
+.logo b{font-size:18px;font-weight:700;letter-spacing:-.02em;display:block;line-height:1.1;color:#FFFFFF;
+  text-shadow:0 1px 8px rgba(0,0,0,.55)}
+.logo span{font-size:8.5px;letter-spacing:.15em;text-transform:uppercase;display:block;margin-top:2px;
+  color:rgba(255,255,255,.82);text-shadow:0 1px 6px rgba(0,0,0,.5)}
 .ibtn{width:38px;height:38px;border-radius:12px;border:1px solid var(--cizgi-2);background:var(--cam);
   display:grid;place-items:center;flex:0 0 auto;color:var(--ink);backdrop-filter:blur(10px)}
 .ibtn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -226,6 +245,12 @@ select option{background:#101614;color:var(--ink)}
 </style>
 </head>
 <body>
+<div id="acilis">
+  <div class="acilisArka"></div>
+  <div class="acilisAlt">
+    <div class="acilisBar"><i></i></div>
+  </div>
+</div>
 <div class="wrap" id="app"><div class="spin"></div></div>
 <div id="toast"></div>
 
@@ -267,7 +292,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "v2.2";
+const SURUM = "beta 2.3";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -332,7 +357,7 @@ function payOran(s){
 function girisEkrani(){
   app.innerHTML = `
     <div style="padding:64px 0 28px"><div class="brand" style="flex-direction:column;gap:6px;align-items:flex-start">
-      <span>tarla · arsa · portföy</span><b style="font-size:32px">ArsaTakip</b>
+      <span>tarla · arsa · portföy</span><b style="font-size:32px">Çapsız Çapçı</b>
       <span style="color:var(--ink-3);letter-spacing:0;text-transform:none">sürüm ${SURUM}</span>
     </div>
     <p style="color:var(--ink-2);margin:14px 0 0;max-width:300px">E-postanı yaz, giriş bağlantısını yollayalım. Şifre yok.</p></div>
@@ -366,8 +391,8 @@ function head(title, back){
     ${back?`<button class="ibtn geri" onclick="${back}" aria-label="Geri">‹</button>`:""}
     ${title
       ? `<h1>${esc(title)}</h1>`
-      : `<div class="logo"><span class="mark">${svg("map")}</span>
-           <span><b>ArsaTakip</b><span>çapımız alayınıza yeter</span></span></div>`}
+      : `<div class="logo"><span class="mark"><img src="logo.png" alt=""></span>
+           <span><b>Çapsız Çapçı</b><span>çapımız alayınıza yeter</span></span></div>`}
     ${!back&&ME.role==='admin'?`<button class="ibtn ak" onclick="go('ayarlar')" aria-label="Ayarlar">${svg("gear")}</button>`:""}
     ${!back?`<button class="ibtn cik" onclick="cikisSor()" aria-label="Çıkış yap">${svg("out")}</button>`:""}
   </div>`;
@@ -385,8 +410,8 @@ async function anaMenu(){
     ${tile("ekler","file","Ekler","Vekalet, muvafakat","gri")}
     ${tile("kml","globe","KML","İndir, Earth'te aç","mavi")}
     ${tile("cap","vector","Çap","Çiz veya yükle","mavi")}
-    <button class="tile wide sari soon" onclick="toast('Sırası gelince açılacak')"><div class="ic">${svg("spark")}</div>
-      <div><b>Yapay zekâ</b><small>Görsel hazırla, belge oku, soru sor</small></div></button>
+    <button class="tile wide sari" onclick="go('yz')"><div class="ic">${svg("spark")}</div>
+      <div><b>Yapay zekâ</b><small>Claude, ChatGPT, Gemini · kendi hesabınla</small></div></button>
   </div>`;
   kurlar();
 }
@@ -1974,6 +1999,76 @@ function parcaCfg(){
            parcalar: PARCA.parcalar.map(o=>({ no:o.no, m2:+o.m2||1, renk:o.renk||"#FFFFFF" })) };
 }
 
+
+/* ================= yapay zekâ ================= */
+
+const AI_LER = [
+  { id:"claude", ad:"Claude", alt:"Anthropic · Pro hesabınla", url:"https://claude.ai/new", renk:"sari" },
+  { id:"gpt",    ad:"ChatGPT", alt:"OpenAI · ücretsiz sürüm yeter", url:"https://chatgpt.com/", renk:"yesil" },
+  { id:"gemini", ad:"Gemini", alt:"Google · Google hesabınla", url:"https://gemini.google.com/app", renk:"mavi" }
+];
+
+async function yapayZeka(){
+  app.innerHTML = head("Yapay zekâ","go('ana')") + `
+    <p class="ipuc">Birini seç, tarayıcı sekmesinde kendi hesabınla açılsın. Mikrofonla konuşabilir, yazıp sorabilirsin.</p>
+    <div class="grid">
+      ${AI_LER.map(a=>`<button class="tile ${a.renk}" onclick="aiAc('${a.id}')">
+        <div class="ic">${svg("spark")}</div><b>${a.ad}</b><small>${a.alt}</small></button>`).join("")}
+    </div>
+
+    <h3 style="font-size:14px;margin:24px 0 10px">Parsel bilgisiyle sor</h3>
+    <p class="ipuc">Bir parsel seç, bilgileri panoya kopyalayayım; açılan sohbete yapıştırıp istediğini sor.</p>
+    <div id="aiList"><div class="spin"></div></div>`;
+  document.getElementById("aiList").innerHTML = await parselSecici("yapayZekaListe", p=>`
+    <div class="rw">
+      <span class="kod">${esc(p.ada||"—")}/${esc(p.parsel)}</span>
+      <span class="orta"><b>${nf(p.alan_m2)} m²</b><small>${esc(duzgun(p.mahalle))}</small></span>
+      <span class="sag"><button class="pill gold" onclick="aiKopyala('${p.id}')">kopyala</button></span>
+    </div>`);
+}
+function yapayZekaListe(){ yapayZeka(); }
+
+function aiAc(id){
+  const a = AI_LER.find(x=>x.id===id);
+  if(a) window.open(a.url, "_blank", "noopener");
+}
+
+async function aiKopyala(parselId){
+  const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
+  const { data:yl } = await sb.from("parcel_years").select("*").eq("parcel_id",parselId).order("yil",{ascending:false});
+  const { data:et } = await sb.from("parcel_tags").select("tags(name)").eq("parcel_id",parselId);
+  const y = yl?.[0] || {};
+  const etiket = (et||[]).map(e=>e.tags?.name).filter(Boolean);
+
+  const satirlar = [
+    `Konum: ${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)}`,
+    `Ada/parsel: ${p.ada||"—"}/${p.parsel}`,
+    `Yüzölçümü: ${nf(p.alan_m2)} m²`,
+    `Niteliği: ${p.nitelik||"—"}`,
+    p.mevkii ? `Mevkii: ${p.mevkii}` : null,
+    p.lat ? `Koordinat: ${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}` : null,
+    y.tapu_durumu === "hisseli" ? `Tapu: hisseli (${y.hisse_pay||"?"}), payımız ${nf(y.hisse_m2)} m²` : "Tapu: tek tapu",
+    y.m2_fiyat ? `m² fiyatı: ${nf(y.m2_fiyat)} ₺` : null,
+    y.toplam_fiyat ? `Toplam fiyat: ${nf(y.toplam_fiyat)} ₺` : null,
+    y.malik ? `Malik: ${y.malik.replace(/\n/g,", ")}` : null,
+    etiket.length ? `Özellikler: ${etiket.join(", ")}` : null
+  ].filter(Boolean);
+
+  if(CEVRE_SON?.o){
+    const o = CEVRE_SON.o;
+    const yer = o.yerler[0];
+    satirlar.push("--- çevre ---");
+    if(yer) satirlar.push(`En yakın yerleşim: ${yer.t.name} (${km(yer.u)})`);
+    Object.entries(o.yollar).slice(0,3).forEach(([k,v])=>satirlar.push(`${YOL_AD[k]}: ${km(v.u)}`));
+    if(o.su) satirlar.push(`Su kaynağı: ${km(o.su.u)}`);
+    if(o.elektrik) satirlar.push(`Elektrik hattı: ${km(o.elektrik.u)}`);
+  }
+
+  const metin = satirlar.join("\n");
+  try{ await navigator.clipboard.writeText(metin); toast("Kopyalandı, sohbete yapıştır"); }
+  catch(e){ toast("Kopyalanamadı"); }
+}
+
 /* ================= sunum görseli ================= */
 
 /* ---- sunum kutu stilleri ---- */
@@ -3040,9 +3135,18 @@ async function cikis(){ await sb.auth.signOut(); location.reload(); }
 
 /* ================= yonlendirme ================= */
 
-const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, emsal:emsal, sunum:sunum, yeni:yeniParsel, parsel:parselDetay,
+const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, emsal:emsal, sunum:sunum, yz:yapayZeka, yeni:yeniParsel, parsel:parselDetay,
                    fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
 function go(r,arg){ (ekranlar[r]||anaMenu)(arg); window.scrollTo(0,0); }
+
+function acilisiKapat(){
+  const a = document.getElementById("acilis");
+  if(!a || a.classList.contains("git")) return;
+  a.classList.add("git");
+  setTimeout(()=>a.remove(), 600);
+}
+// en az 3,4 saniye dursun ki bar dolsun
+setTimeout(acilisiKapat, 3500);
 
 function acilisHatasi(mesaj){
   app.innerHTML = `<div class="empty"><b>Açılamadı</b>
