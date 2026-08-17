@@ -194,18 +194,43 @@ select option{background:#101614;color:var(--ink)}
 .pill.gold{background:var(--gold-soft);color:var(--gold);border-color:rgba(227,192,90,.32)}
 .pill.sade{background:var(--cam-2);color:var(--ink-2);border-color:var(--cizgi)}
 
+/* ---- bolum basliklari ---- */
+.bolum{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.bolum .rz{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:0 0 auto;
+  border:1px solid rgba(255,255,255,.18)}
+.bolum .rz svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.bolum b{font-size:14.5px;font-weight:700;letter-spacing:-.01em;flex:1}
+.bolum .sayi{font-size:11px;color:var(--ink-3);background:var(--cam-2);border:1px solid var(--cizgi);
+  border-radius:20px;padding:3px 10px}
+.rz.altin{background:linear-gradient(155deg,rgba(227,192,90,.30),rgba(227,192,90,.08));color:var(--gold)}
+.rz.yesil{background:linear-gradient(155deg,rgba(95,215,154,.30),rgba(95,215,154,.08));color:var(--green)}
+.rz.mavi{background:linear-gradient(155deg,rgba(111,176,245,.30),rgba(111,176,245,.08));color:var(--blue)}
+.rz.kirmizi{background:linear-gradient(155deg,rgba(240,112,92,.30),rgba(240,112,92,.08));color:var(--red)}
+.tur{font-size:10.5px;color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase;
+  margin:12px 0 4px;display:flex;align-items:center;gap:9px}
+.tur::after{content:"";flex:1;height:1px;background:var(--cizgi)}
+.acts button.kirmizi{background:linear-gradient(155deg,rgba(240,112,92,.34),rgba(240,112,92,.12));
+  border-color:rgba(240,112,92,.5);color:#FFD9D1}
+.acts button.yesilb{background:linear-gradient(155deg,rgba(95,215,154,.32),rgba(95,215,154,.10));
+  border-color:rgba(95,215,154,.5);color:#DCFFEE}
+.acts button.mavib{background:linear-gradient(155deg,rgba(111,176,245,.32),rgba(111,176,245,.10));
+  border-color:rgba(111,176,245,.5);color:#DCEEFF}
+
 /* ---- belge satirlari ---- */
 .dosya{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--cizgi)}
 .dosya:first-child{border-top:none}
-.dosya .tip{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;
-  background:var(--cam-2);border:1px solid var(--cizgi);color:var(--ink-2)}
+.dosya .tip{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:0 0 auto;
+  background:linear-gradient(155deg,rgba(227,192,90,.28),rgba(227,192,90,.08));
+  border:1px solid rgba(227,192,90,.35);color:var(--gold)}
 .dosya .tip svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .dosya .bilgi{flex:1;min-width:0;text-align:left}
 .dosya .bilgi b{display:block;font-size:13.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dosya .bilgi small{display:block;font-size:11px;color:var(--ink-3)}
 .dosya .ops{display:flex;gap:6px;flex:0 0 auto}
-.dosya .ops button{width:32px;height:32px;border-radius:9px;border:1px solid var(--cizgi-2);background:var(--cam-2);
-  color:var(--ink);display:grid;place-items:center}
+.dosya .ops button{width:34px;height:34px;border-radius:11px;border:1px solid rgba(255,255,255,.2);
+  background:linear-gradient(155deg,rgba(255,255,255,.20),rgba(255,255,255,.06));
+  color:#fff;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.dosya .ops button:active{background:rgba(255,255,255,.3)}
 .dosya .ops button svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .dosya .ops button.kirmizi{color:var(--red);border-color:rgba(240,112,92,.35);background:var(--red-soft)}
 
@@ -310,7 +335,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 2.6";
+const SURUM = "beta 2.7";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -669,6 +694,7 @@ function ciz(f){
         ${ME.role==='admin'?`<button class="pri" onclick="haritadanKaydet()">Kaydet</button>`:""}
         <button onclick="cevreRaporu()">Çevre raporu</button>
         <button onclick="go('emsal')">Emsal araştır</button>
+        <button onclick="eplanAcSon()">İmar planı</button>
       </div>
     </div>`;
 }
@@ -702,6 +728,12 @@ function kmlIndir(){
   a.download = `${(p.mahalleAd||"parsel")}-${p.adaNo||0}-${p.parselNo||0}.kml`.replace(/\s+/g,"_");
   a.click(); URL.revokeObjectURL(a.href);
   toast("KML indirildi");
+}
+
+function eplanAcSon(){
+  if(!SONPARSEL) return toast("Önce bir parsel sorgula");
+  const m = merkez(SONPARSEL);
+  eplanAc(m.lat, m.lng);
 }
 
 function earthAc(){
@@ -1106,18 +1138,20 @@ async function parselDetay(id){
         <b class="mono" style="color:var(--red)">${new Date(y.pasif_tarihi).toLocaleString("tr-TR",{day:"2-digit",month:"long",hour:"2-digit",minute:"2-digit"})}</b></div>` : ""}
       <div id="minikutu"></div>
       ${p.lat?`<div class="acts" style="margin-top:12px">
-        <button onclick="miniHarita('${id}')">Haritada göster</button>
-        <button onclick="kmlIndirParsel('${id}')">KML indir</button>
-        <button onclick="earthAcKoord(${p.lat},${p.lng})">Earth'te aç</button></div>`:""}
+        <button class="yesilb" onclick="miniHarita('${id}')">Haritada göster</button>
+        <button class="mavib" onclick="kmlIndirParsel('${id}')">KML indir</button>
+        <button class="mavib" onclick="earthAcKoord(${p.lat},${p.lng})">Earth'te aç</button>
+        <button class="kirmizi" onclick="eplanAc(${p.lat},${p.lng})">İmar planı</button></div>`:""}
       ${y && ME.role==='admin' ? `<button class="btn ghost" style="margin-top:10px"
         onclick="SONPARSELID='${id}';go('fiyatDuzen','${y.id}')">Tapu bilgilerini düzenle</button>
-      <button class="btn ghost" style="margin-top:8px" onclick="go('sunum','${id}')">Sunum görseli hazırla</button>` : ""}
+      <button class="btn ghost" style="margin-top:8px" onclick="go('sunum','${id}')">Sunum görseli hazırla</button>
+      <button class="btn" style="margin-top:8px;background:linear-gradient(160deg,#F0705C,#C6402C);color:#fff"
+        onclick="go('musteri','${id}')">Müşteri için sunum hazırla</button>` : ""}
     </div>
 
     ${y ? `<div class="card">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <div style="color:var(--gold)">${svg("money")}</div><b style="font-size:14px">Tapu ve fiyat</b>
-        <span class="pill ${y.aktif?"on":"off"}" style="margin-left:auto">${y.yil} · ${y.aktif?"aktif":"pasif"}</span></div>
+      <div class="bolum"><span class="rz altin">${svg("money")}</span><b>Tapu ve fiyat</b>
+        <span class="pill ${y.aktif?"on":"off"}">${y.yil} · ${y.aktif?"aktif":"pasif"}</span></div>
       <div class="kv"><span>Tapu durumu</span><b>${y.tapu_durumu==="hisseli"?"Hisseli"+(y.hisse_pay?" · "+esc(y.hisse_pay):""):"Tek tapu"}</b></div>
       <div class="kv"><span>Payınız</span><b class="mono">${y.tapu_durumu==="hisseli"?nf(y.hisse_m2)+" m²":"tamamı"}</b></div>
       <div class="kv"><span>m² fiyatı</span><b class="mono">${nf(y.m2_fiyat)} ₺</b></div>
@@ -1141,16 +1175,15 @@ async function parselDetay(id){
     </div>` : ""}
 
     <div class="card">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <div style="color:var(--gold)">${svg("tag")}</div><b style="font-size:14px">Arazi özellikleri</b></div>
+      <div class="bolum"><span class="rz yesil">${svg("tag")}</span><b>Arazi özellikleri</b></div>
       ${etiketAd.length
         ? `<div style="display:flex;gap:7px;flex-wrap:wrap">${etiketAd.map(t=>`<span class="pill on">${esc(t)}</span>`).join("")}</div>`
         : `<div style="color:var(--ink-3);font-size:13px">Etiket eklenmemiş. Tapu bilgileri ekranından ekleyebilirsin.</div>`}
     </div>
 
     ${(kisiler||[]).filter(k=>k.parcel_id===id).length ? `<div class="card">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <div style="color:var(--gold)">${svg("file")}</div><b style="font-size:14px">Bu parsele bağlı belgeler</b></div>
+      <div class="bolum">
+        <span class="rz mavi">${svg("file")}</span><b>Bu parsele bağlı belgeler</b></div>
       ${kisiler.filter(k=>k.parcel_id===id).map(k=>`<div style="border-top:1px solid var(--cizgi);padding:10px 0 4px">
         <div style="display:flex;align-items:center;gap:8px">
           <b style="font-size:14px;font-weight:500;flex:1">${esc(k.ad_soyad)}</b>
@@ -1163,22 +1196,20 @@ async function parselDetay(id){
     </div>` : ""}
 
     <div class="card">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <div style="color:var(--gold)">${svg("photo")}</div><b style="font-size:14px">Belgeler ve görseller</b>
-        <span style="margin-left:auto;font-size:12px;color:var(--ink-3)">${(belgeler||[]).length}</span></div>
+      <div class="bolum"><span class="rz altin">${svg("photo")}</span><b>Belgeler ve görseller</b>
+        <span class="sayi">${(belgeler||[]).length}</span></div>
       ${(belgeler||[]).length
         ? grupSira.filter(k=>grup[k]).map(k=>`
             <div style="border-top:1px solid var(--cizgi);padding:8px 0 2px">
-              <div style="font-size:11px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px">${BELGE_AD[k]||k}</div>
+              <div class="tur">${BELGE_AD[k]||k}</div>
               ${grup[k].map(b=>dosyaSatiri(b, ME.role==='admin'
                   ? `<button class="kirmizi" aria-label="Sil" onclick="belgeSilVeYenile('${b.id}','${esc(b.file_path)}','parsel','${id}')">${svg("trash")}</button>` : "")).join("")}</div>`).join("")
         : `<div style="color:var(--ink-3);font-size:13px">Henüz belge yok. Tapu bilgileri ekranından yükleyebilirsin.</div>`}
     </div>
 
     <div class="card">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <div style="color:var(--gold)">${svg("note")}</div><b style="font-size:14px">Notlar</b>
-        <span style="margin-left:auto;font-size:12px;color:var(--ink-3)">${(notlar||[]).length}</span></div>
+      <div class="bolum"><span class="rz kirmizi">${svg("note")}</span><b>Notlar</b>
+        <span class="sayi">${(notlar||[]).length}</span></div>
       ${ME.role!=='uye'?`<div style="display:flex;gap:8px;margin-bottom:12px">
         <input id="not" placeholder="Not yaz…"><button class="btn" style="width:auto;padding:12px 18px" id="notEkle">Ekle</button></div>`:""}
       ${(notlar||[]).length? notlar.map(n=>{
@@ -1415,6 +1446,45 @@ async function etiketSil(parselId, tagId){
 
 /* ================= çevre raporu ve emsal ================= */
 
+/* ---- CORINE arazi ortusu (Copernicus acik verisi) ---- */
+
+const CLC_AD = {
+  "111":"Kesintisiz kent dokusu","112":"Kesintili kent dokusu","121":"Sanayi veya ticaret alanı",
+  "122":"Yol ve demiryolu ağı","123":"Liman","124":"Havaalanı","131":"Maden ocağı","132":"Döküm sahası",
+  "133":"İnşaat alanı","141":"Kentsel yeşil alan","142":"Spor ve eğlence alanı",
+  "211":"Sulanmayan tarım arazisi","212":"Sürekli sulanan tarım arazisi","213":"Çeltik tarlası",
+  "221":"Bağ","222":"Meyve bahçesi","223":"Zeytinlik","231":"Otlak / mera",
+  "241":"Yıllık ve çok yıllık karışık tarım","242":"Karmaşık ekim düzeni",
+  "243":"Doğal bitki örtüsüyle karışık tarım arazisi","244":"Ağaçlı tarım arazisi",
+  "311":"Yapraklı orman","312":"İğne yapraklı orman","313":"Karışık orman",
+  "321":"Doğal çayır","322":"Fundalık","323":"Maki","324":"Geçiş halinde orman-çalılık",
+  "331":"Kumsal / kumul","332":"Çıplak kaya","333":"Seyrek bitki örtülü alan","334":"Yanmış alan",
+  "411":"İç sulak alan","412":"Turbalık","421":"Tuzlu bataklık","422":"Tuzla",
+  "511":"Akarsu","512":"Su kütlesi","521":"Kıyı lagünü","523":"Deniz"
+};
+
+async function corineSinif(lat, lng){
+  const d = 0.0009;
+  const u = "https://image.discomap.eea.europa.eu/arcgis/rest/services/Corine/CLC2018_WM/MapServer/identify"
+    + `?f=json&geometryType=esriGeometryPoint&sr=4326&layers=all&tolerance=3&returnGeometry=false`
+    + `&imageDisplay=400,400,96&mapExtent=${lng-d},${lat-d},${lng+d},${lat+d}`
+    + `&geometry=${encodeURIComponent(JSON.stringify({ x:lng, y:lat, spatialReference:{ wkid:4326 } }))}`;
+  const r = await zamanAsimi(tkgm(u), 15000);
+  const sonuc = r?.results?.[0];
+  if(!sonuc) return null;
+  const oz = sonuc.attributes || {};
+  const metin = Object.values(oz).map(v=>String(v)).join(" ");
+  const kod = (metin.match(/\b([1-5]\d\d)\b/) || [])[1];
+  return { kod, ad: (kod && CLC_AD[kod]) || sonuc.value || sonuc.layerName || null };
+}
+
+// e-Plan'i parselin noktasinda ac
+function eplanAc(lat, lng){
+  window.open(`https://e-plan.gov.tr/?lat=${lat}&lon=${lng}&zoom=17`, "_blank", "noopener");
+}
+
+
+
 const OVER = "https://overpass-api.de/api/interpreter?data=";
 let CEVRE_SON = null;   // son cikarilan cevre ozeti
 
@@ -1495,14 +1565,23 @@ function raporPng(baslik, altBaslik, bolumler){
     y = 250;
 
     bolumler.forEach(b=>{
-      yer(56 + satirY*2);                       // baslik ve ilk iki satir birlikte kalsin
+      yer(56 + satirY*2);
       ciz && ciz.bolum(b.baslik, y, sayfa);
       y += 56;
-      b.satirlar.forEach(([k,v])=>{
-        yer(satirY);
-        ciz && ciz.satir(k, v, y);
-        y += satirY;
-      });
+      if(b.metin){
+        const satirlar = yaziSar(b.metin, G-152, 25);
+        satirlar.forEach(t=>{
+          yer(38);
+          ciz && ciz.paragraf(t, y);
+          y += t === "" ? 16 : 38;
+        });
+      }else{
+        (b.satirlar||[]).forEach(([k,v])=>{
+          yer(satirY);
+          ciz && ciz.satir(k, v, y);
+          y += satirY;
+        });
+      }
       y += 34;
     });
 
@@ -1550,6 +1629,10 @@ function raporPng(baslik, altBaslik, bolumler){
       x.strokeStyle = "#EEE"; x.lineWidth = 1;
       x.beginPath(); x.moveTo(76, y+10); x.lineTo(G-76, y+10); x.stroke();
     },
+    paragraf: (t, y) => {
+      x.font = "400 25px Arial"; x.fillStyle = "#222"; x.textAlign = "left";
+      x.fillText(t, 76, y);
+    },
     dipnot: y => {
       x.font = "400 19px Arial"; x.fillStyle = "#888"; x.textAlign = "left";
       x.fillText("Kaynak: TKGM parsel verisi ve OpenStreetMap açık verisi · " + new Date().toLocaleString("tr-TR"), 60, y);
@@ -1557,6 +1640,23 @@ function raporPng(baslik, altBaslik, bolumler){
   });
 
   return { png: { dataUrl: c.toDataURL("image/png"), canvas: c, sayfaPx: SAYFA }, oran: Y/G };
+}
+
+// uzun metni satirlara bol
+function yaziSar(metin, genislik, punto){
+  OLCER.font = `400 ${punto}px Arial`;
+  const cikti = [];
+  String(metin).split("\n").forEach(parca=>{
+    if(!parca.trim()){ cikti.push(""); return; }
+    let satir = "";
+    parca.split(" ").forEach(kelime=>{
+      const deneme = satir ? satir + " " + kelime : kelime;
+      if(OLCER.measureText(deneme).width > genislik){ cikti.push(satir); satir = kelime; }
+      else satir = deneme;
+    });
+    if(satir) cikti.push(satir);
+  });
+  return cikti;
 }
 
 function pngToPdfBlob(kaynak, oran){
@@ -1599,7 +1699,9 @@ async function cevreUret(indir){
   const m = merkez(SONPARSEL);
   const veri = await cevreVerisi(m.lat, m.lng);
   const o = cevreOzet(veri, m);
-  CEVRE_SON = { o, p, m, tarih:new Date() };
+  let clc = null;
+  try{ clc = await corineSinif(m.lat, m.lng); }catch(e){}
+  CEVRE_SON = { o, p, m, clc, tarih:new Date() };
   if(!indir) return CEVRE_SON;
 
   const yerSatir = o.yerler.map(y=>[`${YER_AD[y.t.place]||y.t.place}: ${y.t.name}`, km(y.u)]);
@@ -1629,7 +1731,15 @@ async function cevreUret(indir){
       ["En yakın okul", o.okul ? `${o.okul.t.name||"okul"} · ${km(o.okul.u)}` : "kayıt yok"],
       ["Sağlık tesisi", o.saglik ? `${o.saglik.t.name||"sağlık"} · ${km(o.saglik.u)}` : "kayıt yok"]
     ]},
-    { baslik:"Çevredeki arazi kullanımı", satirlar: kullanimSatir.length ? kullanimSatir : [["Kayıt yok",""]] }
+    { baslik:"Çevredeki arazi kullanımı", satirlar: kullanimSatir.length ? kullanimSatir : [["Kayıt yok",""]] },
+    { baslik:"Resmî arazi örtüsü (CORINE)", satirlar: clc
+        ? [["Parselin bulunduğu sınıf", clc.ad || "—"], ["CORINE kodu", clc.kod || "—"],
+           ["Kaynak", "Copernicus CLC 2018"]]
+        : [["Sınıf bilgisi alınamadı", "—"]] },
+    { baslik:"İmar durumu", satirlar:[
+      ["e-Plan sorgusu", "Uygulamadaki İmar planı tuşundan"],
+      ["Not", "Yürürlükteki ve askıdaki planlar e-Plan'da görüntülenir"]
+    ]}
   ];
 
   const { png, oran } = raporPng(
@@ -1803,6 +1913,18 @@ async function emsalHesapla(p){
     if((o.kullanim.residential||0) > 0) etkiler.push(["Çevrede yerleşim alanı var", 10]);
     if((o.kullanim.industrial||0) > 0) etkiler.push(["Çevrede sanayi alanı var", 8]);
     if((o.kullanim.forest||0) > 2) etkiler.push(["Çevre ağırlıklı orman", -5]);
+    const c = CEVRE_SON.clc;
+    if(c?.kod){
+      const k = c.kod;
+      if(k === "121") etkiler.push([`CORINE: ${c.ad}`, 16]);
+      else if(k.startsWith("11")) etkiler.push([`CORINE: ${c.ad}`, 14]);
+      else if(k === "133" || k === "142") etkiler.push([`CORINE: ${c.ad}`, 10]);
+      else if(k === "212" || k === "213") etkiler.push([`CORINE: ${c.ad}`, 8]);
+      else if(k === "222" || k === "221" || k === "223") etkiler.push([`CORINE: ${c.ad}`, 6]);
+      else if(k.startsWith("31") || k.startsWith("32")) etkiler.push([`CORINE: ${c.ad}`, -6]);
+      else if(k.startsWith("41") || k.startsWith("51")) etkiler.push([`CORINE: ${c.ad}`, -14]);
+      else if(k === "331" || k === "332" || k === "333") etkiler.push([`CORINE: ${c.ad}`, -10]);
+    }
   }
   let carpan = etkiler.reduce((t,[,y])=>t+y, 0);
   carpan = Math.max(-45, Math.min(60, carpan));
@@ -2078,6 +2200,129 @@ async function aiKopyala(parselId){
   const metin = satirlar.join("\n");
   try{ await navigator.clipboard.writeText(metin); toast("Kopyalandı, sohbete yapıştır"); }
   catch(e){ toast("Kopyalanamadı"); }
+}
+
+
+/* ================= müşteri sunumu ================= */
+
+async function musteriSunumu(parselId){
+  const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
+  if(!p) return toast("Parsel bulunamadı");
+  if(!p.lat) return toast("Bu parselin konumu yok, önce TKGM'den tazele");
+
+  app.innerHTML = head("Müşteri sunumu", `go('parsel','${parselId}')`) + `
+    <div class="card"><div class="spin"></div>
+      <p style="text-align:center;color:var(--ink-3);font-size:13px" id="durum">Çevre verisi taranıyor…</p></div>`;
+
+  try{
+    const [{ data:yl }, { data:et }] = await Promise.all([
+      sb.from("parcel_years").select("*").eq("parcel_id",parselId).order("yil",{ascending:false}),
+      sb.from("parcel_tags").select("tags(name)").eq("parcel_id",parselId)
+    ]);
+    const y = yl?.[0] || {};
+    const etiket = (et||[]).map(e=>e.tags?.name).filter(Boolean);
+    const m = { lat:p.lat, lng:p.lng };
+
+    const veri = await cevreVerisi(m.lat, m.lng);
+    const o = cevreOzet(veri, m);
+    document.getElementById("durum").textContent = "Arazi örtüsü sorgulanıyor…";
+    let clc = null;
+    try{ clc = await corineSinif(m.lat, m.lng); }catch(e){}
+
+    // --- anlatim metinleri ---
+    const yer = o.yerler[0];
+    const anaYol = o.yollar.primary || o.yollar.secondary || o.yollar.trunk || o.yollar.motorway;
+    const koyYol = o.yollar.unclassified || o.yollar.track || o.yollar.residential;
+
+    const konum = [
+      `${duzgun(p.mahalle)}, ${duzgun(p.ilce)} ilçesine bağlı bir yerleşimdir ve söz konusu taşınmaz bu sınırlar içinde ${p.ada?`${p.ada} ada `:""}${p.parsel} parselde yer almaktadır.`,
+      `Parselin yüzölçümü ${nf(p.alan_m2)} m² olup tapu kaydındaki niteliği ${(p.nitelik||"belirtilmemiş").toLocaleLowerCase("tr")}tir.` ,
+      p.mevkii ? `Taşınmaz ${p.mevkii} mevkiinde konumlanmaktadır.` : "",
+      yer ? `En yakın yerleşim ${yer.t.name} olup parsele kuş uçuşu ${km(yer.u)} mesafededir.` : "",
+      o.yerler[1] ? `Bunun dışında ${o.yerler[1].t.name} ${km(o.yerler[1].u)}, ${o.yerler[2]?`${o.yerler[2].t.name} ise ${km(o.yerler[2].u)} `:""}uzaklıktadır.` : ""
+    ].filter(Boolean).join(" ");
+
+    const ulasim = [
+      koyYol ? `Parsele erişim ${YOL_AD[Object.keys(o.yollar).find(k=>o.yollar[k]===koyYol)]?.toLocaleLowerCase("tr")||"mevcut yol"} üzerinden sağlanmakta olup, taşınmaz bu yola ${km(koyYol.u)} mesafededir.`
+              : "Yakın çevrede kayıtlı bir ulaşım yolu tespit edilememiştir; erişim durumunun yerinde incelenmesi önerilir.",
+      anaYol ? `Bölgenin ana ulaşım aksı olan ${YOL_AD[Object.keys(o.yollar).find(k=>o.yollar[k]===anaYol)]?.toLocaleLowerCase("tr")||"karayolu"} parsele ${km(anaYol.u)} uzaklıktadır.` : "",
+      koyYol && koyYol.u <= 60 ? "Bu haliyle taşınmaz yola cepheli konumdadır; ulaşım açısından güçlü bir avantaja sahiptir." : "",
+      koyYol && koyYol.u > 400 ? "Yola olan mesafe dikkate alındığında geçit hakkı konusunun alıcı tarafından ayrıca değerlendirilmesi uygun olacaktır." : ""
+    ].filter(Boolean).join(" ");
+
+    const altyapi = [
+      o.su ? `En yakın su kaynağı parsele ${km(o.su.u)} mesafededir${o.su.t.name?` (${o.su.t.name})`:""}.` : "Yakın çevrede kayıtlı yüzey suyu bulunmamaktadır.",
+      o.kuyu ? `Ayrıca ${km(o.kuyu.u)} mesafede kayıtlı bir su kuyusu yer almaktadır.` : "",
+      o.elektrik ? `Elektrik iletim hattı parsele ${km(o.elektrik.u)} uzaklıkta geçmektedir.` : "Kayıtlarda parsele yakın bir elektrik hattı görünmemektedir.",
+      o.akaryakit ? `En yakın akaryakıt istasyonu ${km(o.akaryakit.u)} mesafededir.` : "",
+      o.okul ? `Bölgedeki en yakın okul ${km(o.okul.u)}, ` : "",
+      o.saglik ? `en yakın sağlık tesisi ise ${km(o.saglik.u)} uzaklıktadır.` : ""
+    ].filter(Boolean).join(" ");
+
+    const kullanimListe = Object.entries(o.kullanim).sort((a,b)=>b[1]-a[1]).slice(0,4)
+      .map(([k])=>(LANDUSE_AD[k]||k).toLocaleLowerCase("tr"));
+    const cevre = [
+      clc?.ad ? `Copernicus CORINE arazi örtüsü verilerine göre parsel "${clc.ad}" sınıfında yer almaktadır.` : "",
+      kullanimListe.length ? `Yakın çevrede ağırlıklı olarak ${kullanimListe.join(", ")} kullanımları gözlenmektedir.` : "",
+      clc?.kod?.startsWith("11") || clc?.kod === "121"
+        ? "Bu sınıflama, taşınmazın yerleşim ve yapılaşma baskısı bulunan bir bölgede konumlandığını göstermektedir; gelişme potansiyeli açısından dikkate değerdir." : "",
+      clc?.kod?.startsWith("2")
+        ? "Taşınmaz tarımsal karakterini korumakta olup, mevcut haliyle üretime elverişli bir yapı sunmaktadır." : ""
+    ].filter(Boolean).join(" ");
+
+    const tapu = [
+      y.tapu_durumu === "hisseli"
+        ? `Taşınmaz hisseli tapu niteliğinde olup, satışa konu pay ${y.hisse_pay||"belirtilen oran"} ile ${nf(y.hisse_m2)} m²'ye karşılık gelmektedir.`
+        : "Taşınmaz tek tapu niteliğindedir; satışa konu alan parselin tamamıdır.",
+      y.malik ? `Tapu kaydındaki malik bilgisi: ${String(y.malik).replace(/\n/g,", ")}.` : "",
+      y.m2_fiyat ? `Metrekare birim fiyatı ${nf(y.m2_fiyat)} ₺ olarak belirlenmiştir.` : "",
+      y.toplam_fiyat ? `Buna göre taşınmazın toplam satış bedeli ${nf(y.toplam_fiyat)} ₺'dir.` : ""
+    ].filter(Boolean).join(" ");
+
+    const ozet = [
+      etiket.length ? `Taşınmazın öne çıkan özellikleri şunlardır: ${etiket.join(", ")}.` : "",
+      koyYol && koyYol.u <= 60 ? "Yola cepheli konumu," : "",
+      anaYol && anaYol.u <= 1000 ? "ana ulaşım aksına yakınlığı," : "",
+      o.su && o.su.u <= 500 ? "su kaynağına yakınlığı," : "",
+      "taşınmazı bölgedeki benzer parseller arasında öne çıkarmaktadır."
+    ].filter(Boolean).join(" ");
+
+    const bolumler = [
+      { baslik:"Taşınmazın konumu", metin: konum },
+      { baslik:"Ulaşım ve erişim", metin: ulasim },
+      { baslik:"Altyapı ve çevresel olanaklar", metin: altyapi },
+      { baslik:"Arazi yapısı ve çevre kullanımı", metin: cevre },
+      { baslik:"Tapu ve satış bilgileri", metin: tapu },
+      { baslik:"Genel değerlendirme", metin: ozet },
+      { baslik:"Künye", satirlar:[
+        ["İl / ilçe / mahalle", `${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)}`],
+        ["Ada / parsel", `${p.ada||"—"} / ${p.parsel}`],
+        ["Yüzölçümü", nf(p.alan_m2) + " m²"],
+        ["Niteliği", p.nitelik || "—"],
+        ["Koordinat", `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`],
+        ["Arazi örtüsü", clc?.ad || "—"],
+        ["Satış bedeli", y.toplam_fiyat ? nf(y.toplam_fiyat) + " ₺" : "—"]
+      ]}
+    ];
+
+    document.getElementById("durum").textContent = "Sunum hazırlanıyor…";
+    const { png, oran } = raporPng(
+      `${duzgun(p.mahalle)} ${p.ada||""}/${p.parsel}`,
+      `Taşınmaz tanıtım dosyası\n${duzgun(p.ilce)} / ${duzgun(p.il)}`,
+      bolumler);
+
+    const blob = pngToPdfBlob(png, oran);
+    const ad2 = `${p.ada||0}-${p.parsel}-musteri-sunumu.pdf`;
+    indirBlob(blob, ad2);
+    if(ME.role !== 'uye'){
+      try{ await dosyaYukle(new File([blob], ad2, { type:"application/pdf" }), "sunum", parselId); }catch(e){}
+    }
+    toast("Müşteri sunumu hazır");
+    go("parsel", parselId);
+  }catch(e){
+    app.innerHTML = head("Müşteri sunumu", `go('parsel','${parselId}')`) +
+      `<div class="empty"><b>Hazırlanamadı</b>${esc(e.message||e)}</div>`;
+  }
 }
 
 /* ================= sunum görseli ================= */
@@ -3146,7 +3391,7 @@ async function cikis(){ await sb.auth.signOut(); location.reload(); }
 
 /* ================= yonlendirme ================= */
 
-const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, emsal:emsal, sunum:sunum, yz:yapayZeka, yeni:yeniParsel, parsel:parselDetay,
+const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, emsal:emsal, sunum:sunum, musteri:musteriSunumu, yz:yapayZeka, yeni:yeniParsel, parsel:parselDetay,
                    fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
 function go(r,arg){ (ekranlar[r]||anaMenu)(arg); window.scrollTo(0,0); }
 
