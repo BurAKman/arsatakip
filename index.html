@@ -335,7 +335,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 3.0";
+const SURUM = "beta 3.1";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -434,7 +434,10 @@ function cikisSor(){ if(confirm("Çıkış yapılsın mı?")) cikis(); }
 /* ================= ana menu ================= */
 
 async function anaMenu(){
-  app.innerHTML = head() + `<div class="zaman" id="stamp"></div><div id="rates" class="rates"></div>
+  app.innerHTML = head() + `<div style="display:flex;align-items:center;gap:8px;margin:0 2px 8px">
+      <span style="font-size:9.5px;letter-spacing:.16em;font-weight:700;color:var(--gold);
+        background:var(--gold-soft);border:1px solid rgba(227,192,90,.35);border-radius:20px;padding:3px 10px">BETA</span>
+      <div class="zaman" id="stamp" style="flex:1;margin:0"></div></div><div id="rates" class="rates"></div>
   <div class="grid">
     ${tile("harita","map","Harita","Sorgula · Soruştur · Araştır","kirmizi","bg-harita.jpg")}
     ${tile("araziler","folder","Araziler","Her şey tek yerde","yesil","bg-araziler.jpg")}
@@ -2452,25 +2455,6 @@ async function musteriSunumu(parselId){
       bolumler.splice(1, 0, { baslik:"Taşınmazın konumu (uydu görünümü)", gorsel:harita, oran:1350/1800 });
     }catch(e){}
 
-    // sadece cap gorseli eklensin
-    try{
-      const { data:capd } = await sb.from("documents").select("file_path,mime_type")
-        .eq("parcel_id", parselId).eq("kind","cap").order("created_at",{ascending:false}).limit(1);
-      const c2 = capd?.[0];
-      if(c2 && !/pdf/i.test(c2.mime_type||"")){
-        const { data:link } = await sb.storage.from("arsatakip").createSignedUrl(c2.file_path, 3600);
-        if(link){
-          const im = await yukleGorsel(link.signedUrl);
-          bolumler.push({ baslik:"Çap görünümü", gorsel:im, oran: im.naturalHeight/im.naturalWidth });
-        }
-      }else if(p.geojson){
-        const png = capSeffafPng(p, p.cap_config && !Array.isArray(p.cap_config) ? p.cap_config : null,
-                                 p.cap_config ? 3 : 1, { tema:1, dis:"#111111", ic:"#333333" });
-        const im = await yukleGorsel(png);
-        bolumler.push({ baslik:"Çap görünümü", gorsel:im, oran: im.naturalHeight/im.naturalWidth });
-      }
-    }catch(e){}
-
     document.getElementById("durum").textContent = "Sunum hazırlanıyor…";
     const { png, oran } = raporPng(
       `${duzgun(p.mahalle)} ${p.ada||""}/${p.parsel}`,
@@ -3505,9 +3489,9 @@ async function ayarlar(){
   const rolAd = { admin:"Admin", yonetici:"Yönetici", uye:"Üye" };
   app.innerHTML = head("Ayarlar","go('ana')") + `
     <div class="card">
-      <div class="kv"><span>Hesap</span><b>${esc(ME.email||"")}</b></div>
+      <div class="kv"><span>Hesap</span><b>${esc((ME.full_name && !ME.full_name.includes("@")) ? ME.full_name : (ME.email||"").split("@")[0])}</b></div>
+      <div class="kv"><span>E-posta</span><b>${esc(ME.email||"")}</b></div>
       <div class="kv"><span>Yetki</span><b>${rolAd[ME.role]}</b></div>
-      <div class="kv"><span>Sürüm</span><b>${SURUM}</b></div>
     </div>
     <h3 style="font-size:14px;margin:22px 0 10px">Kullanıcılar</h3>
     ${(kisiler||[]).map(k=>{
@@ -3590,6 +3574,11 @@ async function baslat(){
     ({ data:prof } = await zamanAsimi(sb.from("profiles").select("*").eq("id", session.user.id).single(), 8000)); }
   window.__acildi = true; window.__basliyor = false;
   if(!prof) return acilisHatasi("Profil kurulamadı. Oturumu sıfırlayıp tekrar gir.");
+  // isim mail gibi kalmissa Google'dan gelen ad soyadi yaz
+  const gAd = session.user.user_metadata?.full_name || session.user.user_metadata?.name;
+  if(gAd && (!prof.full_name || prof.full_name.includes("@"))){
+    try{ await sb.from("profiles").update({ full_name: gAd }).eq("id", prof.id); prof.full_name = gAd; }catch(e){}
+  }
   ME = prof; anaMenu();
  }catch(e){ window.__acildi = true; window.__basliyor = false; acilisHatasi(String(e.message||e)); }
 }
