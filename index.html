@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 3.6";
+const SURUM = "beta 3.7";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -493,11 +493,15 @@ async function kurlar(){
 
 // dis harita adresleri (baglanti ogesi olarak kullanilir, tarayici engellemez)
 const earthUrl = (lat,lng) => `https://earth.google.com/web/@${lat},${lng},0a,600d,35y,0h,45t,0r`;
-const yandexUrl = (lat,lng) =>
-  `https://yandex.com/maps/?ll=${encodeURIComponent((+lng).toFixed(6)+","+(+lat).toFixed(6))}&z=17&l=sat`;
+const yandexUrl = (lat,lng) => {
+  const n = encodeURIComponent((+lng).toFixed(6)+","+(+lat).toFixed(6));
+  // pt = haritaya ignesi dusen nokta
+  return `https://yandex.com/maps/?ll=${n}&z=18&l=sat&pt=${n}%2Cpm2rdm`;
+};
 const yandexPanoUrl = (lat,lng) => {
   const n = encodeURIComponent((+lng).toFixed(6)+","+(+lat).toFixed(6));
-  return `https://yandex.com/maps/?ll=${n}&z=17&panorama%5Bpoint%5D=${n}&panorama%5Bdirection%5D=0%2C0`;
+  // stv,sta = panorama katmani acik; cekim yapilmis yollar mavi gorunur
+  return `https://yandex.com/maps/?ll=${n}&z=17&l=stv%2Csta&pt=${n}%2Cpm2rdm`;
 };
 function disAc(url){
   const a = document.createElement("a");
