@@ -335,7 +335,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 3.3";
+const SURUM = "beta 3.4";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -660,14 +660,18 @@ function sozdenSayi(metin){
 // duyulan cumleyi parcala
 function sesiCoz(metin){
   const t = " " + String(metin||"").toLocaleLowerCase("tr").replace(/\./g," ") + " ";
+  // hem "108 ada" hem "ada 108" bicimini yakala
   const al = (anahtar) => {
     const i = t.indexOf(" " + anahtar + " ");
     if(i < 0) return null;
-    const once = t.slice(0, i).trim().split(/\s+/);
-    return once.length ? once.slice(-3).join(" ") : null;
+    const sonra = t.slice(i + anahtar.length + 2).trim().split(/\s+/).slice(0,3).join(" ");
+    const sonraSayi = sozdenSayi(sonra);
+    if(sonraSayi != null) return sonraSayi;
+    const once = t.slice(0, i).trim().split(/\s+/).slice(-3).join(" ");
+    return sozdenSayi(once);
   };
-  const ada = sozdenSayi(al("ada"));
-  const parsel = sozdenSayi(al("parsel"));
+  const ada = al("ada");
+  const parsel = al("parsel");
   // ada/parsel kelimelerinden onceki kisim yer adlaridir
   const kes = t.search(/\s(ada|parsel)\s/);
   const yerKismi = (kes > 0 ? t.slice(0, kes) : t).trim().split(/\s+/).filter(k=>!RAKAM_SOZ[k] && !/^\d+$/.test(k));
@@ -709,16 +713,43 @@ function sesliSorgu(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR) return toast("Bu tarayıcı sesli komutu desteklemiyor");
   const tani = new SR();
-  tani.lang = "tr-TR"; tani.interimResults = false; tani.maxAlternatives = 1;
+  tani.lang = "tr-TR"; tani.interimResults = true; tani.continuous = true; tani.maxAlternatives = 1;
 
   const kutu = document.getElementById("tani");
   kutu.innerHTML = `<div class="card" style="text-align:center">
     <div style="font-size:34px;line-height:1">🎤</div>
-    <div style="font-size:14px;font-weight:600;margin-top:6px">Dinliyorum…</div>
-    <p class="ipuc" style="margin:8px 0 0">Örnek: "Kırklareli Babaeski Kuştepe 108 ada 9 parsel"</p></div>`;
+    <div style="font-size:14px;font-weight:600;margin-top:6px">Dinliyorum… acele etme</div>
+    <div id="sCanli" style="font-size:15px;color:#fff;margin-top:10px;min-height:22px"></div>
+    <button class="btn" style="margin-top:12px" id="sBitir">Bitti, dinlemeyi durdur</button>
+    <p class="ipuc" style="margin:10px 0 0">Örnek: "Kırklareli Babaeski Kuştepe ada 108 parsel 9"</p></div>`;
+
+  let biriken = "", kapandi = false;
+  const bitir = () => { if(!kapandi){ kapandi = true; try{ tani.stop(); }catch(e){} } };
+  document.getElementById("sBitir").onclick = bitir;
+  // konusma bitince 2,5 saniye sessizlikte kendiliginden kapansin
+  let sayac = null;
+  const sayaciKur = () => { clearTimeout(sayac); sayac = setTimeout(bitir, 2500); };
+  sayaciKur();
 
   tani.onresult = e => {
-    const metin = e.results[0][0].transcript;
+    let gecici = "";
+    for(let i=0;i<e.results.length;i++){
+      const r = e.results[i];
+      if(r.isFinal) biriken += r[0].transcript + " "; else gecici += r[0].transcript;
+    }
+    const c2 = document.getElementById("sCanli");
+    if(c2) c2.textContent = (biriken + gecici).trim();
+    sayaciKur();
+  };
+
+  tani.onend = () => {
+    clearTimeout(sayac);
+    const metin = biriken.trim();
+    if(!metin){
+      kutu.innerHTML = `<div class="card"><div style="font-size:13px;color:var(--ink-2)">Bir şey duyamadım.</div>
+        <button class="btn ghost" style="margin-top:10px" onclick="sesliSorgu()">Tekrar dene</button></div>`;
+      return;
+    }
     const c = sesiCoz(metin);
     kutu.innerHTML = `<div class="card">
       <div class="ipuc" style="margin:0 0 6px">Şunu duydum</div>
@@ -741,6 +772,7 @@ function sesliSorgu(){
     document.getElementById("sOnay").onclick = () => sesleDoldur(c);
   };
   tani.onerror = ev => {
+    clearTimeout(sayac);
     kutu.innerHTML = `<div class="card"><div style="font-size:13px;color:var(--red)">
       Ses alınamadı${ev.error === "not-allowed" ? " · mikrofon izni verilmemiş" : ""}.</div>
       <button class="btn ghost" style="margin-top:10px" onclick="sesliSorgu()">Tekrar dene</button></div>`;
@@ -788,6 +820,90 @@ async function sesleDoldur(c){
   yaz("Sorgulanıyor…");
   document.getElementById("tani").innerHTML = "";
   adaParselSorgu();
+}
+
+
+/* ---- sonuc ekraninda sesli komut ---- */
+
+const KOMUTLAR = [
+  { anahtar:["çevre raporu","çevre","rapor hazırla","çevre bilgisi"], ad:"Çevre raporu", is:()=>cevreRaporu() },
+  { anahtar:["emsal","fiyat araştır","değer","emsal araştır"],       ad:"Emsal araştır", is:()=>go("emsal") },
+  { anahtar:["kaydet","arazilere ekle","kayıt et"],                   ad:"Kaydet", is:()=>haritadanKaydet() },
+  { anahtar:["kml","kml indir"],                                      ad:"KML indir", is:()=>kmlIndir() },
+  { anahtar:["earth","google earth"],                                 ad:"Earth'te aç", is:()=>earthAc() },
+  { anahtar:["yandex","uydu"],                                        ad:"Yandex uydu", is:()=>yandexAcSon() },
+  { anahtar:["sokak","panorama","sokak görünümü"],                    ad:"Sokak görünümü", is:()=>yandexPanoramaSon() },
+  { anahtar:["imar","imar planı","plan"],                             ad:"İmar planı", is:()=>eplanAcSon() },
+  { anahtar:["yeni sorgu","başka parsel","temizle"],                  ad:"Yeni sorgu", is:()=>go("harita") }
+];
+
+function komutBul(metin){
+  const t = sade(metin);
+  let enIyi = null, enIyiUz = 0;
+  KOMUTLAR.forEach(k=>{
+    k.anahtar.forEach(a=>{
+      const sa = sade(a);
+      if(t.includes(sa) && sa.length > enIyiUz){ enIyi = k; enIyiUz = sa.length; }
+    });
+  });
+  return enIyi;
+}
+
+function sesliKomut(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return toast("Bu tarayıcı sesli komutu desteklemiyor");
+  const kutu = document.querySelector("#bilgi .acts");
+  if(!kutu) return;
+  let alan = document.getElementById("komutKutu");
+  if(!alan){
+    kutu.insertAdjacentHTML("beforeend", `<div id="komutKutu" style="flex:1 1 100%"></div>`);
+    alan = document.getElementById("komutKutu");
+  }
+  alan.innerHTML = `<div style="text-align:center;padding:10px 0">
+    <div style="font-size:26px">🎤</div>
+    <div style="font-size:13px;color:var(--ink-2);margin-top:4px">Komut bekliyorum…</div>
+    <div id="kCanli" style="font-size:14px;color:#fff;margin-top:6px;min-height:20px"></div></div>`;
+
+  const tani = new SR();
+  tani.lang = "tr-TR"; tani.interimResults = true; tani.continuous = true;
+  let biriken = "", kapandi = false, sayac = null;
+  const bitir = () => { if(!kapandi){ kapandi = true; try{ tani.stop(); }catch(e){} } };
+  const sayaciKur = () => { clearTimeout(sayac); sayac = setTimeout(bitir, 2200); };
+  sayaciKur();
+
+  tani.onresult = e => {
+    let gecici = "";
+    for(let i=0;i<e.results.length;i++){
+      const r = e.results[i];
+      if(r.isFinal) biriken += r[0].transcript + " "; else gecici += r[0].transcript;
+    }
+    const c = document.getElementById("kCanli");
+    if(c) c.textContent = (biriken + gecici).trim();
+    sayaciKur();
+  };
+
+  tani.onend = () => {
+    clearTimeout(sayac);
+    const metin = biriken.trim();
+    const k = metin ? komutBul(metin) : null;
+    if(!k){
+      alan.innerHTML = `<div style="padding:10px 0;text-align:center">
+        <div style="font-size:13px;color:var(--ink-2)">${metin ? `"${esc(metin)}" anlaşılamadı` : "Bir şey duyamadım"}</div>
+        <div class="ipuc" style="margin-top:6px">Çevre raporu · emsal · kaydet · kml · earth · yandex · sokak görünümü · imar planı</div>
+        <button class="btn ghost" style="margin-top:10px" onclick="sesliKomut()">Tekrar dene</button></div>`;
+      return;
+    }
+    alan.innerHTML = `<div style="padding:10px 0;text-align:center">
+      <div style="font-size:14px;font-weight:600;color:var(--green)">${k.ad} çalıştırılıyor…</div>
+      <div class="ipuc" style="margin-top:4px">"${esc(metin)}"</div></div>`;
+    setTimeout(()=>{ try{ k.is(); }catch(e){ toast("Olmadı: "+(e.message||e)); } }, 500);
+  };
+  tani.onerror = ev => {
+    clearTimeout(sayac);
+    alan.innerHTML = `<div style="padding:10px 0;text-align:center;font-size:13px;color:var(--red)">
+      Ses alınamadı${ev.error === "not-allowed" ? " · mikrofon izni yok" : ""}</div>`;
+  };
+  tani.start();
 }
 
 /* ================= harita ================= */
@@ -860,6 +976,7 @@ function ciz(f){
         <button onclick="cevreRaporu()">Çevre raporu</button>
         <button onclick="go('emsal')">Emsal araştır</button>
         <button onclick="eplanAcSon()">İmar planı</button>
+        <button class="pri" style="flex:1 1 100%" onclick="sesliKomut()">🎤 Sesle komut ver</button>
       </div>
     </div>`;
 }
@@ -1661,7 +1778,7 @@ async function eplanAc(lat, lng, p){
     : `${(+lat).toFixed(6)}, ${(+lng).toFixed(6)}`;
   try{ await navigator.clipboard.writeText(kunye); toast("Künye kopyalandı, e-Plan'da yapıştır"); }
   catch(e){ toast("e-Plan açılıyor"); }
-  window.open("https://e-plan.gov.tr/", "_blank", "noopener");
+  disAc("https://e-plan.gov.tr/");
 }
 
 
@@ -1849,8 +1966,6 @@ function raporPng(baslik, altBaslik, bolumler){
   yerlestir({
     baslik: y => {
       x.textAlign = "left";
-      x.fillStyle = "rgba(255,255,255,.72)"; x.font = "700 19px Arial";
-      x.fillText("ÇAPSIZ ÇAPÇI", 60, 74);
       x.fillStyle = "#FFFFFF"; x.font = "700 46px Arial";
       x.fillText(baslik, 60, y + 22);
       x.fillStyle = "rgba(255,255,255,.86)"; x.font = "400 23px Arial";
@@ -2420,7 +2535,7 @@ function yapayZekaListe(){ yapayZeka(); }
 
 function aiAc(id){
   const a = AI_LER.find(x=>x.id===id);
-  if(a) window.open(a.url, "_blank", "noopener");
+  if(a) disAc(a.url);
 }
 
 async function aiKopyala(parselId){
