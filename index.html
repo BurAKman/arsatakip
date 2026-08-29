@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 3.5";
+const SURUM = "beta 3.6";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -490,6 +490,21 @@ async function kurlar(){
 }
 
 /* ================= TKGM ================= */
+
+// dis harita adresleri (baglanti ogesi olarak kullanilir, tarayici engellemez)
+const earthUrl = (lat,lng) => `https://earth.google.com/web/@${lat},${lng},0a,600d,35y,0h,45t,0r`;
+const yandexUrl = (lat,lng) =>
+  `https://yandex.com/maps/?ll=${encodeURIComponent((+lng).toFixed(6)+","+(+lat).toFixed(6))}&z=17&l=sat`;
+const yandexPanoUrl = (lat,lng) => {
+  const n = encodeURIComponent((+lng).toFixed(6)+","+(+lat).toFixed(6));
+  return `https://yandex.com/maps/?ll=${n}&z=17&panorama%5Bpoint%5D=${n}&panorama%5Bdirection%5D=0%2C0`;
+};
+function disAc(url){
+  const a = document.createElement("a");
+  a.href = url; a.target = "_blank"; a.rel = "noopener";
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
 
 const TB   = "https://cbsapi.tkgm.gov.tr/megsiswebapi.v3.1/api";
 const TB3  = "https://cbsapi.tkgm.gov.tr/megsiswebapi.v3/api";
@@ -746,12 +761,6 @@ function kmlIndir(){
   a.download = `${(p.mahalleAd||"parsel")}-${p.adaNo||0}-${p.parselNo||0}.kml`.replace(/\s+/g,"_");
   a.click(); URL.revokeObjectURL(a.href);
   toast("KML indirildi");
-}
-
-function eplanAcSon(){
-  if(!SONPARSEL) return toast("Önce bir parsel sorgula");
-  const m = merkez(SONPARSEL);
-  eplanAc(m.lat, m.lng, SONPARSEL.properties || {});
 }
 
 async function haritadanKaydet(){
