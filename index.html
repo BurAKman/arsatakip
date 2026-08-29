@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 4.6";
+const SURUM = "beta 4.7";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -2133,12 +2133,9 @@ function parcaAyarHtml(){
   return `
     <div id="satirlar"></div>
     <button class="btn ghost" id="satirEkle" style="margin-bottom:14px">+ Satır ekle</button>
-    <div class="row2">
-      <div class="field"><label>Parsel yolu</label><select id="pkonum">
-        <option value="kenar">Kenardan · boydan boya</option>
-        <option value="orta">Ortadan · satırların arasından</option></select></div>
-      <div class="field"><label>En az genişlik (m)</label><input id="penaz" inputmode="decimal" value="${PARCA.enAzYol}"></div>
-    </div>
+    <div class="field"><label>Parsel yolu en az genişliği (m)</label>
+      <input id="penaz" inputmode="decimal" value="${PARCA.enAzYol}">
+      <p class="ipuc" style="margin:8px 2px 0">Yol kendiliğinden konumlanır: tek parçalı satırlarda kenardan, çok parçalı satırlarda ortadan geçer; geçiş yerlerinde birleşir. Böylece her parçanın yola cephesi olur.</p></div>
     <div class="card" id="capOzet" style="font-size:13px"></div>`;
 }
 
@@ -2155,9 +2152,7 @@ function parcaKur(toplam, mevcut){
     PARCA.satirlar = [{ parcalar:[yeniParca(Math.round(toplam*0.4))] },
                       { parcalar:[yeniParca(Math.round(toplam*0.2)), yeniParca(Math.round(toplam*0.2))] }];
   numaralariTazele();
-  const kn = document.getElementById("pkonum"), ea = document.getElementById("penaz");
-  kn.value = PARCA.yolKonum;
-  kn.onchange = () => { PARCA.yolKonum = kn.value; ozetCiz(); };
+  const ea = document.getElementById("penaz");
   ea.oninput = () => { PARCA.enAzYol = Math.max(1, sayiCoz(ea.value) || 4); ozetCiz(); };
   document.getElementById("satirEkle").onclick = () => {
     const pay = Math.round(Math.max(150, PARCA.toplam*0.08));
@@ -2247,7 +2242,7 @@ function ozetCiz(){
 }
 
 function parcaCfg(){
-  return { yolKonum: PARCA.yolKonum, enAzYol: PARCA.enAzYol,
+  return { enAzYol: PARCA.enAzYol,
            satirlar: PARCA.satirlar.map(r=>({
              parcalar: r.parcalar.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk||"#FFFFFF" })) })),
            parcalar: cfgParcalari({ satirlar: PARCA.satirlar }) };
@@ -2878,7 +2873,7 @@ function sunumCap(duzenleIx){
     g("yukleBolum").style.display = k === "yukle" ? "block" : "none";
     g("cizBolum").style.display   = k === "yukle" ? "none" : "block";
     if(k === "kayit" && kayitliCfg){
-      PARCA.satirlar = []; PARCA.yolKonum = "kenar"; PARCA.enAzYol = 4; PARCA.renkler = {};
+      PARCA.satirlar = []; PARCA.enAzYol = 4;
       parcaKur(alan, kayitliCfg.satirlar);
     }
   };
@@ -3269,84 +3264,115 @@ function yolGenisligiOner(alan){
 }
 
 // satir tarifine gore parcalari ve yolu uret
-// cfg = { satirlar:[{ parcalar:[{no,m2,renk}] }], yolKonum:"kenar"|"orta", enAzYol }
+// yol otomatik konumlanir: tek parcali satirlarda kenardan, cok parcali satirlarda ortadan;
+// gecis noktalarinda baglanti parcasiyla kesintisiz kalir. Her parca yola cephelidir.
 function capYerlesim(M, cfg){
   const ana = anaYon(M), dik = [-ana[1], ana[0]];
   const satirlar = (cfg.satirlar||[]).map(r=>({
     parcalar: (r.parcalar||[]).map(o=>({ ...o, m2: Math.max(1, +o.m2 || 1) }))
   })).filter(r=>r.parcalar.length);
-  if(!satirlar.length) return { parcalar:[], yol:[], ana, dik, yolGenislik:0, yolAlan:0, kucultme:0 };
+  const bos = { parcalar:[], yol:[], ana, dik, yolGenislik:0, yolAlan:0, kucultme:0 };
+  if(!satirlar.length) return bos;
 
   const A = alanHesap(M);
+  const izdA = M.map(p=>p[0]*ana[0]+p[1]*ana[1]);
   const izdD = M.map(p=>p[0]*dik[0]+p[1]*dik[1]);
+  const aMin = Math.min(...izdA), aMax = Math.max(...izdA);
   const dMin = Math.min(...izdD), dMax = Math.max(...izdD);
-  const W = dMax - dMin;                      // parselin enine genisligi
-  const boy = A / Math.max(1, W);             // ortalama boy
-  const enAz = cfg.enAzYol || 4;              // en az yol genisligi (m)
-  const konum = cfg.yolKonum === "orta" ? "orta" : "kenar";
+  const W = dMax - dMin, boy = aMax - aMin;
+  const enAz = Math.max(1, cfg.enAzYol || 4);
 
   const satirAlan = satirlar.map(r=>r.parcalar.reduce((t,o)=>t+o.m2, 0));
   const T = satirAlan.reduce((a,b)=>a+b, 0);
 
   // yol genisligi: artan alandan, en az enAz metre
   let w = Math.max(enAz, (A - T) / Math.max(1, boy));
-  w = Math.min(w, W*0.4);
+  w = Math.min(w, W*0.35);
   const yolAlan = w * boy;
+  const carpan = T > (A - yolAlan) ? Math.max(0.05, (A - yolAlan) / T) : 1;
 
-  // parcalar sigmiyorsa oransal kucult
-  const kalan = Math.max(1, A - yolAlan);
-  const carpan = T > kalan ? kalan / T : 1;
+  // yardimcilar: ana/dik yonunde yariduzlem kirpma
+  const kA = (poly, deger, ust) => ust ? kirp(poly, ana, deger) : kirp(poly, [-ana[0],-ana[1]], -deger);
+  const kD = (poly, deger, ust) => ust ? kirp(poly, dik, deger) : kirp(poly, [-dik[0],-dik[1]], -deger);
+  const serit = (a0, a1, d0, d1) => {
+    let p = kA(kA(M, a1, true), a0, false);
+    if(p.length < 3) return null;
+    p = kD(kD(p, d1, true), d0, false);
+    return p.length > 2 ? p : null;
+  };
 
-  // yol seridini parselden ayir
-  let calisma = M, yolPoly = null;
-  if(konum === "kenar"){
-    const sinir = dMin + w;
-    yolPoly = kirp(M, dik, sinir);
-    calisma = kirp(M, [-dik[0],-dik[1]], -sinir);
-  }else{
-    const orta = (dMin + dMax) / 2;
-    var y1 = orta - w/2, y2 = orta + w/2;
-    yolPoly = kirp(kirp(M, dik, y2), [-dik[0],-dik[1]], -y1);
+  // satir bantlarini alanlarina gore uzun eksen boyunca bol
+  const bantHedef = satirAlan.map(a=>a*carpan / Math.max(0.25, 1 - w/W));
+  const sinirlar = [aMin];
+  {
+    let s2 = aMin;
+    const toplamHedef = bantHedef.reduce((x,y)=>x+y,0) || 1;
+    bantHedef.forEach((h,i)=>{
+      if(i === bantHedef.length-1){ sinirlar.push(aMax); return; }
+      // hedef alani tutan kesim yerini ara
+      let lo = s2, hi = aMax, kes = aMax;
+      for(let k=0;k<40;k++){
+        kes = (lo+hi)/2;
+        const dilim = kA(kA(M, kes, true), s2, false);
+        const al = dilim.length > 2 ? alanHesap(dilim) : 0;
+        if(al < h) lo = kes; else hi = kes;
+      }
+      sinirlar.push(kes); s2 = kes;
+    });
   }
+
+  const kenarMerkez = dMin + w/2;
+  const ortaMerkez  = (dMin + dMax) / 2;
+  const merkez = satirlar.map(r=>r.parcalar.length > 1 ? ortaMerkez : kenarMerkez);
 
   const cikti = [], yolParcalari = [];
-  if(yolPoly && yolPoly.length > 2) yolParcalari.push(yolPoly);
 
-  if(konum === "kenar"){
-    // satirlar uzun eksen boyunca, her satir yola cepheli
-    const bantlar = parcala(calisma, satirAlan.map(a=>a*carpan), ana, true);
-    bantlar.forEach((bant, i)=>{
-      const r = satirlar[i];
-      if(!bant || bant.length < 3 || !r) return;
-      if(r.parcalar.length < 2){ cikti.push({ poly:bant, bilgi:r.parcalar[0] }); return; }
-      parcala(bant, r.parcalar.map(o=>o.m2*carpan), dik, true)
-        .forEach((p,k)=>cikti.push({ poly:p, bilgi:r.parcalar[k] }));
-    });
-  }else{
-    // yol ortadan; cok parcali satirlar iki yana dagilir
-    const bantHedef = satirAlan.map((a,i)=> a*carpan + (satirlar[i].parcalar.length > 1 ? yolAlan * a / Math.max(1,T) : 0));
-    const bantlar = parcala(M, bantHedef, ana, true);
-    bantlar.forEach((bant, i)=>{
-      const r = satirlar[i];
-      if(!bant || bant.length < 3 || !r) return;
-      if(r.parcalar.length < 2){ cikti.push({ poly:bant, bilgi:r.parcalar[0] }); return; }
-      const sol = kirp(bant, dik, y1);
-      const sag = kirp(bant, [-dik[0],-dik[1]], -y2);
-      const aSol = sol.length > 2 ? alanHesap(sol) : 0;
-      const aSag = sag.length > 2 ? alanHesap(sag) : 0;
-      const n = r.parcalar.length;
-      let nSol = 0, birikim = 0;
-      const hedefSol = aSol / Math.max(1, aSol + aSag) * satirAlan[i];
-      for(let k=0;k<n-1 && birikim < hedefSol;k++){ birikim += r.parcalar[k].m2; nSol++; }
-      if(aSol <= 0) nSol = 0;
-      if(aSag <= 0) nSol = n;
-      const solP = r.parcalar.slice(0, nSol), sagP = r.parcalar.slice(nSol);
-      if(solP.length && aSol > 0)
-        parcala(sol, solP.map(o=>o.m2*carpan), ana, true).forEach((p,k)=>cikti.push({ poly:p, bilgi:solP[k] }));
-      if(sagP.length && aSag > 0)
-        parcala(sag, sagP.map(o=>o.m2*carpan), ana, true).forEach((p,k)=>cikti.push({ poly:p, bilgi:sagP[k] }));
-    });
-  }
+  satirlar.forEach((r, i)=>{
+    const a0 = sinirlar[i], a1 = sinirlar[i+1];
+    const dc = merkez[i];
+    const yd0 = dc - w/2, yd1 = dc + w/2;
+
+    // bu satirin yol serdi
+    const ys = serit(a0, a1, yd0, yd1);
+    if(ys) yolParcalari.push(ys);
+
+    // yon degisiyorsa baglanti parcasi
+    if(i > 0 && Math.abs(merkez[i] - merkez[i-1]) > 0.01){
+      const d0 = Math.min(merkez[i], merkez[i-1]) - w/2;
+      const d1 = Math.max(merkez[i], merkez[i-1]) + w/2;
+      const bag = serit(a0, Math.min(a1, a0 + w*1.4), d0, d1);
+      if(bag) yolParcalari.push(bag);
+    }
+
+    const bant = kA(kA(M, a1, true), a0, false);
+    if(bant.length < 3) return;
+
+    if(r.parcalar.length < 2){
+      // tek parca: yolun disinda kalan alan
+      const p = kD(bant, yd1, false);
+      cikti.push({ poly: p.length > 2 ? p : bant, bilgi:r.parcalar[0] });
+      return;
+    }
+
+    // cok parca: yolun iki yani
+    const sol = kD(bant, yd0, true);
+    const sag = kD(bant, yd1, false);
+    const aSol = sol.length > 2 ? alanHesap(sol) : 0;
+    const aSag = sag.length > 2 ? alanHesap(sag) : 0;
+    const n = r.parcalar.length;
+
+    let nSol = 0, birikim = 0;
+    const hedefSol = aSol / Math.max(1, aSol + aSag) * satirAlan[i];
+    for(let k=0;k<n-1 && birikim < hedefSol;k++){ birikim += r.parcalar[k].m2; nSol++; }
+    if(aSol <= 1) nSol = 0;
+    if(aSag <= 1) nSol = n;
+
+    const solP = r.parcalar.slice(0, nSol), sagP = r.parcalar.slice(nSol);
+    if(solP.length && aSol > 1)
+      parcala(sol, solP.map(o=>o.m2*carpan), ana, true).forEach((p,k)=>cikti.push({ poly:p, bilgi:solP[k] }));
+    if(sagP.length && aSag > 1)
+      parcala(sag, sagP.map(o=>o.m2*carpan), ana, true).forEach((p,k)=>cikti.push({ poly:p, bilgi:sagP[k] }));
+  });
 
   return { parcalar: cikti, yol: yolParcalari, ana, dik,
            yolGenislik: w, yolAlan: Math.round(yolAlan),
@@ -3390,7 +3416,7 @@ async function capAyar(parselId){
 
   PARCA.geometri = capHalkasi(p);
   PARCA.toplam = alan;
-  PARCA.satirlar = []; PARCA.yolKonum = "kenar"; PARCA.enAzYol = 4; PARCA.renkler = {};
+  PARCA.satirlar = []; PARCA.enAzYol = 4;
 
   app.innerHTML = head("Çap çizdir","go('cap')") + `
     <div class="card">
