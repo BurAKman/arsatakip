@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 5.1";
+const SURUM = "beta 5.2";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -905,14 +905,15 @@ async function dosyaSec(kabul){
   });
 }
 
-async function dosyaYukle(file, tur, parselId){
+async function dosyaYukle(file, tur, parselId, capCfg){
   const uz = (file.name.split(".").pop() || "bin").toLowerCase();
   const yol = `${ME.team_id}/${parselId || "genel"}/${tur}-${Date.now()}.${uz}`;
   const { error } = await sb.storage.from("arsatakip").upload(yol, file);
   if(error) throw error;
   const { data, error:e2 } = await sb.from("documents").insert({
     team_id:ME.team_id, parcel_id:parselId || null, kind:tur, file_path:yol,
-    file_name:file.name, mime_type:file.type, size_bytes:file.size, created_by:ME.id
+    file_name:file.name, mime_type:file.type, size_bytes:file.size, created_by:ME.id,
+    ...(capCfg ? { cap_config: capCfg } : {})
   }).select().single();
   if(e2) throw e2;
   return data;
@@ -3409,8 +3410,8 @@ function capYerlesim(M, cfg){
     if(ys) yolParcalari.push(ys);
 
     if(i > 0 && Math.abs(merkez[i] - merkez[i-1]) > 0.01){
-      const d0 = Math.min(merkez[i], merkez[i-1]) - w/2;
-      const d1 = Math.max(merkez[i], merkez[i-1]) + w/2;
+      const d0 = Math.min(merkez[i], merkez[i-1]);
+      const d1 = Math.max(merkez[i], merkez[i-1]);
       const bag = serit(a0 - w/2, a0 + w/2, d0, d1);
       if(bag) yolParcalari.push(bag);
     }
@@ -3493,7 +3494,7 @@ async function capAyar(arg){
   PARCA.toplam = alan;
   PARCA.bloklar = []; PARCA.enAzYol = 4; PARCA.ters = false; PARCA.kis = false;
 
-  app.innerHTML = head("Çap çizdir","go('cap')") + `
+  app.innerHTML = head(belgeId ? "Çapı düzenle" : "Çap çizdir", belgeId ? `go('parsel','${parselId}')` : "go('cap')") + `
     <div class="card">
       <div style="font-size:12px;color:var(--ink-3)">${esc(duzgun(p.mahalle))}</div>
       <div style="font-size:17px;font-weight:600;margin-top:2px">Ada ${esc(p.ada||"—")} · Parsel ${esc(p.parsel)}</div>
@@ -3515,11 +3516,16 @@ async function capAyar(arg){
          <button class="btn ghost" id="cizYeni" style="margin-top:8px">Farklı kaydet</button>`
       : `<button class="btn" id="ciz" style="margin-top:6px">Çapı çiz ve parsele ekle</button>`}`;
 
+  let duzen = null;
+  if(belgeId){
+    const { data:bd } = await sb.from("documents").select("cap_config").eq("id", belgeId).single();
+    duzen = bd?.cap_config || eski || null;
+  }
   PARCA.p = p;
-  parcaKur(alan, belgeId ? (eski?.bloklar || null) : null);
-  if(belgeId && eski){
-    PARCA.enAzYol = eski.enAzYol || 4;
-    PARCA.ters = !!eski.ters; PARCA.yolDus = !!eski.yolDus;
+  parcaKur(alan, duzen?.bloklar || null);
+  if(duzen){
+    PARCA.enAzYol = duzen.enAzYol || 4;
+    PARCA.ters = !!duzen.ters; PARCA.yolDus = !!duzen.yolDus;
     const ea = document.getElementById("penaz"); if(ea) ea.value = PARCA.enAzYol;
     const tr = document.getElementById("pters"); if(tr) tr.value = PARCA.ters ? "1" : "0";
     const du = document.getElementById("pdus"); if(du) du.checked = PARCA.yolDus;
@@ -3562,12 +3568,16 @@ async function capCiz(parselId, cfg, belgeId){
     if(belgeId){
       const { data:b2 } = await sb.from("documents").select("file_path,file_name").eq("id", belgeId).single();
       if(b2){
-        const { error } = await sb.storage.from("arsatakip").upload(b2.file_path, dosya, { upsert:true });
+        // depo kurallari uzerine yazmaya izin vermiyor: once sil, sonra ayni yola yukle
+        await sb.storage.from("arsatakip").remove([b2.file_path]);
+        const { error } = await sb.storage.from("arsatakip").upload(b2.file_path, dosya);
         if(error) throw error;
-        await sb.from("documents").update({ size_bytes: dosya.size, created_at: new Date().toISOString() }).eq("id", belgeId);
-      }else await dosyaYukle(dosya, "cap", parselId);
+        const { error:e2 } = await sb.from("documents")
+          .update({ size_bytes: dosya.size, cap_config: cfg }).eq("id", belgeId);
+        if(e2) throw e2;
+      }else await dosyaYukle(dosya, "cap", parselId, cfg);
     }else{
-      await dosyaYukle(dosya, "cap", parselId);
+      await dosyaYukle(dosya, "cap", parselId, cfg);
     }
     if(cfg && cfg.parcalar?.length) await sb.from("parcels").update({ cap_config: cfg }).eq("id", parselId);
     toast(belgeId ? "Çap güncellendi" : "Çap hazırlandı ve parsele eklendi");
@@ -3672,12 +3682,12 @@ function capCizPng(p, cfg, kucuk){
       }
     });
 
-    // parsel yolu parcalarin uzerine cizilir
+    // parsel yolu her zaman en uste cizilir
     (yer.yol||[]).forEach(yp=>{
-      if(yp.length < 3) return;
+      if(!yp || yp.length < 3) return;
       yol(yp.map(E));
-      x.fillStyle = "#EAEDF0"; x.globalAlpha = .93; x.fill(); x.globalAlpha = 1;
-      x.lineWidth = 1; x.strokeStyle = "#A9B2BA"; x.stroke();
+      x.fillStyle = "#E3E7EB"; x.fill();
+      x.lineWidth = 1.2; x.strokeStyle = "#98A2AC"; x.stroke();
     });
     if((yer.yol||[]).length && !kucuk){
       const enBuyuk = yer.yol.reduce((a,b2)=>
