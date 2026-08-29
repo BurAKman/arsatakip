@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 4.9";
+const SURUM = "beta 5.0";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -2141,6 +2141,9 @@ function parcaAyarHtml(){
       <div class="field"><label>Blok sırası</label><select id="pters">
         <option value="0">Normal</option><option value="1">Ters çevir</option></select></div>
     </div>
+    <label style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--ink);margin:0 2px 14px">
+      <input type="checkbox" id="pdus" style="width:20px;height:20px" ${PARCA.yolDus?"checked":""}>
+      <span style="flex:1">Yol alanını parçalardan düş</span></label>
     <label style="display:flex;align-items:center;gap:10px;margin:0 2px 14px;font-size:13.5px;color:var(--ink)">
       <input type="checkbox" id="pkis" style="width:20px;height:20px" ${PARCA.kis?"checked":""}>
       <span style="flex:1">Yola yer açmak için parçaları orantılı küçült</span></label>
@@ -2172,6 +2175,8 @@ function parcaKur(toplam, mevcut){
   ea.oninput = () => { PARCA.enAzYol = Math.max(1, sayiCoz(ea.value) || 4); ozetCiz(); };
   const ks = document.getElementById("pkis");
   ks.onchange = () => { PARCA.kis = ks.checked; ozetCiz(); };
+  const dus = document.getElementById("pdus");
+  dus.onchange = () => { PARCA.yolDus = dus.checked; ozetCiz(); };
   const tr = document.getElementById("pters");
   tr.value = PARCA.ters ? "1" : "0";
   tr.onchange = () => { PARCA.ters = tr.value === "1"; ozetCiz(); };
@@ -2287,7 +2292,7 @@ function ozetCiz(){
 }
 
 function parcaCfg(){
-  return { enAzYol: PARCA.enAzYol, ters: PARCA.ters, kis: PARCA.kis,
+  return { enAzYol: PARCA.enAzYol, ters: PARCA.ters, yolDus: PARCA.yolDus, kis: PARCA.kis,
     bloklar: PARCA.bloklar.map(b=> b.tip === "yol"
       ? { tip:"yol", sol:b.sol.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })),
                      sag:b.sag.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })) }
@@ -2739,14 +2744,6 @@ function capSeffafPng(p, cfg, mod, ayar){
 
   if(mod !== 1 && parcalar && parcalar.length > 1){
     const yer = capYerlesim(M, cfg);
-    (yer.yol||[]).forEach(yp=>{
-      if(yp.length < 3) return;
-      yol(yp.map(E));
-      x.fillStyle = tema.metalik ? "rgba(60,60,60,.55)" : "rgba(255,255,255,.26)";
-      x.fill();
-      x.setLineDash([18,14]); x.lineWidth = 3; x.globalAlpha = .8;
-      x.strokeStyle = icRenk; x.stroke(); x.globalAlpha = 1; x.setLineDash([]);
-    });
     yer.parcalar.forEach((o,i)=>{
       const d = o.poly, bilgi = o.bilgi || parcalar[i] || {};
       yol(d.map(E));
@@ -2777,6 +2774,15 @@ function capSeffafPng(p, cfg, mod, ayar){
         const ov = `${ol.en.toFixed(1).replace(".",",")} × ${ol.boy.toFixed(1).replace(".",",")} m`;
         x.strokeText(ov, om[0], om[1]+52); x.fillText(ov, om[0], om[1]+52);
       }
+    });
+
+    (yer.yol||[]).forEach(yp=>{
+      if(yp.length < 3) return;
+      yol(yp.map(E));
+      x.fillStyle = tema.metalik ? "rgba(70,70,70,.6)" : "rgba(255,255,255,.30)";
+      x.fill();
+      x.setLineDash([18,14]); x.lineWidth = 3; x.globalAlpha = .85;
+      x.strokeStyle = icRenk; x.stroke(); x.globalAlpha = 1; x.setLineDash([]);
     });
   }else if(mod === 1){
     yol(N); x.fillStyle = tema.metalik ? "rgba(0,0,0,.18)" : "rgba(255,255,255,.14)"; x.fill();
@@ -3435,6 +3441,7 @@ function capYerlesim(M, cfg){
       });
   });
 
+  if(cfg.yolDus) cikti.forEach(o=>{ if(o.bilgi) o.bilgi = { ...o.bilgi, m2: Math.round(o.bilgi.m2 * carpan) }; });
   return { parcalar: cikti, yol: yolParcalari, ana, dik,
            yolGenislik: w, yolAlan: Math.round(yolAlan),
            kucultme: carpan < 1 ? Math.round((1-carpan)*1000)/10 : 0 };
@@ -3594,25 +3601,6 @@ function capCizPng(p, cfg, kucuk){
   if(liste){
     const yer = capYerlesim(M, cfg);
 
-    (yer.yol||[]).forEach(yp=>{
-      if(yp.length < 3) return;
-      yol(yp.map(E));
-      x.fillStyle = "#E6E9EC"; x.fill();
-      x.globalAlpha = .55; x.fillStyle = "#C4CBD2"; x.fill(); x.globalAlpha = 1;
-      x.lineWidth = 1; x.strokeStyle = "#A9B2BA"; x.stroke();
-    });
-    if((yer.yol||[]).length && !kucuk){
-      const orta = yer.yol[Math.floor(yer.yol.length/2)];
-      const om = E(agirlikMerkezi(orta));
-      x.save(); x.translate(om[0], om[1]);
-      let ac = Math.atan2(yer.ana[1], yer.ana[0]);
-      x.rotate(-ac + (Math.abs(ac) > Math.PI/2 ? Math.PI : 0));
-      x.textAlign = "center"; x.textBaseline = "middle";
-      x.font = "700 12px Arial"; x.fillStyle = "#6C757D";
-      x.fillText("PARSEL YOLU", 0, 0);
-      x.restore();
-    }
-
     yer.parcalar.forEach((o,i)=>{
       const d = o.poly, ek = d.map(E), bilgi = o.bilgi || liste[i] || {};
       yol(ek);
@@ -3649,6 +3637,28 @@ function capCizPng(p, cfg, kucuk){
         }
       }
     });
+
+    // parsel yolu parcalarin uzerine cizilir
+    (yer.yol||[]).forEach(yp=>{
+      if(yp.length < 3) return;
+      yol(yp.map(E));
+      x.fillStyle = "#EAEDF0"; x.globalAlpha = .93; x.fill(); x.globalAlpha = 1;
+      x.lineWidth = 1; x.strokeStyle = "#A9B2BA"; x.stroke();
+    });
+    if((yer.yol||[]).length && !kucuk){
+      const enBuyuk = yer.yol.reduce((a,b2)=>
+        (b2.length>2 && alanHesap(b2) > (a && a.length>2 ? alanHesap(a) : 0)) ? b2 : a, yer.yol[0]);
+      if(enBuyuk && enBuyuk.length > 2){
+        const om = E(agirlikMerkezi(enBuyuk));
+        x.save(); x.translate(om[0], om[1]);
+        let ac = Math.atan2(yer.ana[1], yer.ana[0]);
+        x.rotate(-ac + (Math.abs(ac) > Math.PI/2 ? Math.PI : 0));
+        x.textAlign = "center"; x.textBaseline = "middle";
+        x.font = "700 12px Arial"; x.fillStyle = "#6C757D";
+        x.fillText("PARSEL YOLU", 0, 0);
+        x.restore();
+      }
+    }
   }else{
     yol(N); x.fillStyle = "#F4F6F0"; x.fill();
   }
