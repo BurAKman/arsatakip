@@ -269,6 +269,16 @@ select option{background:#101614;color:var(--ink)}
 .ipt select{background-position:calc(100% - 17px) 20px,calc(100% - 12px) 20px}
 .ipt .full{flex:1 1 100%}
 .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.acts a.dis{flex:1 1 30%;border:1px solid var(--cizgi-2);border-radius:12px;padding:11px 8px;font-size:13px;
+  font-weight:600;background:var(--cam-2);color:var(--ink);backdrop-filter:blur(10px);text-align:center;
+  text-decoration:none;display:flex;align-items:center;justify-content:center}
+.acts a.dis:active{background:rgba(255,255,255,.18)}
+.acts a.dis.yesilb{background:linear-gradient(155deg,rgba(95,215,154,.32),rgba(95,215,154,.10));
+  border-color:rgba(95,215,154,.5);color:#DCFFEE}
+.acts a.dis.mavib{background:linear-gradient(155deg,rgba(111,176,245,.32),rgba(111,176,245,.10));
+  border-color:rgba(111,176,245,.5);color:#DCEEFF}
+.acts a.dis.kirmizi{background:linear-gradient(155deg,rgba(240,112,92,.34),rgba(240,112,92,.12));
+  border-color:rgba(240,112,92,.5);color:#FFD9D1}
 .acts button{flex:1 1 30%;border:1px solid var(--cizgi-2);border-radius:12px;padding:11px 8px;font-size:13px;
   font-weight:600;background:var(--cam-2);color:var(--ink);backdrop-filter:blur(10px)}
 .acts button:active{background:rgba(255,255,255,.18)}
@@ -335,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 3.4";
+const SURUM = "beta 3.5";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -634,278 +644,6 @@ const secimAdi = (pre,k) => {
 };
 
 
-/* ---- sesli sorgulama ---- */
-
-const RAKAM_SOZ = { "sıfır":0,"bir":1,"iki":2,"üç":3,"dört":4,"beş":5,"altı":6,"yedi":7,"sekiz":8,"dokuz":9,
-  "on":10,"yirmi":20,"otuz":30,"kırk":40,"elli":50,"altmış":60,"yetmiş":70,"seksen":80,"doksan":90,
-  "yüz":100,"bin":1000 };
-
-// "yüz sekiz" -> 108 ; "108" -> 108
-function sozdenSayi(metin){
-  const t = String(metin||"").toLocaleLowerCase("tr").trim();
-  const d = t.match(/\d+/);
-  if(d) return +d[0];
-  let toplam = 0, gecici = 0, bulundu = false;
-  t.split(/\s+/).forEach(k=>{
-    const v = RAKAM_SOZ[k];
-    if(v == null) return;
-    bulundu = true;
-    if(v === 100 || v === 1000){ gecici = (gecici || 1) * v; toplam += gecici; gecici = 0; }
-    else gecici += v;
-  });
-  toplam += gecici;
-  return bulundu ? toplam : null;
-}
-
-// duyulan cumleyi parcala
-function sesiCoz(metin){
-  const t = " " + String(metin||"").toLocaleLowerCase("tr").replace(/\./g," ") + " ";
-  // hem "108 ada" hem "ada 108" bicimini yakala
-  const al = (anahtar) => {
-    const i = t.indexOf(" " + anahtar + " ");
-    if(i < 0) return null;
-    const sonra = t.slice(i + anahtar.length + 2).trim().split(/\s+/).slice(0,3).join(" ");
-    const sonraSayi = sozdenSayi(sonra);
-    if(sonraSayi != null) return sonraSayi;
-    const once = t.slice(0, i).trim().split(/\s+/).slice(-3).join(" ");
-    return sozdenSayi(once);
-  };
-  const ada = al("ada");
-  const parsel = al("parsel");
-  // ada/parsel kelimelerinden onceki kisim yer adlaridir
-  const kes = t.search(/\s(ada|parsel)\s/);
-  const yerKismi = (kes > 0 ? t.slice(0, kes) : t).trim().split(/\s+/).filter(k=>!RAKAM_SOZ[k] && !/^\d+$/.test(k));
-  return { yerler: yerKismi, ada, parsel, ham: metin };
-}
-
-// listede en yakin secenegi bul
-function secenekBul(select, ad2){
-  if(!select || !ad2) return null;
-  const hedef = sade(ad2);
-  let enIyi = null, enIyiPuan = 0;
-  Array.from(select.options).forEach(o=>{
-    if(!o.value) return;
-    const s2 = sade(o.textContent);
-    let puan = 0;
-    if(s2 === hedef) puan = 100;
-    else if(s2.startsWith(hedef) || hedef.startsWith(s2)) puan = 80;
-    else if(s2.includes(hedef) || hedef.includes(s2)) puan = 60;
-    if(puan > enIyiPuan){ enIyiPuan = puan; enIyi = o; }
-  });
-  return enIyiPuan >= 60 ? enIyi : null;
-}
-
-// secim yapip listenin dolmasini bekle
-function secVeBekle(select, secenek, sonraki){
-  return new Promise(res=>{
-    select.value = secenek.value;
-    select.dispatchEvent(new Event("change"));
-    if(!sonraki) return res();
-    let deneme = 0;
-    const kontrol = setInterval(()=>{
-      deneme++;
-      if(sonraki.options.length > 1 || deneme > 60){ clearInterval(kontrol); res(); }
-    }, 250);
-  });
-}
-
-function sesliSorgu(){
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR) return toast("Bu tarayıcı sesli komutu desteklemiyor");
-  const tani = new SR();
-  tani.lang = "tr-TR"; tani.interimResults = true; tani.continuous = true; tani.maxAlternatives = 1;
-
-  const kutu = document.getElementById("tani");
-  kutu.innerHTML = `<div class="card" style="text-align:center">
-    <div style="font-size:34px;line-height:1">🎤</div>
-    <div style="font-size:14px;font-weight:600;margin-top:6px">Dinliyorum… acele etme</div>
-    <div id="sCanli" style="font-size:15px;color:#fff;margin-top:10px;min-height:22px"></div>
-    <button class="btn" style="margin-top:12px" id="sBitir">Bitti, dinlemeyi durdur</button>
-    <p class="ipuc" style="margin:10px 0 0">Örnek: "Kırklareli Babaeski Kuştepe ada 108 parsel 9"</p></div>`;
-
-  let biriken = "", kapandi = false;
-  const bitir = () => { if(!kapandi){ kapandi = true; try{ tani.stop(); }catch(e){} } };
-  document.getElementById("sBitir").onclick = bitir;
-  // konusma bitince 2,5 saniye sessizlikte kendiliginden kapansin
-  let sayac = null;
-  const sayaciKur = () => { clearTimeout(sayac); sayac = setTimeout(bitir, 2500); };
-  sayaciKur();
-
-  tani.onresult = e => {
-    let gecici = "";
-    for(let i=0;i<e.results.length;i++){
-      const r = e.results[i];
-      if(r.isFinal) biriken += r[0].transcript + " "; else gecici += r[0].transcript;
-    }
-    const c2 = document.getElementById("sCanli");
-    if(c2) c2.textContent = (biriken + gecici).trim();
-    sayaciKur();
-  };
-
-  tani.onend = () => {
-    clearTimeout(sayac);
-    const metin = biriken.trim();
-    if(!metin){
-      kutu.innerHTML = `<div class="card"><div style="font-size:13px;color:var(--ink-2)">Bir şey duyamadım.</div>
-        <button class="btn ghost" style="margin-top:10px" onclick="sesliSorgu()">Tekrar dene</button></div>`;
-      return;
-    }
-    const c = sesiCoz(metin);
-    kutu.innerHTML = `<div class="card">
-      <div class="ipuc" style="margin:0 0 6px">Şunu duydum</div>
-      <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:12px">${esc(metin)}</div>
-      <div class="row2">
-        <div class="field" style="margin:0"><label>Ada</label>
-          <input id="sAda" inputmode="numeric" value="${c.ada ?? ""}"></div>
-        <div class="field" style="margin:0"><label>Parsel</label>
-          <input id="sPar" inputmode="numeric" value="${c.parsel ?? ""}"></div>
-      </div>
-      <div class="acts" style="margin-top:12px">
-        <button class="pri" id="sOnay">Doğru, sorgula</button>
-        <button id="sTekrar">Tekrar söyle</button>
-        <button class="kirmizi" id="sIptal">Vazgeç</button>
-      </div>
-      <div class="ipuc" id="sDurum" style="margin-top:10px"></div></div>`;
-
-    document.getElementById("sTekrar").onclick = sesliSorgu;
-    document.getElementById("sIptal").onclick = () => { kutu.innerHTML = ""; };
-    document.getElementById("sOnay").onclick = () => sesleDoldur(c);
-  };
-  tani.onerror = ev => {
-    clearTimeout(sayac);
-    kutu.innerHTML = `<div class="card"><div style="font-size:13px;color:var(--red)">
-      Ses alınamadı${ev.error === "not-allowed" ? " · mikrofon izni verilmemiş" : ""}.</div>
-      <button class="btn ghost" style="margin-top:10px" onclick="sesliSorgu()">Tekrar dene</button></div>`;
-  };
-  tani.start();
-}
-
-async function sesleDoldur(c){
-  const durum = document.getElementById("sDurum");
-  const yaz = t => { if(durum) durum.textContent = t; };
-  const il = document.getElementById("hil"), ilce = document.getElementById("hilce"), mah = document.getElementById("hmah");
-  if(il.tagName !== "SELECT") return toast("Liste yüklenmemiş, elle yazman gerekiyor");
-
-  const kalan = [...c.yerler];
-  yaz("İl aranıyor…");
-  let secildi = null;
-  for(let i=0;i<kalan.length && !secildi;i++){
-    const o = secenekBul(il, kalan[i]);
-    if(o){ secildi = kalan.splice(i,1)[0]; await secVeBekle(il, o, ilce); }
-  }
-  if(!secildi) return yaz("İl anlaşılamadı, listeden seç");
-
-  yaz("İlçe aranıyor…");
-  let ilceSec = null;
-  for(let i=0;i<kalan.length && !ilceSec;i++){
-    const o = secenekBul(ilce, kalan[i]);
-    if(o){ ilceSec = kalan.splice(i,1)[0]; await secVeBekle(ilce, o, mah); }
-  }
-  if(!ilceSec) return yaz("İlçe anlaşılamadı, listeden seç");
-
-  yaz("Köy aranıyor…");
-  let mahSec = null;
-  for(let i=kalan.length-1;i>=0 && !mahSec;i--){
-    const o = secenekBul(mah, kalan[i]);
-    if(o){ mahSec = kalan[i]; mah.value = o.value; }
-  }
-  if(!mahSec){
-    const birlesik = secenekBul(mah, kalan.join(" "));
-    if(birlesik){ mah.value = birlesik.value; mahSec = kalan.join(" "); }
-  }
-  if(!mahSec) return yaz("Köy anlaşılamadı, listeden seç");
-
-  document.getElementById("hada").value = document.getElementById("sAda")?.value || c.ada || "";
-  document.getElementById("hpar").value = document.getElementById("sPar")?.value || c.parsel || "";
-  yaz("Sorgulanıyor…");
-  document.getElementById("tani").innerHTML = "";
-  adaParselSorgu();
-}
-
-
-/* ---- sonuc ekraninda sesli komut ---- */
-
-const KOMUTLAR = [
-  { anahtar:["çevre raporu","çevre","rapor hazırla","çevre bilgisi"], ad:"Çevre raporu", is:()=>cevreRaporu() },
-  { anahtar:["emsal","fiyat araştır","değer","emsal araştır"],       ad:"Emsal araştır", is:()=>go("emsal") },
-  { anahtar:["kaydet","arazilere ekle","kayıt et"],                   ad:"Kaydet", is:()=>haritadanKaydet() },
-  { anahtar:["kml","kml indir"],                                      ad:"KML indir", is:()=>kmlIndir() },
-  { anahtar:["earth","google earth"],                                 ad:"Earth'te aç", is:()=>earthAc() },
-  { anahtar:["yandex","uydu"],                                        ad:"Yandex uydu", is:()=>yandexAcSon() },
-  { anahtar:["sokak","panorama","sokak görünümü"],                    ad:"Sokak görünümü", is:()=>yandexPanoramaSon() },
-  { anahtar:["imar","imar planı","plan"],                             ad:"İmar planı", is:()=>eplanAcSon() },
-  { anahtar:["yeni sorgu","başka parsel","temizle"],                  ad:"Yeni sorgu", is:()=>go("harita") }
-];
-
-function komutBul(metin){
-  const t = sade(metin);
-  let enIyi = null, enIyiUz = 0;
-  KOMUTLAR.forEach(k=>{
-    k.anahtar.forEach(a=>{
-      const sa = sade(a);
-      if(t.includes(sa) && sa.length > enIyiUz){ enIyi = k; enIyiUz = sa.length; }
-    });
-  });
-  return enIyi;
-}
-
-function sesliKomut(){
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR) return toast("Bu tarayıcı sesli komutu desteklemiyor");
-  const kutu = document.querySelector("#bilgi .acts");
-  if(!kutu) return;
-  let alan = document.getElementById("komutKutu");
-  if(!alan){
-    kutu.insertAdjacentHTML("beforeend", `<div id="komutKutu" style="flex:1 1 100%"></div>`);
-    alan = document.getElementById("komutKutu");
-  }
-  alan.innerHTML = `<div style="text-align:center;padding:10px 0">
-    <div style="font-size:26px">🎤</div>
-    <div style="font-size:13px;color:var(--ink-2);margin-top:4px">Komut bekliyorum…</div>
-    <div id="kCanli" style="font-size:14px;color:#fff;margin-top:6px;min-height:20px"></div></div>`;
-
-  const tani = new SR();
-  tani.lang = "tr-TR"; tani.interimResults = true; tani.continuous = true;
-  let biriken = "", kapandi = false, sayac = null;
-  const bitir = () => { if(!kapandi){ kapandi = true; try{ tani.stop(); }catch(e){} } };
-  const sayaciKur = () => { clearTimeout(sayac); sayac = setTimeout(bitir, 2200); };
-  sayaciKur();
-
-  tani.onresult = e => {
-    let gecici = "";
-    for(let i=0;i<e.results.length;i++){
-      const r = e.results[i];
-      if(r.isFinal) biriken += r[0].transcript + " "; else gecici += r[0].transcript;
-    }
-    const c = document.getElementById("kCanli");
-    if(c) c.textContent = (biriken + gecici).trim();
-    sayaciKur();
-  };
-
-  tani.onend = () => {
-    clearTimeout(sayac);
-    const metin = biriken.trim();
-    const k = metin ? komutBul(metin) : null;
-    if(!k){
-      alan.innerHTML = `<div style="padding:10px 0;text-align:center">
-        <div style="font-size:13px;color:var(--ink-2)">${metin ? `"${esc(metin)}" anlaşılamadı` : "Bir şey duyamadım"}</div>
-        <div class="ipuc" style="margin-top:6px">Çevre raporu · emsal · kaydet · kml · earth · yandex · sokak görünümü · imar planı</div>
-        <button class="btn ghost" style="margin-top:10px" onclick="sesliKomut()">Tekrar dene</button></div>`;
-      return;
-    }
-    alan.innerHTML = `<div style="padding:10px 0;text-align:center">
-      <div style="font-size:14px;font-weight:600;color:var(--green)">${k.ad} çalıştırılıyor…</div>
-      <div class="ipuc" style="margin-top:4px">"${esc(metin)}"</div></div>`;
-    setTimeout(()=>{ try{ k.is(); }catch(e){ toast("Olmadı: "+(e.message||e)); } }, 500);
-  };
-  tani.onerror = ev => {
-    clearTimeout(sayac);
-    alan.innerHTML = `<div style="padding:10px 0;text-align:center;font-size:13px;color:var(--red)">
-      Ses alınamadı${ev.error === "not-allowed" ? " · mikrofon izni yok" : ""}</div>`;
-  };
-  tani.start();
-}
-
 /* ================= harita ================= */
 
 let HARITA = null, KATMAN = null, SONPARSEL = null;
@@ -919,8 +657,6 @@ async function harita(){
       <input id="hada" inputmode="numeric" placeholder="Ada">
       <input id="hpar" inputmode="numeric" placeholder="Parsel">
       <button class="btn full" id="sor">Sorgula</button>
-      <button class="btn ghost full" id="sesli" style="display:flex;align-items:center;justify-content:center;gap:9px">
-        <span style="font-size:17px">🎤</span> Sesle sorgula</button>
     </div>
     <p class="ipuc">Haritada bir parselin üstüne dokunarak da sorgulayabilirsin.</p>
     <div id="tani"></div>
@@ -933,7 +669,6 @@ async function harita(){
 
   idariKur("h");
   document.getElementById("sor").onclick = adaParselSorgu;
-  document.getElementById("sesli").onclick = sesliSorgu;
   HARITA.on("click", e => noktaSorgu(e.latlng.lat, e.latlng.lng));
 }
 
@@ -956,6 +691,7 @@ async function noktaSorgu(lat,lng){
 function ciz(f){
   if(!f || !f.geometry) throw new Error("Parsel bulunamadı");
   SONPARSEL = f;
+  const m = merkez(f);
   if(KATMAN) HARITA.removeLayer(KATMAN);
   KATMAN = L.geoJSON(f, { style:{ color:"#C9A227", weight:2.5, fillColor:"#C9A227", fillOpacity:.18 } }).addTo(HARITA);
   HARITA.fitBounds(KATMAN.getBounds(), { padding:[30,30], maxZoom:18 });
@@ -969,14 +705,14 @@ function ciz(f){
       <div class="kv"><span>Mevkii</span><b>${esc(p.mevkii||"—")}</b></div>
       <div class="acts">
         <button onclick="kmlIndir()">KML indir</button>
-        <button onclick="earthAc()">Earth'te aç</button>
-        <button onclick="yandexAcSon()">Yandex uydu</button>
-        <button onclick="yandexPanoramaSon()">Sokak görünümü</button>
+        <a class="dis" href="${earthUrl(m.lat, m.lng)}" target="_blank" rel="noopener">Earth'te aç</a>
+        <a class="dis yesilb" href="${yandexUrl(m.lat, m.lng)}" target="_blank" rel="noopener">Yandex uydu</a>
+        <a class="dis yesilb" href="${yandexPanoUrl(m.lat, m.lng)}" target="_blank" rel="noopener">Sokak görünümü</a>
+        <a class="dis kirmizi" href="https://e-plan.gov.tr/" target="_blank" rel="noopener"
+           onclick="eplanKunye(${m.lat},${m.lng})">İmar planı</a>
         ${ME.role==='admin'?`<button class="pri" onclick="haritadanKaydet()">Kaydet</button>`:""}
         <button onclick="cevreRaporu()">Çevre raporu</button>
         <button onclick="go('emsal')">Emsal araştır</button>
-        <button onclick="eplanAcSon()">İmar planı</button>
-        <button class="pri" style="flex:1 1 100%" onclick="sesliKomut()">🎤 Sesle komut ver</button>
       </div>
     </div>`;
 }
@@ -1012,25 +748,10 @@ function kmlIndir(){
   toast("KML indirildi");
 }
 
-function yandexAcSon(){
-  if(!SONPARSEL) return toast("Önce bir parsel sorgula");
-  const m = merkez(SONPARSEL); yandexAc(m.lat, m.lng);
-}
-function yandexPanoramaSon(){
-  if(!SONPARSEL) return toast("Önce bir parsel sorgula");
-  const m = merkez(SONPARSEL); yandexPanorama(m.lat, m.lng);
-}
-
 function eplanAcSon(){
   if(!SONPARSEL) return toast("Önce bir parsel sorgula");
   const m = merkez(SONPARSEL);
   eplanAc(m.lat, m.lng, SONPARSEL.properties || {});
-}
-
-function earthAc(){
-  if(!SONPARSEL) return;
-  const { lat, lng } = merkez(SONPARSEL);
-  window.open(`https://earth.google.com/web/@${lat},${lng},0a,600d,35y,0h,45t,0r`, "_blank");
 }
 
 async function haritadanKaydet(){
@@ -1431,10 +1152,10 @@ async function parselDetay(id){
       ${p.lat?`<div class="acts" style="margin-top:12px">
         <button class="yesilb" onclick="miniHarita('${id}')">Haritada göster</button>
         <button class="mavib" onclick="kmlIndirParsel('${id}')">KML indir</button>
-        <button class="mavib" onclick="earthAcKoord(${p.lat},${p.lng})">Earth'te aç</button>
-        <button class="yesilb" onclick="yandexAc(${p.lat},${p.lng})">Yandex uydu</button>
-        <button class="yesilb" onclick="yandexPanorama(${p.lat},${p.lng})">Sokak görünümü</button>
-        <button class="kirmizi" onclick="eplanAc(${p.lat},${p.lng},{il:'${esc(p.il)}',ilce:'${esc(p.ilce)}',mahalle:'${esc(p.mahalle)}',ada:'${esc(p.ada||"")}',parsel:'${esc(p.parsel)}'})">İmar planı</button></div>`:""}
+        <a class="dis mavib" href="${earthUrl(p.lat,p.lng)}" target="_blank" rel="noopener">Earth'te aç</a>
+        <a class="dis yesilb" href="${yandexUrl(p.lat,p.lng)}" target="_blank" rel="noopener">Yandex uydu</a>
+        <a class="dis yesilb" href="${yandexPanoUrl(p.lat,p.lng)}" target="_blank" rel="noopener">Sokak görünümü</a>
+        <a class="dis kirmizi" href="https://e-plan.gov.tr/" target="_blank" rel="noopener">İmar planı</a></div>`:""}
       ${y && ME.role==='admin' ? `<button class="btn ghost" style="margin-top:10px"
         onclick="SONPARSELID='${id}';go('fiyatDuzen','${y.id}')">Tapu bilgilerini düzenle</button>
       <button class="btn ghost" style="margin-top:8px" onclick="go('sunum','${id}')">Sunum görseli hazırla</button>
@@ -1769,6 +1490,12 @@ async function corineSinif(lat, lng){
   const metin = Object.values(oz).map(v=>String(v)).join(" ");
   const kod = (metin.match(/\b([1-5]\d\d)\b/) || [])[1];
   return { kod, ad: (kod && CLC_AD[kod]) || sonuc.value || sonuc.layerName || null };
+}
+
+async function eplanKunye(lat, lng){
+  const p = SONPARSEL?.properties || {};
+  const k = `${p.ilAd||""} / ${p.ilceAd||""} / ${p.mahalleAd||""} · Ada ${p.adaNo||"—"} · Parsel ${p.parselNo||"—"} · ${(+lat).toFixed(6)}, ${(+lng).toFixed(6)}`;
+  try{ await navigator.clipboard.writeText(k); toast("Künye kopyalandı, e-Plan'da yapıştır"); }catch(e){}
 }
 
 // e-Plan koordinatla acmayi desteklemiyor; kunyeyi panoya alip imar durumu sayfasini aciyoruz
@@ -3353,8 +3080,8 @@ async function kmlListele(){
         <small>${p.geojson?"sınır çizimi var":"çizim yok, TKGM'den tazele"}</small></span>
       <span class="sag">
         ${p.geojson?`<button class="pill gold" onclick="kmlIndirParsel('${p.id}')">KML</button>`:""}
-        ${p.lat?`<button class="pill gold" onclick="earthAcKoord(${p.lat},${p.lng})">Earth</button>
-        <button class="pill sade" onclick="yandexAc(${p.lat},${p.lng})">Yandex</button>`:""}
+        ${p.lat?`<a class="pill gold" href="${earthUrl(p.lat,p.lng)}" target="_blank" rel="noopener">Earth</a>
+        <a class="pill sade" href="${yandexUrl(p.lat,p.lng)}" target="_blank" rel="noopener">Yandex</a>`:""}
       </span></div>`);
 }
 
@@ -3650,10 +3377,6 @@ async function kmlIndirParsel(parselId){
   a.download = `${p.mahalle||"parsel"}-${p.ada||0}-${p.parsel}.kml`.replace(/\s+/g,"_");
   a.click(); URL.revokeObjectURL(a.href);
   toast("KML indirildi");
-}
-
-function earthAcKoord(lat,lng){
-  window.open(`https://earth.google.com/web/@${lat},${lng},0a,600d,35y,0h,45t,0r`, "_blank");
 }
 
 let MINI = null;
