@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 5.0";
+const SURUM = "beta 5.1";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -935,8 +935,8 @@ async function belgeSil(belgeId, yol){
 const BELGE_IKON = { tapu:"file", cap:"vector", kml:"globe", resim:"photo", video:"photo",
                      sunum:"photo", arastirma:"note", vekalet:"file", muvafakat:"file", diger:"file" };
 
-// her yerde ayni gorunen dosya satiri: goruntule + indir (+ sil)
-function dosyaSatiri(b, silHtml){
+// her yerde ayni gorunen dosya satiri: goruntule + indir + paylas (+ duzenle, sil)
+function dosyaSatiri(b, silHtml, duzenleHtml){
   return `<div class="dosya">
     <span class="tip">${svg(BELGE_IKON[b.kind]||"file")}</span>
     <button class="bilgi" onclick="dosyaAc('${esc(b.file_path)}')">
@@ -946,6 +946,7 @@ function dosyaSatiri(b, silHtml){
       <button onclick="dosyaAc('${esc(b.file_path)}')" aria-label="Görüntüle">${svg("goz")}</button>
       <button onclick="dosyaIndir('${esc(b.file_path)}','${esc(b.file_name||"belge")}')" aria-label="İndir">${svg("indir")}</button>
       <button onclick="dosyaPaylas('${esc(b.file_path)}','${esc(b.file_name||"belge")}')" aria-label="Paylaş">${svg("paylas")}</button>
+      ${duzenleHtml||""}
       ${silHtml||""}
     </span></div>`;
 }
@@ -1229,8 +1230,10 @@ async function parselDetay(id){
         ? grupSira.filter(k=>grup[k]).map(k=>`
             <div style="border-top:1px solid var(--cizgi);padding:8px 0 2px">
               <div class="tur">${BELGE_AD[k]||k}</div>
-              ${grup[k].map(b=>dosyaSatiri(b, ME.role==='admin'
-                  ? `<button class="kirmizi" aria-label="Sil" onclick="belgeSilVeYenile('${b.id}','${esc(b.file_path)}','parsel','${id}')">${svg("trash")}</button>` : "")).join("")}</div>`).join("")
+              ${grup[k].map(b=>dosyaSatiri(b,
+                  ME.role==='admin' ? `<button class="kirmizi" aria-label="Sil" onclick="belgeSilVeYenile('${b.id}','${esc(b.file_path)}','parsel','${id}')">${svg("trash")}</button>` : "",
+                  (ME.role==='admin' && b.kind==='cap' && p.cap_config) ? `<button aria-label="Düzenle" onclick="go('capAyar','${id}|${b.id}')">${svg("kalem")}</button>` : ""
+                )).join("")}</div>`).join("")
         : `<div style="color:var(--ink-3);font-size:13px">Henüz belge yok. Tapu bilgileri ekranından yükleyebilirsin.</div>`}
     </div>
 
@@ -3408,7 +3411,7 @@ function capYerlesim(M, cfg){
     if(i > 0 && Math.abs(merkez[i] - merkez[i-1]) > 0.01){
       const d0 = Math.min(merkez[i], merkez[i-1]) - w/2;
       const d1 = Math.max(merkez[i], merkez[i-1]) + w/2;
-      const bag = serit(a0 - w*0.7, a0 + w*0.7, d0, d1);
+      const bag = serit(a0 - w/2, a0 + w/2, d0, d1);
       if(bag) yolParcalari.push(bag);
     }
 
@@ -3479,7 +3482,8 @@ function agirlikMerkezi(pts){
   return a ? [x/(6*a), y/(6*a)] : [pts[0][0], pts[0][1]];
 }
 
-async function capAyar(parselId){
+async function capAyar(arg){
+  const [parselId, belgeId] = String(arg||"").split("|");
   const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
   if(!p || !p.geojson) return toast("Bu parselin sınır çizimi yok");
   const alan = Math.round(+p.alan_m2 || 0);
@@ -3506,23 +3510,43 @@ async function capAyar(parselId){
     </div>
 
     ${parcaAyarHtml()}
-    <button class="btn" id="ciz" style="margin-top:6px">Çapı çiz ve parsele ekle</button>`;
+    ${belgeId
+      ? `<button class="btn" id="ciz" style="margin-top:6px">Üzerine kaydet</button>
+         <button class="btn ghost" id="cizYeni" style="margin-top:8px">Farklı kaydet</button>`
+      : `<button class="btn" id="ciz" style="margin-top:6px">Çapı çiz ve parsele ekle</button>`}`;
 
   PARCA.p = p;
-  parcaKur(alan, null);
+  parcaKur(alan, belgeId ? (eski?.bloklar || null) : null);
+  if(belgeId && eski){
+    PARCA.enAzYol = eski.enAzYol || 4;
+    PARCA.ters = !!eski.ters; PARCA.yolDus = !!eski.yolDus;
+    const ea = document.getElementById("penaz"); if(ea) ea.value = PARCA.enAzYol;
+    const tr = document.getElementById("pters"); if(tr) tr.value = PARCA.ters ? "1" : "0";
+    const du = document.getElementById("pdus"); if(du) du.checked = PARCA.yolDus;
+    ozetCiz();
+  }
 
   document.getElementById("ciz").onclick = async e => {
     const cfg = parcaCfg();
     if(!cfg.bloklar.length) return toast("En az bir blok ekle");
     if(!cfg.parcalar.length) return toast("En az bir parça ekle");
     if(cfg.parcalar.some(o=>!(+o.m2 > 0))) return toast("Her parçanın metrekaresini yaz");
+    e.target.disabled = true; const eskiYazi = e.target.textContent; e.target.textContent = "Çiziliyor…";
+    await capCiz(parselId, cfg, belgeId || null);
+    e.target.disabled = false; e.target.textContent = eskiYazi;
+  };
+
+  const yeni = document.getElementById("cizYeni");
+  if(yeni) yeni.onclick = async e => {
+    const cfg = parcaCfg();
+    if(!cfg.parcalar.length) return toast("En az bir parça ekle");
     e.target.disabled = true; e.target.textContent = "Çiziliyor…";
-    await capCiz(parselId, cfg);
-    e.target.disabled = false; e.target.textContent = "Çapı çiz ve parsele ekle";
+    await capCiz(parselId, cfg, null);
+    e.target.disabled = false; e.target.textContent = "Farklı kaydet";
   };
 }
 
-async function capCiz(parselId, cfg){
+async function capCiz(parselId, cfg, belgeId){
   const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
   if(!p || !p.geojson) return toast("Bu parselin sınır çizimi yok");
   toast("Çap çiziliyor…");
@@ -3532,12 +3556,22 @@ async function capCiz(parselId, cfg){
     const pdf = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
     pdf.addImage(png, "PNG", 10, 10, 190, 190*(1400/1000));
     const blob = pdf.output("blob");
-    const dosya = new File([blob], `cap-${p.mahalle||""}-${p.ada||0}-${p.parsel}.pdf`.replace(/\s+/g,"_"),
+    const damga = belgeId ? "" : "-" + String(Date.now()).slice(-4);
+    const dosya = new File([blob], `cap-${p.mahalle||""}-${p.ada||0}-${p.parsel}${damga}.pdf`.replace(/\s+/g,"_"),
                            { type:"application/pdf" });
-    await dosyaYukle(dosya, "cap", parselId);
+    if(belgeId){
+      const { data:b2 } = await sb.from("documents").select("file_path,file_name").eq("id", belgeId).single();
+      if(b2){
+        const { error } = await sb.storage.from("arsatakip").upload(b2.file_path, dosya, { upsert:true });
+        if(error) throw error;
+        await sb.from("documents").update({ size_bytes: dosya.size, created_at: new Date().toISOString() }).eq("id", belgeId);
+      }else await dosyaYukle(dosya, "cap", parselId);
+    }else{
+      await dosyaYukle(dosya, "cap", parselId);
+    }
     if(cfg && cfg.parcalar?.length) await sb.from("parcels").update({ cap_config: cfg }).eq("id", parselId);
-    toast("Çap hazırlandı ve parsele eklendi");
-    go("cap");
+    toast(belgeId ? "Çap güncellendi" : "Çap hazırlandı ve parsele eklendi");
+    go("parsel", parselId);
   }catch(e){ toast("Olmadı: " + (e.message||e)); }
 }
 
