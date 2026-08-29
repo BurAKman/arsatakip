@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 4.4";
+const SURUM = "beta 4.5";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -2123,45 +2123,43 @@ async function emsalHesapla(p){
 
 /* ---- parça ayar bileşeni: hem çap çizdirmede hem sunumda ---- */
 
-let PARCA = { satirlar:[], yolGenislik:7, toplam:0, geometri:null, yolAlan:0, renkler:{}, p:null };
+let PARCA = { satirlar:[], toplam:0, geometri:null, yolAlan:0, yolGenislik:0, p:null };
 
-const SATIR_RENK = ["#FFFFFF","#FFFFFF","#FFFFFF","#FFFFFF","#FFFFFF","#FFFFFF","#FFFFFF","#FFFFFF"];
+let PSAYAC = 0;
+const yeniParca = (m2) => ({ id: ++PSAYAC, no:"", m2: Math.round(m2||100), renk:"#FFFFFF" });
 
 function parcaAyarHtml(){
   return `
     <div id="satirlar"></div>
     <button class="btn ghost" id="satirEkle" style="margin-bottom:14px">+ Satır ekle</button>
-    <div class="card">
-      <div class="bolum"><span class="rz altin">${svg("tag")}</span><b>Parça renkleri</b>
-        <button class="pill sade" onclick="renkleriSifirla()">hepsi beyaz</button></div>
-      <div id="parcaRenkler" style="display:flex;flex-wrap:wrap;gap:8px"></div>
-    </div>
-    <div class="card" id="capOzet" style="font-size:13px"></div>
-    <div class="field"><label>Parsel yolu genişliği (m)</label>
-      <input id="pyol" inputmode="decimal" value="${PARCA.yolGenislik}">
-      <p class="ipuc" style="margin:8px 2px 0" id="pyolNot"></p></div>`;
+    <div class="card" id="capOzet" style="font-size:13px"></div>`;
 }
 
 function parcaKur(toplam, mevcut){
   PARCA.toplam = toplam;
-  PARCA.yolGenislik = PARCA.yolGenislik || yolGenisligiOner(toplam);
   if(mevcut && mevcut.length){
     PARCA.satirlar = mevcut.map(r=>({
-      m2ler: (r.m2ler && r.m2ler.length) ? r.m2ler.map(v=>+v||1) : Array(r.adet||1).fill(+r.m2||1)
+      parcalar: (r.parcalar && r.parcalar.length)
+        ? r.parcalar.map(o=>({ id:++PSAYAC, no:o.no||"", m2:+o.m2||1, renk:o.renk||"#FFFFFF" }))
+        : (r.m2ler||[+r.m2||1]).map(v=>yeniParca(v))
     }));
   }
-  if(!PARCA.satirlar.length){
-    PARCA.satirlar = [{ m2ler:[Math.round(toplam*0.4)] },
-                      { m2ler:[Math.round(toplam*0.15), Math.round(toplam*0.15)] }];
-  }
+  if(!PARCA.satirlar.length)
+    PARCA.satirlar = [{ parcalar:[yeniParca(Math.round(toplam*0.4))] },
+                      { parcalar:[yeniParca(Math.round(toplam*0.2)), yeniParca(Math.round(toplam*0.2))] }];
+  numaralariTazele();
   document.getElementById("satirEkle").onclick = () => {
-    const pay = Math.round(Math.max(200, PARCA.toplam*0.1));
-    PARCA.satirlar.push({ m2ler:[pay, pay] });
+    const pay = Math.round(Math.max(150, PARCA.toplam*0.08));
+    PARCA.satirlar.push({ parcalar:[yeniParca(pay), yeniParca(pay)] });
     satirlariCiz();
   };
-  const yol = document.getElementById("pyol");
-  yol.oninput = () => { PARCA.yolGenislik = sayiCoz(yol.value) || yolGenisligiOner(toplam); satirlariCiz(); };
   satirlariCiz();
+}
+
+// bos birakilan numaralari sirayla doldur
+function numaralariTazele(){
+  let n = 0;
+  PARCA.satirlar.forEach(r=>r.parcalar.forEach(o=>{ n++; if(!String(o.no||"").trim()) o.no = String(n); }));
 }
 
 function satirlariCiz(){
@@ -2171,118 +2169,79 @@ function satirlariCiz(){
       <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">
         <span style="font-size:11px;color:var(--ink-3);font-family:'IBM Plex Mono',monospace">${i+1}. SATIR</span>
         <span style="flex:1"></span>
-        <button class="pill sade" onclick="satirEsitle(${i})">eşit yap</button>
+        <button class="pill sade" onclick="parcaKopyala(${i})">+ parça</button>
         ${PARCA.satirlar.length > 1 ? `<button class="sil" onclick="satirSil(${i})">${svg("trash")}</button>` : ""}
       </div>
-      <div class="field" style="margin:0 0 10px"><label>Parça sayısı</label>
-        <input id="sa${i}" type="number" min="1" max="999" value="${r.m2ler.length}"></div>
-      <label>Parçaların metrekaresi</label>
-      <div style="display:flex;flex-wrap:wrap;gap:8px">
-        ${r.m2ler.map((v,j)=>`
-          <div style="flex:1 1 46%;min-width:120px">
-            <input id="sm${i}_${j}" inputmode="decimal" value="${Math.round(v)}" style="text-align:right">
-            <div style="font-size:10px;color:var(--ink-3);text-align:right;margin-top:3px">${j+1}. parça</div>
-          </div>`).join("")}
-      </div>
-      <div class="ipuc" style="margin:10px 2px 0">Satır toplamı ${nf(Math.round(r.m2ler.reduce((a,b)=>a+b,0)))} m²</div>
+      <div style="display:flex;gap:8px;font-size:10.5px;color:var(--ink-3);padding:0 2px 4px">
+        <span style="width:56px">NO</span><span style="flex:1">METREKARE</span>
+        <span style="width:46px;text-align:center">RENK</span><span style="width:34px"></span></div>
+      ${r.parcalar.map((o,j)=>`
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:7px">
+          <input id="pn${o.id}" value="${esc(o.no)}" style="width:56px;text-align:center;padding:10px 4px">
+          <input id="pm${o.id}" inputmode="decimal" value="${Math.round(o.m2)}" style="flex:1;text-align:right">
+          <input type="color" id="pr${o.id}" value="${o.renk}" style="width:46px;height:42px;padding:3px;border-radius:9px">
+          <button class="sil" style="width:34px;height:34px" onclick="parcaSil(${i},${j})">${svg("trash")}</button>
+        </div>`).join("")}
+      <div class="ipuc" style="margin:6px 2px 0">${r.parcalar.length} parça · ${nf(Math.round(r.parcalar.reduce((t,o)=>t+o.m2,0)))} m²</div>
     </div>`).join("");
 
-  PARCA.satirlar.forEach((r,i)=>{
-    const a = document.getElementById("sa"+i);
-    a.oninput = () => {
-      const n = Math.max(1, Math.min(999, +a.value||1));
-      const eski = r.m2ler;
-      const varsayilan = Math.round(eski.reduce((x,y)=>x+y,0) / Math.max(1,eski.length));
-      r.m2ler = Array.from({length:n},(_,j)=> eski[j] != null ? eski[j] : varsayilan);
-      satirlariCiz();
-    };
-    r.m2ler.forEach((v,j)=>{
-      const m = document.getElementById(`sm${i}_${j}`);
-      if(m) m.oninput = () => { r.m2ler[j] = sayiCoz(m.value) || 0; ozetCiz(); };
-    });
-  });
-
-  renkListesiCiz();
+  PARCA.satirlar.forEach(r=>r.parcalar.forEach(o=>{
+    const n = document.getElementById("pn"+o.id), m = document.getElementById("pm"+o.id), c = document.getElementById("pr"+o.id);
+    if(n) n.oninput = () => { o.no = n.value; onizlemeCiz(); };
+    if(m) m.oninput = () => { o.m2 = sayiCoz(m.value) || 0; ozetCiz(); };
+    if(c) c.oninput = () => { o.renk = c.value; onizlemeCiz(); };
+  }));
   ozetCiz();
 }
 
-function satirSil(i){ PARCA.satirlar.splice(i,1); satirlariCiz(); }
-
-// bir satirin parcalarini kendi icinde esitle
-function satirEsitle(i){
+function parcaKopyala(i){
   const r = PARCA.satirlar[i];
-  const t = r.m2ler.reduce((a,b)=>a+b,0);
-  const pay = Math.round(t / r.m2ler.length);
-  r.m2ler = r.m2ler.map((_,j)=> j === r.m2ler.length-1 ? t - pay*(r.m2ler.length-1) : pay);
+  const son = r.parcalar[r.parcalar.length-1];
+  r.parcalar.push(yeniParca(son ? son.m2 : 200));
+  numaralariTazele(); satirlariCiz();
+}
+function parcaSil(i,j){
+  PARCA.satirlar[i].parcalar.splice(j,1);
+  if(!PARCA.satirlar[i].parcalar.length) PARCA.satirlar.splice(i,1);
   satirlariCiz();
 }
-
-function renkleriSifirla(){ PARCA.renkler = {}; satirlariCiz(); }
-
-function renkListesiCiz(){
-  const kutu = document.getElementById("parcaRenkler");
-  if(!kutu) return;
-  const adet = PARCA.satirlar.reduce((t,r)=>t+r.m2ler.length,0);
-  if(adet > 60){
-    kutu.innerHTML = `<div class="ipuc">${nf(adet)} parça var; tek tek renklendirme 60 parçaya kadar gösteriliyor.</div>`;
-    return;
-  }
-  kutu.innerHTML = Array.from({length:adet},(_,i)=>`
-    <label style="display:flex;flex-direction:column;align-items:center;gap:4px;margin:0">
-      <input type="color" id="pc${i}" value="${PARCA.renkler[i] || "#FFFFFF"}"
-        style="width:42px;height:38px;padding:3px;border-radius:9px">
-      <span style="font-size:10px;color:var(--ink-3);font-family:'IBM Plex Mono',monospace">${i+1}</span>
-    </label>`).join("");
-  for(let i=0;i<adet;i++){
-    const el = document.getElementById("pc"+i);
-    if(el) el.oninput = () => { PARCA.renkler[i] = el.value; ozetCiz(); };
-  }
-}
+function satirSil(i){ PARCA.satirlar.splice(i,1); satirlariCiz(); }
 
 function ozetCiz(){
-  const parcaAlan = PARCA.satirlar.reduce((t,r)=>t + r.m2ler.reduce((a,b)=>a+b,0), 0);
-  const adet = PARCA.satirlar.reduce((t,r)=>t+r.m2ler.length,0);
-  let yolAlan = 0;
+  const parcaAlan = PARCA.satirlar.reduce((t,r)=>t + r.parcalar.reduce((a,o)=>a+o.m2,0), 0);
+  const adet = PARCA.satirlar.reduce((t,r)=>t+r.parcalar.length,0);
+  let yolAlan = 0, yolGen = 0;
   if(PARCA.geometri){
     try{
-      const y = capYerlesim(PARCA.geometri, { satirlar:PARCA.satirlar, yolGenislik:PARCA.yolGenislik });
-      yolAlan = (y.yol||[]).reduce((t,p)=>t + (p.length>2 ? alanHesap(p) : 0), 0);
+      const y = capYerlesim(PARCA.geometri, parcaCfg());
+      yolAlan = y.yolAlan || 0; yolGen = y.yolGenislik || 0;
     }catch(e){}
   }
-  PARCA.yolAlan = Math.round(yolAlan);
-  const toplam = parcaAlan + PARCA.yolAlan;
-  const fark = toplam - PARCA.toplam;
-  const uyumlu = Math.abs(fark) <= Math.max(5, PARCA.toplam*0.02);
+  PARCA.yolAlan = Math.round(yolAlan); PARCA.yolGenislik = yolGen;
+  const fark = PARCA.toplam - parcaAlan;
+  const tasma = fark < -Math.max(5, PARCA.toplam*0.01);
 
   const o = document.getElementById("capOzet");
   if(o) o.innerHTML = `
     <div class="kv"><span>Parselin alanı</span><b class="mono">${nf(Math.round(PARCA.toplam))} m²</b></div>
     <div class="kv"><span>Parçalar (${adet} adet)</span><b class="mono">${nf(Math.round(parcaAlan))} m²</b></div>
-    <div class="kv"><span>Parsel yolu</span><b class="mono">${nf(PARCA.yolAlan)} m²</b></div>
     <div class="kv" style="border-top:1px solid var(--cizgi);margin-top:6px;padding-top:8px">
-      <span style="color:${uyumlu?"var(--green)":"var(--red)"}">${uyumlu?"Uyumlu":"Fark var"}</span>
-      <b class="mono" style="color:${uyumlu?"var(--green)":"var(--red)"}">${fark>0?"+":""}${nf(Math.round(fark))} m²</b></div>
-    ${uyumlu?"":`<button class="btn ghost" style="margin-top:10px" onclick="capEsitle()">Farkı parçalara dağıt</button>`}`;
-
-  const not = document.getElementById("pyolNot");
-  if(not) not.textContent = `Bu büyüklük için önerilen ${yolGenisligiOner(PARCA.toplam)} m. ` +
-    `Yol parselin ortasından tek hat halinde geçer; tek parçalı satırlarda sonlanır.`;
+      <span style="color:${tasma?"var(--red)":"var(--gold)"}">${tasma?"Parselden taşıyor":"Yola kalan"}</span>
+      <b class="mono" style="color:${tasma?"var(--red)":"var(--gold)"}">${nf(Math.round(Math.abs(fark)))} m²</b></div>
+    ${tasma ? `<p class="ipuc" style="margin:8px 2px 0;color:var(--red)">Parça toplamı parselin alanını aşıyor, metrekareleri küçült.</p>`
+      : `<p class="ipuc" style="margin:8px 2px 0">Bu fark parsel yoluna ayrıldı · genişliği ${yolGen ? yolGen.toFixed(1).replace(".",",") + " m" : "yol yok"}</p>`}`;
 
   const say = document.getElementById("onizSay");
   if(say) say.textContent = nf(adet) + " parça";
   onizlemeCiz();
 }
 
-// farki butun parcalara esit dagit (parca sayilari degismez)
-function capEsitle(){
-  const adet = PARCA.satirlar.reduce((t,r)=>t+r.m2ler.length,0);
-  if(!adet) return;
-  const pay = Math.round(Math.max(0, PARCA.toplam - PARCA.yolAlan) / adet);
-  PARCA.satirlar.forEach(r=>{ r.m2ler = r.m2ler.map(()=>pay); });
-  satirlariCiz();
+function parcaCfg(){
+  return { satirlar: PARCA.satirlar.map(r=>({
+             parcalar: r.parcalar.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk||"#FFFFFF" })) })),
+           parcalar: cfgParcalari({ satirlar: PARCA.satirlar }) };
 }
 
-// canli onizleme
 function onizlemeCiz(){
   const c = document.getElementById("capOnizleme");
   if(!c || !PARCA.p) return;
@@ -2294,13 +2253,6 @@ function onizlemeCiz(){
     im.onload = () => { const x = c.getContext("2d"); x.clearRect(0,0,G,Y); x.drawImage(im,0,0,G,Y); };
     im.src = png;
   }catch(e){}
-}
-
-function parcaCfg(){
-  return { satirlar: PARCA.satirlar.map(r=>({ m2ler: r.m2ler.map(v=>+v||1) })),
-           yolGenislik: PARCA.yolGenislik, yolAlan: PARCA.yolAlan,
-           renkler: { ...PARCA.renkler },
-           parcalar: cfgParcalari({ satirlar:PARCA.satirlar }, PARCA.renkler) };
 }
 
 /* ================= yapay zekâ ================= */
@@ -2741,9 +2693,9 @@ function capSeffafPng(p, cfg, mod, ayar){
       x.setLineDash([16,12]); x.lineWidth = 4; x.strokeStyle = icRenk; x.stroke(); x.setLineDash([]);
     });
     yer.parcalar.forEach((o,i)=>{
-      const d = o.poly;
+      const d = o.poly, bilgi = o.bilgi || parcalar[i] || {};
       yol(d.map(E));
-      const pr = parcalar[i]?.renk || "#FFFFFF";
+      const pr = bilgi.renk || "#FFFFFF";
       if(tema.metalik){
         const gr = x.createLinearGradient(0,0,W*.3,H);
         gr.addColorStop(0, pr); gr.addColorStop(.42, "#FFFFFF");
@@ -2761,7 +2713,7 @@ function capSeffafPng(p, cfg, mod, ayar){
         x.textAlign = "center"; x.textBaseline = "middle";
         x.lineWidth = 7; x.strokeStyle = tema.yaziGolge;
         x.font = "700 60px Arial";
-        const no = String(parcalar[i]?.no ?? (i+1));
+        const no = String(bilgi.no || (i+1));
         x.strokeText(no, om[0], om[1]-34); x.fillStyle = tema.yaziRenk; x.fillText(no, om[0], om[1]-34);
         x.font = "700 34px Arial";
         const m2 = nf(Math.round(alanHesap(d))) + " m²";
@@ -2915,21 +2867,16 @@ function sunumCap(duzenleIx){
     g("yukleBolum").style.display = k === "yukle" ? "block" : "none";
     g("cizBolum").style.display   = k === "yukle" ? "none" : "block";
     if(k === "kayit" && kayitliCfg){
-      PARCA.satirlar = (kayitliCfg.satirlar||[]).map(r=>({ m2ler: (r.m2ler && r.m2ler.length) ? r.m2ler.map(v=>+v||1)
-                                                                 : Array(r.adet||1).fill(+r.m2||1) }));
-      PARCA.yolGenislik = kayitliCfg.yolGenislik || yolGenisligiOner(alan);
-      parcaKur(alan, PARCA.satirlar);
+      PARCA.satirlar = [];
+      parcaKur(alan, kayitliCfg.satirlar);
     }
   };
   PARCA.geometri = capHalkasi(p);
   PARCA.toplam = alan;
   const kaynakSatir = (a.cfg?.satirlar && typeof a.cfg.satirlar[0] === "object") ? a.cfg.satirlar
     : (kayitliCfg?.satirlar && typeof kayitliCfg.satirlar[0] === "object") ? kayitliCfg.satirlar : [];
-  PARCA.satirlar = kaynakSatir.map(r=>({ m2ler: (r.m2ler && r.m2ler.length) ? r.m2ler.map(v=>+v||1)
-                                                : Array(r.adet||1).fill(+r.m2||1) }));
-  PARCA.p = p;
-  PARCA.yolGenislik = a.cfg?.yolGenislik || kayitliCfg?.yolGenislik || yolGenisligiOner(alan);
-  if(g("ckaynak").value !== "yukle") parcaKur(alan, PARCA.satirlar);
+  PARCA.p = p; PARCA.satirlar = [];
+  if(g("ckaynak").value !== "yukle") parcaKur(alan, kaynakSatir);
   g("ckaynak").onchange = kaynakGun;
   kaynakGun();
 
@@ -3237,8 +3184,9 @@ function anaYon(pts){
   return yon;
 }
 
-// verilen yone dik seritlere bol; her serit hedef alani tutsun
-function parcala(pts, hedefler, yonVer){
+// verilen yone dik seritlere bol
+// mutlak=true ise hedefler m2 olarak birebir uygulanir (orantilanmaz)
+function parcala(pts, hedefler, yonVer, mutlak){
   const yon = yonVer || anaYon(pts);
   const izd = pts.map(p=>p[0]*yon[0]+p[1]*yon[1]);
   let alt = Math.min(...izd), ust = Math.max(...izd);
@@ -3252,9 +3200,9 @@ function parcala(pts, hedefler, yonVer){
       parcalar.push(kirp(pts, [-yon[0],-yon[1]], -sinir));
       break;
     }
-    const hedef = toplam * (hedefler[i]/oran);
+    const hedef = mutlak ? hedefler[i] : toplam * (hedefler[i]/oran);
     let a = sinir, b = ust, kes = ust;
-    for(let k=0;k<40;k++){
+    for(let k=0;k<44;k++){
       kes = (a+b)/2;
       const dilim = kirp(kirp(pts, yon, kes), [-yon[0],-yon[1]], -sinir);
       const al = dilim.length > 2 ? alanHesap(dilim) : 0;
@@ -3310,35 +3258,49 @@ function yolGenisligiOner(alan){
 }
 
 // satir tarifine gore parcalari ve yolu uret
-// cfg = { satirlar:[{ m2ler:[...] }], yolGenislik }
+// cfg = { satirlar:[{ parcalar:[{no,m2,renk}] }] }
+// yol genisligi, parselin alani ile girilen parca alanlari arasindaki farktan hesaplanir
 function capYerlesim(M, cfg){
   const ana = anaYon(M), dik = [-ana[1], ana[0]];
-  const satirlar = (cfg.satirlar||[])
-    .map(r=>({ m2ler: (r.m2ler && r.m2ler.length) ? r.m2ler.map(v=>+v||1) : Array(r.adet||1).fill(+r.m2||1) }))
-    .filter(r=>r.m2ler.length);
+  const satirlar = (cfg.satirlar||[]).map(r=>({
+    parcalar: (r.parcalar||[]).map(o=>({ ...o, m2: +o.m2 || 1 }))
+  })).filter(r=>r.parcalar.length);
   if(!satirlar.length) return { parcalar:[], yol:[], ana, dik, yolGenislik:0 };
 
+  const A = alanHesap(M);
   const izdD = M.map(p=>p[0]*dik[0]+p[1]*dik[1]);
-  const enGenislik = Math.max(...izdD) - Math.min(...izdD);
-  const w = Math.min(cfg.yolGenislik || 7, enGenislik*0.45);
-  const cokParcali = satirlar.some(r=>r.m2ler.length > 1);
+  const W = Math.max(...izdD) - Math.min(...izdD);
 
-  // YOL EKSENI: butun parsel icin tek ve sabit -> satirlar arasinda kaymaz
+  const satirAlan = satirlar.map(r=>r.parcalar.reduce((t,o)=>t+o.m2, 0));
+  const T = satirAlan.reduce((a,b)=>a+b, 0);
+  const cokIx = satirlar.map((r,i)=>r.parcalar.length > 1 ? i : -1).filter(i=>i>=0);
+  const cokAlan = cokIx.reduce((t,i)=>t + satirAlan[i], 0);
+
+  // fazlalik yola gider
+  let L = Math.max(0, A - T);
+  let w = 0;
+  if(cokIx.length && cokAlan > 0 && L > 0){
+    w = Math.min(W*0.45, L * W / (cokAlan + L));
+    if(w < 0.5){ w = 0; L = 0; }
+  }else L = 0;
+
+  // her satirin bant alani = parca alanlari + o satira dusen yol payi
+  const bantHedef = satirAlan.map((alan,i)=>
+    (satirlar[i].parcalar.length > 1 && w > 0) ? alan + L * alan / cokAlan : alan);
+  const bantlar = parcala(M, bantHedef, ana, true);
+
+  // yol ekseni parselin tamami icin sabit
   const ortaGlobal = (Math.min(...izdD) + Math.max(...izdD)) / 2;
   const y1 = ortaGlobal - w/2, y2 = ortaGlobal + w/2;
-
-  const bantHedef = satirlar.map(r=>{
-    const parcaAlan = r.m2ler.reduce((a,b)=>a+b,0);
-    return (r.m2ler.length > 1 && cokParcali) ? parcaAlan / Math.max(0.2, 1 - w/enGenislik) : parcaAlan;
-  });
-  const bantlar = parcala(M, bantHedef, ana);
 
   const cikti = [], yolParcalari = [];
   bantlar.forEach((bant, i)=>{
     const r = satirlar[i];
-    if(!bant || bant.length < 3) return;
-    if(r.m2ler.length < 2 || !cokParcali){ cikti.push({ poly:bant, satir:i }); return; }
-
+    if(!bant || bant.length < 3 || !r) return;
+    if(r.parcalar.length < 2 || w <= 0){
+      cikti.push({ poly:bant, bilgi:r.parcalar[0] || { no:String(i+1), m2:0 } });
+      return;
+    }
     const yolBant = kirp(kirp(bant, dik, y2), [-dik[0],-dik[1]], -y1);
     if(yolBant.length > 2) yolParcalari.push(yolBant);
 
@@ -3346,35 +3308,32 @@ function capYerlesim(M, cfg){
     const sag = kirp(bant, [-dik[0],-dik[1]], -y2);
     const aSol = sol.length > 2 ? alanHesap(sol) : 0;
     const aSag = sag.length > 2 ? alanHesap(sag) : 0;
-    const n = r.m2ler.length;
-    let nSol = Math.round(n * aSol / Math.max(1, aSol + aSag));
-    nSol = Math.max(aSol > 0 ? 1 : 0, Math.min(n - (aSag > 0 ? 1 : 0), nSol));
-    const solHedef = r.m2ler.slice(0, nSol);
-    const sagHedef = r.m2ler.slice(nSol);
+    const n = r.parcalar.length;
 
-    if(solHedef.length && aSol > 0)
-      parcala(sol, solHedef, ana).forEach(p=>cikti.push({ poly:p, satir:i }));
-    if(sagHedef.length && aSag > 0)
-      parcala(sag, sagHedef, ana).forEach(p=>cikti.push({ poly:p, satir:i }));
+    // parcalari alanlarina gore iki yana bol
+    let nSol = 0, birikim = 0;
+    const hedefSol = aSol / Math.max(1, aSol + aSag) * satirAlan[i];
+    for(let k=0;k<n-1 && birikim < hedefSol;k++){ birikim += r.parcalar[k].m2; nSol++; }
+    if(aSol <= 0) nSol = 0;
+    if(aSag <= 0) nSol = n;
+
+    const solP = r.parcalar.slice(0, nSol), sagP = r.parcalar.slice(nSol);
+    if(solP.length && aSol > 0)
+      parcala(sol, solP.map(o=>o.m2), ana, true).forEach((p,k)=>cikti.push({ poly:p, bilgi:solP[k] }));
+    if(sagP.length && aSag > 0)
+      parcala(sag, sagP.map(o=>o.m2), ana, true).forEach((p,k)=>cikti.push({ poly:p, bilgi:sagP[k] }));
   });
 
-  return { parcalar: cikti, yol: yolParcalari, ana, dik, yolGenislik: w };
+  return { parcalar: cikti, yol: yolParcalari, ana, dik, yolGenislik: w, yolAlan: Math.round(L) };
 }
 
 function parcalariUret(M, cfg){
   return capYerlesim(M, cfg).parcalar.map(o=>o.poly);
 }
 
-// tarifteki parca listesini duz diziye cevir
-function cfgParcalari(cfg, renkler){
+function cfgParcalari(cfg){
   const liste = [];
-  (cfg.satirlar||[]).forEach((r,si)=>{
-    const m2ler = (r.m2ler && r.m2ler.length) ? r.m2ler : Array(r.adet||1).fill(+r.m2||1);
-    m2ler.forEach(v=>{
-      const ix = liste.length;
-      liste.push({ no:String(ix+1), m2:+v||1, renk:(renkler && renkler[ix]) || "#FFFFFF", satir:si });
-    });
-  });
+  (cfg.satirlar||[]).forEach(r=>(r.parcalar||[]).forEach(o=>liste.push({ ...o })));
   return liste;
 }
 
@@ -3405,11 +3364,7 @@ async function capAyar(parselId){
 
   PARCA.geometri = capHalkasi(p);
   PARCA.toplam = alan;
-  PARCA.yolGenislik = eski?.yolGenislik || yolGenisligiOner(alan);
-  PARCA.satirlar = (eski?.satirlar && typeof eski.satirlar[0] === "object")
-    ? eski.satirlar.map(r=>({ m2ler: (r.m2ler && r.m2ler.length) ? r.m2ler.map(v=>+v||1)
-                                    : Array(r.adet||1).fill(+r.m2||1) })) : [];
-  PARCA.renkler = eski?.renkler ? { ...eski.renkler } : {};
+  PARCA.satirlar = [];
 
   app.innerHTML = head("Çap çizdir","go('cap')") + `
     <div class="card">
@@ -3418,7 +3373,7 @@ async function capAyar(parselId){
       <div class="kv" style="margin-top:8px"><span>Toplam alan</span><b class="mono">${nf(alan)} m²</b></div>
       <div class="kv"><span>Niteliği</span><b>${esc(p.nitelik||"—")}</b></div>
     </div>
-    <p class="ipuc">Satırları üstten alta doğru tarif et. Örnek: 1. satır 1 parça 1.500 m², 2. satır 3 parça 500'er m², 3. satır 2 parça 750'şer m².</p>
+    <p class="ipuc">Satırları üstten alta doğru tarif et. Her parçanın numarasını, metrekaresini ve rengini kendin girersin. Parselden artan alan otomatik parsel yoluna ayrılır.</p>
 
     <div class="card">
       <div class="bolum"><span class="rz yesil">${svg("vector")}</span><b>Canlı önizleme</b>
@@ -3430,8 +3385,8 @@ async function capAyar(parselId){
     ${parcaAyarHtml()}
     <button class="btn" id="ciz" style="margin-top:6px">Çapı çiz ve parsele ekle</button>`;
 
-  parcaKur(alan, PARCA.satirlar);
   PARCA.p = p;
+  parcaKur(alan, eski?.satirlar);
 
   document.getElementById("ciz").onclick = async e => {
     const cfg = parcaCfg();
@@ -3541,15 +3496,15 @@ function capCizPng(p, cfg, kucuk){
     }
 
     yer.parcalar.forEach((o,i)=>{
-      const d = o.poly, ek = d.map(E);
+      const d = o.poly, ek = d.map(E), bilgi = o.bilgi || liste[i] || {};
       yol(ek);
-      x.fillStyle = liste[i]?.renk || "#FFFFFF"; x.globalAlpha = .55; x.fill(); x.globalAlpha = 1;
+      x.fillStyle = bilgi.renk || "#FFFFFF"; x.globalAlpha = .55; x.fill(); x.globalAlpha = 1;
       x.lineWidth = 1.6; x.strokeStyle = "#222"; x.stroke();
 
       const om = E(agirlikMerkezi(d));
       x.textAlign = "center"; x.textBaseline = "middle";
       x.font = `700 ${S(20)}px Arial`; x.fillStyle = "#111";
-      x.fillText(String(liste[i]?.no ?? (i+1)), om[0], om[1] - S(12));
+      x.fillText(String(bilgi.no || (i+1)), om[0], om[1] - S(12));
       x.font = `400 ${S(15)}px Arial`;
       x.fillText(nf(Math.round(alanHesap(d))) + " m2", om[0], om[1] + S(10));
 
