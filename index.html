@@ -335,7 +335,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 3.1";
+const SURUM = "beta 3.3";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -633,6 +633,163 @@ const secimAdi = (pre,k) => {
   return el.tagName === "SELECT" ? (el.selectedOptions[0]?.textContent || "") : el.value.trim();
 };
 
+
+/* ---- sesli sorgulama ---- */
+
+const RAKAM_SOZ = { "sıfır":0,"bir":1,"iki":2,"üç":3,"dört":4,"beş":5,"altı":6,"yedi":7,"sekiz":8,"dokuz":9,
+  "on":10,"yirmi":20,"otuz":30,"kırk":40,"elli":50,"altmış":60,"yetmiş":70,"seksen":80,"doksan":90,
+  "yüz":100,"bin":1000 };
+
+// "yüz sekiz" -> 108 ; "108" -> 108
+function sozdenSayi(metin){
+  const t = String(metin||"").toLocaleLowerCase("tr").trim();
+  const d = t.match(/\d+/);
+  if(d) return +d[0];
+  let toplam = 0, gecici = 0, bulundu = false;
+  t.split(/\s+/).forEach(k=>{
+    const v = RAKAM_SOZ[k];
+    if(v == null) return;
+    bulundu = true;
+    if(v === 100 || v === 1000){ gecici = (gecici || 1) * v; toplam += gecici; gecici = 0; }
+    else gecici += v;
+  });
+  toplam += gecici;
+  return bulundu ? toplam : null;
+}
+
+// duyulan cumleyi parcala
+function sesiCoz(metin){
+  const t = " " + String(metin||"").toLocaleLowerCase("tr").replace(/\./g," ") + " ";
+  const al = (anahtar) => {
+    const i = t.indexOf(" " + anahtar + " ");
+    if(i < 0) return null;
+    const once = t.slice(0, i).trim().split(/\s+/);
+    return once.length ? once.slice(-3).join(" ") : null;
+  };
+  const ada = sozdenSayi(al("ada"));
+  const parsel = sozdenSayi(al("parsel"));
+  // ada/parsel kelimelerinden onceki kisim yer adlaridir
+  const kes = t.search(/\s(ada|parsel)\s/);
+  const yerKismi = (kes > 0 ? t.slice(0, kes) : t).trim().split(/\s+/).filter(k=>!RAKAM_SOZ[k] && !/^\d+$/.test(k));
+  return { yerler: yerKismi, ada, parsel, ham: metin };
+}
+
+// listede en yakin secenegi bul
+function secenekBul(select, ad2){
+  if(!select || !ad2) return null;
+  const hedef = sade(ad2);
+  let enIyi = null, enIyiPuan = 0;
+  Array.from(select.options).forEach(o=>{
+    if(!o.value) return;
+    const s2 = sade(o.textContent);
+    let puan = 0;
+    if(s2 === hedef) puan = 100;
+    else if(s2.startsWith(hedef) || hedef.startsWith(s2)) puan = 80;
+    else if(s2.includes(hedef) || hedef.includes(s2)) puan = 60;
+    if(puan > enIyiPuan){ enIyiPuan = puan; enIyi = o; }
+  });
+  return enIyiPuan >= 60 ? enIyi : null;
+}
+
+// secim yapip listenin dolmasini bekle
+function secVeBekle(select, secenek, sonraki){
+  return new Promise(res=>{
+    select.value = secenek.value;
+    select.dispatchEvent(new Event("change"));
+    if(!sonraki) return res();
+    let deneme = 0;
+    const kontrol = setInterval(()=>{
+      deneme++;
+      if(sonraki.options.length > 1 || deneme > 60){ clearInterval(kontrol); res(); }
+    }, 250);
+  });
+}
+
+function sesliSorgu(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR) return toast("Bu tarayıcı sesli komutu desteklemiyor");
+  const tani = new SR();
+  tani.lang = "tr-TR"; tani.interimResults = false; tani.maxAlternatives = 1;
+
+  const kutu = document.getElementById("tani");
+  kutu.innerHTML = `<div class="card" style="text-align:center">
+    <div style="font-size:34px;line-height:1">🎤</div>
+    <div style="font-size:14px;font-weight:600;margin-top:6px">Dinliyorum…</div>
+    <p class="ipuc" style="margin:8px 0 0">Örnek: "Kırklareli Babaeski Kuştepe 108 ada 9 parsel"</p></div>`;
+
+  tani.onresult = e => {
+    const metin = e.results[0][0].transcript;
+    const c = sesiCoz(metin);
+    kutu.innerHTML = `<div class="card">
+      <div class="ipuc" style="margin:0 0 6px">Şunu duydum</div>
+      <div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:12px">${esc(metin)}</div>
+      <div class="row2">
+        <div class="field" style="margin:0"><label>Ada</label>
+          <input id="sAda" inputmode="numeric" value="${c.ada ?? ""}"></div>
+        <div class="field" style="margin:0"><label>Parsel</label>
+          <input id="sPar" inputmode="numeric" value="${c.parsel ?? ""}"></div>
+      </div>
+      <div class="acts" style="margin-top:12px">
+        <button class="pri" id="sOnay">Doğru, sorgula</button>
+        <button id="sTekrar">Tekrar söyle</button>
+        <button class="kirmizi" id="sIptal">Vazgeç</button>
+      </div>
+      <div class="ipuc" id="sDurum" style="margin-top:10px"></div></div>`;
+
+    document.getElementById("sTekrar").onclick = sesliSorgu;
+    document.getElementById("sIptal").onclick = () => { kutu.innerHTML = ""; };
+    document.getElementById("sOnay").onclick = () => sesleDoldur(c);
+  };
+  tani.onerror = ev => {
+    kutu.innerHTML = `<div class="card"><div style="font-size:13px;color:var(--red)">
+      Ses alınamadı${ev.error === "not-allowed" ? " · mikrofon izni verilmemiş" : ""}.</div>
+      <button class="btn ghost" style="margin-top:10px" onclick="sesliSorgu()">Tekrar dene</button></div>`;
+  };
+  tani.start();
+}
+
+async function sesleDoldur(c){
+  const durum = document.getElementById("sDurum");
+  const yaz = t => { if(durum) durum.textContent = t; };
+  const il = document.getElementById("hil"), ilce = document.getElementById("hilce"), mah = document.getElementById("hmah");
+  if(il.tagName !== "SELECT") return toast("Liste yüklenmemiş, elle yazman gerekiyor");
+
+  const kalan = [...c.yerler];
+  yaz("İl aranıyor…");
+  let secildi = null;
+  for(let i=0;i<kalan.length && !secildi;i++){
+    const o = secenekBul(il, kalan[i]);
+    if(o){ secildi = kalan.splice(i,1)[0]; await secVeBekle(il, o, ilce); }
+  }
+  if(!secildi) return yaz("İl anlaşılamadı, listeden seç");
+
+  yaz("İlçe aranıyor…");
+  let ilceSec = null;
+  for(let i=0;i<kalan.length && !ilceSec;i++){
+    const o = secenekBul(ilce, kalan[i]);
+    if(o){ ilceSec = kalan.splice(i,1)[0]; await secVeBekle(ilce, o, mah); }
+  }
+  if(!ilceSec) return yaz("İlçe anlaşılamadı, listeden seç");
+
+  yaz("Köy aranıyor…");
+  let mahSec = null;
+  for(let i=kalan.length-1;i>=0 && !mahSec;i--){
+    const o = secenekBul(mah, kalan[i]);
+    if(o){ mahSec = kalan[i]; mah.value = o.value; }
+  }
+  if(!mahSec){
+    const birlesik = secenekBul(mah, kalan.join(" "));
+    if(birlesik){ mah.value = birlesik.value; mahSec = kalan.join(" "); }
+  }
+  if(!mahSec) return yaz("Köy anlaşılamadı, listeden seç");
+
+  document.getElementById("hada").value = document.getElementById("sAda")?.value || c.ada || "";
+  document.getElementById("hpar").value = document.getElementById("sPar")?.value || c.parsel || "";
+  yaz("Sorgulanıyor…");
+  document.getElementById("tani").innerHTML = "";
+  adaParselSorgu();
+}
+
 /* ================= harita ================= */
 
 let HARITA = null, KATMAN = null, SONPARSEL = null;
@@ -646,6 +803,8 @@ async function harita(){
       <input id="hada" inputmode="numeric" placeholder="Ada">
       <input id="hpar" inputmode="numeric" placeholder="Parsel">
       <button class="btn full" id="sor">Sorgula</button>
+      <button class="btn ghost full" id="sesli" style="display:flex;align-items:center;justify-content:center;gap:9px">
+        <span style="font-size:17px">🎤</span> Sesle sorgula</button>
     </div>
     <p class="ipuc">Haritada bir parselin üstüne dokunarak da sorgulayabilirsin.</p>
     <div id="tani"></div>
@@ -658,6 +817,7 @@ async function harita(){
 
   idariKur("h");
   document.getElementById("sor").onclick = adaParselSorgu;
+  document.getElementById("sesli").onclick = sesliSorgu;
   HARITA.on("click", e => noktaSorgu(e.latlng.lat, e.latlng.lng));
 }
 
@@ -694,6 +854,8 @@ function ciz(f){
       <div class="acts">
         <button onclick="kmlIndir()">KML indir</button>
         <button onclick="earthAc()">Earth'te aç</button>
+        <button onclick="yandexAcSon()">Yandex uydu</button>
+        <button onclick="yandexPanoramaSon()">Sokak görünümü</button>
         ${ME.role==='admin'?`<button class="pri" onclick="haritadanKaydet()">Kaydet</button>`:""}
         <button onclick="cevreRaporu()">Çevre raporu</button>
         <button onclick="go('emsal')">Emsal araştır</button>
@@ -731,6 +893,15 @@ function kmlIndir(){
   a.download = `${(p.mahalleAd||"parsel")}-${p.adaNo||0}-${p.parselNo||0}.kml`.replace(/\s+/g,"_");
   a.click(); URL.revokeObjectURL(a.href);
   toast("KML indirildi");
+}
+
+function yandexAcSon(){
+  if(!SONPARSEL) return toast("Önce bir parsel sorgula");
+  const m = merkez(SONPARSEL); yandexAc(m.lat, m.lng);
+}
+function yandexPanoramaSon(){
+  if(!SONPARSEL) return toast("Önce bir parsel sorgula");
+  const m = merkez(SONPARSEL); yandexPanorama(m.lat, m.lng);
 }
 
 function eplanAcSon(){
@@ -1144,6 +1315,8 @@ async function parselDetay(id){
         <button class="yesilb" onclick="miniHarita('${id}')">Haritada göster</button>
         <button class="mavib" onclick="kmlIndirParsel('${id}')">KML indir</button>
         <button class="mavib" onclick="earthAcKoord(${p.lat},${p.lng})">Earth'te aç</button>
+        <button class="yesilb" onclick="yandexAc(${p.lat},${p.lng})">Yandex uydu</button>
+        <button class="yesilb" onclick="yandexPanorama(${p.lat},${p.lng})">Sokak görünümü</button>
         <button class="kirmizi" onclick="eplanAc(${p.lat},${p.lng},{il:'${esc(p.il)}',ilce:'${esc(p.ilce)}',mahalle:'${esc(p.mahalle)}',ada:'${esc(p.ada||"")}',parsel:'${esc(p.parsel)}'})">İmar planı</button></div>`:""}
       ${y && ME.role==='admin' ? `<button class="btn ghost" style="margin-top:10px"
         onclick="SONPARSELID='${id}';go('fiyatDuzen','${y.id}')">Tapu bilgilerini düzenle</button>
@@ -1593,51 +1766,56 @@ const LANDUSE_AD = { farmland:"Tarım arazisi", meadow:"Çayır", forest:"Orman"
   vineyard:"Bağ", residential:"Yerleşim", industrial:"Sanayi", commercial:"Ticaret", quarry:"Taş ocağı",
   cemetery:"Mezarlık", farmyard:"Çiftlik avlusu", grass:"Otlak", village_green:"Köy meydanı" };
 
-// beyaz zemine rapor cizer; sayfa sinirlarini bilerek yerlestirir, satir ortadan bolunmez
+// beyaz zemine kurumsal rapor cizer; satir ortadan bolunmez
+const RAP = {
+  kirmizi:"#B3232E", koyu:"#7E141C", acik:"#FBE9EA", metin:"#16181A",
+  gri:"#5A6169", cizgi:"#E6E8EA", zebra:"#FAFAFB"
+};
+
 function raporPng(baslik, altBaslik, bolumler){
   const G = 1000;
-  const SAYFA = Math.round(G * 277 / 190);     // A4'te bir sayfanin piksel yuksekligi
-  const UST = 90, ALT = 130, satirY = 34;
+  const SAYFA = Math.round(G * 277 / 190);
+  const UST = 108, ALT = 118, satirY = 38;
 
   const yerlestir = (ciz) => {
     let sayfa = 0, y = 0;
     const dip = () => (sayfa+1)*SAYFA - ALT;
     const yeniSayfa = () => { sayfa++; y = sayfa*SAYFA + UST; };
-    const yer = h => { if(y + h + 26 > dip()) yeniSayfa(); };
+    const yer = h => { if(y + h + 24 > dip()) yeniSayfa(); };
 
-    // baslik yalnizca ilk sayfada
-    y = 100;
+    y = 118;
     ciz && ciz.baslik(y);
-    y = 250;
+    y = 300;
 
-    bolumler.forEach(b=>{
-      yer(56 + satirY*2);
-      ciz && ciz.bolum(b.baslik, y, sayfa);
-      y += 56;
-      if(b.gorsel){
-        const gy = (G-152) * b.oran;
-        yer(gy);
-        ciz && ciz.gorsel(b.gorsel, y, gy);
-        y += gy + 10;
-      }else if(b.metin){
-        const satirlar = yaziSar(b.metin, G-152, 25);
-        satirlar.forEach(t=>{
-          yer(38);
+    bolumler.forEach(b2=>{
+      if(b2.gorsel){
+        const gy = (G-140) * b2.oran;
+        yer(58 + gy);
+        ciz && ciz.bolum(b2.baslik, y);
+        y += 58;
+        ciz && ciz.gorsel(b2.gorsel, y, gy);
+        y += gy + 16;
+      }else if(b2.metin){
+        yer(58 + 44*2);
+        ciz && ciz.bolum(b2.baslik, y);
+        y += 58;
+        yaziSar(b2.metin, G-150, 25).forEach(t=>{
+          yer(40);
           ciz && ciz.paragraf(t, y);
-          y += t === "" ? 16 : 38;
+          y += t === "" ? 18 : 40;
         });
       }else{
-        (b.satirlar||[]).forEach(([k,v])=>{
+        yer(58 + satirY*2);
+        ciz && ciz.bolum(b2.baslik, y);
+        y += 58;
+        (b2.satirlar||[]).forEach(([k,v],i)=>{
           yer(satirY);
-          ciz && ciz.satir(k, v, y);
+          ciz && ciz.satir(k, v, y, i);
           y += satirY;
         });
       }
-      y += 34;
+      y += 40;
     });
-
-    yer(60);
-    ciz && ciz.dipnot(y);
     return (sayfa+1) * SAYFA;
   };
 
@@ -1646,51 +1824,72 @@ function raporPng(baslik, altBaslik, bolumler){
   const x = c.getContext("2d");
   x.fillStyle = "#FFFFFF"; x.fillRect(0,0,G,Y);
 
-  // her sayfaya ust serit ve cerceve
-  for(let i=0;i<Y/SAYFA;i++){
-    x.fillStyle = "#2F4A22"; x.fillRect(0, i*SAYFA, G, 10);
-    x.strokeStyle = "#DDD"; x.lineWidth = 2;
-    x.strokeRect(20, i*SAYFA + 20, G-40, SAYFA - 40);
-    if(i){
-      x.fillStyle = "#999"; x.font = "400 18px Arial"; x.textAlign = "right";
-      x.fillText(`sayfa ${i+1}`, G-76, i*SAYFA + 52);
-      x.textAlign = "left";
+  const sayfaSayisi = Math.round(Y/SAYFA);
+  for(let i=0;i<sayfaSayisi;i++){
+    const t = i*SAYFA;
+    if(i === 0){
+      const gr = x.createLinearGradient(0,0,G,240);
+      gr.addColorStop(0, RAP.koyu); gr.addColorStop(1, RAP.kirmizi);
+      x.fillStyle = gr; x.fillRect(0,0,G,240);
+      x.fillStyle = "rgba(255,255,255,.16)";
+      x.beginPath(); x.moveTo(G-330,0); x.lineTo(G,0); x.lineTo(G,240); x.closePath(); x.fill();
+    }else{
+      x.fillStyle = RAP.kirmizi; x.fillRect(0,t,G,12);
+      x.fillStyle = RAP.gri; x.font = "400 19px Arial"; x.textAlign = "left";
+      x.fillText(baslik, 60, t + 58);
     }
+    // alt bant
+    x.fillStyle = RAP.cizgi; x.fillRect(60, t + SAYFA - 74, G-120, 1);
+    x.fillStyle = RAP.gri; x.font = "400 18px Arial";
+    x.textAlign = "left";  x.fillText("Çapsız Çapçı · çapımız alayınıza yeter", 60, t + SAYFA - 44);
+    x.textAlign = "right"; x.fillText(`${i+1} / ${sayfaSayisi}`, G-60, t + SAYFA - 44);
+    x.textAlign = "left";
   }
 
   yerlestir({
     baslik: y => {
-      x.textAlign = "left"; x.fillStyle = "#111"; x.font = "700 42px Arial";
-      x.fillText(baslik, 60, y);
-      x.font = "400 24px Arial"; x.fillStyle = "#555";
-      altBaslik.split("\n").forEach((t,i)=> x.fillText(t, 60, y + 45 + i*32));
+      x.textAlign = "left";
+      x.fillStyle = "rgba(255,255,255,.72)"; x.font = "700 19px Arial";
+      x.fillText("ÇAPSIZ ÇAPÇI", 60, 74);
+      x.fillStyle = "#FFFFFF"; x.font = "700 46px Arial";
+      x.fillText(baslik, 60, y + 22);
+      x.fillStyle = "rgba(255,255,255,.86)"; x.font = "400 23px Arial";
+      altBaslik.split("\n").forEach((t,i)=> x.fillText(t, 60, y + 66 + i*32));
+      x.fillStyle = RAP.gri; x.font = "400 19px Arial";
+      x.fillText(new Date().toLocaleString("tr-TR"), 60, 282);
     },
     bolum: (ad2, y) => {
-      x.fillStyle = "#EAF3DE"; x.fillRect(60, y-32, G-120, 46);
-      x.fillStyle = "#2F4A22"; x.font = "700 26px Arial"; x.textAlign = "left";
-      x.fillText(ad2, 76, y);
+      x.fillStyle = RAP.acik;
+      x.beginPath(); x.roundRect(60, y-34, G-120, 50, 8); x.fill();
+      x.fillStyle = RAP.kirmizi;
+      x.beginPath(); x.roundRect(60, y-34, 7, 50, 4); x.fill();
+      x.fillStyle = RAP.koyu; x.font = "700 25px Arial"; x.textAlign = "left";
+      x.fillText(ad2.toLocaleUpperCase("tr"), 82, y);
     },
-    satir: (k, v, y) => {
-      x.font = "400 23px Arial";
-      x.fillStyle = "#555"; x.textAlign = "left";
-      x.fillText(String(k).slice(0,62), 76, y);
-      x.fillStyle = "#111"; x.textAlign = "right";
-      x.fillText(String(v), G-76, y);
+    satir: (k, v, y, i) => {
+      if(i % 2 === 0){ x.fillStyle = RAP.zebra; x.fillRect(60, y-26, G-120, satirY); }
+      x.font = "400 23px Arial"; x.fillStyle = RAP.gri; x.textAlign = "left";
+      x.fillText(String(k).slice(0,58), 78, y);
+      x.font = "700 23px Arial"; x.fillStyle = RAP.metin; x.textAlign = "right";
+      x.fillText(String(v), G-78, y);
       x.textAlign = "left";
-      x.strokeStyle = "#EEE"; x.lineWidth = 1;
-      x.beginPath(); x.moveTo(76, y+10); x.lineTo(G-76, y+10); x.stroke();
     },
     gorsel: (im, y, gy) => {
-      try{ x.drawImage(im, 76, y - 24, G-152, gy); }catch(e){}
-      x.strokeStyle = "#CFCFCF"; x.lineWidth = 1.5; x.strokeRect(76, y - 24, G-152, gy);
+      x.save();
+      x.shadowColor = "rgba(0,0,0,.22)"; x.shadowBlur = 18; x.shadowOffsetY = 6;
+      x.fillStyle = "#FFF";
+      x.beginPath(); x.roundRect(70, y, G-140, gy, 10); x.fill();
+      x.restore();
+      x.save();
+      x.beginPath(); x.roundRect(70, y, G-140, gy, 10); x.clip();
+      try{ x.drawImage(im, 70, y, G-140, gy); }catch(e){}
+      x.restore();
+      x.strokeStyle = RAP.cizgi; x.lineWidth = 2;
+      x.beginPath(); x.roundRect(70, y, G-140, gy, 10); x.stroke();
     },
     paragraf: (t, y) => {
-      x.font = "400 25px Arial"; x.fillStyle = "#222"; x.textAlign = "left";
-      x.fillText(t, 76, y);
-    },
-    dipnot: y => {
-      x.font = "400 19px Arial"; x.fillStyle = "#888"; x.textAlign = "left";
-      x.fillText("Kaynak: TKGM parsel verisi ve OpenStreetMap açık verisi · " + new Date().toLocaleString("tr-TR"), 60, y);
+      x.font = "400 25px Arial"; x.fillStyle = RAP.metin; x.textAlign = "left";
+      x.fillText(t, 78, y);
     }
   });
 
@@ -3039,7 +3238,8 @@ async function kmlListele(){
         <small>${p.geojson?"sınır çizimi var":"çizim yok, TKGM'den tazele"}</small></span>
       <span class="sag">
         ${p.geojson?`<button class="pill gold" onclick="kmlIndirParsel('${p.id}')">KML</button>`:""}
-        ${p.lat?`<button class="pill gold" onclick="earthAcKoord(${p.lat},${p.lng})">Earth</button>`:""}
+        ${p.lat?`<button class="pill gold" onclick="earthAcKoord(${p.lat},${p.lng})">Earth</button>
+        <button class="pill sade" onclick="yandexAc(${p.lat},${p.lng})">Yandex</button>`:""}
       </span></div>`);
 }
 
