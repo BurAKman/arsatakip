@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 5.2";
+const SURUM = "beta 5.3";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -457,6 +457,10 @@ async function anaMenu(){
       <b>KML</b><small>İndir, Earth'te aç</small></button>
     <button class="tile mavi mini" onclick="go('cap')">
       <b>Çap</b><small>Çiz veya yükle</small></button>
+    <button class="tile wide gri" onclick="go('hesap')" style="min-height:0;padding:15px 14px">
+      <div style="display:flex;align-items:center;gap:13px">
+        <div class="ic" style="margin:0">${svg("money")}</div>
+        <div><b>Hesap - Kitap</b><small>Alacaklar, borçlar, vadeler</small></div></div></button>
     <button class="tile wide sari gorselli" onclick="go('yz')">
       <div class="gorsel" style="background-image:url('bg-yz.jpg')"></div><div class="perde"></div>
       <div class="icerik"><b>Bir Bilene Danış!</b><small>Claude, ChatGPT, Gemini · her şeyi bilen adam farkıyla</small></div></button>
@@ -2140,14 +2144,9 @@ function parcaAyarHtml(){
       <button id="blokTam">+ Tam genişlik blok</button>
       <button id="blokYol">+ Yol iki yanlı blok</button>
     </div>
-    <div class="row2">
-      <div class="field"><label>Yol genişliği (m)</label><input id="penaz" inputmode="decimal" value="${PARCA.enAzYol}"></div>
-      <div class="field"><label>Blok sırası</label><select id="pters">
-        <option value="0">Normal</option><option value="1">Ters çevir</option></select></div>
-    </div>
-    <label style="display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--ink);margin:0 2px 14px">
-      <input type="checkbox" id="pdus" style="width:20px;height:20px" ${PARCA.yolDus?"checked":""}>
-      <span style="flex:1">Yol alanını parçalardan düş</span></label>
+    <div class="field"><label>Blok sırası</label><select id="pters">
+      <option value="0">Normal</option><option value="1">Ters çevir</option></select>
+      <p class="ipuc" style="margin:8px 2px 0">Parsel yolu 3 m genişliğinde çizilir; girdiğin metrekareler hiç değişmez.</p></div>
     <label style="display:flex;align-items:center;gap:10px;margin:0 2px 14px;font-size:13.5px;color:var(--ink)">
       <input type="checkbox" id="pkis" style="width:20px;height:20px" ${PARCA.kis?"checked":""}>
       <span style="flex:1">Yola yer açmak için parçaları orantılı küçült</span></label>
@@ -2175,12 +2174,8 @@ function parcaKur(toplam, mevcut){
     PARCA.bloklar.push({ tip:"yol", parcalar:[], sol:[yeniParca(pay)], sag:[yeniParca(pay)] });
     numaralariTazele(); bloklariCiz();
   };
-  const ea = document.getElementById("penaz");
-  ea.oninput = () => { PARCA.enAzYol = Math.max(1, sayiCoz(ea.value) || 4); ozetCiz(); };
   const ks = document.getElementById("pkis");
   ks.onchange = () => { PARCA.kis = ks.checked; ozetCiz(); };
-  const dus = document.getElementById("pdus");
-  dus.onchange = () => { PARCA.yolDus = dus.checked; ozetCiz(); };
   const tr = document.getElementById("pters");
   tr.value = PARCA.ters ? "1" : "0";
   tr.onchange = () => { PARCA.ters = tr.value === "1"; ozetCiz(); };
@@ -2283,7 +2278,7 @@ function ozetCiz(){
     <div class="kv"><span>Parçalar (${hepsi.length} adet)</span><b class="mono">${nf(Math.round(parcaAlan))} m²</b></div>
     <div class="kv" style="border-top:1px solid var(--cizgi);margin-top:6px;padding-top:8px">
       <span style="color:var(--gold)">Parsel yolu</span>
-      <b class="mono" style="color:var(--gold)">${yolGen.toFixed(1).replace(".",",")} m genişlik</b></div>
+      <b class="mono" style="color:var(--gold)">3 m genişlik</b></div>
     ${kucultme > 0
       ? `<p class="ipuc" style="margin:8px 2px 0;color:var(--red)">Parçalar yola yer açmak için %${String(kucultme).replace(".",",")} küçültüldü; çizimdeki gerçek metrekareler parçaların üstünde yazıyor.</p>`
       : (yolGen < 1
@@ -2296,7 +2291,7 @@ function ozetCiz(){
 }
 
 function parcaCfg(){
-  return { enAzYol: PARCA.enAzYol, ters: PARCA.ters, yolDus: PARCA.yolDus, kis: PARCA.kis,
+  return { enAzYol: 3, ters: PARCA.ters, yolDus: false, kis: PARCA.kis,
     bloklar: PARCA.bloklar.map(b=> b.tip === "yol"
       ? { tip:"yol", sol:b.sol.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })),
                      sag:b.sag.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })) }
@@ -2581,6 +2576,196 @@ async function musteriSunumu(parselId){
     app.innerHTML = head("Müşteri sunumu", `go('parsel','${parselId}')`) +
       `<div class="empty"><b>Hazırlanamadı</b>${esc(e.message||e)}</div>`;
   }
+}
+
+/* ================= hesap - kitap ================= */
+
+let HESAP_TIP = "alacak";
+
+async function hesap(){
+  app.innerHTML = head("Hesap - Kitap","go('ana')") + `
+    <div class="acts" style="margin-bottom:14px">
+      <button class="${HESAP_TIP==="alacak"?"pri":""}" onclick="HESAP_TIP='alacak';hesap()">Alacaklarım</button>
+      <button class="${HESAP_TIP==="borc"?"pri":""}" onclick="HESAP_TIP='borc';hesap()">Borçlarım</button>
+    </div>
+    <div id="hlist"><div class="spin"></div></div>
+    ${ME.role!=='uye'?`<button class="fab" onclick="hesapYeni()">+</button>`:""}`;
+  hesapListele();
+}
+
+async function hesapListele(){
+  const kutu = document.getElementById("hlist");
+  const { data, error } = await sb.from("hesap").select("*").eq("tip", HESAP_TIP).order("tarih",{nullsFirst:false});
+  if(error) return kutu.innerHTML = `<div class="empty">${esc(error.message)}</div>`;
+  const kayitlar = data || [];
+  if(!kayitlar.length) return kutu.innerHTML =
+    `<div class="empty"><b>Kayıt yok</b>${ME.role!=='uye'?"Sağ alttaki + ile ekle.":""}</div>`;
+
+  const { data:vadeler } = await sb.from("hesap_vade").select("*").in("hesap_id", kayitlar.map(k=>k.id));
+  const grup = {};
+  (vadeler||[]).forEach(v=>(grup[v.hesap_id] ||= []).push(v));
+
+  const bugun = new Date(); bugun.setHours(0,0,0,0);
+  const gun = t => Math.round((new Date(t) - bugun) / 86400000);
+
+  let acikToplam = 0, yaklasan = 0;
+  kayitlar.forEach(k=>{
+    if(k.kapandi) return;
+    const vs = grup[k.id] || [];
+    if(k.vadeli && vs.length){
+      vs.forEach(v=>{ if(!v.odendi){ acikToplam += +v.tutar||0; if(gun(v.tarih) <= 20 && gun(v.tarih) >= -3650) yaklasan++; } });
+    }else{
+      acikToplam += +k.tutar||0;
+      if(k.tarih && gun(k.tarih) <= 20) yaklasan++;
+    }
+  });
+
+  kutu.innerHTML = `
+    <div class="card">
+      <div class="kv"><span>Açık ${HESAP_TIP==="alacak"?"alacak":"borç"}</span>
+        <b class="mono" style="color:${HESAP_TIP==="alacak"?"var(--green)":"var(--red)"}">${nf(Math.round(acikToplam))} ₺</b></div>
+      <div class="kv"><span>20 gün içinde vadesi gelen</span><b class="mono">${yaklasan}</b></div>
+    </div>
+    ${kayitlar.map(k=>{
+      const vs = (grup[k.id]||[]).sort((a,b)=>a.tarih.localeCompare(b.tarih));
+      const acik = vs.filter(v=>!v.odendi);
+      const sonraki = acik[0];
+      const g = sonraki ? gun(sonraki.tarih) : (k.tarih ? gun(k.tarih) : null);
+      const renk = k.kapandi ? "var(--ink-3)" : (g != null && g <= 20 ? (g < 0 ? "var(--red)" : "var(--gold)") : "var(--ink-2)");
+      const durum = k.kapandi ? "kapandı"
+        : g == null ? "tarihsiz"
+        : g < 0 ? `${Math.abs(g)} gün geçti`
+        : g === 0 ? "bugün" : `${g} gün kaldı`;
+      return `<div class="card" style="${k.kapandi?"opacity:.55":""}">
+        <div style="display:flex;align-items:center;gap:10px">
+          <b style="font-size:15px;flex:1">${esc(k.kisi)}</b>
+          <b class="mono" style="color:${HESAP_TIP==="alacak"?"var(--green)":"var(--red)"}">${nf(Math.round(k.tutar))} ₺</b></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <span class="pill sade">${k.vadeli ? `${vs.length} vade` : "tek ödeme"}</span>
+          <span class="pill" style="background:transparent;color:${renk};border-color:${renk}">${durum}</span>
+          ${k.tarih && !k.vadeli ? `<span class="pill sade">${new Date(k.tarih).toLocaleDateString("tr-TR")}</span>` : ""}
+          <span style="flex:1"></span>
+          ${ME.role!=='uye'?`<button class="pill gold" onclick="hesapAc('${k.id}')">detay</button>`:""}
+        </div>
+        ${k.notu?`<div style="font-size:13px;color:var(--ink-2);margin-top:8px">${esc(k.notu)}</div>`:""}
+      </div>`;
+    }).join("")}`;
+}
+
+function hesapYeni(){
+  app.innerHTML = head("Yeni kayıt","go('hesap')") + `
+    <div class="field"><label>Tür</label><select id="htip">
+      <option value="alacak"${HESAP_TIP==="alacak"?" selected":""}>Alacağım</option>
+      <option value="borc"${HESAP_TIP==="borc"?" selected":""}>Borcum</option></select></div>
+    <div class="field"><label>Kişi / kurum</label><input id="hkisi" placeholder="Ad soyad"></div>
+    <div class="field"><label>Toplam tutar (₺)</label><input id="htutar" inputmode="decimal"></div>
+    <div class="field"><label>Ödeme biçimi</label><select id="hvadeli">
+      <option value="0">Tek ödeme</option><option value="1">Vadeli</option></select></div>
+    <div class="field" id="htarihK"><label>Tarih</label><input id="htarih" type="date"></div>
+    <div id="hvadeK" style="display:none">
+      <div class="row2">
+        <div class="field"><label>Vade sayısı</label><input id="hadet" type="number" min="1" max="120" value="6"></div>
+        <div class="field"><label>İlk vade</label><input id="hilk" type="date"></div>
+      </div>
+      <p class="ipuc">Tutar vadelere eşit bölünür; sonra tek tek düzenleyebilirsin.</p>
+    </div>
+    <div class="field"><label>Not (isteğe bağlı)</label><input id="hnot" placeholder="Tek satır not"></div>
+    <button class="btn" id="hkay">Kaydet</button>`;
+
+  const vd = document.getElementById("hvadeli");
+  vd.onchange = () => {
+    const v = vd.value === "1";
+    document.getElementById("hvadeK").style.display = v ? "block" : "none";
+    document.getElementById("htarihK").style.display = v ? "none" : "block";
+  };
+
+  document.getElementById("hkay").onclick = async e => {
+    const kisi = document.getElementById("hkisi").value.trim();
+    const tutar = sayiCoz(document.getElementById("htutar").value) || 0;
+    if(!kisi) return toast("Kişi adı yaz");
+    if(tutar <= 0) return toast("Tutar yaz");
+    const vadeli = vd.value === "1";
+    e.target.disabled = true;
+    const { data:k, error } = await sb.from("hesap").insert({
+      team_id:ME.team_id, tip:document.getElementById("htip").value, kisi, tutar,
+      vadeli, tarih: vadeli ? null : (document.getElementById("htarih").value || null),
+      notu: document.getElementById("hnot").value.trim() || null, created_by:ME.id
+    }).select().single();
+    if(error){ e.target.disabled = false; return toast("Olmadı: "+error.message); }
+
+    if(vadeli){
+      const adet = Math.max(1, Math.min(120, +document.getElementById("hadet").value || 1));
+      const ilk = document.getElementById("hilk").value;
+      const pay = Math.round(tutar/adet);
+      const satirlar = Array.from({length:adet},(_,i)=>{
+        const t = ilk ? new Date(ilk) : new Date();
+        t.setMonth(t.getMonth() + i);
+        return { hesap_id:k.id, team_id:ME.team_id, tarih:t.toISOString().slice(0,10),
+                 tutar: i === adet-1 ? tutar - pay*(adet-1) : pay };
+      });
+      await sb.from("hesap_vade").insert(satirlar);
+    }
+    HESAP_TIP = k.tip;
+    toast("Kaydedildi"); go("hesap");
+  };
+}
+
+async function hesapAc(id){
+  const { data:k } = await sb.from("hesap").select("*").eq("id",id).single();
+  if(!k) return;
+  const { data:vs } = await sb.from("hesap_vade").select("*").eq("hesap_id",id).order("tarih");
+  const bugun = new Date(); bugun.setHours(0,0,0,0);
+  const gun = t => Math.round((new Date(t) - bugun) / 86400000);
+  const acik = (vs||[]).filter(v=>!v.odendi).reduce((t,v)=>t+(+v.tutar||0),0);
+
+  app.innerHTML = head(k.kisi,"go('hesap')") + `
+    <div class="card">
+      <div class="kv"><span>Tür</span><b>${k.tip==="alacak"?"Alacağım":"Borcum"}</b></div>
+      <div class="kv"><span>Toplam</span><b class="mono">${nf(Math.round(k.tutar))} ₺</b></div>
+      ${k.vadeli?`<div class="kv"><span>Kalan</span><b class="mono">${nf(Math.round(acik))} ₺</b></div>`:""}
+      ${k.tarih?`<div class="kv"><span>Tarih</span><b>${new Date(k.tarih).toLocaleDateString("tr-TR")}</b></div>`:""}
+      <div class="field" style="margin:12px 0 0"><label>Not</label>
+        <input id="hnot2" value="${esc(k.notu||"")}" placeholder="Tek satır not"></div>
+      <div class="acts" style="margin-top:12px">
+        <button onclick="hesapNot('${id}')">Notu kaydet</button>
+        <button class="${k.kapandi?"":"pri"}" onclick="hesapKapat('${id}',${!k.kapandi})">${k.kapandi?"Yeniden aç":"Kapandı işaretle"}</button>
+        ${ME.role==='admin'?`<button class="kirmizi" onclick="hesapSil('${id}')">Sil</button>`:""}
+      </div>
+    </div>
+    ${k.vadeli?`<h3 style="font-size:14px;margin:20px 0 10px">Vadeler</h3>
+      ${(vs||[]).map(v=>{
+        const g = gun(v.tarih);
+        const renk = v.odendi ? "var(--ink-3)" : g < 0 ? "var(--red)" : g <= 20 ? "var(--gold)" : "var(--ink-2)";
+        return `<div class="card" style="display:flex;align-items:center;gap:10px;padding:12px;${v.odendi?"opacity:.55":""}">
+          <div style="flex:1">
+            <b class="mono" style="font-size:15px">${nf(Math.round(v.tutar))} ₺</b>
+            <div style="font-size:12px;color:${renk};margin-top:2px">
+              ${new Date(v.tarih).toLocaleDateString("tr-TR")} · ${v.odendi?"ödendi":g<0?`${Math.abs(g)} gün geçti`:g===0?"bugün":`${g} gün kaldı`}</div>
+          </div>
+          <button class="pill ${v.odendi?"sade":"gold"}" onclick="vadeIsaret('${v.id}','${id}',${!v.odendi})">
+            ${v.odendi?"geri al":"ödendi"}</button>
+        </div>`;
+      }).join("")}`:""}`;
+}
+
+async function hesapNot(id){
+  const n = document.getElementById("hnot2").value.trim();
+  const { error } = await sb.from("hesap").update({ notu: n || null }).eq("id", id);
+  toast(error ? "Olmadı: "+error.message : "Not kaydedildi");
+}
+async function hesapKapat(id, deger){
+  await sb.from("hesap").update({ kapandi: deger }).eq("id", id);
+  hesapAc(id);
+}
+async function hesapSil(id){
+  if(!confirm("Bu kayıt ve vadeleri silinsin mi?")) return;
+  const { error } = await sb.from("hesap").delete().eq("id", id);
+  if(error) return toast("Olmadı: "+error.message);
+  toast("Silindi"); go("hesap");
+}
+async function vadeIsaret(vid, hid, deger){
+  await sb.from("hesap_vade").update({ odendi: deger }).eq("id", vid);
+  hesapAc(hid);
 }
 
 /* ================= sunum görseli ================= */
@@ -2932,7 +3117,7 @@ function sunumCap(duzenleIx){
     g("yukleBolum").style.display = k === "yukle" ? "block" : "none";
     g("cizBolum").style.display   = k === "yukle" ? "none" : "block";
     if(k === "kayit" && kayitliCfg){
-      PARCA.bloklar = []; PARCA.enAzYol = 4; PARCA.ters = false; PARCA.kis = false;
+      PARCA.bloklar = []; PARCA.enAzYol = 3; PARCA.ters = false; PARCA.yolDus = false; PARCA.kis = false;
       parcaKur(alan, kayitliCfg.bloklar);
     }
   };
@@ -3343,7 +3528,7 @@ function capYerlesim(M, cfg){
   const aMin = Math.min(...izdA), aMax = Math.max(...izdA);
   const dMin = Math.min(...izdD), dMax = Math.max(...izdD);
   const W = dMax - dMin, boy = aMax - aMin;
-  const enAz = Math.max(1, cfg.enAzYol || 4);
+  const enAz = 3;
 
   const blokAlan = bloklar.map(b=> b.tip === "yol"
     ? b.sol.concat(b.sag).reduce((t,o)=>t+o.m2,0)
@@ -3492,7 +3677,7 @@ async function capAyar(arg){
 
   PARCA.geometri = capHalkasi(p);
   PARCA.toplam = alan;
-  PARCA.bloklar = []; PARCA.enAzYol = 4; PARCA.ters = false; PARCA.kis = false;
+  PARCA.bloklar = []; PARCA.enAzYol = 3; PARCA.ters = false; PARCA.yolDus = false; PARCA.kis = false;
 
   app.innerHTML = head(belgeId ? "Çapı düzenle" : "Çap çizdir", belgeId ? `go('parsel','${parselId}')` : "go('cap')") + `
     <div class="card">
@@ -3524,11 +3709,9 @@ async function capAyar(arg){
   PARCA.p = p;
   parcaKur(alan, duzen?.bloklar || null);
   if(duzen){
-    PARCA.enAzYol = duzen.enAzYol || 4;
+    PARCA.enAzYol = 3;
     PARCA.ters = !!duzen.ters; PARCA.yolDus = !!duzen.yolDus;
-    const ea = document.getElementById("penaz"); if(ea) ea.value = PARCA.enAzYol;
     const tr = document.getElementById("pters"); if(tr) tr.value = PARCA.ters ? "1" : "0";
-    const du = document.getElementById("pdus"); if(du) du.checked = PARCA.yolDus;
     ozetCiz();
   }
 
@@ -3682,13 +3865,25 @@ function capCizPng(p, cfg, kucuk){
       }
     });
 
-    // parsel yolu her zaman en uste cizilir
+    // parsel yolu: once tum parcalar dolgu (birlesik gorunsun), sonra seyrek cizgiler
     (yer.yol||[]).forEach(yp=>{
       if(!yp || yp.length < 3) return;
-      yol(yp.map(E));
-      x.fillStyle = "#E3E7EB"; x.fill();
-      x.lineWidth = 1.2; x.strokeStyle = "#98A2AC"; x.stroke();
+      yol(yp.map(E)); x.fillStyle = "#EDF0F3"; x.fill();
     });
+    x.save();
+    x.beginPath();
+    (yer.yol||[]).forEach(yp=>{ if(yp && yp.length > 2){ const e2 = yp.map(E);
+      e2.forEach((k,i)=> i ? x.lineTo(k[0],k[1]) : x.moveTo(k[0],k[1])); x.closePath(); } });
+    x.clip();
+    x.strokeStyle = "#C2C9D0"; x.lineWidth = 1; x.setLineDash([5,9]);
+    const adim = kucuk ? 7 : 11;
+    const kose = Math.atan2(yer.ana[1], yer.ana[0]);
+    for(let t=-Y; t<G+Y; t+=adim){
+      x.beginPath();
+      x.moveTo(t, 0); x.lineTo(t + Y*Math.tan(kose), Y);
+      x.stroke();
+    }
+    x.setLineDash([]); x.restore();
     if((yer.yol||[]).length && !kucuk){
       const enBuyuk = yer.yol.reduce((a,b2)=>
         (b2.length>2 && alanHesap(b2) > (a && a.length>2 ? alanHesap(a) : 0)) ? b2 : a, yer.yol[0]);
@@ -3933,7 +4128,7 @@ async function cikis(){ await sb.auth.signOut(); location.reload(); }
 
 /* ================= yonlendirme ================= */
 
-const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, emsal:emsal, sunum:sunum, musteri:musteriSunumu, yz:yapayZeka, yeni:yeniParsel, parsel:parselDetay,
+const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, emsal:emsal, sunum:sunum, musteri:musteriSunumu, yz:yapayZeka, hesap:hesap, yeni:yeniParsel, parsel:parselDetay,
                    fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
 function go(r,arg){ (ekranlar[r]||anaMenu)(arg); window.scrollTo(0,0); }
 
