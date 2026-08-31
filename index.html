@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 5.3";
+const SURUM = "beta 5.4";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -2132,7 +2132,7 @@ async function emsalHesapla(p){
 /* ---- parça ayar bileşeni: hem çap çizdirmede hem sunumda ---- */
 
 let PARCA = { bloklar:[], toplam:0, geometri:null, yolAlan:0, yolGenislik:0,
-              p:null, enAzYol:4, kucultme:0, ters:false, kis:false };
+              p:null, enAzYol:3, ters:false };
 
 let PSAYAC = 0;
 const yeniParca = (m2) => ({ id: ++PSAYAC, no:"", m2: Math.round(m2||200), renk:"#FFFFFF" });
@@ -2147,9 +2147,6 @@ function parcaAyarHtml(){
     <div class="field"><label>Blok sırası</label><select id="pters">
       <option value="0">Normal</option><option value="1">Ters çevir</option></select>
       <p class="ipuc" style="margin:8px 2px 0">Parsel yolu 3 m genişliğinde çizilir; girdiğin metrekareler hiç değişmez.</p></div>
-    <label style="display:flex;align-items:center;gap:10px;margin:0 2px 14px;font-size:13.5px;color:var(--ink)">
-      <input type="checkbox" id="pkis" style="width:20px;height:20px" ${PARCA.kis?"checked":""}>
-      <span style="flex:1">Yola yer açmak için parçaları orantılı küçült</span></label>
     <div class="card" id="capOzet" style="font-size:13px"></div>`;
 }
 
@@ -2174,8 +2171,6 @@ function parcaKur(toplam, mevcut){
     PARCA.bloklar.push({ tip:"yol", parcalar:[], sol:[yeniParca(pay)], sag:[yeniParca(pay)] });
     numaralariTazele(); bloklariCiz();
   };
-  const ks = document.getElementById("pkis");
-  ks.onchange = () => { PARCA.kis = ks.checked; ozetCiz(); };
   const tr = document.getElementById("pters");
   tr.value = PARCA.ters ? "1" : "0";
   tr.onchange = () => { PARCA.ters = tr.value === "1"; ozetCiz(); };
@@ -2263,14 +2258,14 @@ function blokTasi(i, yon){
 function ozetCiz(){
   const hepsi = PARCA.bloklar.flatMap(blokParcalari);
   const parcaAlan = hepsi.reduce((t,o)=>t+(+o.m2||0), 0);
-  let yolAlan = 0, yolGen = 0, kucultme = 0;
+  let yolAlan = 0, yolGen = 0;
   if(PARCA.geometri){
     try{
       const y = capYerlesim(PARCA.geometri, parcaCfg());
-      yolAlan = y.yolAlan || 0; yolGen = y.yolGenislik || 0; kucultme = y.kucultme || 0;
+      yolAlan = y.yolAlan || 0; yolGen = y.yolGenislik || 0;
     }catch(e){}
   }
-  PARCA.yolAlan = Math.round(yolAlan); PARCA.yolGenislik = yolGen; PARCA.kucultme = kucultme;
+  PARCA.yolAlan = Math.round(yolAlan); PARCA.yolGenislik = yolGen;
 
   const o = document.getElementById("capOzet");
   if(o) o.innerHTML = `
@@ -2279,9 +2274,7 @@ function ozetCiz(){
     <div class="kv" style="border-top:1px solid var(--cizgi);margin-top:6px;padding-top:8px">
       <span style="color:var(--gold)">Parsel yolu</span>
       <b class="mono" style="color:var(--gold)">3 m genişlik</b></div>
-    ${kucultme > 0
-      ? `<p class="ipuc" style="margin:8px 2px 0;color:var(--red)">Parçalar yola yer açmak için %${String(kucultme).replace(".",",")} küçültüldü; çizimdeki gerçek metrekareler parçaların üstünde yazıyor.</p>`
-      : (yolGen < 1
+    ${false ? "" : (yolGen < 1
         ? `<p class="ipuc" style="margin:8px 2px 0;color:var(--gold)">Girdiğin metrekareler birebir uygulandı; yola sadece ${nf(PARCA.yolAlan)} m² kaldığı için yol ${yolGen.toFixed(2).replace(".",",")} m genişliğinde. Daha geniş yol istersen parça metrekarelerini düşür ya da alttaki küçültme seçeneğini aç.</p>`
         : `<p class="ipuc" style="margin:8px 2px 0">Girdiğin metrekareler birebir uygulanıyor, artan alan yola ayrıldı.</p>`)}`;
 
@@ -2291,7 +2284,7 @@ function ozetCiz(){
 }
 
 function parcaCfg(){
-  return { enAzYol: 3, ters: PARCA.ters, yolDus: false, kis: PARCA.kis,
+  return { enAzYol: 3, ters: PARCA.ters,
     bloklar: PARCA.bloklar.map(b=> b.tip === "yol"
       ? { tip:"yol", sol:b.sol.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })),
                      sag:b.sag.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })) }
@@ -3117,7 +3110,7 @@ function sunumCap(duzenleIx){
     g("yukleBolum").style.display = k === "yukle" ? "block" : "none";
     g("cizBolum").style.display   = k === "yukle" ? "none" : "block";
     if(k === "kayit" && kayitliCfg){
-      PARCA.bloklar = []; PARCA.enAzYol = 3; PARCA.ters = false; PARCA.yolDus = false; PARCA.kis = false;
+      PARCA.bloklar = []; PARCA.enAzYol = 3; PARCA.ters = false;
       parcaKur(alan, kayitliCfg.bloklar);
     }
   };
@@ -3512,7 +3505,7 @@ function capYerlesim(M, cfg){
   let ana = anaYon(M);
   if(cfg.ters) ana = [-ana[0], -ana[1]];
   const dik = [-ana[1], ana[0]];
-  const bos = { parcalar:[], yol:[], ana, dik, yolGenislik:0, yolAlan:0, kucultme:0 };
+  const bos = { parcalar:[], yol:[], ana, dik, yolGenislik:0, yolAlan:0 };
 
   const bloklar = (cfg.bloklar||[]).map(b=>{
     if(b.tip === "yol") return { tip:"yol",
@@ -3535,19 +3528,9 @@ function capYerlesim(M, cfg){
     : b.parcalar.reduce((t,o)=>t+o.m2,0));
   const T = blokAlan.reduce((a,b)=>a+b,0);
 
-  // girilen metrekareler birebir uygulanir; yol artan alandan cikar
-  const artan = Math.max(0, A - T);
-  let w = artan / Math.max(1, boy);
-  let carpan = 1;
-  if(cfg.kis){
-    // istege bagli: yola en az enAz metre acmak icin parcalari orantili kucult
-    w = Math.max(enAz, w);
-    w = Math.min(w, W*0.35);
-    const gereken = w * boy;
-    if(T > A - gereken) carpan = Math.max(0.05, (A - gereken) / T);
-  }else{
-    w = Math.min(w, W*0.35);
-  }
+  // yol her zaman 3 m; girilen metrekareler hicbir zaman degistirilmez
+  const w = Math.min(enAz, W*0.35);
+  const carpan = 1;
   const yolAlan = w * boy;
 
   const kA = (poly, deger, ust) => ust ? kirp(poly, ana, deger) : kirp(poly, [-ana[0],-ana[1]], -deger);
@@ -3630,10 +3613,9 @@ function capYerlesim(M, cfg){
       });
   });
 
-  if(cfg.yolDus) cikti.forEach(o=>{ if(o.bilgi) o.bilgi = { ...o.bilgi, m2: Math.round(o.bilgi.m2 * carpan) }; });
   return { parcalar: cikti, yol: yolParcalari, ana, dik,
            yolGenislik: w, yolAlan: Math.round(yolAlan),
-           kucultme: carpan < 1 ? Math.round((1-carpan)*1000)/10 : 0 };
+           kucultme: 0 };
 }
 
 function parcalariUret(M, cfg){
@@ -3677,7 +3659,7 @@ async function capAyar(arg){
 
   PARCA.geometri = capHalkasi(p);
   PARCA.toplam = alan;
-  PARCA.bloklar = []; PARCA.enAzYol = 3; PARCA.ters = false; PARCA.yolDus = false; PARCA.kis = false;
+  PARCA.bloklar = []; PARCA.enAzYol = 3; PARCA.ters = false;
 
   app.innerHTML = head(belgeId ? "Çapı düzenle" : "Çap çizdir", belgeId ? `go('parsel','${parselId}')` : "go('cap')") + `
     <div class="card">
@@ -3710,7 +3692,7 @@ async function capAyar(arg){
   parcaKur(alan, duzen?.bloklar || null);
   if(duzen){
     PARCA.enAzYol = 3;
-    PARCA.ters = !!duzen.ters; PARCA.yolDus = !!duzen.yolDus;
+    PARCA.ters = !!duzen.ters;
     const tr = document.getElementById("pters"); if(tr) tr.value = PARCA.ters ? "1" : "0";
     ozetCiz();
   }
