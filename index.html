@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 5.4";
+const SURUM = "beta 5.5";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -2899,6 +2899,7 @@ const ORANLAR = [
   { ad:"Dikey 4:5",  w:1080, h:1350 },
   { ad:"Kare 1:1",   w:1080, h:1080 }
 ];
+let SON_CAP_ANKRAJ = null;
 let SUNUM = { parselId:null, ogeler:[], secili:null, arka:null, oranIx:0, kaydir:50 };
 
 // capi seffaf PNG olarak uret: mod 1 sinir, 2 parcali, 3 parcali + yazi
@@ -2973,6 +2974,13 @@ function capSeffafPng(p, cfg, mod, ayar){
   yol(N);
   x.lineWidth = 12; x.strokeStyle = tema.golge; x.stroke();
   x.lineWidth = 6; x.strokeStyle = disRenk; x.stroke();
+
+  // hizalama icin uzun eksenin iki ucu (goruntuye gore oranli)
+  const anaY = anaYon(M);
+  const izd = M.map(p=>p[0]*anaY[0]+p[1]*anaY[1]);
+  const i1 = izd.indexOf(Math.min(...izd)), i2 = izd.indexOf(Math.max(...izd));
+  const e1 = E(M[i1]), e2 = E(M[i2]);
+  SON_CAP_ANKRAJ = [[e1[0]/W, e1[1]/H], [e2[0]/W, e2[1]/H]];
   return c.toDataURL("image/png");
 }
 
@@ -3019,6 +3027,17 @@ function sunumEkran(){
       ${etiketler.map(t=>`<button class="pill gold" onclick="sunumKutu('serbest','ÖZELLİK','${esc(t)}')">${esc(t)}</button>`).join("")}
     </div>`:""}
 
+    ${SUNUM.secili!=null && SUNUM.ogeler[SUNUM.secili] && SUNUM.ogeler[SUNUM.secili].tur==="cap" ? `
+      <h3 style="font-size:14px;margin:18px 0 8px">Seçili çap</h3>
+      <div class="card">
+        <div class="field"><label>Saydamlık · fotoğrafla üst üste getirmek için</label>
+          <input type="range" id="capSaydam" min="20" max="100" step="5"
+            value="${Math.round((SUNUM.ogeler[SUNUM.secili].saydam ?? 1)*100)}" style="padding:0"></div>
+        <button class="btn ghost" id="capHizala">İki noktayla hizala</button>
+        <p class="ipuc" id="hizalaNot" style="margin:10px 2px 0">
+          Bas, sonra fotoğrafta parselin iki ucuna sırayla dokun; çap o iki noktaya göre kendini döndürüp ölçekler.</p>
+      </div>` : ""}
+
     ${SUNUM.secili!=null && SUNUM.ogeler[SUNUM.secili] && SUNUM.ogeler[SUNUM.secili].tur!=="cap" ? `
       <h3 style="font-size:14px;margin:18px 0 8px">Seçili kutu</h3>
       <div class="card">
@@ -3042,6 +3061,17 @@ function sunumEkran(){
   document.getElementById("ozellikKutu").onclick = () => sunumKutu("ozellik");
   document.getElementById("serbestKutu").onclick = () => sunumKutu("serbest","BAŞLIK","İçerik");
   document.getElementById("uret").onclick = sunumUret;
+
+  const cs = document.getElementById("capSaydam");
+  if(cs) cs.oninput = () => { SUNUM.ogeler[SUNUM.secili].saydam = +cs.value/100; sunumCiz(); };
+  const ch = document.getElementById("capHizala");
+  if(ch) ch.onclick = () => {
+    const o = SUNUM.ogeler[SUNUM.secili];
+    if(!o.ank) return toast("Bu çap kendi çizdiğimiz çap değil, hizalama yapılamıyor");
+    SUNUM.hizala = { i: SUNUM.secili, noktalar: [] };
+    document.getElementById("hizalaNot").textContent = "Fotoğrafta parselin BİR ucuna dokun.";
+    toast("Birinci noktaya dokun");
+  };
 
   const dzU = document.getElementById("dzUst"), dzA = document.getElementById("dzAlt"), dzS = document.getElementById("dzStil");
   if(dzU){
@@ -3145,9 +3175,10 @@ function sunumCap(duzenleIx){
                dolgu:(+g("cdolgu").value)/100, cfg };
       src = capSeffafPng(p, cfg, mod, ayar);
     }
-    if(mevcutOge){ mevcutOge.src = src; mevcutOge.ayar = ayar; }
+    const ank = kaynak === "yukle" ? null : SON_CAP_ANKRAJ;
+    if(mevcutOge){ mevcutOge.src = src; mevcutOge.ayar = ayar; mevcutOge.ank = ank; }
     else{
-      SUNUM.ogeler.push({ tur:"cap", rol:"cap", src, ayar, x:.20, y:.24, w:.60, h:.48, rot:0 });
+      SUNUM.ogeler.push({ tur:"cap", rol:"cap", src, ayar, ank, saydam:1, x:.20, y:.24, w:.60, h:.48, rot:0 });
       SUNUM.secili = SUNUM.ogeler.length-1;
     }
     sunumEkran();
@@ -3193,7 +3224,10 @@ function sunumCiz(){
   t.style.height = H + "px";
   t.innerHTML = `<div class="arka" style="background-image:url('${SUNUM.arka.url}');
      background-position:50% ${SUNUM.kaydir}%"></div>
-     <div class="olcu">${oran.w}×${oran.h}</div>`;
+     <div class="olcu">${oran.w}×${oran.h}</div>
+     ${SUNUM.hizala ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,.25);display:grid;place-items:center;
+       color:#fff;font-size:13px;font-weight:600;pointer-events:none">
+       ${SUNUM.hizala.noktalar.length ? "Karşı uca dokun" : "Parselin bir ucuna dokun"}</div>` : ""}`;
 
   SUNUM.ogeler.forEach((o,i)=>{
     const d = document.createElement("div");
@@ -3204,7 +3238,7 @@ function sunumCiz(){
     d.dataset.i = i;
 
     if(o.tur === "cap"){
-      d.innerHTML = `<img src="${o.src}">`;
+      d.innerHTML = `<img src="${o.src}" style="opacity:${o.saydam ?? 1}">`;
     }else{
       const kw = o.w*W, kh = o.h*H, st = KUTU_STIL[o.stil ?? 0];
       const m = kutuMetrik(o, kw, kh);
@@ -3227,8 +3261,26 @@ function sunumCiz(){
 }
 
 function sunumOlaylar(t, W, H){
+  // hizalama modunda tuvale dokunuslari topla
+  t.onpointerdown = e => {
+    if(!SUNUM.hizala) return;
+    const bx = t.getBoundingClientRect();
+    SUNUM.hizala.noktalar.push([e.clientX - bx.left, e.clientY - bx.top]);
+    const not = document.getElementById("hizalaNot");
+    if(SUNUM.hizala.noktalar.length === 1){
+      if(not) not.textContent = "Şimdi karşı uca dokun.";
+      toast("İkinci noktaya dokun");
+    }else{
+      hizalamayiUygula(W, H);
+    }
+  };
+
   t.querySelectorAll(".oge").forEach(d=>{
+    const parmaklar = new Map();
+    let bas = null;
+
     d.onpointerdown = e => {
+      if(SUNUM.hizala) return;                 // hizalama modunda oge surukleme kapali
       const i = +d.dataset.i, o = SUNUM.ogeler[i];
       const tut = e.target.dataset?.tut;
       if(tut === "kapat"){ SUNUM.ogeler.splice(i,1); SUNUM.secili = null; sunumEkran(); return; }
@@ -3240,30 +3292,103 @@ function sunumOlaylar(t, W, H){
         return;
       }
       if(SUNUM.secili !== i){ SUNUM.secili = i; sunumEkran(); return; }
-      e.preventDefault(); d.setPointerCapture(e.pointerId);
-      const bx = t.getBoundingClientRect();
-      const b = { x:o.x, y:o.y, w:o.w, h:o.h, rot:o.rot||0 };
-      const bas = { x:e.clientX, y:e.clientY };
-      const mx = bx.left + (o.x + o.w/2)*W, my = bx.top + (o.y + o.h/2)*H;
-      const basAci = Math.atan2(e.clientY-my, e.clientX-mx) * 180/Math.PI;
 
-      d.onpointermove = ev => {
-        const dx = (ev.clientX - bas.x)/W, dy = (ev.clientY - bas.y)/H;
-        if(tut === "boy"){
-          o.w = Math.max(.06, b.w + dx); o.h = Math.max(.04, b.h + dy);
-        }else if(tut === "don"){
-          const aci = Math.atan2(ev.clientY-my, ev.clientX-mx) * 180/Math.PI;
-          o.rot = Math.round(b.rot + (aci - basAci));
-        }else{
-          o.x = b.x + dx; o.y = b.y + dy;
-        }
-        d.style.left = (o.x*W)+"px"; d.style.top = (o.y*H)+"px";
-        d.style.width = (o.w*W)+"px"; d.style.height = (o.h*H)+"px";
-        d.style.transform = `rotate(${o.rot||0}deg)`;
+      e.preventDefault();
+      d.setPointerCapture(e.pointerId);
+      parmaklar.set(e.pointerId, { x:e.clientX, y:e.clientY });
+
+      const bx = t.getBoundingClientRect();
+      bas = {
+        x:o.x, y:o.y, w:o.w, h:o.h, rot:o.rot||0,
+        px:e.clientX, py:e.clientY,
+        mx: bx.left + (o.x + o.w/2)*W, my: bx.top + (o.y + o.h/2)*H,
+        tut
       };
-      d.onpointerup = () => { d.onpointermove = null; sunumCiz(); };
+      if(bas.tut === "don") bas.aci = Math.atan2(e.clientY-bas.my, e.clientX-bas.mx)*180/Math.PI;
+
+      if(parmaklar.size === 2){
+        const [a,b2] = [...parmaklar.values()];
+        bas.mesafe = Math.hypot(a.x-b2.x, a.y-b2.y) || 1;
+        bas.aci2 = Math.atan2(b2.y-a.y, b2.x-a.x)*180/Math.PI;
+        bas.w2 = o.w; bas.h2 = o.h; bas.rot2 = o.rot||0;
+      }
     };
+
+    d.onpointermove = ev => {
+      if(!bas || !parmaklar.has(ev.pointerId)) return;
+      parmaklar.set(ev.pointerId, { x:ev.clientX, y:ev.clientY });
+      const i = +d.dataset.i, o = SUNUM.ogeler[i];
+
+      if(parmaklar.size === 2){
+        const [a,b2] = [...parmaklar.values()];
+        const m = Math.hypot(a.x-b2.x, a.y-b2.y) || 1;
+        const ac = Math.atan2(b2.y-a.y, b2.x-a.x)*180/Math.PI;
+        if(bas.mesafe){
+          const k = m / bas.mesafe;
+          const mx = o.x + o.w/2, my = o.y + o.h/2;
+          o.w = Math.max(.05, bas.w2 * k);
+          o.h = Math.max(.03, bas.h2 * k);
+          o.x = mx - o.w/2; o.y = my - o.h/2;
+          o.rot = Math.round(bas.rot2 + (ac - bas.aci2));
+        }
+      }else{
+        const dx = (ev.clientX - bas.px)/W, dy = (ev.clientY - bas.py)/H;
+        if(bas.tut === "boy"){
+          o.w = Math.max(.05, bas.w + dx); o.h = Math.max(.03, bas.h + dy);
+        }else if(bas.tut === "don"){
+          const aci = Math.atan2(ev.clientY-bas.my, ev.clientX-bas.mx)*180/Math.PI;
+          o.rot = Math.round(bas.rot + (aci - bas.aci));
+        }else{
+          o.x = bas.x + dx; o.y = bas.y + dy;
+        }
+      }
+      d.style.left = (o.x*W)+"px"; d.style.top = (o.y*H)+"px";
+      d.style.width = (o.w*W)+"px"; d.style.height = (o.h*H)+"px";
+      d.style.transform = `rotate(${o.rot||0}deg)`;
+    };
+
+    const bitir = ev => {
+      parmaklar.delete(ev.pointerId);
+      if(!parmaklar.size){ bas = null; sunumCiz(); }
+    };
+    d.onpointerup = bitir;
+    d.onpointercancel = bitir;
   });
+}
+
+// iki nokta ile capi fotografa oturt
+function hizalamayiUygula(W, H){
+  const { i, noktalar } = SUNUM.hizala;
+  SUNUM.hizala = null;
+  const o = SUNUM.ogeler[i];
+  if(!o || !o.ank || noktalar.length < 2) return sunumEkran();
+
+  const [A, B] = noktalar;
+  const im = new Image();
+  im.onload = () => {
+    const iw = im.naturalWidth, ih = im.naturalHeight;
+    const [a1, a2] = o.ank;                       // goruntudeki oranli ankraj noktalari
+    const ux = (a2[0]-a1[0])*iw, uy = (a2[1]-a1[1])*ih;
+    const uzUnlu = Math.hypot(ux, uy) || 1;
+    const tx = B[0]-A[0], ty = B[1]-A[1];
+    const hedefUz = Math.hypot(tx, ty) || 1;
+
+    const k = hedefUz / uzUnlu;                   // piksel basina olcek
+    const aci = (Math.atan2(ty, tx) - Math.atan2(uy, ux)) * 180/Math.PI;
+    const wpx = iw * k, hpx = ih * k;
+    const r = aci * Math.PI/180;
+    const d1x = (a1[0]-0.5)*wpx, d1y = (a1[1]-0.5)*hpx;
+    const cx = A[0] - (d1x*Math.cos(r) - d1y*Math.sin(r));
+    const cy = A[1] - (d1x*Math.sin(r) + d1y*Math.cos(r));
+
+    o.w = wpx/W; o.h = hpx/H;
+    o.x = (cx - wpx/2)/W; o.y = (cy - hpx/2)/H;
+    o.rot = Math.round(aci);
+    toast("Çap hizalandı");
+    sunumEkran();
+  };
+  im.onerror = () => sunumEkran();
+  im.src = o.src;
 }
 
 async function sunumUret(){
@@ -3289,7 +3414,9 @@ async function sunumUret(){
     x.translate(-ow/2, -oh/2);
     if(o.tur === "cap"){
       const im = await yukleGorsel(o.src);
+      x.globalAlpha = o.saydam ?? 1;
       x.drawImage(im, 0, 0, ow, oh);
+      x.globalAlpha = 1;
     }else{
       kutuCiz(x, o, ow, oh);
     }
