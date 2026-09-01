@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 5.5";
+const SURUM = "beta 5.6";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -4280,8 +4280,22 @@ async function baslat(){
 }
 baslat();
 
+// servis calisani: kurulabilirlik ve cevrimdisi acilis
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("./sw.js").catch(()=>{});
+  });
+}
+
 sb.auth.onAuthStateChange((olay) => {
   if(olay === "SIGNED_IN" && !ME && !window.__basliyor) baslat();
+
+// servis calisani: kurulabilirlik ve cevrimdisi acilis
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("./sw.js").catch(()=>{});
+  });
+}
 });
 </script>
 </body>
