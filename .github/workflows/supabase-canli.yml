@@ -1,0 +1,39 @@
+name: Supabase canli tut
+
+# Ucretsiz plandaki proje 7 gun hareketsiz kalirsa duraklatiliyor.
+# Bu gorev 3 gunde bir kucuk bir istek gonderip projeyi uyanik tutar.
+# Elle de calistirilabilir: Actions > Supabase canli tut > Run workflow
+
+on:
+  schedule:
+    - cron: "0 9 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Veritabanina istek gonder
+        run: |
+          URL="https://fhydzzogwyhfssbnfokw.supabase.co"
+          KEY="sb_publishable_63EA1qyRE0yS3_EGGS9KMA_Zq49wbmJ"
+
+          echo "REST istegi gonderiliyor..."
+          KOD=$(curl -s -o /tmp/cevap.txt -w "%{http_code}" \
+            -H "apikey: $KEY" \
+            -H "Authorization: Bearer $KEY" \
+            "$URL/rest/v1/teams?select=id&limit=1")
+          echo "REST yanit kodu: $KOD"
+          cat /tmp/cevap.txt || true
+
+          echo "Auth saglik kontrolu..."
+          KOD2=$(curl -s -o /dev/null -w "%{http_code}" "$URL/auth/v1/health")
+          echo "Auth yanit kodu: $KOD2"
+
+          # 2xx veya 4xx donmesi projenin ayakta oldugunu gosterir.
+          # 5xx ya da baglanti hatasi varsa gorev basarisiz olsun ki haberimiz olsun.
+          if [ "$KOD" -ge 500 ] || [ "$KOD" = "000" ]; then
+            echo "Proje yanit vermiyor, kontrol edilmeli."
+            exit 1
+          fi
+          echo "Proje ayakta."
