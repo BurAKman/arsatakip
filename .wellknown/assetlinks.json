@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.burakman.twa",
+        "sha256_cert_fingerprints": ["3E:4F:28:B0:B2:9A:E0:10:2A:1E:4C:20:E2:BB:14:05:19:F7:77:95:20:FC:AC:08:20:7F:0A:7C:0A:6D:54:7C"]
+      }
+    }]
