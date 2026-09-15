@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 5.7";
+const SURUM = "beta 5.8";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -2725,35 +2725,98 @@ async function hesapAc(id){
   const bugun = new Date(); bugun.setHours(0,0,0,0);
   const gun = t => Math.round((new Date(t) - bugun) / 86400000);
   const acik = (vs||[]).filter(v=>!v.odendi).reduce((t,v)=>t+(+v.tutar||0),0);
+  const yazabilir = ME.role !== 'uye';
 
   app.innerHTML = head(k.kisi,"go('hesap')") + `
     <div class="card">
-      <div class="kv"><span>Tür</span><b>${k.tip==="alacak"?"Alacağım":"Borcum"}</b></div>
-      <div class="kv"><span>Toplam</span><b class="mono">${nf(Math.round(k.tutar))} ₺</b></div>
-      ${k.vadeli?`<div class="kv"><span>Kalan</span><b class="mono">${nf(Math.round(acik))} ₺</b></div>`:""}
-      ${k.tarih?`<div class="kv"><span>Tarih</span><b>${new Date(k.tarih).toLocaleDateString("tr-TR")}</b></div>`:""}
-      <div class="field" style="margin:12px 0 0"><label>Not</label>
-        <input id="hnot2" value="${esc(k.notu||"")}" placeholder="Tek satır not"></div>
-      <div class="acts" style="margin-top:12px">
-        <button onclick="hesapNot('${id}')">Notu kaydet</button>
-        <button class="${k.kapandi?"":"pri"}" onclick="hesapKapat('${id}',${!k.kapandi})">${k.kapandi?"Yeniden aç":"Kapandı işaretle"}</button>
-        ${ME.role==='admin'?`<button class="kirmizi" onclick="hesapSil('${id}')">Sil</button>`:""}
-      </div>
+      <div class="bolum"><span class="rz altin">${svg("money")}</span><b>Kayıt bilgileri</b>
+        ${k.kapandi?`<span class="pill sade">kapandı</span>`:""}</div>
+      ${yazabilir ? `
+        <div class="field"><label>Tür</label><select id="dtip">
+          <option value="alacak"${k.tip==="alacak"?" selected":""}>Alacağım</option>
+          <option value="borc"${k.tip==="borc"?" selected":""}>Borcum</option></select></div>
+        <div class="field"><label>Kişi / kurum</label><input id="dkisi" value="${esc(k.kisi)}"></div>
+        <div class="row2">
+          <div class="field"><label>Toplam tutar (₺)</label><input id="dtutar" inputmode="decimal" value="${Math.round(k.tutar)}"></div>
+          <div class="field"><label>Tarih</label><input id="dtarih" type="date" value="${k.tarih||""}"></div>
+        </div>
+        <div class="field"><label>Not</label><input id="dnot" value="${esc(k.notu||"")}" placeholder="Tek satır not"></div>
+        <button class="btn" onclick="hesapGuncelle('${id}')">Değişiklikleri kaydet</button>
+        <div class="acts" style="margin-top:10px">
+          <button class="${k.kapandi?"":"pri"}" onclick="hesapKapat('${id}',${!k.kapandi})">${k.kapandi?"Yeniden aç":"Kapandı işaretle"}</button>
+          ${ME.role==='admin'?`<button class="kirmizi" onclick="hesapSil('${id}')">Sil</button>`:""}
+        </div>`
+      : `<div class="kv"><span>Tür</span><b>${k.tip==="alacak"?"Alacağım":"Borcum"}</b></div>
+         <div class="kv"><span>Toplam</span><b class="mono">${nf(Math.round(k.tutar))} ₺</b></div>
+         ${k.tarih?`<div class="kv"><span>Tarih</span><b>${new Date(k.tarih).toLocaleDateString("tr-TR")}</b></div>`:""}
+         ${k.notu?`<div style="font-size:13px;color:var(--ink-2);margin-top:8px">${esc(k.notu)}</div>`:""}`}
     </div>
-    ${k.vadeli?`<h3 style="font-size:14px;margin:20px 0 10px">Vadeler</h3>
+
+    <div class="card">
+      <div class="bolum"><span class="rz yesil">${svg("note")}</span><b>Vadeler</b>
+        <span class="sayi">${(vs||[]).length}</span></div>
+      ${(vs||[]).length ? `<div class="kv"><span>Kalan</span><b class="mono">${nf(Math.round(acik))} ₺</b></div>` : ""}
       ${(vs||[]).map(v=>{
         const g = gun(v.tarih);
         const renk = v.odendi ? "var(--ink-3)" : g < 0 ? "var(--red)" : g <= 20 ? "var(--gold)" : "var(--ink-2)";
-        return `<div class="card" style="display:flex;align-items:center;gap:10px;padding:12px;${v.odendi?"opacity:.55":""}">
-          <div style="flex:1">
-            <b class="mono" style="font-size:15px">${nf(Math.round(v.tutar))} ₺</b>
-            <div style="font-size:12px;color:${renk};margin-top:2px">
-              ${new Date(v.tarih).toLocaleDateString("tr-TR")} · ${v.odendi?"ödendi":g<0?`${Math.abs(g)} gün geçti`:g===0?"bugün":`${g} gün kaldı`}</div>
-          </div>
-          <button class="pill ${v.odendi?"sade":"gold"}" onclick="vadeIsaret('${v.id}','${id}',${!v.odendi})">
-            ${v.odendi?"geri al":"ödendi"}</button>
+        return `<div style="border-top:1px solid var(--cizgi);padding:11px 0;${v.odendi?"opacity:.6":""}">
+          ${yazabilir ? `
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="date" id="vt${v.id}" value="${v.tarih}" style="flex:1;padding:9px 10px;font-size:13px">
+              <input id="vm${v.id}" inputmode="decimal" value="${Math.round(v.tutar)}" style="width:110px;text-align:right;padding:9px 10px;font-size:13px">
+              <button class="sil" style="width:32px;height:32px" onclick="vadeSil('${v.id}','${id}')">${svg("trash")}</button>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+              <span style="flex:1;font-size:12px;color:${renk}">${v.odendi?"ödendi":g<0?`${Math.abs(g)} gün geçti`:g===0?"bugün":`${g} gün kaldı`}</span>
+              <button class="pill sade" onclick="vadeKaydet('${v.id}','${id}')">kaydet</button>
+              <button class="pill ${v.odendi?"sade":"gold"}" onclick="vadeIsaret('${v.id}','${id}',${!v.odendi})">${v.odendi?"geri al":"ödendi"}</button>
+            </div>`
+          : `<div style="display:flex;align-items:center;gap:10px">
+              <b class="mono" style="flex:1">${nf(Math.round(v.tutar))} ₺</b>
+              <span style="font-size:12px;color:${renk}">${new Date(v.tarih).toLocaleDateString("tr-TR")}</span></div>`}
         </div>`;
-      }).join("")}`:""}`;
+      }).join("")}
+      ${yazabilir ? `<button class="btn ghost" style="margin-top:12px" onclick="vadeEkle('${id}')">+ Vade ekle</button>` : ""}
+      ${!(vs||[]).length && !yazabilir ? `<div style="color:var(--ink-3);font-size:13px">Vade yok.</div>` : ""}
+    </div>`;
+}
+
+async function hesapGuncelle(id){
+  const v = x => document.getElementById(x).value;
+  const kisi = v("dkisi").trim();
+  if(!kisi) return toast("Kişi adı boş olamaz");
+  const { error } = await sb.from("hesap").update({
+    tip: v("dtip"), kisi, tutar: sayiCoz(v("dtutar")) || 0,
+    tarih: v("dtarih") || null, notu: v("dnot").trim() || null
+  }).eq("id", id);
+  if(error) return toast("Olmadı: " + error.message);
+  toast("Kaydedildi"); hesapAc(id);
+}
+
+async function vadeKaydet(vid, hid){
+  const t = document.getElementById("vt"+vid).value;
+  const m = sayiCoz(document.getElementById("vm"+vid).value) || 0;
+  if(!t) return toast("Tarih seç");
+  const { error } = await sb.from("hesap_vade").update({ tarih:t, tutar:m }).eq("id", vid);
+  if(error) return toast("Olmadı: " + error.message);
+  toast("Vade kaydedildi"); hesapAc(hid);
+}
+
+async function vadeSil(vid, hid){
+  if(!confirm("Bu vade silinsin mi?")) return;
+  await sb.from("hesap_vade").delete().eq("id", vid);
+  hesapAc(hid);
+}
+
+async function vadeEkle(hid){
+  const { data:son } = await sb.from("hesap_vade").select("tarih,tutar").eq("hesap_id",hid)
+    .order("tarih",{ascending:false}).limit(1);
+  const t = son?.[0]?.tarih ? new Date(son[0].tarih) : new Date();
+  t.setMonth(t.getMonth() + 1);
+  const { error } = await sb.from("hesap_vade").insert({
+    hesap_id:hid, team_id:ME.team_id, tarih:t.toISOString().slice(0,10), tutar: son?.[0]?.tutar || 0 });
+  if(error) return toast("Olmadı: " + error.message);
+  hesapAc(hid);
 }
 
 async function hesapNot(id){
@@ -3829,7 +3892,9 @@ async function capAyar(arg){
     ${belgeId
       ? `<button class="btn" id="ciz" style="margin-top:6px">Üzerine kaydet</button>
          <button class="btn ghost" id="cizYeni" style="margin-top:8px">Farklı kaydet</button>`
-      : `<button class="btn" id="ciz" style="margin-top:6px">Çapı çiz ve parsele ekle</button>`}`;
+      : `<button class="btn" id="ciz" style="margin-top:6px">Çapı çiz ve parsele ekle</button>`}
+    <button class="btn ghost" style="margin-top:8px" onclick="dxfIndir()">DXF olarak indir</button>
+    <p class="ipuc" style="margin-top:10px">DXF, harita mühendislerinin AutoCAD'de açabildiği çizim dosyasıdır. Parsel sınırı, parçalar, yol ve yazılar ayrı katmanlarda gelir.</p>`;
 
   let duzen = null;
   if(belgeId){
@@ -3908,6 +3973,63 @@ async function capCiz(parselId, cfg, belgeId){
 
 // parsel sinirindan olcekli cap cizimi uretir
 
+
+/* ---- DXF disa aktarma ---- */
+
+function dxfUret(p, cfg){
+  const M = capHalkasi(p);
+  if(!M) throw new Error("sınır çizimi yok");
+  const yer = capYerlesim(M, cfg);
+  const L = [];
+  const g = (kod, deger) => { L.push(String(kod)); L.push(String(deger)); };
+
+  g(0,"SECTION"); g(2,"HEADER"); g(0,"ENDSEC");
+  g(0,"SECTION"); g(2,"TABLES");
+  g(0,"TABLE"); g(2,"LAYER"); g(70,4);
+  [["PARSEL_SINIR",1],["PARCALAR",3],["YOL",8],["YAZI",2]].forEach(([ad2,renk])=>{
+    g(0,"LAYER"); g(2,ad2); g(70,0); g(62,renk); g(6,"CONTINUOUS");
+  });
+  g(0,"ENDTAB"); g(0,"ENDSEC");
+  g(0,"SECTION"); g(2,"ENTITIES");
+
+  const cizgi = (a,b,katman) => {
+    g(0,"LINE"); g(8,katman);
+    g(10,a[0].toFixed(3)); g(20,a[1].toFixed(3)); g(30,"0.0");
+    g(11,b[0].toFixed(3)); g(21,b[1].toFixed(3)); g(31,"0.0");
+  };
+  const halka = (pts,katman) => { for(let i=0;i<pts.length;i++) cizgi(pts[i], pts[(i+1)%pts.length], katman); };
+  const yazi = (nokta, metin, boy) => {
+    g(0,"TEXT"); g(8,"YAZI");
+    g(10,nokta[0].toFixed(3)); g(20,nokta[1].toFixed(3)); g(30,"0.0");
+    g(40,boy.toFixed(2)); g(1,String(metin)); g(72,1); g(11,nokta[0].toFixed(3)); g(21,nokta[1].toFixed(3)); g(31,"0.0");
+  };
+
+  halka(M, "PARSEL_SINIR");
+  (yer.yol||[]).forEach(yp=>{ if(yp && yp.length>2) halka(yp, "YOL"); });
+  yer.parcalar.forEach((o,i)=>{
+    if(!o.poly || o.poly.length < 3) return;
+    halka(o.poly, "PARCALAR");
+    const om = agirlikMerkezi(o.poly);
+    const b2 = o.bilgi || {};
+    yazi(om, String(b2.no || (i+1)), 3);
+    yazi([om[0], om[1]-4], `${Math.round(b2.m2 || alanHesap(o.poly))} m2`, 2);
+  });
+
+  g(0,"ENDSEC"); g(0,"EOF");
+  return L.join("\r\n");
+}
+
+function dxfIndir(){
+  if(!PARCA.p) return toast("Önce parseli aç");
+  try{
+    const metin = dxfUret(PARCA.p, parcaCfg());
+    const p = PARCA.p;
+    const blob = new Blob([metin], { type:"application/dxf" });
+    indirBlob(blob, `${p.ada||0}-${p.parsel}-cap.dxf`);
+    toast("DXF indirildi");
+  }catch(e){ toast("Olmadı: " + (e.message||e)); }
+}
+
 /* ---- cap sayfasi tasarimi: cerceve, kunye, muvafakatname ---- */
 
 const CAP_R = { kirmizi:"#A3242C", gri:"#8B9096", sari:"#FCF3CF", cizgi:"#3A3A3A" };
@@ -3966,8 +4088,8 @@ function muvafakatPng(p, G, Y){
   x.fillText("ÖZEL PARSELASYON BİLGİLERİ", sol + gen/2, 150 + sy/2);
   [["PARSELASYON NO", ""], ["HİSSE YÜZÖLÇÜMÜ", ""]].forEach(([ad2,deger],i)=>{
     const y = 150 + sy*(i+1), w1 = gen*0.42;
-    x.fillStyle = "#FFFFFF"; x.fillRect(sol, y, w1, sy); x.strokeRect(sol, y, w1, sy);
-    x.fillStyle = CAP_R.sari; x.fillRect(sol+w1, y, gen-w1, sy); x.strokeRect(sol+w1, y, gen-w1, sy);
+    x.fillStyle = CAP_R.sari; x.fillRect(sol, y, gen, sy);
+    x.strokeRect(sol, y, w1, sy); x.strokeRect(sol+w1, y, gen-w1, sy);
     x.fillStyle = "#111"; x.font = "400 16px Georgia, serif"; x.textAlign = "left";
     x.fillText(ad2, sol + 10, y + sy/2);
   });
