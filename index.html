@@ -252,10 +252,6 @@ select option{background:#101614;color:var(--ink)}
 .tut.don{left:-13px;bottom:-13px}
 .tut.kapat{right:-13px;top:-13px;background:var(--red);color:#fff}
 .tut.kalem{left:-13px;top:-13px;background:#fff;color:#111}
-.etk{position:absolute;transform-origin:center center;font-size:10px;color:#1a1a1a;background:rgba(255,255,255,.82);
-  border:1px solid rgba(0,0,0,.18);border-radius:5px;padding:1px 4px;white-space:nowrap;cursor:move;
-  touch-action:none;user-select:none;font-family:Arial,sans-serif;line-height:1.2}
-.etk:active{background:#fff;border-color:var(--gold)}
 .sablonlar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
 .sablon{border:1px solid var(--cizgi-2);border-radius:10px;padding:8px 6px;font-size:11px;text-align:center;
   background:var(--cam-2);color:var(--ink)}
@@ -349,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 6.5";
+const SURUM = "beta 6.6";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -2140,7 +2136,7 @@ async function emsalHesapla(p){
 /* ---- parça ayar bileşeni: hem çap çizdirmede hem sunumda ---- */
 
 let PARCA = { bloklar:[], toplam:0, geometri:null, yolAlan:0, yolGenislik:0,
-              p:null, enAzYol:3, ters:false, yolTipi:"parsel", yolKonum:"oto", capTema:"yatay", olculer:true, etiketKay:{} };
+              p:null, enAzYol:3, ters:false, yolTipi:"parsel", yolKonum:"oto", capTema:"yatay", olculer:true };
 
 let PSAYAC = 0;
 const yeniParca = (m2) => ({ id: ++PSAYAC, no:"", m2: Math.round((m2||200)*100)/100, renk:"#FFFFFF" });
@@ -2323,7 +2319,7 @@ function ozetCiz(){
 }
 
 function parcaCfg(){
-  return { enAzYol: 3, ters: PARCA.ters, yolTipi: PARCA.yolTipi, yolKonum: PARCA.yolKonum, capTema: "yatay", olculer: PARCA.olculer !== false, etiketKay: PARCA.etiketKay || {},
+  return { enAzYol: 3, ters: PARCA.ters, yolTipi: PARCA.yolTipi, yolKonum: PARCA.yolKonum, capTema: "yatay", olculer: PARCA.olculer !== false,
     bloklar: PARCA.bloklar.map(b=> b.tip === "yol"
       ? { tip:"yol", sol:b.sol.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })),
                      sag:b.sag.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })) }
@@ -2343,48 +2339,31 @@ function onizlemeCiz(){
     const im = new Image();
     im.onload = () => { const x = c.getContext("2d"); x.clearRect(0,0,G,Y); x.drawImage(im,0,0,G,Y); };
     im.src = png;
-    etiketleriYerlestir();
   }catch(e){}
 }
 
-// olcu yazilarini surukleebilir kutular olarak yerlestir
-function etiketleriYerlestir(){
-  const kat = document.getElementById("etiketKat");
-  if(!kat) return;
-  if(PARCA.olculer === false){ kat.innerHTML = ""; return; }
-  kat.innerHTML = SON_ETIKETLER.map(e=>`
-    <div class="etk" data-id="${e.id}" style="left:${(e.x*100).toFixed(3)}%;top:${(e.y*100).toFixed(3)}%;
-      transform:translate(-50%,-50%) rotate(${e.aci.toFixed(1)}deg)">${esc(e.metin)}</div>`).join("");
-
-  kat.querySelectorAll(".etk").forEach(d=>{
-    d.onpointerdown = ev => {
-      ev.preventDefault(); ev.stopPropagation();
-      d.setPointerCapture(ev.pointerId);
-      const kutu = document.getElementById("onizKutu").getBoundingClientRect();
-      const id = d.dataset.id;
-      const bas = PARCA.etiketKay[id] || { dx:0, dy:0 };
-      const bx = ev.clientX, by = ev.clientY;
-
-      d.onpointermove = e2 => {
-        const dx = bas.dx + (e2.clientX - bx)/kutu.width;
-        const dy = bas.dy + (e2.clientY - by)/kutu.height;
-        PARCA.etiketKay[id] = { dx, dy };
-        const asil = SON_ETIKETLER.find(t=>t.id === id);
-        if(asil){
-          d.style.left = ((asil.x + dx - (bas.dx||0))*100).toFixed(3) + "%";
-          d.style.top  = ((asil.y + dy - (bas.dy||0))*100).toFixed(3) + "%";
-        }
-      };
-      d.onpointerup = () => { d.onpointermove = null; onizlemeCiz(); };
-      d.onpointercancel = d.onpointerup;
-    };
-  });
+function parcaCfg(){
+  return { enAzYol: 3, ters: PARCA.ters, yolTipi: PARCA.yolTipi, yolKonum: PARCA.yolKonum, capTema: "yatay", olculer: PARCA.olculer !== false,
+    bloklar: PARCA.bloklar.map(b=> b.tip === "yol"
+      ? { tip:"yol", sol:b.sol.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })),
+                     sag:b.sag.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })) }
+      : { tip:"tam", parcalar:b.parcalar.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })) }),
+    parcalar: cfgParcalari({ bloklar: PARCA.bloklar.map(b=> b.tip === "yol"
+      ? { tip:"yol", sol:b.sol, sag:b.sag } : { tip:"tam", parcalar:b.parcalar }) }) };
 }
 
-function etiketleriSifirla(){
-  PARCA.etiketKay = {};
-  onizlemeCiz();
-  toast("Ölçü konumları sıfırlandı");
+function onizlemeCiz(){
+  const c = document.getElementById("capOnizleme");
+  if(!c || !PARCA.p) return;
+  const G = 700, Y = 900;
+  c.width = G; c.height = Y;
+  try{
+    const cfg = { ...parcaCfg(), etiketGizle:true };
+    const png = capCizPng(PARCA.p, cfg, true);
+    const im = new Image();
+    im.onload = () => { const x = c.getContext("2d"); x.clearRect(0,0,G,Y); x.drawImage(im,0,0,G,Y); };
+    im.src = png;
+  }catch(e){}
 }
 
 /* ================= yapay zekâ ================= */
@@ -3285,7 +3264,7 @@ function sunumCap(duzenleIx){
     g("yukleBolum").style.display = k === "yukle" ? "block" : "none";
     g("cizBolum").style.display   = k === "yukle" ? "none" : "block";
     if(k === "kayit" && kayitliCfg){
-      PARCA.bloklar = []; PARCA.enAzYol = 3; PARCA.ters = false; PARCA.yolTipi = "parsel"; PARCA.yolKonum = "oto"; PARCA.capTema = "yatay"; PARCA.olculer = true; PARCA.etiketKay = {};
+      PARCA.bloklar = []; PARCA.enAzYol = 3; PARCA.ters = false; PARCA.yolTipi = "parsel"; PARCA.yolKonum = "oto"; PARCA.capTema = "yatay"; PARCA.olculer = true;
       parcaKur(alan, kayitliCfg.bloklar);
     }
   };
@@ -3979,14 +3958,8 @@ async function capAyar(arg){
     <div class="card">
       <div class="bolum"><span class="rz yesil">${svg("vector")}</span><b>Canlı önizleme</b>
         <span class="sayi" id="onizSay">—</span></div>
-      <div id="onizKutu" style="position:relative;width:100%">
-        <canvas id="capOnizleme" style="width:100%;border-radius:10px;background:#fff;display:block"></canvas>
-        <div id="etiketKat" style="position:absolute;inset:0"></div>
-      </div>
-      <div class="acts" style="margin-top:10px">
-        <button onclick="etiketleriSifirla()">Ölçüleri sıfırla</button>
-      </div>
-      <p class="ipuc" style="margin:10px 2px 0">Ölçü yazılarını parmakla tutup istediğin yere çekebilirsin; çizim o konumu hatırlar.</p>
+      <canvas id="capOnizleme" style="width:100%;border-radius:10px;background:#fff;display:block"></canvas>
+      <p class="ipuc" style="margin:10px 2px 0">Önizlemede parçalar ve metrekareler görünür. Kenar ölçüleri PDF'e yazılırken numaraların üstüne binmeyecek şekilde kendiliğinden yerleştirilir.</p>
     </div>
 
     ${parcaAyarHtml()}
@@ -4009,7 +3982,6 @@ async function capAyar(arg){
     PARCA.ters = !!duzen.ters;
     PARCA.yolTipi = duzen.yolTipi || "parsel"; PARCA.yolKonum = duzen.yolKonum || "oto";
     PARCA.capTema = "yatay"; PARCA.olculer = duzen.olculer !== false;
-    PARCA.etiketKay = duzen.etiketKay ? { ...duzen.etiketKay } : {};
     const ol = document.getElementById("polcu");
   ol.value = PARCA.olculer === false ? "0" : "1";
   ol.onchange = () => { PARCA.olculer = ol.value === "1"; ozetCiz(); };
@@ -4286,6 +4258,14 @@ function muvafakatPng(p, G, Y){
   return c.toDataURL("image/png");
 }
 
+// donmus yazinin eksen hizali sinir kutusu
+function yaziKutusu(cx, cy, gen, yuk, aci){
+  const c = Math.abs(Math.cos(aci)), si = Math.abs(Math.sin(aci));
+  const w = gen*c + yuk*si, h = gen*si + yuk*c;
+  return { x1:cx - w/2, y1:cy - h/2, x2:cx + w/2, y2:cy + h/2 };
+}
+const kutuCakisiyor = (a,b) => !(a.x2 < b.x1 || b.x2 < a.x1 || a.y2 < b.y1 || b.y2 < a.y1);
+
 // resmi capa benzer cizim: kunye tablosu, kuzey gulu, parcalar ve olculer
 function capCizPng(p, cfg, kucuk){
   const parcalar = cfg?.parcalar || null;
@@ -4325,7 +4305,7 @@ function capCizPng(p, cfg, kucuk){
     x.restore();
   }
 
-  const etiketler = [];
+  const etiketler = [], dolu = [], bekleyen = [];
   const liste = (parcalar && parcalar.length > 1) ? parcalar : null;
   if(liste){
     const yer = capYerlesim(M, cfg);
@@ -4341,37 +4321,22 @@ function capCizPng(p, cfg, kucuk){
       x.font = `700 ${S(20)}px Arial`; x.fillStyle = "#111";
       x.fillText(String(bilgi.no || (i+1)), om[0], om[1] - S(12));
       x.font = `400 ${S(15)}px Arial`;
-      x.fillText(nfAkilli(bilgi.m2 ?? alanHesap(d)) + " m2", om[0], om[1] + S(10));
+      const m2Metin = nfAkilli(bilgi.m2 ?? alanHesap(d)) + " m2";
+      x.fillText(m2Metin, om[0], om[1] + S(10));
+      // no ve m2 blogunu dolu alan olarak isaretle
+      const blokGen = Math.max(x.measureText(m2Metin).width, S(30)) + S(10);
+      dolu.push({ x1:om[0]-blokGen/2, y1:om[1]-S(26), x2:om[0]+blokGen/2, y2:om[1]+S(20) });
 
-      // parcanin kenar olculeri
-      if(cfg.olculer !== false){
-        x.font = `400 ${S(11)}px Arial`; x.fillStyle = "#333";
+      // kenar olculeri: konumu sonra, carpismaya bakarak belirlenecek
+      if(cfg.olculer !== false && !kucuk){
         for(let k=0;k<d.length;k++){
           const j = (k+1) % d.length;
           const uz = Math.hypot(d[j][0]-d[k][0], d[j][1]-d[k][1]);
           if(uz < 4) continue;
           const a1 = ek[k], a2 = ek[j];
-          const ox = (a1[0]+a2[0])/2, oy = (a1[1]+a2[1])/2;
           const dx = a2[0]-a1[0], dy = a2[1]-a1[1], u = Math.hypot(dx,dy) || 1;
-          if(u < S(26)) continue;
-          const mx = om[0] - ox, my = om[1] - oy;
-          const nx = (-dy/u), ny = (dx/u);
-          const disa = (nx*mx + ny*my) > 0 ? -1 : 1;
-          let px = ox + nx*S(8)*disa, py = oy + ny*S(8)*disa;
-
-          const kimlik = `${i}-${k}`;
-          const kay = cfg.etiketKay && cfg.etiketKay[kimlik];
-          if(kay){ px += (kay.dx||0)*G; py += (kay.dy||0)*Y; }
-
-          let ac = Math.atan2(dy, dx);
-          if(Math.abs(ac) > Math.PI/2) ac += Math.PI;
-          const metin = uz.toFixed(1).replace(".",",") + " m";
-          etiketler.push({ id:kimlik, x:px/G, y:py/Y, aci:ac*180/Math.PI, metin });
-
-          if(!cfg.etiketGizle){
-            x.save(); x.translate(px, py); x.rotate(ac);
-            x.fillText(metin, 0, 0); x.restore();
-          }
+          if(u < 30) continue;
+          bekleyen.push({ a1, a2, dx, dy, u, om, metin: uz.toFixed(1).replace(".",",") + " m" });
         }
       }
     });
@@ -4411,6 +4376,43 @@ function capCizPng(p, cfg, kucuk){
     }
   }else{
     yol(N); x.fillStyle = "#F4F6F0"; x.fill();
+  }
+
+  // ---- kenar olculerini carpismadan yerlestir ----
+  if(bekleyen.length){
+    x.font = `400 ${S(11)}px Arial`; x.textAlign = "center"; x.textBaseline = "middle";
+    const konumlar = [0.5, 0.36, 0.64, 0.24, 0.76];
+    const uzakliklar = [9, 15, 22, 30];
+    bekleyen.forEach(b2=>{
+      const nx = -b2.dy/b2.u, ny = b2.dx/b2.u;
+      let ac = Math.atan2(b2.dy, b2.dx);
+      if(Math.abs(ac) > Math.PI/2) ac += Math.PI;
+      const gen = x.measureText(b2.metin).width + 4, yuk = S(13);
+
+      let yerlesti = false;
+      for(const uzk of uzakliklar){
+        for(const t of konumlar){
+          for(const yon of [-1, 1]){
+            const ox = b2.a1[0] + b2.dx*t, oy = b2.a1[1] + b2.dy*t;
+            const mx = b2.om[0] - ox, my = b2.om[1] - oy;
+            const disa = (nx*mx + ny*my) > 0 ? -1 : 1;
+            const s2 = yon === -1 ? disa : -disa;      // once disari, olmazsa iceri
+            const px = ox + nx*uzk*s2, py = oy + ny*uzk*s2;
+            const kutu = yaziKutusu(px, py, gen, yuk, ac);
+            if(kutu.x1 < 40 || kutu.y1 < 40 || kutu.x2 > G-40 || kutu.y2 > Y-40) continue;
+            if(dolu.some(k=>kutuCakisiyor(kutu, k))) continue;
+            dolu.push(kutu);
+            x.save(); x.translate(px, py); x.rotate(ac);
+            x.fillStyle = "rgba(255,255,255,.75)"; x.fillRect(-gen/2, -yuk/2, gen, yuk);
+            x.fillStyle = "#333"; x.fillText(b2.metin, 0, 0);
+            x.restore();
+            yerlesti = true; break;
+          }
+          if(yerlesti) break;
+        }
+        if(yerlesti) break;
+      }
+    });
   }
 
   SON_ETIKETLER = etiketler;
