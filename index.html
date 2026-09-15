@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 5.6";
+const SURUM = "beta 5.7";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -2132,7 +2132,7 @@ async function emsalHesapla(p){
 /* ---- parça ayar bileşeni: hem çap çizdirmede hem sunumda ---- */
 
 let PARCA = { bloklar:[], toplam:0, geometri:null, yolAlan:0, yolGenislik:0,
-              p:null, enAzYol:3, ters:false };
+              p:null, enAzYol:3, ters:false, yolTipi:"parsel", yolKonum:"oto" };
 
 let PSAYAC = 0;
 const yeniParca = (m2) => ({ id: ++PSAYAC, no:"", m2: Math.round(m2||200), renk:"#FFFFFF" });
@@ -2144,9 +2144,19 @@ function parcaAyarHtml(){
       <button id="blokTam">+ Tam genişlik blok</button>
       <button id="blokYol">+ Yol iki yanlı blok</button>
     </div>
+    <div class="row2">
+      <div class="field"><label>Yol adı</label><select id="pyoltip">
+        <option value="parsel">PARSEL YOLU</option>
+        <option value="resmi">RESMİ YOL</option></select></div>
+      <div class="field"><label>Yol nereden geçsin</label><select id="pyolkonum">
+        <option value="oto">Otomatik</option>
+        <option value="sol">Soldan</option>
+        <option value="sag">Sağdan</option>
+        <option value="orta">Ortadan</option></select></div>
+    </div>
     <div class="field"><label>Blok sırası</label><select id="pters">
       <option value="0">Normal</option><option value="1">Ters çevir</option></select>
-      <p class="ipuc" style="margin:8px 2px 0">Parsel yolu 3 m genişliğinde çizilir; girdiğin metrekareler hiç değişmez.</p></div>
+      <p class="ipuc" style="margin:8px 2px 0">Yol 3 m genişliğinde çizilir; girdiğin metrekareler hiç değişmez. Otomatik seçimde yol tek parçalı blokların kenarından, çok parçalı blokların ortasından geçer.</p></div>
     <div class="card" id="capOzet" style="font-size:13px"></div>`;
 }
 
@@ -2171,6 +2181,11 @@ function parcaKur(toplam, mevcut){
     PARCA.bloklar.push({ tip:"yol", parcalar:[], sol:[yeniParca(pay)], sag:[yeniParca(pay)] });
     numaralariTazele(); bloklariCiz();
   };
+  const yt = document.getElementById("pyoltip"), yk = document.getElementById("pyolkonum");
+  yt.value = PARCA.yolTipi || "parsel";
+  yk.value = PARCA.yolKonum || "oto";
+  yt.onchange = () => { PARCA.yolTipi = yt.value; ozetCiz(); };
+  yk.onchange = () => { PARCA.yolKonum = yk.value; ozetCiz(); };
   const tr = document.getElementById("pters");
   tr.value = PARCA.ters ? "1" : "0";
   tr.onchange = () => { PARCA.ters = tr.value === "1"; ozetCiz(); };
@@ -2284,7 +2299,7 @@ function ozetCiz(){
 }
 
 function parcaCfg(){
-  return { enAzYol: 3, ters: PARCA.ters,
+  return { enAzYol: 3, ters: PARCA.ters, yolTipi: PARCA.yolTipi, yolKonum: PARCA.yolKonum,
     bloklar: PARCA.bloklar.map(b=> b.tip === "yol"
       ? { tip:"yol", sol:b.sol.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })),
                      sag:b.sag.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })) }
@@ -3140,7 +3155,7 @@ function sunumCap(duzenleIx){
     g("yukleBolum").style.display = k === "yukle" ? "block" : "none";
     g("cizBolum").style.display   = k === "yukle" ? "none" : "block";
     if(k === "kayit" && kayitliCfg){
-      PARCA.bloklar = []; PARCA.enAzYol = 3; PARCA.ters = false;
+      PARCA.bloklar = []; PARCA.enAzYol = 3; PARCA.ters = false; PARCA.yolTipi = "parsel"; PARCA.yolKonum = "oto";
       parcaKur(alan, kayitliCfg.bloklar);
     }
   };
@@ -3686,9 +3701,15 @@ function capYerlesim(M, cfg){
     sinirlar.push(kes); s2 = kes;
   });
 
-  const kenarMerkez = dMin + w/2;
-  const ortaMerkez  = (dMin + dMax) / 2;
-  const merkez = bloklar.map(b=> b.tip === "yol" ? ortaMerkez : kenarMerkez);
+  const konum = cfg.yolKonum || "oto";
+  const solMerkez = dMin + w/2, sagMerkez = dMax - w/2, ortaMerkez = (dMin + dMax)/2;
+  const kenarMerkez = konum === "sag" ? sagMerkez : konum === "orta" ? ortaMerkez : solMerkez;
+  const merkez = bloklar.map(b=>{
+    if(konum === "sol") return solMerkez;
+    if(konum === "sag") return sagMerkez;
+    if(konum === "orta") return ortaMerkez;
+    return b.tip === "yol" ? ortaMerkez : kenarMerkez;   // otomatik
+  });
 
   const cikti = [], yolParcalari = [];
 
@@ -3786,7 +3807,7 @@ async function capAyar(arg){
 
   PARCA.geometri = capHalkasi(p);
   PARCA.toplam = alan;
-  PARCA.bloklar = []; PARCA.enAzYol = 3; PARCA.ters = false;
+  PARCA.bloklar = []; PARCA.enAzYol = 3; PARCA.ters = false; PARCA.yolTipi = "parsel"; PARCA.yolKonum = "oto";
 
   app.innerHTML = head(belgeId ? "Çapı düzenle" : "Çap çizdir", belgeId ? `go('parsel','${parselId}')` : "go('cap')") + `
     <div class="card">
@@ -3820,7 +3841,13 @@ async function capAyar(arg){
   if(duzen){
     PARCA.enAzYol = 3;
     PARCA.ters = !!duzen.ters;
-    const tr = document.getElementById("pters"); if(tr) tr.value = PARCA.ters ? "1" : "0";
+    PARCA.yolTipi = duzen.yolTipi || "parsel"; PARCA.yolKonum = duzen.yolKonum || "oto";
+    const yt = document.getElementById("pyoltip"), yk = document.getElementById("pyolkonum");
+  yt.value = PARCA.yolTipi || "parsel";
+  yk.value = PARCA.yolKonum || "oto";
+  yt.onchange = () => { PARCA.yolTipi = yt.value; ozetCiz(); };
+  yk.onchange = () => { PARCA.yolKonum = yk.value; ozetCiz(); };
+  const tr = document.getElementById("pters"); if(tr) tr.value = PARCA.ters ? "1" : "0";
     ozetCiz();
   }
 
@@ -3853,6 +3880,8 @@ async function capCiz(parselId, cfg, belgeId){
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
     pdf.addImage(png, "PNG", 10, 10, 190, 190*(1400/1000));
+    pdf.addPage();
+    pdf.addImage(muvafakatPng(p, 1000, 1400), "PNG", 10, 10, 190, 190*(1400/1000));
     const blob = pdf.output("blob");
     const damga = belgeId ? "" : "-" + String(Date.now()).slice(-4);
     const dosya = new File([blob], `cap-${p.mahalle||""}-${p.ada||0}-${p.parsel}${damga}.pdf`.replace(/\s+/g,"_"),
@@ -3878,6 +3907,116 @@ async function capCiz(parselId, cfg, belgeId){
 }
 
 // parsel sinirindan olcekli cap cizimi uretir
+
+/* ---- cap sayfasi tasarimi: cerceve, kunye, muvafakatname ---- */
+
+const CAP_R = { kirmizi:"#A3242C", gri:"#8B9096", sari:"#FCF3CF", cizgi:"#3A3A3A" };
+
+// kurumsal kirmizi-gri cerceve
+function capCerceve(x, G, Y){
+  x.fillStyle = "#FFFFFF"; x.fillRect(0,0,G,Y);
+  x.strokeStyle = CAP_R.kirmizi; x.lineWidth = 9;
+  x.strokeRect(16, 16, G-32, Y-32);
+  x.strokeStyle = CAP_R.gri; x.lineWidth = 2;
+  x.strokeRect(30, 30, G-60, Y-60);
+  x.strokeStyle = CAP_R.kirmizi; x.lineWidth = 1;
+  x.strokeRect(36, 36, G-72, Y-72);
+}
+
+// kunye tablosu (sari basliklar)
+function capKunye(x, p, sol, ust, gen){
+  const sy = 34, yariGen = gen/2, etiketGen = yariGen*0.42;
+  const satirlar = [
+    ["İL", duzgun(p.il), "ADA", p.ada || "—"],
+    ["İLÇE", duzgun(p.ilce), "PARSEL", p.parsel],
+    ["KÖY / MAH.", duzgun(p.mahalle), "YÜZÖLÇÜMÜ", nf(p.alan_m2) + " m²"]
+  ];
+  x.lineWidth = 1.2; x.strokeStyle = CAP_R.cizgi;
+  satirlar.forEach((r,i)=>{
+    const y = ust + i*sy;
+    [[sol, etiketGen, r[0], true], [sol+etiketGen, yariGen-etiketGen, r[1], false],
+     [sol+yariGen, etiketGen, r[2], true], [sol+yariGen+etiketGen, yariGen-etiketGen, r[3], false]]
+    .forEach(([hx, hw, metin, basMi])=>{
+      x.fillStyle = basMi ? CAP_R.sari : "#FFFFFF";
+      x.fillRect(hx, y, hw, sy);
+      x.strokeRect(hx, y, hw, sy);
+      x.fillStyle = "#111"; x.font = `${basMi?"700":"400"} 15px Arial`;
+      x.textAlign = "left"; x.textBaseline = "middle";
+      x.fillText(String(metin).slice(0,26), hx + 10, y + sy/2);
+    });
+  });
+  return ust + satirlar.length*sy;
+}
+
+// ikinci sayfa: muvafakatname
+function muvafakatPng(p, G, Y){
+  const c = document.createElement("canvas"); c.width = G; c.height = Y;
+  const x = c.getContext("2d");
+  capCerceve(x, G, Y);
+
+  const sol = 70, gen = G - 140;
+  x.textAlign = "center"; x.fillStyle = "#111"; x.font = "400 38px Georgia, serif";
+  x.fillText("MUVAFAKATNAME", G/2, 110);
+
+  // ozel parselasyon bilgileri
+  const sy = 34;
+  x.lineWidth = 1.2; x.strokeStyle = CAP_R.cizgi;
+  x.fillStyle = CAP_R.sari; x.fillRect(sol, 150, gen, sy); x.strokeRect(sol, 150, gen, sy);
+  x.fillStyle = "#111"; x.font = "400 17px Georgia, serif"; x.textAlign = "center"; x.textBaseline = "middle";
+  x.fillText("ÖZEL PARSELASYON BİLGİLERİ", sol + gen/2, 150 + sy/2);
+  [["PARSELASYON NO", ""], ["HİSSE YÜZÖLÇÜMÜ", ""]].forEach(([ad2,deger],i)=>{
+    const y = 150 + sy*(i+1), w1 = gen*0.42;
+    x.fillStyle = "#FFFFFF"; x.fillRect(sol, y, w1, sy); x.strokeRect(sol, y, w1, sy);
+    x.fillStyle = CAP_R.sari; x.fillRect(sol+w1, y, gen-w1, sy); x.strokeRect(sol+w1, y, gen-w1, sy);
+    x.fillStyle = "#111"; x.font = "400 16px Georgia, serif"; x.textAlign = "left";
+    x.fillText(ad2, sol + 10, y + sy/2);
+  });
+
+  // metin
+  const metinler = [
+    "",
+    "Ben …..................... oğlu/kızı …......................................",
+    "",
+    "Yukarıda ve yanda açık bilgileri yazılı olan …........ vasfındaki gayrımenkulü, …..................... oğlu/kızı …............................................... sattım. Satmış olduğum gayrımenkulde hiçbir tasarrufum kalmamıştır. Alıcı, satın almış olduğu gayrımenkulün tasarrufu esnasında komşu hisselere ve yol paylarına tecavüz edemez. Aksi halde doğacak olan tüm olumsuzluklardan alıcı bizzat sorumlu olup, maddi ve manevi giderleri karşılamayı peşinen taahhüt eder.",
+    "",
+    "",
+    "Ben …..................... oğlu/kızı …......................................",
+    "",
+    "Yukarıda ve yanda açık bilgileri yazılı olan ........ vasfındaki gayrımenkulden …......... m² hisse satın aldım. Aldığım hissenin sınırları dışına çıkmayacağımı, diğer hisse sınırlarına ve yol paylarına tecavüz etmeyeceğimi ve izale-i şuyu ile şufa davaları açmayacağımı taahhüt ederim. Aksi halde, T.C. Mahkemeleri nezdinde aleyhimdeki hiçbir karara itiraz etmeyeceğimi bu muvafakatnameyle taahhüt ederim."
+  ];
+  x.textAlign = "left"; x.fillStyle = "#111";
+  let y = 150 + sy*3 + 46;
+  metinler.forEach(par=>{
+    if(!par){ y += 16; return; }
+    OLCER.font = "400 17px Georgia, serif";
+    const satirlar = [];
+    let satir = "";
+    par.split(" ").forEach(k=>{
+      const dene = satir ? satir + " " + k : k;
+      if(OLCER.measureText(dene).width > gen - 20){ satirlar.push(satir); satir = k; }
+      else satir = dene;
+    });
+    if(satir) satirlar.push(satir);
+    x.font = "400 17px Georgia, serif";
+    satirlar.forEach(t=>{ x.fillText(t, sol + 10, y); y += 27; });
+    y += 10;
+  });
+
+  // alici - satici
+  y = Math.max(y + 60, Y - 300);
+  const kolon = [["ALICI:", sol + 40], ["SATICI:", sol + gen*0.55]];
+  kolon.forEach(([ad2, kx])=>{
+    x.font = "400 20px Georgia, serif"; x.fillStyle = "#111";
+    x.fillText(ad2, kx, y);
+    x.strokeStyle = CAP_R.cizgi; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(kx - 8, y + 10); x.lineTo(kx + 170, y + 10); x.stroke();
+    x.font = "400 18px Georgia, serif";
+    ["ADI:", "SOYADI:", "İMZASI:"].forEach((t,i)=> x.fillText(t, kx, y + 50 + i*34));
+  });
+
+  return c.toDataURL("image/png");
+}
+
 // resmi capa benzer cizim: kunye tablosu, kuzey gulu, parcalar ve olculer
 function capCizPng(p, cfg, kucuk){
   const parcalar = cfg?.parcalar || null;
@@ -3885,10 +4024,11 @@ function capCizPng(p, cfg, kucuk){
   if(!M) throw new Error("sınır çizimi yok");
 
   const G = kucuk ? 700 : 1000, Y = kucuk ? 900 : 1400;
-  const ustAlan = kucuk ? 110 : 280, altAlan = kucuk ? 30 : 90, kenar = kucuk ? 40 : 80;
+  const ustAlan = kucuk ? 110 : 330, altAlan = kucuk ? 30 : 90, kenar = kucuk ? 40 : 80;
   const c = document.createElement("canvas"); c.width = G; c.height = Y;
   const x = c.getContext("2d");
-  x.fillStyle = "#FFFFFF"; x.fillRect(0,0,G,Y);
+  if(kucuk){ x.fillStyle = "#FFFFFF"; x.fillRect(0,0,G,Y); }
+  else capCerceve(x, G, Y);
   const S = k => kucuk ? Math.max(8, Math.round(k*0.66)) : k;
 
   const minX = Math.min(...M.map(k=>k[0])), maxX = Math.max(...M.map(k=>k[0]));
@@ -3901,35 +4041,20 @@ function capCizPng(p, cfg, kucuk){
   const N = M.map(E);
   const yol = pts => { x.beginPath(); pts.forEach((k,i)=> i ? x.lineTo(k[0],k[1]) : x.moveTo(k[0],k[1])); x.closePath(); };
 
-  // ---- kunye tablosu ----
+  // ---- baslik ve kunye ----
   if(!kucuk){
-    const t = 30, tw = G - 60, sy = 34;
-    const sut = [[ "İl", duzgun(p.il) ], [ "İlçe", duzgun(p.ilce) ], [ "Mahalle", duzgun(p.mahalle) ]];
-    const sut2 = [[ "Ada", p.ada||"—" ], [ "Parsel", p.parsel ], [ "Tapu alanı (m²)", nf(p.alan_m2) ],
-                  [ "Nitelik", p.nitelik||"—" ], [ "Mevki", p.mevkii||"—" ]];
-    x.strokeStyle = "#333"; x.lineWidth = 1.4;
-    const ciz = (satir, ust) => {
-      const gen = tw / satir.length;
-      satir.forEach((s2,i)=>{
-        x.strokeRect(t + i*gen, ust, gen, sy);
-        x.strokeRect(t + i*gen, ust+sy, gen, sy);
-        x.textAlign = "center"; x.textBaseline = "middle";
-        x.font = "700 15px Arial"; x.fillStyle = "#111";
-        x.fillText(s2[0], t + i*gen + gen/2, ust + sy/2);
-        x.font = "400 15px Arial"; x.fillStyle = "#222";
-        x.fillText(String(s2[1]).slice(0,22), t + i*gen + gen/2, ust + sy + sy/2);
-      });
-    };
-    ciz(sut, 30); ciz(sut2, 30 + sy*2);
+    x.textAlign = "center"; x.fillStyle = "#111"; x.font = "400 34px Georgia, serif";
+    x.fillText("PARSELASYON KROKİSİ", G/2, 100);
+    capKunye(x, p, 62, 132, G - 124);
 
     // kuzey gulu
-    const kx2 = 74, ky2 = 224;
+    const kx2 = 96, ky2 = 300;
     x.save(); x.translate(kx2, ky2);
-    x.fillStyle = "#111"; x.font = "700 15px Arial"; x.textAlign = "center";
-    x.fillText("KUZEY", 0, -36);
-    x.beginPath(); x.moveTo(0,-26); x.lineTo(-9,10); x.lineTo(0,3); x.lineTo(9,10); x.closePath();
+    x.fillStyle = "#111"; x.font = "700 13px Arial"; x.textAlign = "center";
+    x.fillText("KUZEY", 0, -30);
+    x.beginPath(); x.arc(0,0,17,0,7); x.strokeStyle = "#333"; x.lineWidth = 1.2; x.stroke();
+    x.beginPath(); x.moveTo(0,-22); x.lineTo(-8,10); x.lineTo(0,3); x.lineTo(8,10); x.closePath();
     x.fillStyle = "#111"; x.fill();
-    x.beginPath(); x.arc(0,0,20,0,7); x.strokeStyle = "#333"; x.lineWidth = 1.2; x.stroke();
     x.restore();
   }
 
@@ -4002,8 +4127,8 @@ function capCizPng(p, cfg, kucuk){
         let ac = Math.atan2(yer.ana[1], yer.ana[0]);
         x.rotate(-ac + (Math.abs(ac) > Math.PI/2 ? Math.PI : 0));
         x.textAlign = "center"; x.textBaseline = "middle";
-        x.font = "700 12px Arial"; x.fillStyle = "#6C757D";
-        x.fillText("PARSEL YOLU", 0, 0);
+        x.font = "700 12px Arial"; x.fillStyle = "#5A6169";
+        x.fillText(cfg.yolTipi === "resmi" ? "RESMİ YOL" : "PARSEL YOLU", 0, 0);
         x.restore();
       }
     }
@@ -4018,9 +4143,9 @@ function capCizPng(p, cfg, kucuk){
     x.textAlign = "left"; x.textBaseline = "alphabetic";
     x.font = "400 14px Arial"; x.fillStyle = "#666";
     const pxPerM = olcek, pxPerCm = 1000/190*10;
-    x.fillText(`Ölçek 1 cm ≈ ${Math.round(pxPerCm/(pxPerM||1))} m`, 30, Y - 40);
+    x.fillText(`Ölçek 1 cm ≈ ${Math.round(pxPerCm/(pxPerM||1))} m`, 62, Y - 56);
     x.textAlign = "right";
-    x.fillText(new Date().toLocaleDateString("tr-TR"), G-30, Y - 40);
+    x.fillText(new Date().toLocaleDateString("tr-TR"), G-62, Y - 56);
   }
   return c.toDataURL("image/png");
 }
