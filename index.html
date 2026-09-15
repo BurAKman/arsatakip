@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 6.2";
+const SURUM = "beta 6.3";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -3594,16 +3594,21 @@ function mesafe(a, b){
 /* ---- geometri: metreye cevir, alan, yariduzlem kirpma, parcala ---- */
 
 // parselin dis halkasini metre duzlemine cevir
-// kayitli alan geometriden cok saparsa (eski hatali kayitlar) geometriyi esas al
+// Kayitli alani dogrula.
+// Eski surumde "7,116.82" gibi degerler yanlis okunup 7.11682 olarak kaydedilmisti.
+// Once 1000 ile carpip geometriye uyuyor mu bakariz (boylece TKGM'nin resmi rakamini
+// birebir geri kazaniriz); uymuyorsa son care geometriden olcume duseriz.
 function gercekAlan(p){
   const kayitli = +p?.alan_m2 || 0;
-  try{
-    const M = capHalkasi(p);
-    if(!M) return kayitli;
-    const geo = alanHesap(M);
-    if(geo > 1 && (kayitli < geo*0.5 || kayitli > geo*2)) return geo;
-    return kayitli || geo;
-  }catch(e){ return kayitli; }
+  let geo = 0;
+  try{ const M = capHalkasi(p); if(M) geo = alanHesap(M); }catch(e){}
+  if(!geo) return kayitli;
+  const yakin = (a,b) => Math.abs(a-b) <= b*0.06;      // cizim olcumu %6'ya kadar sapabilir
+  if(yakin(kayitli, geo)) return kayitli;              // kayit zaten dogru
+  for(const k of [1000, 100, 10]){                     // bozuk kaydi geri kazan
+    if(yakin(kayitli*k, geo)) return Math.round(kayitli*k*100)/100;
+  }
+  return geo;                                          // kurtarilamadi, olcumu kullan
 }
 
 function capHalkasi(p){
@@ -3907,11 +3912,14 @@ async function capAyar(arg){
       <div style="font-size:17px;font-weight:600;margin-top:2px">Ada ${esc(p.ada||"—")} · Parsel ${esc(p.parsel)}</div>
       <div class="kv" style="margin-top:8px"><span>Tapu alanı</span><b class="mono">${nf2(alan)} m²</b></div>
       <div class="kv"><span>Niteliği</span><b>${esc(p.nitelik||"—")}</b></div>
-      ${(geoAlan > 1 && Math.abs(geoAlan - kayitli) > Math.max(1, geoAlan*0.02))
-        ? `<div class="kv"><span style="color:var(--gold)">Çizimden ölçülen</span>
-             <b class="mono" style="color:var(--gold)">${nf2(geoAlan)} m²</b></div>
-           <button class="btn ghost" style="margin-top:10px" onclick="alaniDuzelt('${parselId}',${geoAlan.toFixed(2)})">
-             Kayıtlı alanı düzelt</button>` : ""}
+      ${Math.abs(alan - kayitli) > Math.max(0.5, alan*0.01)
+        ? `<div class="kv"><span style="color:var(--gold)">Kayıtta yazan</span>
+             <b class="mono" style="color:var(--gold)">${nf2(kayitli)} m²</b></div>
+           <p class="ipuc" style="margin:8px 2px 0">Kayıttaki değer hatalı görünüyor, doğrusu yukarıda kullanılıyor.
+             Kalıcı düzeltmek için aşağıdaki tuşa bas; TKGM'nin resmî rakamını almak istersen parsel detayından
+             "TKGM'den tazele" de.</p>
+           <button class="btn ghost" style="margin-top:10px" onclick="alaniDuzelt('${parselId}',${alan.toFixed(2)})">
+             Kayıtlı alanı düzelt (${nf2(alan)} m²)</button>` : ""}
     </div>
     <p class="ipuc">Çapı bloklardan kur. <b>Tam genişlik blok</b> parselin enini kaplar, yol kenarından geçer. <b>Yol iki yanlı blok</b> ortasından yol geçirir, soluna ve sağına istediğin kadar parça koyarsın. Blokları yukarı aşağı taşıyabilirsin.</p>
 
