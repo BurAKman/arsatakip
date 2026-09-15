@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 6.0";
+const SURUM = "beta 6.1";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -371,6 +371,10 @@ const ic = {
 };
 const svg = k => `<svg viewBox="0 0 24 24">${ic[k]}</svg>`;
 const esc = s => (s??"").toString().replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+const nf2 = n => (n == null || n === "" || !isFinite(n)) ? "—"
+  : Number(n).toLocaleString("tr-TR", { minimumFractionDigits:2, maximumFractionDigits:2 });
+const nfAkilli = n => (n == null || !isFinite(n)) ? "—"
+  : (Math.abs(n - Math.round(n)) < 0.005 ? Number(n).toLocaleString("tr-TR") : nf2(n));
 const nf = n => n==null||n===""?"—":Number(n).toLocaleString("tr-TR");
 const toast = m => { T.innerHTML = `<div class="toast">${esc(m)}</div>`; setTimeout(()=>T.innerHTML="",2600); };
 
@@ -2135,7 +2139,7 @@ let PARCA = { bloklar:[], toplam:0, geometri:null, yolAlan:0, yolGenislik:0,
               p:null, enAzYol:3, ters:false, yolTipi:"parsel", yolKonum:"oto", capTema:"yatay" };
 
 let PSAYAC = 0;
-const yeniParca = (m2) => ({ id: ++PSAYAC, no:"", m2: Math.round(m2||200), renk:"#FFFFFF" });
+const yeniParca = (m2) => ({ id: ++PSAYAC, no:"", m2: Math.round((m2||200)*100)/100, renk:"#FFFFFF" });
 
 function parcaAyarHtml(){
   return `
@@ -2192,6 +2196,13 @@ function parcaKur(toplam, mevcut){
   bloklariCiz();
 }
 
+async function alaniDuzelt(parselId, deger){
+  const { error } = await sb.from("parcels").update({ alan_m2: +deger }).eq("id", parselId);
+  if(error) return toast("Olmadı: " + error.message);
+  toast("Alan düzeltildi");
+  go("capAyar", parselId);
+}
+
 function blokParcalari(b){
   return b.tip === "yol" ? b.sol.concat(b.sag) : b.parcalar;
 }
@@ -2204,7 +2215,7 @@ function numaralariTazele(){
 function parcaSatirHtml(o, bi, yer, j){
   return `<div style="display:flex;gap:7px;align-items:center;margin-bottom:7px">
     <input id="pn${o.id}" value="${esc(o.no)}" style="width:52px;text-align:center;padding:10px 3px">
-    <input id="pm${o.id}" inputmode="decimal" value="${Math.round(o.m2)}" style="flex:1;text-align:right">
+    <input id="pm${o.id}" inputmode="decimal" value="${nfAkilli(o.m2)}" style="flex:1;text-align:right">
     <input type="color" id="pr${o.id}" value="${o.renk}" style="width:44px;height:40px;padding:3px;border-radius:9px">
     <button class="sil" style="width:32px;height:32px" onclick="parcaSil(${bi},'${yer}',${j})">${svg("trash")}</button>
   </div>`;
@@ -2245,7 +2256,7 @@ function bloklariCiz(){
   PARCA.bloklar.forEach(b=>blokParcalari(b).forEach(o=>{
     const n = document.getElementById("pn"+o.id), m = document.getElementById("pm"+o.id), c = document.getElementById("pr"+o.id);
     if(n) n.oninput = () => { o.no = n.value; onizlemeCiz(); };
-    if(m) m.oninput = () => { o.m2 = sayiCoz(m.value) || 0; ozetCiz(); };
+    if(m) m.oninput = () => { o.m2 = Math.round((sayiCoz(m.value)||0)*100)/100; ozetCiz(); };
     if(c) c.oninput = () => { o.renk = c.value; onizlemeCiz(); };
   }));
   ozetCiz();
@@ -2282,12 +2293,15 @@ function ozetCiz(){
   }
   PARCA.yolAlan = Math.round(yolAlan); PARCA.yolGenislik = yolGen;
 
+  const kalan = PARCA.toplam - parcaAlan;
   const o = document.getElementById("capOzet");
   if(o) o.innerHTML = `
-    <div class="kv"><span>Parselin alanı</span><b class="mono">${nf(Math.round(PARCA.toplam))} m²</b></div>
-    <div class="kv"><span>Parçalar (${hepsi.length} adet)</span><b class="mono">${nf(Math.round(parcaAlan))} m²</b></div>
+    <div class="kv"><span>Parselin alanı</span><b class="mono">${nf2(PARCA.toplam)} m²</b></div>
+    <div class="kv"><span>Parçalar (${hepsi.length} adet)</span><b class="mono">${nf2(parcaAlan)} m²</b></div>
     <div class="kv" style="border-top:1px solid var(--cizgi);margin-top:6px;padding-top:8px">
-      <span style="color:var(--gold)">Parsel yolu</span>
+      <span style="color:${kalan < -0.5 ? "var(--red)" : "var(--green)"}">${kalan < -0.5 ? "Fazla girildi" : "Kalan"}</span>
+      <b class="mono" style="color:${kalan < -0.5 ? "var(--red)" : "var(--green)"}">${nf2(Math.abs(kalan))} m²</b></div>
+    <div class="kv"><span style="color:var(--gold)">Parsel yolu</span>
       <b class="mono" style="color:var(--gold)">3 m genişlik</b></div>
     ${false ? "" : (yolGen < 1
         ? `<p class="ipuc" style="margin:8px 2px 0;color:var(--gold)">Girdiğin metrekareler birebir uygulandı; yola sadece ${nf(PARCA.yolAlan)} m² kaldığı için yol ${yolGen.toFixed(2).replace(".",",")} m genişliğinde. Daha geniş yol istersen parça metrekarelerini düşür ya da alttaki küçültme seçeneğini aç.</p>`
@@ -3029,7 +3043,7 @@ function capSeffafPng(p, cfg, mod, ayar){
         const no = String(bilgi.no || (i+1));
         x.strokeText(no, om[0], om[1]-34); x.fillStyle = tema.yaziRenk; x.fillText(no, om[0], om[1]-34);
         x.font = "700 34px Arial";
-        const m2 = nf(Math.round(bilgi.m2 || alanHesap(d))) + " m²";
+        const m2 = nfAkilli(bilgi.m2 ?? alanHesap(d)) + " m²";
         x.strokeText(m2, om[0], om[1]+14); x.fillText(m2, om[0], om[1]+14);
         x.font = "700 24px Arial";
         const ov = `${ol.en.toFixed(1).replace(".",",")} × ${ol.boy.toFixed(1).replace(".",",")} m`;
@@ -3865,7 +3879,11 @@ async function capAyar(arg){
   const [parselId, belgeId] = String(arg||"").split("|");
   const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
   if(!p || !p.geojson) return toast("Bu parselin sınır çizimi yok");
-  const alan = Math.round(+p.alan_m2 || 0);
+  const M0 = capHalkasi(p);
+  const geoAlan = M0 ? alanHesap(M0) : 0;
+  const kayitli = +p.alan_m2 || 0;
+  // kayitli deger geometriden cok saparsa (eski hatali kayitlar) geometriyi esas al
+  const alan = (geoAlan > 1 && (kayitli < geoAlan*0.5 || kayitli > geoAlan*2)) ? geoAlan : (kayitli || geoAlan);
   const eski = p.cap_config;
 
   PARCA.geometri = capHalkasi(p);
@@ -3876,8 +3894,13 @@ async function capAyar(arg){
     <div class="card">
       <div style="font-size:12px;color:var(--ink-3)">${esc(duzgun(p.mahalle))}</div>
       <div style="font-size:17px;font-weight:600;margin-top:2px">Ada ${esc(p.ada||"—")} · Parsel ${esc(p.parsel)}</div>
-      <div class="kv" style="margin-top:8px"><span>Toplam alan</span><b class="mono">${nf(alan)} m²</b></div>
+      <div class="kv" style="margin-top:8px"><span>Tapu alanı</span><b class="mono">${nf2(alan)} m²</b></div>
       <div class="kv"><span>Niteliği</span><b>${esc(p.nitelik||"—")}</b></div>
+      ${(geoAlan > 1 && Math.abs(geoAlan - kayitli) > Math.max(1, geoAlan*0.02))
+        ? `<div class="kv"><span style="color:var(--gold)">Çizimden ölçülen</span>
+             <b class="mono" style="color:var(--gold)">${nf2(geoAlan)} m²</b></div>
+           <button class="btn ghost" style="margin-top:10px" onclick="alaniDuzelt('${parselId}',${geoAlan.toFixed(2)})">
+             Kayıtlı alanı düzelt</button>` : ""}
     </div>
     <p class="ipuc">Çapı bloklardan kur. <b>Tam genişlik blok</b> parselin enini kaplar, yol kenarından geçer. <b>Yol iki yanlı blok</b> ortasından yol geçirir, soluna ve sağına istediğin kadar parça koyarsın. Blokları yukarı aşağı taşıyabilirsin.</p>
 
@@ -4095,7 +4118,7 @@ function capKunye(x, p, sol, ust, gen){
   const satirlar = [
     ["İL", duzgun(p.il), "ADA", p.ada || "—"],
     ["İLÇE", duzgun(p.ilce), "PARSEL", p.parsel],
-    ["KÖY / MAH.", duzgun(p.mahalle), "YÜZÖLÇÜMÜ", nf(p.alan_m2) + " m²"]
+    ["KÖY / MAH.", duzgun(p.mahalle), "YÜZÖLÇÜMÜ", nf2(p.alan_m2) + " m²"]
   ];
   x.lineWidth = 1.2; x.strokeStyle = CAP_R.cizgi;
   satirlar.forEach((r,i)=>{
@@ -4235,7 +4258,7 @@ function capCizPng(p, cfg, kucuk){
       x.font = `700 ${S(20)}px Arial`; x.fillStyle = "#111";
       x.fillText(String(bilgi.no || (i+1)), om[0], om[1] - S(12));
       x.font = `400 ${S(15)}px Arial`;
-      x.fillText(nf(Math.round(bilgi.m2 || alanHesap(d))) + " m2", om[0], om[1] + S(10));
+      x.fillText(nfAkilli(bilgi.m2 ?? alanHesap(d)) + " m2", om[0], om[1] + S(10));
 
       // parcanin kenar olculeri
       if(!kucuk){
