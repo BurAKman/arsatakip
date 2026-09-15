@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 6.6";
+const SURUM = "beta 1.0";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -461,6 +461,10 @@ async function anaMenu(){
       <b>KML</b><small>İndir, Earth'te aç</small></button>
     <button class="tile mavi mini" onclick="go('cap')">
       <b>Çap</b><small>Çiz veya yükle</small></button>
+    <button class="tile wide gri" onclick="go('yaklasan')" style="min-height:0;padding:15px 14px">
+      <div style="display:flex;align-items:center;gap:13px">
+        <div class="ic" style="margin:0">${svg("note")}</div>
+        <div><b>Yaklaşanlar</b><small>Vekalet süreleri, vadeler</small></div></div></button>
     <button class="tile wide gri" onclick="go('hesap')" style="min-height:0;padding:15px 14px">
       <div style="display:flex;align-items:center;gap:13px">
         <div class="ic" style="margin:0">${svg("money")}</div>
@@ -671,6 +675,234 @@ const secimAdi = (pre,k) => {
 };
 
 
+
+/* ---- sesle doldurma ---- */
+
+let SESLI_SONUC = null;
+
+const RAKAM_SOZ = { "sıfır":0,"bir":1,"iki":2,"üç":3,"dört":4,"beş":5,"altı":6,"yedi":7,"sekiz":8,"dokuz":9,
+  "on":10,"yirmi":20,"otuz":30,"kırk":40,"elli":50,"altmış":60,"yetmiş":70,"seksen":80,"doksan":90,
+  "yüz":100,"bin":1000 };
+
+function sozdenSayi(metin){
+  const t = String(metin||"").toLocaleLowerCase("tr").trim();
+  const d = t.replace(/[^\d]/g,"");
+  if(d) return +d;
+  let toplam = 0, gecici = 0, bulundu = false;
+  t.split(/\s+/).forEach(k=>{
+    const v = RAKAM_SOZ[k];
+    if(v == null) return;
+    bulundu = true;
+    if(v === 100 || v === 1000){ gecici = (gecici || 1) * v; toplam += gecici; gecici = 0; }
+    else gecici += v;
+  });
+  toplam += gecici;
+  return bulundu ? toplam : null;
+}
+
+function konus(metin){
+  return new Promise(res=>{
+    try{
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(metin);
+      u.lang = "tr-TR"; u.rate = 1.02;
+      u.onend = () => res(); u.onerror = () => res();
+      window.speechSynthesis.speak(u);
+      setTimeout(res, 4500);
+    }catch(e){ res(); }
+  });
+}
+
+function dinle(){
+  return new Promise((res, rej)=>{
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR) return rej(new Error("Bu cihaz sesli komutu desteklemiyor"));
+    const t = new SR();
+    t.lang = "tr-TR"; t.interimResults = true; t.continuous = true; t.maxAlternatives = 1;
+    let biriken = "", kapandi = false, sayac = null;
+    const bitir = () => { if(!kapandi){ kapandi = true; try{ t.stop(); }catch(e){} } };
+    SES_DURDUR = bitir;
+    const kur = () => { clearTimeout(sayac); sayac = setTimeout(bitir, 1800); };
+    kur();
+    t.onresult = e => {
+      let gecici = "";
+      for(let i=0;i<e.results.length;i++){
+        const r = e.results[i];
+        if(r.isFinal) biriken += r[0].transcript + " "; else gecici += r[0].transcript;
+      }
+      const c = document.getElementById("sesCanli");
+      if(c) c.textContent = (biriken + gecici).trim();
+      kur();
+    };
+    t.onerror = e => { clearTimeout(sayac); rej(new Error(e.error === "not-allowed" ? "Mikrofon izni verilmedi" : "Ses alınamadı")); };
+    t.onend = () => { clearTimeout(sayac); res(biriken.trim()); };
+    t.start();
+  });
+}
+let SES_DURDUR = null;
+
+// listede en yakin secenegi bul
+function listedeAra(liste, metin){
+  const hedef = sade(metin);
+  if(!hedef) return null;
+  let enIyi = null, puanEnIyi = 0;
+  liste.forEach(o=>{
+    const ad2 = String(ad(o)||""), s2 = sade(ad2);
+    if(!s2) return;
+    let puan = 0;
+    if(s2 === hedef) puan = 100;
+    else if(s2.startsWith(hedef) || hedef.startsWith(s2)) puan = 82;
+    else if(s2.includes(hedef) || hedef.includes(s2)) puan = 64;
+    if(puan > puanEnIyi){ puanEnIyi = puan; enIyi = { id:kim(o), ad:ad2 }; }
+  });
+  return puanEnIyi >= 64 ? enIyi : null;
+}
+
+const SES_ADIM = [
+  { alan:"il",     soru:"İli söyleyin",     etiket:"İl" },
+  { alan:"ilce",   soru:"İlçeyi söyleyin",  etiket:"İlçe" },
+  { alan:"mah",    soru:"Köy veya mahalleyi söyleyin", etiket:"Köy / mahalle" },
+  { alan:"ada",    soru:"Ada numarasını söyleyin",    etiket:"Ada", sayi:true },
+  { alan:"parsel", soru:"Parsel numarasını söyleyin", etiket:"Parsel", sayi:true }
+];
+
+let SES = { adim:0, secim:{}, liste:[], calisiyor:false };
+
+async function sesliDoldur(){
+  SES = { adim:0, secim:{}, liste:[], calisiyor:false };
+  sesEkraniCiz("Hazır olduğunda başlat.");
+  sesListeYukle();
+}
+
+function sesEkraniCiz(durum, duyulan){
+  const s2 = SES.secim;
+  app.innerHTML = head("Sesle doldur","sesCik()") + `
+    <div class="card">
+      ${SES_ADIM.map((a,i)=>{
+        const deger = s2[a.alan]?.ad ?? s2[a.alan] ?? "";
+        const aktif = i === SES.adim;
+        return `<div class="kv" style="padding:9px 0;${aktif?"":"opacity:.6"}">
+          <span style="${aktif?"color:var(--gold);font-weight:600":""}">${a.etiket}</span>
+          <b class="mono" style="${deger?"":"color:var(--ink-3)"}">${deger ? esc(String(deger)) : "—"}</b></div>`;
+      }).join("")}
+    </div>
+
+    <div class="card" style="text-align:center;padding:22px 16px">
+      <div style="font-size:40px;line-height:1">${SES.calisiyor ? "🎤" : "🔊"}</div>
+      <div style="font-size:15px;font-weight:600;margin-top:8px">${esc(durum||"")}</div>
+      <div id="sesCanli" style="font-size:14px;color:#fff;margin-top:8px;min-height:20px">${esc(duyulan||"")}</div>
+      <div class="acts" style="margin-top:14px">
+        <button class="pri" id="sesBas">${SES.calisiyor ? "Dinliyorum…" : (SES.adim ? "Tekrar söyle" : "Başlat")}</button>
+        <button id="sesAtla">Bu adımı elle yaz</button>
+      </div>
+    </div>
+
+    <div class="card" id="sesElle" style="display:none">
+      <div class="field" style="margin:0"><label id="sesElleEtiket"></label>
+        <input id="sesElleGiris" placeholder="Yazıp onayla"></div>
+      <button class="btn" style="margin-top:12px" id="sesElleOnay">Onayla</button>
+    </div>`;
+
+  document.getElementById("sesBas").onclick = sesAdimCalistir;
+  document.getElementById("sesAtla").onclick = sesElleAc;
+  document.getElementById("sesElleOnay").onclick = sesElleOnayla;
+}
+
+function sesCik(){
+  try{ window.speechSynthesis.cancel(); }catch(e){}
+  if(SES_DURDUR) SES_DURDUR();
+  go("harita");
+}
+
+// o adimin listesini yukle (il / ilce / mahalle)
+async function sesListeYukle(){
+  const a = SES_ADIM[SES.adim];
+  if(!a || a.sayi){ SES.liste = []; return; }
+  try{
+    if(a.alan === "il") SES.liste = (await ilkCalisan(IL_UCLARI)).d;
+    if(a.alan === "ilce") SES.liste = (await ilkCalisan(ILCE_UCLARI(SES.secim.il.id))).d;
+    if(a.alan === "mah") SES.liste = (await ilkCalisan(MAH_UCLARI(SES.secim.ilce.id))).d;
+  }catch(e){ SES.liste = []; }
+}
+
+async function sesAdimCalistir(){
+  if(SES.calisiyor) return;
+  const a = SES_ADIM[SES.adim];
+  if(!a) return;
+  SES.calisiyor = true;
+  sesEkraniCiz(a.soru);
+  await konus(a.soru);
+  try{
+    const duyulan = await dinle();
+    SES.calisiyor = false;
+    if(!duyulan){ sesEkraniCiz("Bir şey duyamadım, tekrar dene."); await konus("Duyamadım, tekrar söyleyin"); return; }
+
+    if(a.sayi){
+      const n = sozdenSayi(duyulan);
+      if(n == null || n <= 0){
+        sesEkraniCiz(`"${duyulan}" bir numara değil, tekrar söyle.`, duyulan);
+        await konus("Anlayamadım, numarayı tekrar söyleyin"); return;
+      }
+      SES.secim[a.alan] = String(n);
+      await sesSonraki(`${a.etiket} ${n}`);
+      return;
+    }
+
+    const bulunan = listedeAra(SES.liste, duyulan);
+    if(!bulunan){
+      sesEkraniCiz(`"${duyulan}" listede yok, tekrar söyle.`, duyulan);
+      await konus("Bu isim listede bulunamadı, tekrar söyleyin");
+      return;
+    }
+    SES.secim[a.alan] = bulunan;
+    await sesSonraki(bulunan.ad);
+  }catch(e){
+    SES.calisiyor = false;
+    sesEkraniCiz(e.message || "Ses alınamadı");
+  }
+}
+
+async function sesSonraki(onayMetni){
+  SES.adim++;
+  sesEkraniCiz("Yükleniyor…");
+  await konus(onayMetni);
+  if(SES.adim >= SES_ADIM.length) return sesTamamla();
+  await sesListeYukle();
+  sesEkraniCiz("Hazır, dokunup söyle.");
+  sesAdimCalistir();
+}
+
+function sesElleAc(){
+  const a = SES_ADIM[SES.adim];
+  if(!a) return;
+  const k = document.getElementById("sesElle");
+  k.style.display = "block";
+  document.getElementById("sesElleEtiket").textContent = a.etiket;
+  document.getElementById("sesElleGiris").focus();
+}
+
+async function sesElleOnayla(){
+  const a = SES_ADIM[SES.adim];
+  const v = document.getElementById("sesElleGiris").value.trim();
+  if(!v) return;
+  if(a.sayi){
+    const n = sozdenSayi(v);
+    if(n == null) return toast("Sayı yaz");
+    SES.secim[a.alan] = String(n);
+  }else{
+    const bulunan = listedeAra(SES.liste, v);
+    if(!bulunan) return toast("Listede böyle bir kayıt yok");
+    SES.secim[a.alan] = bulunan;
+  }
+  await sesSonraki(a.etiket + " tamam");
+}
+
+async function sesTamamla(){
+  SESLI_SONUC = { ...SES.secim };
+  await konus("Parsel sorgulanıyor");
+  go("harita");
+}
+
 /* ================= harita ================= */
 
 let HARITA = null, KATMAN = null, SONPARSEL = null;
@@ -684,6 +916,8 @@ async function harita(){
       <input id="hada" inputmode="numeric" placeholder="Ada">
       <input id="hpar" inputmode="numeric" placeholder="Parsel">
       <button class="btn full" id="sor">Sorgula</button>
+      <button class="btn ghost full" id="sesli" style="display:flex;align-items:center;justify-content:center;gap:9px">
+        <span style="font-size:17px">🎤</span> Sesle doldur</button>
     </div>
     <p class="ipuc">Haritada bir parselin üstüne dokunarak da sorgulayabilirsin.</p>
     <div id="tani"></div>
@@ -696,7 +930,30 @@ async function harita(){
 
   idariKur("h");
   document.getElementById("sor").onclick = adaParselSorgu;
+  document.getElementById("sesli").onclick = () => go("sesli");
+  if(SESLI_SONUC) sesliDegerleriUygula();
   HARITA.on("click", e => noktaSorgu(e.latlng.lat, e.latlng.lng));
+}
+
+// sesli ekrandan gelen secimleri kutulara yaz ve sorgula
+async function sesliDegerleriUygula(){
+  const sec = SESLI_SONUC; SESLI_SONUC = null;
+  const bekle = (el, sart) => new Promise(res=>{
+    let n = 0;
+    const t = setInterval(()=>{ if(sart() || ++n > 80){ clearInterval(t); res(); } }, 250);
+  });
+  const g = k => document.getElementById(k);
+  try{
+    await bekle(null, ()=> g("hil") && g("hil").tagName === "SELECT" && g("hil").options.length > 1);
+    g("hil").value = sec.il.id; g("hil").dispatchEvent(new Event("change"));
+    await bekle(null, ()=> g("hilce").options.length > 1);
+    g("hilce").value = sec.ilce.id; g("hilce").dispatchEvent(new Event("change"));
+    await bekle(null, ()=> g("hmah").options.length > 1);
+    g("hmah").value = sec.mah.id;
+    g("hada").value = sec.ada || "";
+    g("hpar").value = sec.parsel || "";
+    adaParselSorgu();
+  }catch(e){ toast("Kutular doldurulamadı, elle seç"); }
 }
 
 async function adaParselSorgu(){
@@ -738,8 +995,6 @@ function ciz(f){
         <a class="dis kirmizi" href="https://e-plan.gov.tr/" target="_blank" rel="noopener"
            onclick="eplanKunye(${m.lat},${m.lng})">İmar planı</a>
         ${ME.role==='admin'?`<button class="pri" onclick="haritadanKaydet()">Kaydet</button>`:""}
-        <button onclick="cevreRaporu()">Çevre raporu</button>
-        <button onclick="go('emsal')">Emsal araştır</button>
       </div>
     </div>`;
 }
@@ -1182,8 +1437,9 @@ async function parselDetay(id){
       ${y && ME.role==='admin' ? `<button class="btn ghost" style="margin-top:10px"
         onclick="SONPARSELID='${id}';go('fiyatDuzen','${y.id}')">Tapu bilgilerini düzenle</button>
       <button class="btn ghost" style="margin-top:8px" onclick="go('sunum','${id}')">Sunum görseli hazırla</button>
+      <button class="btn ghost" style="margin-top:8px" onclick="go('emsal','${id}')">Emsal ekle</button>
       <button class="btn" style="margin-top:8px;background:linear-gradient(160deg,#F0705C,#C6402C);color:#fff"
-        onclick="go('musteri','${id}')">Müşteri için sunum hazırla</button>` : ""}
+        onclick="go('dosya','${id}')">RAPOR · parsel dosyası hazırla</button>` : ""}
     </div>
 
     ${y ? `<div class="card">
@@ -1804,16 +2060,6 @@ function dosyaAdi(p, ek){
 }
 
 
-async function cevreRaporu(){
-  if(!SONPARSEL) return toast("Önce bir parsel sorgula");
-  const kutu = document.querySelector("#bilgi .acts");
-  if(kutu) kutu.insertAdjacentHTML("beforeend",
-    `<div id="rapdurum" style="flex:1 1 100%;text-align:center;color:var(--ink-3);font-size:13px;padding-top:8px">çevre taranıyor…</div>`);
-  try{ await cevreUret(true); toast("Çevre raporu indirildi"); }
-  catch(e){ toast("Olmadı: " + (e.message||e)); }
-  document.getElementById("rapdurum")?.remove();
-}
-
 // cevre verisini cikarir; indir=true ise PDF de uretir
 async function cevreUret(indir){
   const p = SONPARSEL.properties || {};
@@ -1896,740 +2142,483 @@ async function parseleIliskilendir(p, blob, ad2, tur){
 }
 
 
-/* ---- emsal araştırma ve değer tahmini ---- */
+/* ---- emsal girisi ve bolge fiyat hafizasi ---- */
 
-let EMSAL_EK = null;   // istege bagli yuklenen cevre raporu
+async function emsalEkle(parselId){
+  const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
+  if(!p) return toast("Parsel bulunamadı");
+  const { data:eskiler } = await sb.from("emsal_kayit").select("*")
+    .eq("parcel_id", parselId).order("created_at",{ascending:false});
 
-async function emsal(){
-  const p = SONPARSEL?.properties || null;
-  app.innerHTML = head("Emsal araştır", p ? "go('harita')" : "go('ana')") + `<div class="spin"></div>`;
+  app.innerHTML = head("Emsal ekle", `go('parsel','${parselId}')`) + `
+    <p class="ipuc">Sahibinden'de gördüğün ilanları buraya gir. Kaydettiğinde arka planda her emsalin konumu,
+      yola cephesi ve arazi yapısı çıkarılıp saklanır; rapor bunları kullanır. Ekranda ayrıca bir şey üretilmez.</p>
 
-  // kayitli parselse bilgileri kendimiz cekelim
-  let kayit = null;
-  if(p){
-    const { data } = await sb.from("parcels")
-      .select("id,alan_m2,parcel_years(yil,tapu_durumu,hisse_pay,hisse_m2,m2_fiyat)")
-      .eq("parsel", String(p.parselNo||"")).eq("mahalle", p.mahalleAd||"").limit(1);
-    kayit = data?.[0] || null;
-  }
-  const yilKayit = kayit?.parcel_years?.find(x=>x.yil===YEAR) || kayit?.parcel_years?.[0] || null;
-  const alanVar = kayit?.alan_m2 || alanCoz(p?.alan) || "";
-  const payVar  = yilKayit?.tapu_durumu === "hisseli" ? (yilKayit.hisse_m2 || "") : "";
+    ${(eskiler||[]).length ? `<div class="card">
+      <div class="bolum"><span class="rz altin">${svg("money")}</span><b>Bu parsel için kayıtlı emsaller</b>
+        <span class="sayi">${eskiler.length}</span></div>
+      ${eskiler.map(o=>`<div style="border-top:1px solid var(--cizgi);padding:10px 0">
+        <div style="display:flex;align-items:center;gap:8px">
+          <b style="flex:1;font-size:14px">${esc(duzgun(o.mahalle||""))} ${esc(o.ada||"")}/${esc(o.parsel||"—")}</b>
+          <b class="mono" style="color:var(--gold)">${nf(Math.round(o.birim_fiyat||0))} ₺/m²</b></div>
+        <div style="font-size:11.5px;color:var(--ink-3);margin-top:3px">
+          ${nf(Math.round(o.alan_m2||0))} m² · ${nf(Math.round(o.fiyat||0))} ₺ · ${new Date(o.tarih).toLocaleDateString("tr-TR")}
+          ${o.analiz?.yolaCephe != null ? ` · yola cephe ${o.analiz.yolaCephe} m` : ""}</div>
+        <div style="display:flex;gap:8px;margin-top:7px">
+          ${o.ilan_url?`<a class="pill gold" href="${esc(o.ilan_url)}" target="_blank" rel="noopener">ilanı aç</a>`:""}
+          ${ME.role==='admin'?`<button class="pill sade" onclick="emsalSil('${o.id}','${parselId}')">sil</button>`:""}
+        </div></div>`).join("")}
+    </div>` : ""}
 
-  app.innerHTML = head("Emsal araştır", p ? "go('harita')" : "go('ana')") + `
-    ${p?`<div class="card">
-      <div style="font-size:12px;color:var(--ink-3)">${esc(p.mahalleAd||"")} · ${esc(p.ilceAd||"")}</div>
-      <div style="font-size:17px;font-weight:600;margin-top:2px">Ada ${esc(p.adaNo||"—")} · Parsel ${esc(p.parselNo||"—")}</div>
-      <div class="kv" style="margin-top:6px"><span>Kayıt durumu</span>
-        <b>${kayit ? "Arazilerde kayıtlı" : "Henüz kayıtlı değil"}</b></div>
-    </div>`:`<p class="ipuc">Haritadan bir parsel sorgulayıp gelirsen bilgiler kendiliğinden dolar.</p>`}
-
-    <h3 style="font-size:14px;margin:20px 0 10px">Değerlenecek parsel</h3>
-    <div class="card">
-      <div class="row2">
-        <div class="field" style="margin:0"><label>Toplam alan (m²)</label>
-          <input id="bizM2" inputmode="decimal" value="${alanVar?Math.round(alanVar):""}"></div>
-        <div class="field" style="margin:0"><label>Payınız (m², boşsa tamamı)</label>
-          <input id="bizPay" inputmode="decimal" value="${payVar?Math.round(payVar):""}"></div>
-      </div>
-      ${kayit?`<button class="btn ghost" style="margin-top:12px" id="cek">Kayıttan tekrar çek</button>`:""}
-    </div>
-
-    <h3 style="font-size:14px;margin:22px 0 10px">Gördüğün emsal ilanlar</h3>
-    <p class="ipuc">Kaç tane girersen o kadarı hesaba katılır. Hiç girmezsen rakam yerine çevre değerlendirmesi hazırlanır.</p>
     <div id="emsatir"></div>
-    <button class="btn ghost" id="emEkle">Emsal ekle</button>
-
-    <h3 style="font-size:14px;margin:24px 0 10px">Gözlemler</h3>
-    <div class="field"><label>Parselin özellikleri (isteğe bağlı)</label>
-      <textarea id="gozlem" rows="4" placeholder="Yola cepheli, köye 800 m, sulama var, hisseli…"></textarea></div>
-
-    <div class="card" id="cevreKutu">
-      <label style="display:flex;align-items:center;gap:10px;margin:0;font-size:13.5px;color:var(--ink)">
-        <input type="checkbox" id="cevreKat" style="width:20px;height:20px" ${CEVRE_SON?"checked":""} ${CEVRE_SON?"":"disabled"}>
-        <span style="flex:1">Çevre raporunu değerlendirmeye kat</span></label>
-      <div class="ipuc" id="cevreNot" style="margin:8px 0 0">${CEVRE_SON
-        ? "Çevre verisi hazır, değerlendirmeye katılacak."
-        : "Henüz çevre verisi yok."}</div>
-      ${!CEVRE_SON && p ? `<button class="btn ghost" style="margin-top:11px" id="cevreYap">Çevre raporunu şimdi çıkar</button>` : ""}
-    </div>
-
-    <div id="sonuc" class="card" style="display:none"></div>
-    <button class="btn" id="hesapla">Değer tahmini yap</button>`;
+    <button class="btn ghost" id="emEkle" style="margin-bottom:14px">+ Emsal satırı ekle</button>
+    <div id="emDurum" class="ipuc" style="margin:0 2px 12px"></div>
+    <button class="btn" id="emKaydet">Emsalleri kaydet</button>`;
 
   let sayac = 0;
   const satirEkle = () => {
     const i = sayac++;
     document.getElementById("emsatir").insertAdjacentHTML("beforeend", `
       <div class="card emsatirim" data-i="${i}" style="padding:12px">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-          <input id="ea${i}" placeholder="Ada/parsel ya da açıklama" style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:11px;color:var(--ink-3);font-family:'IBM Plex Mono',monospace">${i+1}. EMSAL</span>
+          <span style="flex:1"></span>
           <button class="sil" onclick="this.closest('.emsatirim').remove()">${svg("trash")}</button></div>
         <div class="row2">
-          <input id="em${i}" inputmode="decimal" placeholder="Toplam alan m²">
-          <input id="ef${i}" inputmode="decimal" placeholder="İstenen fiyat ₺"></div>
-        <div class="ipuc" id="eb${i}" style="margin:8px 2px 0">m² fiyatı: —</div>
+          <div class="field" style="margin:0 0 10px"><label>İl</label><input id="eil${i}" value="${esc(duzgun(p.il))}"></div>
+          <div class="field" style="margin:0 0 10px"><label>İlçe</label><input id="eilce${i}" value="${esc(duzgun(p.ilce))}"></div>
+        </div>
+        <div class="field" style="margin:0 0 10px"><label>Köy / mahalle</label><input id="emah${i}" value="${esc(duzgun(p.mahalle))}"></div>
+        <div class="row2">
+          <div class="field" style="margin:0 0 10px"><label>Ada</label><input id="eada${i}" inputmode="numeric"></div>
+          <div class="field" style="margin:0 0 10px"><label>Parsel</label><input id="epar${i}" inputmode="numeric"></div>
+        </div>
+        <div class="row2">
+          <div class="field" style="margin:0 0 10px"><label>Toplam alan (m²)</label><input id="em${i}" inputmode="decimal"></div>
+          <div class="field" style="margin:0 0 10px"><label>İstenen fiyat (₺)</label><input id="ef${i}" inputmode="decimal"></div>
+        </div>
+        <div class="field" style="margin:0 0 10px"><label>m² fiyatı (₺) · boş bırakırsan hesaplanır</label>
+          <input id="eb${i}" inputmode="decimal"></div>
+        <div class="field" style="margin:0"><label>İlan bağlantısı</label>
+          <input id="eu${i}" placeholder="https://www.sahibinden.com/ilan/..."></div>
+        <div class="ipuc" id="eh${i}" style="margin:8px 2px 0">m² fiyatı: —</div>
       </div>`);
     const g = k => document.getElementById(k+i);
     const gun = () => {
-      const m2 = sayiCoz(g("em").value), f = sayiCoz(g("ef").value);
-      g("eb").textContent = (m2>0 && f>0)
-        ? `m² fiyatı: ${nf(Math.round(f/m2))} ₺   ·   ${nf(Math.round(m2))} m² / ${nf(Math.round(f))} ₺`
-        : "m² fiyatı: —";
+      const m2 = sayiCoz(g("em").value), f = sayiCoz(g("ef").value), b2 = sayiCoz(g("eb").value);
+      let birim = b2 > 0 ? b2 : (m2 > 0 && f > 0 ? f/m2 : null);
+      g("eh").textContent = birim ? `m² fiyatı: ${nf(Math.round(birim))} ₺` : "m² fiyatı: —";
     };
-    g("em").oninput = gun; g("ef").oninput = gun;
+    ["em","ef","eb"].forEach(k=>{ g(k).oninput = gun; });
   };
   document.getElementById("emEkle").onclick = satirEkle;
-  satirEkle(); satirEkle();
+  satirEkle();
 
-  const cy = document.getElementById("cevreYap");
-  if(cy) cy.onclick = async e => {
-    e.target.disabled = true; e.target.textContent = "Çevre taranıyor…";
-    try{
-      await cevreUret(true);
-      const k = document.getElementById("cevreKat");
-      k.disabled = false; k.checked = true;
-      document.getElementById("cevreNot").textContent = "Çevre verisi hazır, değerlendirmeye katılacak. Rapor da indirildi.";
-      e.target.remove();
-      toast("Çevre raporu hazır");
-    }catch(err){
-      e.target.disabled = false; e.target.textContent = "Çevre raporunu şimdi çıkar";
-      toast("Olmadı: " + (err.message||err));
-    }
-  };
-
-  const cek = document.getElementById("cek");
-  if(cek) cek.onclick = () => { emsal(); toast("Kayıttan çekildi"); };
-
-  document.getElementById("hesapla").onclick = () => emsalHesapla(p);
-}
-
-async function emsalHesapla(p){
-  const veriler = [];
-  document.querySelectorAll(".emsatirim").forEach(el=>{
-    const i = el.dataset.i;
-    const m2 = sayiCoz(document.getElementById("em"+i)?.value);
-    const f  = sayiCoz(document.getElementById("ef"+i)?.value);
-    const ad2 = document.getElementById("ea"+i)?.value.trim() || "emsal";
-    if(m2 > 0 && f > 0) veriler.push({ ad:ad2, m2, fiyat:f, birim: f/m2 });
-  });
-
-  const toplamAlan = sayiCoz(document.getElementById("bizM2").value) || 0;
-  const pay = sayiCoz(document.getElementById("bizPay").value) || toplamAlan;
-  const gozlem = document.getElementById("gozlem").value.trim();
-  const cevreKat = document.getElementById("cevreKat")?.checked && CEVRE_SON;
-
-  // cevre verisinden yuzde etkisi cikar
-  const etkiler = [];
-  if(cevreKat){
-    const o = CEVRE_SON.o;
-    const anaYol = o.yollar.primary || o.yollar.secondary || o.yollar.trunk || o.yollar.motorway;
-    const koyYol = o.yollar.unclassified || o.yollar.track || o.yollar.residential;
-    if(anaYol && anaYol.u <= 300) etkiler.push(["Ana yola 300 m'den yakın", 14]);
-    else if(anaYol && anaYol.u <= 1000) etkiler.push(["Ana yola 1 km içinde", 7]);
-    if(koyYol && koyYol.u <= 60) etkiler.push(["Yola cepheli (yol " + km(koyYol.u) + ")", 10]);
-    else if(!koyYol || koyYol.u > 400) etkiler.push(["Yola uzak, geçit sorunu olabilir", -12]);
-    const yer = o.yerler[0];
-    if(yer && yer.u <= 1500) etkiler.push([`${yer.t.name} yerleşimine ${km(yer.u)}`, 9]);
-    else if(yer && yer.u > 6000) etkiler.push(["Yerleşime uzak", -8]);
-    if(o.su && o.su.u <= 500) etkiler.push(["Su kaynağına yakın (" + km(o.su.u) + ")", 8]);
-    if(o.elektrik && o.elektrik.u <= 800) etkiler.push(["Elektrik hattı yakın", 5]);
-    if((o.kullanim.residential||0) > 0) etkiler.push(["Çevrede yerleşim alanı var", 10]);
-    if((o.kullanim.industrial||0) > 0) etkiler.push(["Çevrede sanayi alanı var", 8]);
-    if((o.kullanim.forest||0) > 2) etkiler.push(["Çevre ağırlıklı orman", -5]);
-    const c = CEVRE_SON.clc;
-    if(c?.kod){
-      const k = c.kod;
-      if(k === "121") etkiler.push([`CORINE: ${c.ad}`, 16]);
-      else if(k.startsWith("11")) etkiler.push([`CORINE: ${c.ad}`, 14]);
-      else if(k === "133" || k === "142") etkiler.push([`CORINE: ${c.ad}`, 10]);
-      else if(k === "212" || k === "213") etkiler.push([`CORINE: ${c.ad}`, 8]);
-      else if(k === "222" || k === "221" || k === "223") etkiler.push([`CORINE: ${c.ad}`, 6]);
-      else if(k.startsWith("31") || k.startsWith("32")) etkiler.push([`CORINE: ${c.ad}`, -6]);
-      else if(k.startsWith("41") || k.startsWith("51")) etkiler.push([`CORINE: ${c.ad}`, -14]);
-      else if(k === "331" || k === "332" || k === "333") etkiler.push([`CORINE: ${c.ad}`, -10]);
-    }
-  }
-  let carpan = etkiler.reduce((t,[,y])=>t+y, 0);
-  carpan = Math.max(-45, Math.min(60, carpan));
-
-  const bolumler = [];
-  bolumler.push({ baslik:"Değerlenen parsel", satirlar:[
-    ["Konum", p ? `${p.mahalleAd||""} / ${p.ilceAd||""} / ${p.ilAd||""}` : "—"],
-    ["Ada / parsel", p ? `${p.adaNo||"—"} / ${p.parselNo||"—"}` : "—"],
-    ["Toplam alan", toplamAlan ? nf(Math.round(toplamAlan)) + " m²" : "—"],
-    ["Değerlenen pay", pay ? nf(Math.round(pay)) + " m²" : "—"]
-  ]});
-
-  let tahmin = null, ortanca = null, en_az = null, en_cok = null;
-  if(veriler.length){
-    const b = veriler.map(v=>v.birim).sort((a,c)=>a-c);
-    en_az = b[0]; en_cok = b[b.length-1];
-    ortanca = b.length % 2 ? b[(b.length-1)/2] : (b[b.length/2-1] + b[b.length/2])/2;
-    tahmin = ortanca * (1 + carpan/100);
-
-    bolumler.push({ baslik:"Alınan emsaller", satirlar: veriler.map(v=>
-      [`${v.ad} · ${nf(Math.round(v.m2))} m²`, `${nf(Math.round(v.birim))} ₺/m² (${nf(Math.round(v.fiyat))} ₺)`]) });
-    bolumler.push({ baslik:"Emsal istatistiği", satirlar:[
-      ["Emsal sayısı", veriler.length],
-      ["En düşük", nf(Math.round(en_az)) + " ₺/m²"],
-      ["En yüksek", nf(Math.round(en_cok)) + " ₺/m²"],
-      ["Ortanca (esas alınan)", nf(Math.round(ortanca)) + " ₺/m²"]
-    ]});
-  }
-
-  bolumler.push({ baslik: cevreKat ? "Çevre verisinden çıkan etkiler" : "Özellik etkisi",
-    satirlar: etkiler.length
-      ? etkiler.map(([a,y])=>[a, (y>0?"+":"")+y+"%"]).concat([["Toplam etki", (carpan>0?"+":"")+carpan+"%"]])
-      : [["Değerlendirmeye katılan veri yok", "0%"]] });
-
-  if(gozlem) bolumler.push({ baslik:"Gözlemler", satirlar: gozlem.split(/\n/).filter(Boolean).map(t=>[t, ""]) });
-
-  if(tahmin != null){
-    bolumler.push({ baslik:"Sonuç", satirlar:[
-      ["Tahmini m² değeri", nf(Math.round(tahmin)) + " ₺"],
-      ["Makul aralık", `${nf(Math.round(Math.min(tahmin, en_az*(1+carpan/100))))} – ${nf(Math.round(Math.max(tahmin, en_cok*(1+carpan/100))))} ₺/m²`],
-      ["Payınızın tahmini değeri", pay ? nf(Math.round(tahmin*pay)) + " ₺" : "—"],
-      ["Parselin tamamı", toplamAlan ? nf(Math.round(tahmin*toplamAlan)) + " ₺" : "—"]
-    ]});
-    bolumler.push({ baslik:"Yöntem", satirlar:[
-      ["Esas", "Girilen emsallerin ortanca m² fiyatı"],
-      ["Düzeltme", "Çevre verisi ve özelliklerin yüzde etkisi"],
-      ["Sınır", "Toplam düzeltme -45% ile +60% arasında"],
-      ["Not", "Emsaller kullanıcının kendi gözlemidir"]
-    ]});
-  }else{
-    bolumler.push({ baslik:"Sonuç", satirlar:[
-      ["Rakamsal tahmin", "Emsal girilmediği için verilmedi"],
-      ["Yapılan", cevreKat ? "Konumun güçlü ve zayıf yönleri çıkarıldı" : "Sadece parsel künyesi hazırlandı"],
-      ["Öneri", "Bölgeden 2-3 ilan girildiğinde rakam da hesaplanır"]
-    ]});
-  }
-
-  const s2 = document.getElementById("sonuc");
-  s2.style.display = "block";
-  s2.innerHTML = tahmin != null
-    ? `<div class="kv"><span>Ortanca emsal</span><b class="mono">${nf(Math.round(ortanca))} ₺/m²</b></div>
-       <div class="kv"><span>Çevre / özellik etkisi</span><b class="mono">${carpan>0?"+":""}${carpan}%</b></div>
-       <div class="kv" style="border-top:1px solid var(--cizgi);margin-top:6px;padding-top:10px">
-         <span style="color:var(--gold)">Tahmini m² değeri</span>
-         <b class="mono" style="color:var(--gold)">${nf(Math.round(tahmin))} ₺</b></div>
-       ${pay?`<div class="kv"><span style="color:var(--gold)">Payınızın değeri</span>
-         <b class="mono" style="color:var(--gold)">${nf(Math.round(tahmin*pay))} ₺</b></div>`:""}`
-    : `<div style="font-size:13.5px;color:var(--ink-2)">Emsal girilmedi, rakam üretilmedi.
-       ${cevreKat?"Rapor konumun güçlü ve zayıf yönleriyle hazırlandı.":"En az bir emsal girersen fiyat da çıkar."}</div>`;
-
-  const { png, oran } = raporPng(
-    `Emsal ve değer raporu${p?` · ${p.adaNo||"—"}/${p.parselNo||"—"}`:""}`,
-    `${p?`${p.mahalleAd||""} — ${p.ilceAd||""} / ${p.ilAd||""}`:"Konum girilmedi"}\nHazırlayan: ${ME.full_name||""}`,
-    bolumler);
-
-  const blob = pngToPdfBlob(png, oran);
-  const ad3 = p ? dosyaAdi(p, "emsal-raporu") : "emsal-raporu.pdf";
-  indirBlob(blob, ad3);
-  if(p) await parseleIliskilendir(p, blob, ad3, "arastirma");
-  toast("Emsal raporu indirildi");
-}
-
-
-
-/* ---- parça ayar bileşeni: hem çap çizdirmede hem sunumda ---- */
-
-let PARCA = { bloklar:[], toplam:0, geometri:null, yolAlan:0, yolGenislik:0,
-              p:null, enAzYol:3, ters:false, yolTipi:"parsel", yolKonum:"oto", capTema:"yatay", olculer:true };
-
-let PSAYAC = 0;
-const yeniParca = (m2) => ({ id: ++PSAYAC, no:"", m2: Math.round((m2||200)*100)/100, renk:"#FFFFFF" });
-
-function parcaAyarHtml(){
-  return `
-    <div id="bloklar"></div>
-    <div class="acts" style="margin-bottom:14px">
-      <button id="blokTam">+ Tam genişlik blok</button>
-      <button id="blokYol">+ Yol iki yanlı blok</button>
-    </div>
-    <div class="row2">
-      <div class="field"><label>Yol adı</label><select id="pyoltip">
-        <option value="parsel">PARSEL YOLU</option>
-        <option value="resmi">RESMİ YOL</option></select></div>
-      <div class="field"><label>Kenar ölçüleri</label><select id="polcu">
-        <option value="1">Göster</option>
-        <option value="0">Gizle</option></select></div>
-      <div class="field"><label>Yol nereden geçsin</label><select id="pyolkonum">
-        <option value="oto">Otomatik</option>
-        <option value="sol">Soldan</option>
-        <option value="sag">Sağdan</option>
-        <option value="orta">Ortadan</option></select></div>
-    </div>
-    <div class="field"><label>Blok sırası</label><select id="pters">
-      <option value="0">Normal</option><option value="1">Ters çevir</option></select>
-      <p class="ipuc" style="margin:8px 2px 0">Yol 3 m genişliğinde çizilir; girdiğin metrekareler hiç değişmez. Otomatik seçimde yol tek parçalı blokların kenarından, çok parçalı blokların ortasından geçer.</p></div>
-    <div class="card" id="capOzet" style="font-size:13px"></div>`;
-}
-
-function parcaKur(toplam, mevcut){
-  PARCA.toplam = toplam;
-  PARCA.bloklar = (mevcut && mevcut.length) ? mevcut.map(b=>({
-    tip: b.tip === "yol" ? "yol" : "tam",
-    parcalar: (b.parcalar||[]).map(o=>({ id:++PSAYAC, no:o.no||"", m2:+o.m2||1, renk:o.renk||"#FFFFFF" })),
-    sol: (b.sol||[]).map(o=>({ id:++PSAYAC, no:o.no||"", m2:+o.m2||1, renk:o.renk||"#FFFFFF" })),
-    sag: (b.sag||[]).map(o=>({ id:++PSAYAC, no:o.no||"", m2:+o.m2||1, renk:o.renk||"#FFFFFF" }))
-  })) : [];
-  if(!PARCA.bloklar.length)
-    PARCA.bloklar = [{ tip:"tam", parcalar:[yeniParca(Math.round(toplam*0.5))], sol:[], sag:[] }];
-
-  numaralariTazele();
-  document.getElementById("blokTam").onclick = () => {
-    PARCA.bloklar.push({ tip:"tam", parcalar:[yeniParca(Math.round(PARCA.toplam*0.15))], sol:[], sag:[] });
-    numaralariTazele(); bloklariCiz();
-  };
-  document.getElementById("blokYol").onclick = () => {
-    const pay = Math.round(Math.max(150, PARCA.toplam*0.06));
-    PARCA.bloklar.push({ tip:"yol", parcalar:[], sol:[yeniParca(pay)], sag:[yeniParca(pay)] });
-    numaralariTazele(); bloklariCiz();
-  };
-  const ol = document.getElementById("polcu");
-  ol.value = PARCA.olculer === false ? "0" : "1";
-  ol.onchange = () => { PARCA.olculer = ol.value === "1"; ozetCiz(); };
-  const yt = document.getElementById("pyoltip"), yk = document.getElementById("pyolkonum");
-  yt.value = PARCA.yolTipi || "parsel";
-  yk.value = PARCA.yolKonum || "oto";
-  yt.onchange = () => { PARCA.yolTipi = yt.value; ozetCiz(); };
-  yk.onchange = () => { PARCA.yolKonum = yk.value; ozetCiz(); };
-  const tr = document.getElementById("pters");
-  tr.value = PARCA.ters ? "1" : "0";
-  tr.onchange = () => { PARCA.ters = tr.value === "1"; ozetCiz(); };
-  bloklariCiz();
-}
-
-async function alaniDuzelt(parselId, deger){
-  const { error } = await sb.from("parcels").update({ alan_m2: +deger }).eq("id", parselId);
-  if(error) return toast("Olmadı: " + error.message);
-  toast("Alan düzeltildi");
-  go("capAyar", parselId);
-}
-
-function blokParcalari(b){
-  return b.tip === "yol" ? b.sol.concat(b.sag) : b.parcalar;
-}
-
-function numaralariTazele(){
-  let n = 0;
-  PARCA.bloklar.forEach(b=>blokParcalari(b).forEach(o=>{ n++; if(!String(o.no||"").trim()) o.no = String(n); }));
-}
-
-function parcaSatirHtml(o, bi, yer, j){
-  return `<div style="display:flex;gap:7px;align-items:center;margin-bottom:7px">
-    <input id="pn${o.id}" value="${esc(o.no)}" style="width:52px;text-align:center;padding:10px 3px">
-    <input id="pm${o.id}" inputmode="decimal" value="${nfAkilli(o.m2)}" style="flex:1;text-align:right">
-    <input type="color" id="pr${o.id}" value="${o.renk}" style="width:44px;height:40px;padding:3px;border-radius:9px">
-    <button class="sil" style="width:32px;height:32px" onclick="parcaSil(${bi},'${yer}',${j})">${svg("trash")}</button>
-  </div>`;
-}
-
-function bloklariCiz(){
-  const kutu = document.getElementById("bloklar");
-  kutu.innerHTML = PARCA.bloklar.map((b,i)=>{
-    const basSatir = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <span class="pill ${b.tip==="yol"?"gold":"on"}">${i+1}. blok · ${b.tip==="yol"?"yol iki yanlı":"tam genişlik"}</span>
-        <span style="flex:1"></span>
-        ${i>0?`<button class="pill sade" onclick="blokTasi(${i},-1)">↑</button>`:""}
-        ${i<PARCA.bloklar.length-1?`<button class="pill sade" onclick="blokTasi(${i},1)">↓</button>`:""}
-        <button class="sil" onclick="blokSil(${i})">${svg("trash")}</button></div>`;
-
-    if(b.tip === "tam"){
-      return `<div class="card" style="padding:12px">${basSatir}
-        <div style="display:flex;gap:7px;font-size:10.5px;color:var(--ink-3);padding:0 2px 4px">
-          <span style="width:52px">NO</span><span style="flex:1">METREKARE</span>
-          <span style="width:44px;text-align:center">RENK</span><span style="width:32px"></span></div>
-        ${b.parcalar.map((o,j)=>parcaSatirHtml(o,i,"parcalar",j)).join("")}
-        <button class="pill sade" onclick="parcaEkle(${i},'parcalar')">+ parça</button>
-        <div class="ipuc" style="margin:8px 2px 0">Yol bu bloğun kenarından geçer, parçalar tam genişlikte alt alta dizilir.</div>
-      </div>`;
-    }
-    const sutun = (yer, ad2) => `
-      <div style="flex:1 1 46%;min-width:150px">
-        <div style="font-size:11px;color:var(--gold);letter-spacing:.08em;margin-bottom:6px">${ad2} · ${b[yer].length} parça</div>
-        ${b[yer].map((o,j)=>parcaSatirHtml(o,i,yer,j)).join("")}
-        <button class="pill sade" onclick="parcaEkle(${i},'${yer}')">+ parça</button>
-      </div>`;
-    return `<div class="card" style="padding:12px">${basSatir}
-      <div style="display:flex;gap:12px;flex-wrap:wrap">${sutun("sol","SOL")}${sutun("sag","SAĞ")}</div>
-      <div class="ipuc" style="margin:10px 2px 0">Yol bu bloğun ortasından geçer; sol ve sağdaki parçalar kendi içinde alt alta dizilir.</div>
-    </div>`;
-  }).join("");
-
-  PARCA.bloklar.forEach(b=>blokParcalari(b).forEach(o=>{
-    const n = document.getElementById("pn"+o.id), m = document.getElementById("pm"+o.id), c = document.getElementById("pr"+o.id);
-    if(n) n.oninput = () => { o.no = n.value; onizlemeCiz(); };
-    if(m) m.oninput = () => { o.m2 = Math.round((sayiCoz(m.value)||0)*100)/100; ozetCiz(); };
-    if(c) c.oninput = () => { o.renk = c.value; onizlemeCiz(); };
-  }));
-  ozetCiz();
-}
-
-function parcaEkle(i, yer){
-  const liste = PARCA.bloklar[i][yer];
-  const son = liste[liste.length-1];
-  liste.push(yeniParca(son ? son.m2 : Math.round(PARCA.toplam*0.05)));
-  numaralariTazele(); bloklariCiz();
-}
-function parcaSil(i, yer, j){
-  PARCA.bloklar[i][yer].splice(j,1);
-  if(!blokParcalari(PARCA.bloklar[i]).length) PARCA.bloklar.splice(i,1);
-  bloklariCiz();
-}
-function blokSil(i){ PARCA.bloklar.splice(i,1); bloklariCiz(); }
-function blokTasi(i, yon){
-  const j = i + yon;
-  if(j < 0 || j >= PARCA.bloklar.length) return;
-  const t = PARCA.bloklar[i]; PARCA.bloklar[i] = PARCA.bloklar[j]; PARCA.bloklar[j] = t;
-  bloklariCiz();
-}
-
-function ozetCiz(){
-  const hepsi = PARCA.bloklar.flatMap(blokParcalari);
-  const parcaAlan = hepsi.reduce((t,o)=>t+(+o.m2||0), 0);
-  let yolAlan = 0, yolGen = 0;
-  if(PARCA.geometri){
-    try{
-      const y = capYerlesim(PARCA.geometri, parcaCfg());
-      yolAlan = y.yolAlan || 0; yolGen = y.yolGenislik || 0;
-    }catch(e){}
-  }
-  PARCA.yolAlan = Math.round(yolAlan); PARCA.yolGenislik = yolGen;
-
-  const kalan = PARCA.toplam - parcaAlan;
-  const o = document.getElementById("capOzet");
-  if(o) o.innerHTML = `
-    <div class="kv"><span>Parselin alanı</span><b class="mono">${nf2(PARCA.toplam)} m²</b></div>
-    <div class="kv"><span>Parçalar (${hepsi.length} adet)</span><b class="mono">${nf2(parcaAlan)} m²</b></div>
-    <div class="kv" style="border-top:1px solid var(--cizgi);margin-top:6px;padding-top:8px">
-      <span style="color:${kalan < -0.5 ? "var(--red)" : "var(--green)"}">${kalan < -0.5 ? "Fazla girildi" : "Kalan"}</span>
-      <b class="mono" style="color:${kalan < -0.5 ? "var(--red)" : "var(--green)"}">${nf2(Math.abs(kalan))} m²</b></div>
-    <div class="kv"><span style="color:var(--gold)">Parsel yolu</span>
-      <b class="mono" style="color:var(--gold)">3 m genişlik</b></div>
-    ${false ? "" : (yolGen < 1
-        ? `<p class="ipuc" style="margin:8px 2px 0;color:var(--gold)">Girdiğin metrekareler birebir uygulandı; yola sadece ${nf(PARCA.yolAlan)} m² kaldığı için yol ${yolGen.toFixed(2).replace(".",",")} m genişliğinde. Daha geniş yol istersen parça metrekarelerini düşür ya da alttaki küçültme seçeneğini aç.</p>`
-        : `<p class="ipuc" style="margin:8px 2px 0">Girdiğin metrekareler birebir uygulanıyor, artan alan yola ayrıldı.</p>`)}`;
-
-  const say = document.getElementById("onizSay");
-  if(say) say.textContent = nf(hepsi.length) + " parça";
-  onizlemeCiz();
-}
-
-function parcaCfg(){
-  return { enAzYol: 3, ters: PARCA.ters, yolTipi: PARCA.yolTipi, yolKonum: PARCA.yolKonum, capTema: "yatay", olculer: PARCA.olculer !== false,
-    bloklar: PARCA.bloklar.map(b=> b.tip === "yol"
-      ? { tip:"yol", sol:b.sol.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })),
-                     sag:b.sag.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })) }
-      : { tip:"tam", parcalar:b.parcalar.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })) }),
-    parcalar: cfgParcalari({ bloklar: PARCA.bloklar.map(b=> b.tip === "yol"
-      ? { tip:"yol", sol:b.sol, sag:b.sag } : { tip:"tam", parcalar:b.parcalar }) }) };
-}
-
-function onizlemeCiz(){
-  const c = document.getElementById("capOnizleme");
-  if(!c || !PARCA.p) return;
-  const G = 700, Y = 900;
-  c.width = G; c.height = Y;
-  try{
-    const cfg = { ...parcaCfg(), etiketGizle:true };
-    const png = capCizPng(PARCA.p, cfg, true);
-    const im = new Image();
-    im.onload = () => { const x = c.getContext("2d"); x.clearRect(0,0,G,Y); x.drawImage(im,0,0,G,Y); };
-    im.src = png;
-  }catch(e){}
-}
-
-function parcaCfg(){
-  return { enAzYol: 3, ters: PARCA.ters, yolTipi: PARCA.yolTipi, yolKonum: PARCA.yolKonum, capTema: "yatay", olculer: PARCA.olculer !== false,
-    bloklar: PARCA.bloklar.map(b=> b.tip === "yol"
-      ? { tip:"yol", sol:b.sol.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })),
-                     sag:b.sag.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })) }
-      : { tip:"tam", parcalar:b.parcalar.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })) }),
-    parcalar: cfgParcalari({ bloklar: PARCA.bloklar.map(b=> b.tip === "yol"
-      ? { tip:"yol", sol:b.sol, sag:b.sag } : { tip:"tam", parcalar:b.parcalar }) }) };
-}
-
-function onizlemeCiz(){
-  const c = document.getElementById("capOnizleme");
-  if(!c || !PARCA.p) return;
-  const G = 700, Y = 900;
-  c.width = G; c.height = Y;
-  try{
-    const cfg = { ...parcaCfg(), etiketGizle:true };
-    const png = capCizPng(PARCA.p, cfg, true);
-    const im = new Image();
-    im.onload = () => { const x = c.getContext("2d"); x.clearRect(0,0,G,Y); x.drawImage(im,0,0,G,Y); };
-    im.src = png;
-  }catch(e){}
-}
-
-/* ================= yapay zekâ ================= */
-
-const AI_LER = [
-  { id:"claude", ad:"Claude", alt:"Anthropic · Pro hesabınla", url:"https://claude.ai/new", renk:"sari" },
-  { id:"gpt",    ad:"ChatGPT", alt:"OpenAI · ücretsiz sürüm yeter", url:"https://chatgpt.com/", renk:"yesil" },
-  { id:"gemini", ad:"Gemini", alt:"Google · Google hesabınla", url:"https://gemini.google.com/app", renk:"mavi" }
-];
-
-async function yapayZeka(){
-  app.innerHTML = head("Bir Bilene Danış!","go('ana')") + `
-    <p class="ipuc">Birini seç, tarayıcı sekmesinde kendi hesabınla açılsın. Mikrofonla konuşabilir, yazıp sorabilirsin.</p>
-    <div class="grid">
-      ${AI_LER.map(a=>`<a class="tile ${a.renk}" href="${a.url}" target="_blank" rel="noopener" style="text-decoration:none;display:block">
-        <div class="ic">${svg("spark")}</div><b>${a.ad}</b><small>${a.alt}</small></a>`).join("")}
-    </div>
-
-    <h3 style="font-size:14px;margin:24px 0 10px">Parsel bilgisiyle sor</h3>
-    <p class="ipuc">Bir parsel seç, bilgileri panoya kopyalayayım; açılan sohbete yapıştırıp istediğini sor.</p>
-    <div id="aiList"><div class="spin"></div></div>`;
-  document.getElementById("aiList").innerHTML = await parselSecici("yapayZekaListe", p=>`
-    <div class="rw">
-      <span class="kod">${esc(p.ada||"—")}/${esc(p.parsel)}</span>
-      <span class="orta"><b>${nf(p.alan_m2)} m²</b><small>${esc(duzgun(p.mahalle))}</small></span>
-      <span class="sag"><button class="pill gold" onclick="aiKopyala('${p.id}')">kopyala</button></span>
-    </div>`);
-}
-function yapayZekaListe(){ yapayZeka(); }
-
-async function aiKopyala(parselId){
-  const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
-  const { data:yl } = await sb.from("parcel_years").select("*").eq("parcel_id",parselId).order("yil",{ascending:false});
-  const { data:et } = await sb.from("parcel_tags").select("tags(name)").eq("parcel_id",parselId);
-  const y = yl?.[0] || {};
-  const etiket = (et||[]).map(e=>e.tags?.name).filter(Boolean);
-
-  const satirlar = [
-    `Konum: ${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)}`,
-    `Ada/parsel: ${p.ada||"—"}/${p.parsel}`,
-    `Yüzölçümü: ${nf(p.alan_m2)} m²`,
-    `Niteliği: ${p.nitelik||"—"}`,
-    p.mevkii ? `Mevkii: ${p.mevkii}` : null,
-    p.lat ? `Koordinat: ${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}` : null,
-    y.tapu_durumu === "hisseli" ? `Tapu: hisseli (${y.hisse_pay||"?"}), payımız ${nf(y.hisse_m2)} m²` : "Tapu: tek tapu",
-    y.m2_fiyat ? `m² fiyatı: ${nf(y.m2_fiyat)} ₺` : null,
-    y.toplam_fiyat ? `Toplam fiyat: ${nf(y.toplam_fiyat)} ₺` : null,
-    y.malik ? `Malik: ${String(y.malik).replace(/\n/g,", ")}` : null,
-    etiket.length ? `Özellikler: ${etiket.join(", ")}` : null
-  ].filter(Boolean);
-
-  if(CEVRE_SON?.o){
-    const o = CEVRE_SON.o, yer = o.yerler[0];
-    satirlar.push("--- çevre ---");
-    if(yer) satirlar.push(`En yakın yerleşim: ${yer.t.name} (${km(yer.u)})`);
-    Object.entries(o.yollar).slice(0,3).forEach(([k,v])=>satirlar.push(`${YOL_AD[k]}: ${km(v.u)}`));
-    if(o.su) satirlar.push(`Su kaynağı: ${km(o.su.u)}`);
-    if(o.elektrik) satirlar.push(`Elektrik hattı: ${km(o.elektrik.u)}`);
-    if(CEVRE_SON.clc?.ad) satirlar.push(`Arazi örtüsü: ${CEVRE_SON.clc.ad}`);
-  }
-
-  try{ await navigator.clipboard.writeText(satirlar.join("\n")); toast("Kopyalandı, sohbete yapıştır"); }
-  catch(e){ toast("Kopyalanamadı"); }
-}
-
-/* ================= müşteri sunumu ================= */
-
-// Esri uydu karolarindan parselin ustten gorunumunu olustur
-async function uyduGorseli(geojson, lat, lng, G, Y){
-  const karo = (z, la, lo) => {
-    const n = Math.pow(2, z);
-    const x = (lo + 180) / 360 * n;
-    const rad = la * Math.PI/180;
-    const y = (1 - Math.log(Math.tan(rad) + 1/Math.cos(rad))/Math.PI) / 2 * n;
-    return { x, y };
-  };
-  let minLa = lat, maxLa = lat, minLo = lng, maxLo = lng;
-  if(geojson?.geometry){
-    JSON.stringify(geojson.geometry.coordinates).replace(/\[(-?\d+\.?\d*),(-?\d+\.?\d*)\]/g,(t,a,b)=>{
-      minLo = Math.min(minLo, +a); maxLo = Math.max(maxLo, +a);
-      minLa = Math.min(minLa, +b); maxLa = Math.max(maxLa, +b); return t;
+  document.getElementById("emKaydet").onclick = async e => {
+    const satirlar = [];
+    document.querySelectorAll(".emsatirim").forEach(el=>{
+      const i = el.dataset.i;
+      const v = k => document.getElementById(k+i)?.value.trim() || "";
+      const m2 = sayiCoz(v("em")), f = sayiCoz(v("ef")), b2 = sayiCoz(v("eb"));
+      const birim = b2 > 0 ? b2 : (m2 > 0 && f > 0 ? f/m2 : null);
+      if(!birim) return;
+      satirlar.push({
+        il:v("eil"), ilce:v("eilce"), mahalle:v("emah"),
+        ada:v("eada") || null, parsel:v("epar") || null,
+        alan_m2: m2 || null, fiyat: f || null,
+        birim_fiyat: Math.round(birim*100)/100,
+        ilan_url: v("eu") || null,
+        aciklama: `${v("emah")} ${v("eada")}/${v("epar")}`.trim()
+      });
     });
-  }
-  const payLa = (maxLa-minLa)*0.25 || 0.0012, payLo = (maxLo-minLo)*0.25 || 0.0012;
-  minLa -= payLa; maxLa += payLa; minLo -= payLo; maxLo += payLo;
+    if(!satirlar.length) return toast("En az bir emsalin fiyat bilgisini gir");
 
-  let z = 18;
-  for(; z > 12; z--){
-    const a = karo(z, maxLa, minLo), b = karo(z, minLa, maxLo);
-    if((b.x-a.x)*256 <= G && (b.y-a.y)*256 <= Y) break;
-  }
-  const ust = karo(z, maxLa, minLo), altk = karo(z, minLa, maxLo);
-  const gen = (altk.x-ust.x)*256, yuk = (altk.y-ust.y)*256;
-  const ol = Math.min(G/gen, Y/yuk);
-  const kx = (G - gen*ol)/2, ky = (Y - yuk*ol)/2;
-
-  const c = document.createElement("canvas"); c.width = G; c.height = Y;
-  const x = c.getContext("2d");
-  x.fillStyle = "#1A1A1A"; x.fillRect(0,0,G,Y);
-
-  const isler = [];
-  for(let tx = Math.floor(ust.x); tx <= Math.floor(altk.x); tx++)
-    for(let ty = Math.floor(ust.y); ty <= Math.floor(altk.y); ty++)
-      isler.push({ tx, ty });
-
-  await Promise.all(isler.map(({tx,ty})=>new Promise(res=>{
-    const im = new Image(); im.crossOrigin = "anonymous";
-    im.onload = () => {
-      const px = kx + (tx - ust.x)*256*ol, py = ky + (ty - ust.y)*256*ol;
-      try{ x.drawImage(im, px, py, 256*ol, 256*ol); }catch(e){}
-      res();
-    };
-    im.onerror = () => res();
-    im.src = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${ty}/${tx}`;
-  })));
-
-  if(geojson?.geometry){
-    const g = geojson.geometry;
-    const halka = g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0];
-    const E = k => {
-      const t = karo(z, k[1], k[0]);
-      return [ kx + (t.x - ust.x)*256*ol, ky + (t.y - ust.y)*256*ol ];
-    };
-    x.beginPath();
-    halka.forEach((k,i)=>{ const e = E(k); i ? x.lineTo(e[0],e[1]) : x.moveTo(e[0],e[1]); });
-    x.closePath();
-    x.fillStyle = "rgba(255,255,255,.16)"; x.fill();
-    x.lineWidth = 7; x.strokeStyle = "rgba(0,0,0,.5)"; x.stroke();
-    x.lineWidth = 4; x.strokeStyle = "#FFFFFF"; x.stroke();
-  }
-  return c;
-}
-
-async function musteriSunumu(parselId){
-  const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
-  if(!p) return toast("Parsel bulunamadı");
-  if(!p.lat) return toast("Bu parselin konumu yok, önce TKGM'den tazele");
-
-  app.innerHTML = head("Müşteri sunumu", `go('parsel','${parselId}')`) + `
-    <div class="card"><div class="spin"></div>
-      <p style="text-align:center;color:var(--ink-3);font-size:13px" id="durum">Çevre verisi taranıyor…</p></div>`;
-
-  try{
-    const [{ data:yl }, { data:et }] = await Promise.all([
-      sb.from("parcel_years").select("*").eq("parcel_id",parselId).order("yil",{ascending:false}),
-      sb.from("parcel_tags").select("tags(name)").eq("parcel_id",parselId)
-    ]);
-    const y = yl?.[0] || {};
-    const etiket = (et||[]).map(e=>e.tags?.name).filter(Boolean);
-    const m = { lat:p.lat, lng:p.lng };
-    const bildir = t => { const d = document.getElementById("durum"); if(d) d.textContent = t; };
-
-    let o = null;
-    if(CEVRE_SON && Math.abs(CEVRE_SON.m.lat - m.lat) < 1e-6 && Math.abs(CEVRE_SON.m.lng - m.lng) < 1e-6){
-      o = CEVRE_SON.o; bildir("Kayıtlı çevre verisi kullanılıyor…");
-    }else{
-      try{ o = cevreOzet(await cevreVerisi(m.lat, m.lng, bildir), m); }catch(e){ o = null; }
+    e.target.disabled = true;
+    const durum = document.getElementById("emDurum");
+    for(let i=0;i<satirlar.length;i++){
+      durum.textContent = `${i+1}/${satirlar.length} emsal inceleniyor…`;
+      satirlar[i].analiz = await emsalAnalizEt(satirlar[i]);
     }
-    const cevreVar = !!o;
-    o = o || { yerler:[], yollar:{}, kullanim:{} };
-
-    bildir("Arazi örtüsü sorgulanıyor…");
-    let clc = (cevreVar && CEVRE_SON?.clc) || null;
-    if(!clc){ try{ clc = await corineSinif(m.lat, m.lng); }catch(e){} }
-
-    const yer = o.yerler[0];
-    const anaYol = o.yollar.primary || o.yollar.secondary || o.yollar.trunk || o.yollar.motorway;
-    const koyYol = o.yollar.unclassified || o.yollar.track || o.yollar.residential;
-
-    const konum = [
-      `${duzgun(p.mahalle)}, ${duzgun(p.ilce)} ilçesine bağlı bir yerleşimdir ve söz konusu taşınmaz bu sınırlar içinde ${p.ada?`${p.ada} ada `:""}${p.parsel} parselde yer almaktadır.`,
-      `Parselin yüzölçümü ${nf(p.alan_m2)} m² olup tapu kaydındaki niteliği "${p.nitelik || "belirtilmemiş"}" olarak geçmektedir.`,
-      p.mevkii ? `Taşınmaz ${p.mevkii} mevkiinde konumlanmaktadır.` : "",
-      yer ? `En yakın yerleşim ${yer.t.name} olup parsele kuş uçuşu ${km(yer.u)} mesafededir.` : "",
-      o.yerler[1] ? `Bunun dışında ${o.yerler[1].t.name} ${km(o.yerler[1].u)}${o.yerler[2]?`, ${o.yerler[2].t.name} ise ${km(o.yerler[2].u)}`:""} uzaklıktadır.` : ""
-    ].filter(Boolean).join(" ");
-
-    const ulasim = [
-      koyYol ? `Parsele erişim mevcut yol üzerinden sağlanmakta olup, taşınmaz bu yola ${km(koyYol.u)} mesafededir.`
-             : "Yakın çevrede kayıtlı bir ulaşım yolu tespit edilememiştir; erişim durumunun yerinde incelenmesi önerilir.",
-      anaYol ? `Bölgenin ana ulaşım aksı parsele ${km(anaYol.u)} uzaklıktadır.` : "",
-      koyYol && koyYol.u <= 60 ? "Bu haliyle taşınmaz yola cepheli konumdadır; ulaşım açısından güçlü bir avantaja sahiptir." : "",
-      koyYol && koyYol.u > 400 ? "Yola olan mesafe dikkate alındığında geçit hakkı konusunun ayrıca değerlendirilmesi uygun olacaktır." : ""
-    ].filter(Boolean).join(" ");
-
-    const altyapi = [
-      o.su ? `En yakın su kaynağı parsele ${km(o.su.u)} mesafededir${o.su.t.name?` (${o.su.t.name})`:""}.` : "Yakın çevrede kayıtlı yüzey suyu bulunmamaktadır.",
-      o.kuyu ? `Ayrıca ${km(o.kuyu.u)} mesafede kayıtlı bir su kuyusu yer almaktadır.` : "",
-      o.elektrik ? `Elektrik iletim hattı parsele ${km(o.elektrik.u)} uzaklıkta geçmektedir.` : "",
-      o.akaryakit ? `En yakın akaryakıt istasyonu ${km(o.akaryakit.u)} mesafededir.` : "",
-      o.okul ? `Bölgedeki en yakın okul ${km(o.okul.u)} uzaklıktadır.` : ""
-    ].filter(Boolean).join(" ");
-
-    const kullanimListe = Object.entries(o.kullanim).sort((a,b)=>b[1]-a[1]).slice(0,4)
-      .map(([k])=>(LANDUSE_AD[k]||k).toLocaleLowerCase("tr"));
-    const cevre = [
-      clc?.ad ? `Copernicus CORINE arazi örtüsü verilerine göre parsel "${clc.ad}" sınıfında yer almaktadır.` : "",
-      kullanimListe.length ? `Yakın çevrede ağırlıklı olarak ${kullanimListe.join(", ")} kullanımları gözlenmektedir.` : "",
-      (clc?.kod?.startsWith("11") || clc?.kod === "121")
-        ? "Bu sınıflama, taşınmazın yerleşim ve yapılaşma baskısı bulunan bir bölgede konumlandığını göstermektedir." : "",
-      clc?.kod?.startsWith("2") ? "Taşınmaz tarımsal karakterini korumakta olup üretime elverişli bir yapı sunmaktadır." : ""
-    ].filter(Boolean).join(" ");
-
-    const tapu = [
-      y.tapu_durumu === "hisseli"
-        ? `Taşınmaz hisseli tapu niteliğinde olup, satışa konu pay ${y.hisse_pay||"belirtilen oran"} ile ${nf(y.hisse_m2)} m²'ye karşılık gelmektedir.`
-        : "Taşınmaz tek tapu niteliğindedir; satışa konu alan parselin tamamıdır.",
-      y.malik ? `Tapu kaydındaki malik bilgisi: ${String(y.malik).replace(/\n/g,", ")}.` : "",
-      y.m2_fiyat ? `Metrekare birim fiyatı ${nf(y.m2_fiyat)} ₺ olarak belirlenmiştir.` : "",
-      y.toplam_fiyat ? `Buna göre taşınmazın toplam satış bedeli ${nf(y.toplam_fiyat)} ₺'dir.` : ""
-    ].filter(Boolean).join(" ");
-
-    const ozet = [
-      etiket.length ? `Taşınmazın öne çıkan özellikleri şunlardır: ${etiket.join(", ")}.` : "",
-      koyYol && koyYol.u <= 60 ? "Yola cepheli konumu," : "",
-      anaYol && anaYol.u <= 1000 ? "ana ulaşım aksına yakınlığı," : "",
-      o.su && o.su.u <= 500 ? "su kaynağına yakınlığı," : "",
-      "taşınmazı bölgedeki benzer parseller arasında öne çıkarmaktadır."
-    ].filter(Boolean).join(" ");
-
-    const bolumler = [
-      { baslik:"Taşınmazın konumu", metin: konum },
-      ...(cevreVar ? [
-        { baslik:"Ulaşım ve erişim", metin: ulasim },
-        { baslik:"Altyapı ve çevresel olanaklar", metin: altyapi }
-      ] : []),
-      { baslik:"Arazi yapısı ve çevre kullanımı",
-        metin: cevre || "Bu bölüm için çevre verisi alınamamıştır; yerinde inceleme önerilir." },
-      { baslik:"Tapu ve satış bilgileri", metin: tapu },
-      { baslik:"Genel değerlendirme", metin: ozet },
-      { baslik:"Künye", satirlar:[
-        ["İl / ilçe / mahalle", `${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)}`],
-        ["Ada / parsel", `${p.ada||"—"} / ${p.parsel}`],
-        ["Yüzölçümü", nf(p.alan_m2) + " m²"],
-        ["Niteliği", p.nitelik || "—"],
-        ["Koordinat", `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`],
-        ["Arazi örtüsü", clc?.ad || "—"],
-        ["Satış bedeli", y.toplam_fiyat ? nf(y.toplam_fiyat) + " ₺" : "—"]
-      ]}
-    ];
-
-    bildir("Uydu görüntüsü hazırlanıyor…");
-    try{
-      const harita = await uyduGorseli(p.geojson, p.lat, p.lng, 1800, 1350);
-      bolumler.splice(1, 0, { baslik:"Taşınmazın konumu (uydu görünümü)", gorsel:harita, oran:1350/1800 });
-    }catch(e){}
-
-    bildir("Sunum hazırlanıyor…");
-    const { png, oran } = raporPng(
-      `${duzgun(p.mahalle)} ${p.ada||""}/${p.parsel}`,
-      `Taşınmaz tanıtım dosyası\n${duzgun(p.ilce)} / ${duzgun(p.il)}`,
-      bolumler);
-
-    const blob = pngToPdfBlob(png, oran);
-    const ad2 = `${p.ada||0}-${p.parsel}-musteri-sunumu.pdf`;
-    indirBlob(blob, ad2);
-    if(ME.role !== 'uye'){
-      try{ await dosyaYukle(new File([blob], ad2, { type:"application/pdf" }), "sunum", parselId); }catch(e){}
-    }
-    toast("Müşteri sunumu hazır");
+    durum.textContent = "Kaydediliyor…";
+    const { error } = await sb.from("emsal_kayit").insert(satirlar.map(o=>({
+      ...o, team_id:ME.team_id, parcel_id:parselId, created_by:ME.id,
+      lat:o.analiz?.lat || null, lng:o.analiz?.lng || null
+    })));
+    e.target.disabled = false;
+    if(error) return toast("Olmadı: " + error.message);
+    toast(`${satirlar.length} emsal kaydedildi`);
     go("parsel", parselId);
-  }catch(e){
-    app.innerHTML = head("Müşteri sunumu", `go('parsel','${parselId}')`) +
-      `<div class="empty"><b>Hazırlanamadı</b>${esc(e.message||e)}</div>`;
-  }
+  };
 }
+
+// emsalin kendi gerceklerini arka planda cikar
+async function emsalAnalizEt(o){
+  const sonuc = {};
+  try{
+    if(!o.ada && !o.parsel) return sonuc;
+    // once mahalle kimligini bul
+    const iller = (await ilkCalisan(IL_UCLARI)).d;
+    const il = iller.find(x=>sade(ad(x)) === sade(o.il)) || iller.find(x=>sade(ad(x)).includes(sade(o.il)));
+    if(!il) return sonuc;
+    const ilceler = (await ilkCalisan(ILCE_UCLARI(kim(il)))).d;
+    const ilce = ilceler.find(x=>sade(ad(x)) === sade(o.ilce)) || ilceler.find(x=>sade(ad(x)).includes(sade(o.ilce)));
+    if(!ilce) return sonuc;
+    const mahalleler = (await ilkCalisan(MAH_UCLARI(kim(ilce)))).d;
+    const mah = mahalleler.find(x=>sade(ad(x)) === sade(o.mahalle)) || mahalleler.find(x=>sade(ad(x)).includes(sade(o.mahalle)));
+    if(!mah) return sonuc;
+
+    const f = await zamanAsimi(tkgm(`${TB3}/parsel/${kim(mah)}/${o.ada||0}/${o.parsel}`), 20000);
+    if(!f?.geometry) return sonuc;
+    const m = merkez(f);
+    sonuc.lat = m.lat; sonuc.lng = m.lng;
+    sonuc.tkgmAlan = alanCoz(f.properties?.alan) || null;
+    sonuc.nitelik = f.properties?.nitelik || null;
+
+    const halka = (f.geometry.type === "Polygon" ? f.geometry.coordinates[0] : f.geometry.coordinates[0][0]).slice();
+    if(halka.length>1 && halka[0][0]===halka[halka.length-1][0] && halka[0][1]===halka[halka.length-1][1]) halka.pop();
+    const M = metreye(halka);
+    const sekil = sekilAnalizi(M);
+    if(sekil){ sonuc.duzgunluk = sekil.duzgunluk; sonuc.boy = sekil.boy; sonuc.en = sekil.en; }
+
+    const cephe = await yolaCephe(M, halka, m.lat, m.lng).catch(()=>null);
+    if(cephe){ sonuc.yolaCephe = cephe.uzunluk; sonuc.yolMesafe = cephe.mesafe; }
+
+    const yuk = await yukseklikIzgarasi(M, m).catch(()=>null);
+    if(yuk){ sonuc.egim = yuk.egim; sonuc.rakim = yuk.ortalama; }
+  }catch(e){}
+  return sonuc;
+}
+
+async function emsalSil(id, parselId){
+  if(!confirm("Bu emsal kaydı silinsin mi?")) return;
+  await sb.from("emsal_kayit").delete().eq("id", id);
+  emsalEkle(parselId);
+}
+
+/* ================= ek veri kaynaklari ================= */
+
+// OSRM: gercek yol agindan surus suresi
+async function surusSuresi(lat1, lng1, lat2, lng2){
+  const u = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=false`;
+  const r = await zamanAsimi(tkgm(u), 15000);
+  const y = r?.routes?.[0];
+  if(!y) return null;
+  return { dakika: Math.round(y.duration/60), km: Math.round(y.distance/100)/10 };
+}
+
+// PVGIS: gunes enerjisi uretim potansiyeli (Avrupa Komisyonu, ucretsiz)
+async function gunesPotansiyeli(lat, lng, egim){
+  const aci = Math.max(0, Math.min(60, Math.round(egim || 0)));
+  const u = `https://re.jrc.ec.europa.eu/api/v5_2/PVcalc?lat=${lat.toFixed(5)}&lon=${lng.toFixed(5)}`
+    + `&peakpower=1&loss=14&angle=${aci}&outputformat=json`;
+  const r = await zamanAsimi(tkgm(u), 20000);
+  const t = r?.outputs?.totals?.fixed;
+  if(!t) return null;
+  return {
+    yillikKwh: Math.round(t.E_y),          // 1 kWp basina yillik uretim
+    gunlukKwh: Math.round(t.E_d*10)/10,
+    isinim: Math.round(t["H(i)_y"]),
+    aci
+  };
+}
+
+// Sentinel-2 NDVI: bitki ortusu zaman serisi
+async function ndviSerisi(geojson, yilSayisi){
+  if(!geojson?.geometry) return null;
+  const bitis = new Date();
+  const baslangic = new Date(bitis.getFullYear() - (yilSayisi||3), bitis.getMonth(), 1);
+  const g = geojson.geometry.type === "MultiPolygon"
+    ? { type:"Polygon", coordinates: geojson.geometry.coordinates[0] }
+    : geojson.geometry;
+
+  const { data, error } = await sb.functions.invoke(FN || "quick-task", { body:{
+    mod:"ndvi", geometry:g,
+    baslangic: baslangic.toISOString().slice(0,10) + "T00:00:00Z",
+    bitis: bitis.toISOString().slice(0,10) + "T23:59:59Z"
+  }});
+  if(error || !data || data.error) return null;
+
+  const kayitlar = [];
+  (data.data||[]).forEach(o=>{
+    const d = o.outputs?.ndvi?.bands?.B0?.stats;
+    if(!d || d.sampleCount === 0 || d.mean == null) return;
+    kayitlar.push({ tarih: o.interval.from.slice(0,7), ort: Math.round(d.mean*1000)/1000 });
+  });
+  if(kayitlar.length < 4) return null;
+
+  // yillik ortalamalar ve egilim
+  const yillar = {};
+  kayitlar.forEach(k=>{ const y = k.tarih.slice(0,4); (yillar[y] ||= []).push(k.ort); });
+  const yilOrt = Object.entries(yillar).map(([y,a])=>({ yil:y, ort: a.reduce((x,z)=>x+z,0)/a.length }));
+  const enYuksek = kayitlar.reduce((a,b)=> b.ort > a.ort ? b : a, kayitlar[0]);
+  const enDusuk  = kayitlar.reduce((a,b)=> b.ort < a.ort ? b : a, kayitlar[0]);
+  const genelOrt = kayitlar.reduce((t,k)=>t+k.ort,0)/kayitlar.length;
+
+  return { kayitlar, yilOrt, enYuksek, enDusuk, genelOrt: Math.round(genelOrt*1000)/1000 };
+}
+
+// TCMB tuketici fiyat endeksi: eski emsalleri bugune tasimak icin
+let TUFE_ONBELLEK = null;
+async function tufeEndeksi(){
+  if(TUFE_ONBELLEK) return TUFE_ONBELLEK;
+  const bugun = new Date();
+  const bas = new Date(bugun.getFullYear()-4, 0, 1);
+  const bicim = d => `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
+  try{
+    const { data, error } = await sb.functions.invoke(FN || "quick-task", { body:{
+      mod:"tcmb", seri:"TP.FG.J0", baslangic:bicim(bas), bitis:bicim(bugun) }});
+    if(error || !data || data.error || !data.items) return null;
+    const harita = {};
+    data.items.forEach(o=>{
+      const deger = parseFloat(String(o["TP_FG_J0"] ?? "").replace(",", "."));
+      if(isFinite(deger) && o.Tarih){
+        const [ay, yil] = String(o.Tarih).split("-");
+        harita[`${yil}-${String(ay).padStart(2,"0")}`] = deger;
+      }
+    });
+    TUFE_ONBELLEK = harita;
+    return harita;
+  }catch(e){ return null; }
+}
+
+// bir tarihteki fiyati bugune tasi
+function bugunkuDeger(fiyat, tarih, endeks){
+  if(!endeks || !tarih) return fiyat;
+  const anahtarlar = Object.keys(endeks).sort();
+  if(!anahtarlar.length) return fiyat;
+  const oAy = String(tarih).slice(0,7);
+  const oDeger = endeks[oAy] || endeks[anahtarlar.find(k=>k >= oAy)] || null;
+  const sonDeger = endeks[anahtarlar[anahtarlar.length-1]];
+  if(!oDeger || !sonDeger) return fiyat;
+  return fiyat * (sonDeger / oDeger);
+}
+
+// parselin sekil ozellikleri
+function sekilAnalizi(M){
+  if(!M || M.length < 3) return null;
+  const alan = alanHesap(M);
+  let cevre = 0;
+  for(let i=0;i<M.length;i++){
+    const j = (i+1)%M.length;
+    cevre += Math.hypot(M[j][0]-M[i][0], M[j][1]-M[i][1]);
+  }
+  const ana = anaYon(M), dik = [-ana[1], ana[0]];
+  const a = M.map(p=>p[0]*ana[0]+p[1]*ana[1]);
+  const d = M.map(p=>p[0]*dik[0]+p[1]*dik[1]);
+  const boy = Math.max(...a)-Math.min(...a);
+  const en  = Math.max(...d)-Math.min(...d);
+  // duzgunluk: 1 = daireye yakin, 0 = cok girintili
+  const duzgunluk = Math.round((4*Math.PI*alan/(cevre*cevre))*100)/100;
+  return {
+    cevre: Math.round(cevre), boy: Math.round(boy*10)/10, en: Math.round(en*10)/10,
+    oran: Math.round((boy/Math.max(1,en))*100)/100, duzgunluk,
+    yorum: duzgunluk >= 0.7 ? "düzgün geometri" : duzgunluk >= 0.45 ? "kabul edilebilir geometri" : "girintili / dar geometri"
+  };
+}
+
+// yola cephe uzunlugu: parsel sinirinin yola degen bolumu
+async function yolaCephe(M, halkaCoord, lat, lng){
+  const sorgu = `[out:json][timeout:25];(
+    way(around:120,${lat},${lng})[highway];
+  );out geom;`;
+  let veri = null;
+  for(const sunucu of OVER_SUNUCU){
+    try{ veri = await zamanAsimi(tkgm(sunucu + encodeURIComponent(sorgu)), 25000); if(veri?.elements) break; }catch(e){}
+  }
+  if(!veri?.elements?.length) return { uzunluk:0, yol:null };
+
+  const lat0 = halkaCoord.reduce((t,k)=>t+k[1],0)/halkaCoord.length;
+  const kx = Math.cos(lat0*Math.PI/180)*111320, ky = 110540;
+  const x0 = halkaCoord[0][0], y0 = halkaCoord[0][1];
+  const metre = (lo,la) => [ (lo-x0)*kx, (la-y0)*ky ];
+
+  const yollar = [];
+  veri.elements.forEach(e=>{
+    if(!e.geometry) return;
+    const nok = e.geometry.map(g=>metre(g.lon, g.lat));
+    for(let i=0;i<nok.length-1;i++) yollar.push({ a:nok[i], b:nok[i+1], ad:e.tags?.name, tip:e.tags?.highway });
+  });
+  if(!yollar.length) return { uzunluk:0, yol:null };
+
+  const parcaMesafe = (p, s) => {
+    const vx = s.b[0]-s.a[0], vy = s.b[1]-s.a[1];
+    const uzun = vx*vx + vy*vy;
+    let t = uzun ? ((p[0]-s.a[0])*vx + (p[1]-s.a[1])*vy)/uzun : 0;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(p[0]-(s.a[0]+t*vx), p[1]-(s.a[1]+t*vy));
+  };
+
+  let toplam = 0, enYakinYol = null, enYakinMesafe = Infinity;
+  for(let i=0;i<M.length;i++){
+    const j = (i+1)%M.length;
+    const orta = [ (M[i][0]+M[j][0])/2, (M[i][1]+M[j][1])/2 ];
+    const kenarUz = Math.hypot(M[j][0]-M[i][0], M[j][1]-M[i][1]);
+    let enAz = Infinity, yol = null;
+    yollar.forEach(s2=>{ const m = parcaMesafe(orta, s2); if(m < enAz){ enAz = m; yol = s2; } });
+    if(enAz < enYakinMesafe){ enYakinMesafe = enAz; enYakinYol = yol; }
+    if(enAz <= 14) toplam += kenarUz;
+  }
+  return {
+    uzunluk: Math.round(toplam*10)/10,
+    mesafe: isFinite(enYakinMesafe) ? Math.round(enYakinMesafe) : null,
+    yol: enYakinYol ? { ad: enYakinYol.ad, tip: YOL_AD[enYakinYol.tip] || enYakinYol.tip } : null
+  };
+}
+
+/* ================= potansiyel analizi ================= */
+// Ucretsiz ve acik kaynaklardan parselin yatirim potansiyelini olcer:
+//  - OpenStreetMap: yerlesim/sanayi/insaat alanlari, bina yogunlugu, yollar
+//  - Copernicus CORINE 2018 ve 2012: arazi ortusu ve degisimi
+//  - OpenTopoData (SRTM): yukseklik izgarasindan egim ve baki
+
+async function yukseklikIzgarasi(M, merkezNokta){
+  // parselin uzerinde 3x3 nokta ornekle
+  const lat = merkezNokta.lat, lng = merkezNokta.lng;
+  const d = 0.0008;
+  const noktalar = [];
+  for(let i=-1;i<=1;i++) for(let j=-1;j<=1;j++)
+    noktalar.push(`${(lat + i*d).toFixed(6)},${(lng + j*d).toFixed(6)}`);
+  const u = "https://api.opentopodata.org/v1/srtm30m?locations=" + encodeURIComponent(noktalar.join("|"));
+  const r = await zamanAsimi(tkgm(u), 20000);
+  const y = (r?.results||[]).map(o=>o.elevation).filter(v=>typeof v === "number");
+  if(y.length < 9) return null;
+
+  // 3x3 izgaradan egim ve baki
+  const h = (i,j) => y[i*3 + j];
+  const adimX = 111320 * Math.cos(lat*Math.PI/180) * d;
+  const adimY = 110540 * d;
+  const dzdx = ((h(0,2)+2*h(1,2)+h(2,2)) - (h(0,0)+2*h(1,0)+h(2,0))) / (8*adimX);
+  const dzdy = ((h(2,0)+2*h(2,1)+h(2,2)) - (h(0,0)+2*h(0,1)+h(0,2))) / (8*adimY);
+  const egimYuzde = Math.sqrt(dzdx*dzdx + dzdy*dzdy) * 100;
+  let bakiAci = Math.atan2(dzdy, -dzdx) * 180/Math.PI;
+  if(bakiAci < 0) bakiAci += 360;
+  const yonAd = ["Kuzey","Kuzeydoğu","Doğu","Güneydoğu","Güney","Güneybatı","Batı","Kuzeybatı"][Math.round(bakiAci/45)%8];
+  return {
+    ortalama: Math.round(y.reduce((a,b)=>a+b,0)/y.length),
+    enDusuk: Math.min(...y), enYuksek: Math.max(...y),
+    egim: Math.round(egimYuzde*10)/10,
+    baki: yonAd
+  };
+}
+
+async function yapilasmaVerisi(lat, lng){
+  const sorgu = `[out:json][timeout:25];(
+    way(around:1500,${lat},${lng})[landuse~"^(residential|industrial|commercial|construction|retail)$"];
+    way(around:600,${lat},${lng})[building];
+    node(around:1500,${lat},${lng})[place~"^(town|village)$"];
+    way(around:2500,${lat},${lng})[highway~"^(motorway|trunk|primary|secondary)$"];
+  );out center tags;`;
+  for(const sunucu of OVER_SUNUCU){
+    try{
+      const r = await zamanAsimi(tkgm(sunucu + encodeURIComponent(sorgu)), 30000);
+      if(r?.elements) return r;
+    }catch(e){}
+  }
+  return null;
+}
+
+async function corineKarsilastir(lat, lng){
+  const cek = async (yil) => {
+    const d = 0.0009;
+    const u = `https://image.discomap.eea.europa.eu/arcgis/rest/services/Corine/CLC${yil}_WM/MapServer/identify`
+      + `?f=json&geometryType=esriGeometryPoint&sr=4326&layers=all&tolerance=3&returnGeometry=false`
+      + `&imageDisplay=400,400,96&mapExtent=${lng-d},${lat-d},${lng+d},${lat+d}`
+      + `&geometry=${encodeURIComponent(JSON.stringify({ x:lng, y:lat, spatialReference:{ wkid:4326 } }))}`;
+    const r = await zamanAsimi(tkgm(u), 15000);
+    const sonuc = r?.results?.[0];
+    if(!sonuc) return null;
+    const metin = Object.values(sonuc.attributes||{}).map(v=>String(v)).join(" ");
+    const kod = (metin.match(/\b([1-5]\d\d)\b/) || [])[1];
+    return kod ? { kod, ad: CLC_AD[kod] || sonuc.value } : null;
+  };
+  const [y2018, y2012] = await Promise.all([cek(2018).catch(()=>null), cek(2012).catch(()=>null)]);
+  return { y2018, y2012 };
+}
+
+// butun kaynaklari topla ve puanla
+async function potansiyelAnalizi(p, bildir){
+  const m = { lat:p.lat, lng:p.lng };
+  const M = capHalkasi(p);
+  const sonuc = { puan:0, etkiler:[], veri:{} };
+  const say = t => { if(bildir) bildir(t); };
+
+  say("Yapılaşma verisi taranıyor…");
+  const osm = await yapilasmaVerisi(m.lat, m.lng);
+  if(osm){
+    const ogeler = (osm.elements||[]).map(e=>{
+      const nk = e.center ? { lat:e.center.lat, lng:e.center.lon } : { lat:e.lat, lng:e.lon };
+      if(!isFinite(nk.lat)) return null;
+      return { t:e.tags||{}, u:uzaklik(m, nk) };
+    }).filter(Boolean).sort((a,b)=>a.u-b.u);
+
+    const binalar = ogeler.filter(o=>o.t.building);
+    const yerlesim = ogeler.find(o=>o.t.landuse === "residential");
+    const sanayi = ogeler.find(o=>o.t.landuse === "industrial" || o.t.landuse === "commercial" || o.t.landuse === "retail");
+    const insaat = ogeler.find(o=>o.t.landuse === "construction");
+    const anaYol = ogeler.find(o=>o.t.highway);
+
+    sonuc.veri.binaSayisi = binalar.length;
+    sonuc.veri.yerlesim = yerlesim; sonuc.veri.sanayi = sanayi;
+    sonuc.veri.insaat = insaat; sonuc.veri.anaYol = anaYol;
+
+    if(yerlesim){
+      if(yerlesim.u <= 300) sonuc.etkiler.push(["Yerleşim alanına 300 m'den yakın", 22]);
+      else if(yerlesim.u <= 800) sonuc.etkiler.push([`Yerleşim alanına ${km(yerlesim.u)}`, 14]);
+      else if(yerlesim.u <= 1500) sonuc.etkiler.push([`Yerleşim alanına ${km(yerlesim.u)}`, 6]);
+    }else sonuc.etkiler.push(["Yakında işaretli yerleşim alanı yok", -8]);
+
+    if(sanayi && sanayi.u <= 1000) sonuc.etkiler.push([`Sanayi/ticaret alanına ${km(sanayi.u)}`, 16]);
+    if(insaat) sonuc.etkiler.push([`Aktif inşaat alanı ${km(insaat.u)} mesafede`, 12]);
+    if(binalar.length >= 30) sonuc.etkiler.push([`600 m içinde ${binalar.length} yapı · yoğun doku`, 14]);
+    else if(binalar.length >= 8) sonuc.etkiler.push([`600 m içinde ${binalar.length} yapı`, 8]);
+    else if(binalar.length === 0) sonuc.etkiler.push(["600 m içinde yapı yok", -6]);
+
+    if(anaYol){
+      if(anaYol.u <= 500) sonuc.etkiler.push([`Ana ulaşım aksına ${km(anaYol.u)}`, 15]);
+      else if(anaYol.u <= 2000) sonuc.etkiler.push([`Ana ulaşım aksına ${km(anaYol.u)}`, 7]);
+    }
+  }
+
+  say("Arazi örtüsü ve değişimi sorgulanıyor…");
+  const clc = await corineKarsilastir(m.lat, m.lng).catch(()=>({}));
+  sonuc.veri.clc = clc;
+  if(clc?.y2018?.kod){
+    const k = clc.y2018.kod;
+    if(k.startsWith("11") || k === "121" || k === "133")
+      sonuc.etkiler.push([`Arazi örtüsü: ${clc.y2018.ad}`, 18]);
+    else if(k === "212" || k === "213") sonuc.etkiler.push([`Arazi örtüsü: ${clc.y2018.ad}`, 8]);
+    else if(k.startsWith("31") || k.startsWith("32")) sonuc.etkiler.push([`Arazi örtüsü: ${clc.y2018.ad}`, -6]);
+    else if(k.startsWith("41") || k.startsWith("51")) sonuc.etkiler.push([`Arazi örtüsü: ${clc.y2018.ad}`, -16]);
+  }
+  if(clc?.y2012?.kod && clc?.y2018?.kod && clc.y2012.kod !== clc.y2018.kod){
+    const yapiya = clc.y2018.kod.startsWith("1") && !clc.y2012.kod.startsWith("1");
+    sonuc.etkiler.push([
+      `2012'de ${clc.y2012.ad}, 2018'de ${clc.y2018.ad}` + (yapiya ? " · yapılaşmaya dönüşüm" : ""),
+      yapiya ? 20 : 4
+    ]);
+  }
+
+  say("Eğim ve bakı hesaplanıyor…");
+  const yuk = await yukseklikIzgarasi(M, m).catch(()=>null);
+  sonuc.veri.yukseklik = yuk;
+  if(yuk){
+    if(yuk.egim <= 3) sonuc.etkiler.push([`Eğim %${yuk.egim} · düz arazi`, 12]);
+    else if(yuk.egim <= 8) sonuc.etkiler.push([`Eğim %${yuk.egim} · hafif eğimli`, 5]);
+    else if(yuk.egim <= 15) sonuc.etkiler.push([`Eğim %${yuk.egim} · orta eğimli`, -6]);
+    else sonuc.etkiler.push([`Eğim %${yuk.egim} · dik arazi`, -16]);
+    if(["Güney","Güneydoğu","Güneybatı"].includes(yuk.baki))
+      sonuc.etkiler.push([`Bakı: ${yuk.baki} · güneş alan yön`, 6]);
+  }
+
+  sonuc.puan = Math.max(0, Math.min(100, 50 + sonuc.etkiler.reduce((t,[,y])=>t+y, 0)));
+  sonuc.yorum = sonuc.puan >= 75 ? "Yüksek potansiyel"
+    : sonuc.puan >= 60 ? "Potansiyeli güçlü"
+    : sonuc.puan >= 45 ? "Orta potansiyel"
+    : sonuc.puan >= 30 ? "Sınırlı potansiyel" : "Düşük potansiyel";
+  return sonuc;
+}
+
+let SON_POTANSIYEL = null;
 
 /* ================= hesap - kitap ================= */
 
@@ -2666,7 +2655,7 @@ async function hesapListele(){
     if(k.kapandi) return;
     const vs = grup[k.id] || [];
     if(k.vadeli && vs.length){
-      vs.forEach(v=>{ if(!v.odendi){ acikToplam += +v.tutar||0; if(gun(v.tarih) <= 20 && gun(v.tarih) >= -3650) yaklasan++; } });
+      vs.forEach(v=>{ if(!v.odendi){ acikToplam += +v.tutar||0; if(gun(v.tarih) <= 20) yaklasan++; } });
     }else{
       acikToplam += +k.tutar||0;
       if(k.tarih && gun(k.tarih) <= 20) yaklasan++;
@@ -2822,7 +2811,6 @@ async function hesapAc(id){
         </div>`;
       }).join("")}
       ${yazabilir ? `<button class="btn ghost" style="margin-top:12px" onclick="vadeEkle('${id}')">+ Vade ekle</button>` : ""}
-      ${!(vs||[]).length && !yazabilir ? `<div style="color:var(--ink-3);font-size:13px">Vade yok.</div>` : ""}
     </div>`;
 }
 
@@ -2837,7 +2825,14 @@ async function hesapGuncelle(id){
   if(error) return toast("Olmadı: " + error.message);
   toast("Kaydedildi"); hesapAc(id);
 }
-
+async function hesapKapat(id, deger){ await sb.from("hesap").update({ kapandi: deger }).eq("id", id); hesapAc(id); }
+async function hesapSil(id){
+  if(!confirm("Bu kayıt ve vadeleri silinsin mi?")) return;
+  const { error } = await sb.from("hesap").delete().eq("id", id);
+  if(error) return toast("Olmadı: " + error.message);
+  toast("Silindi"); go("hesap");
+}
+async function vadeIsaret(vid, hid, deger){ await sb.from("hesap_vade").update({ odendi: deger }).eq("id", vid); hesapAc(hid); }
 async function vadeKaydet(vid, hid){
   const t = document.getElementById("vt"+vid).value;
   const m = sayiCoz(document.getElementById("vm"+vid).value) || 0;
@@ -2846,13 +2841,11 @@ async function vadeKaydet(vid, hid){
   if(error) return toast("Olmadı: " + error.message);
   toast("Vade kaydedildi"); hesapAc(hid);
 }
-
 async function vadeSil(vid, hid){
   if(!confirm("Bu vade silinsin mi?")) return;
   await sb.from("hesap_vade").delete().eq("id", vid);
   hesapAc(hid);
 }
-
 async function vadeEkle(hid){
   const { data:son } = await sb.from("hesap_vade").select("tarih,tutar").eq("hesap_id",hid)
     .order("tarih",{ascending:false}).limit(1);
@@ -2864,24 +2857,465 @@ async function vadeEkle(hid){
   hesapAc(hid);
 }
 
-async function hesapNot(id){
-  const n = document.getElementById("hnot2").value.trim();
-  const { error } = await sb.from("hesap").update({ notu: n || null }).eq("id", id);
-  toast(error ? "Olmadı: "+error.message : "Not kaydedildi");
+/* ================= yaklaşanlar ================= */
+
+async function yaklasanlar(){
+  app.innerHTML = head("Yaklaşanlar","go('ana')") + `<div id="ylist"><div class="spin"></div></div>`;
+  const bugun = new Date(); bugun.setHours(0,0,0,0);
+  const gun = t => Math.round((new Date(t) - bugun) / 86400000);
+
+  const [{ data:ekler }, { data:vadeler }] = await Promise.all([
+    sb.from("ekler").select("*"),
+    sb.from("hesap_vade").select("*, hesap(kisi,tip)").eq("odendi", false)
+  ]);
+
+  const satirlar = [];
+  (ekler||[]).forEach(k=>{
+    if(k.suresiz || !k.gecerlilik_tarihi) return;
+    satirlar.push({ tur:"Vekalet", baslik:k.ad_soyad, alt:"vekalet geçerliliği",
+      g:gun(k.gecerlilik_tarihi), tarih:k.gecerlilik_tarihi, git:"go('ekler')" });
+  });
+  (vadeler||[]).forEach(v=>{
+    satirlar.push({ tur: v.hesap?.tip === "borc" ? "Borç" : "Alacak",
+      baslik: v.hesap?.kisi || "—", alt: nf(Math.round(v.tutar)) + " ₺ vade",
+      g:gun(v.tarih), tarih:v.tarih, git:"go('hesap')" });
+  });
+
+  satirlar.sort((a,b)=>a.g - b.g);
+  const yakin = satirlar.filter(o=>o.g <= 30);
+
+  document.getElementById("ylist").innerHTML = `
+    <div class="card">
+      <div class="kv"><span>Süresi geçmiş</span>
+        <b class="mono" style="color:var(--red)">${satirlar.filter(o=>o.g < 0).length}</b></div>
+      <div class="kv"><span>30 gün içinde</span>
+        <b class="mono" style="color:var(--gold)">${satirlar.filter(o=>o.g >= 0 && o.g <= 30).length}</b></div>
+      <div class="kv"><span>Toplam takip</span><b class="mono">${satirlar.length}</b></div>
+    </div>
+    ${yakin.length ? yakin.map(o=>{
+      const renk = o.g < 0 ? "var(--red)" : o.g <= 7 ? "var(--gold)" : "var(--ink-2)";
+      const durum = o.g < 0 ? `${Math.abs(o.g)} gün geçti` : o.g === 0 ? "bugün" : `${o.g} gün kaldı`;
+      return `<button class="card" style="display:block;width:100%;text-align:left" onclick="${o.git}">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="pill sade">${o.tur}</span>
+          <b style="flex:1;font-size:15px">${esc(o.baslik)}</b>
+          <span style="font-size:12px;color:${renk};font-weight:600">${durum}</span></div>
+        <div style="font-size:12px;color:var(--ink-3);margin-top:5px">
+          ${esc(o.alt)} · ${new Date(o.tarih).toLocaleDateString("tr-TR")}</div></button>`;
+    }).join("") : `<div class="empty"><b>Yaklaşan bir şey yok</b>Vekalet süreleri ve vadeler burada toplanır.</div>`}`;
 }
-async function hesapKapat(id, deger){
-  await sb.from("hesap").update({ kapandi: deger }).eq("id", id);
-  hesapAc(id);
+
+/* ================= yapay zekâ ================= */
+
+const AI_LER = [
+  { id:"claude", ad:"Claude", alt:"Anthropic · Pro hesabınla", url:"https://claude.ai/new", renk:"sari" },
+  { id:"gpt",    ad:"ChatGPT", alt:"OpenAI · ücretsiz sürüm yeter", url:"https://chatgpt.com/", renk:"yesil" },
+  { id:"gemini", ad:"Gemini", alt:"Google · Google hesabınla", url:"https://gemini.google.com/app", renk:"mavi" }
+];
+
+async function yapayZeka(){
+  app.innerHTML = head("Bir Bilene Danış!","go('ana')") + `
+    <p class="ipuc">Birini seç, tarayıcı sekmesinde kendi hesabınla açılsın. Mikrofonla konuşabilir, yazıp sorabilirsin.</p>
+    <div class="grid">
+      ${AI_LER.map(a=>`<a class="tile ${a.renk}" href="${a.url}" target="_blank" rel="noopener" style="text-decoration:none;display:block">
+        <div class="ic">${svg("spark")}</div><b>${a.ad}</b><small>${a.alt}</small></a>`).join("")}
+    </div>
+
+    <h3 style="font-size:14px;margin:24px 0 10px">Parsel bilgisiyle sor</h3>
+    <p class="ipuc">Bir parsel seç, bilgileri panoya kopyalayayım; açılan sohbete yapıştırıp istediğini sor.</p>
+    <div id="aiList"><div class="spin"></div></div>`;
+  document.getElementById("aiList").innerHTML = await parselSecici("yapayZekaListe", p=>`
+    <div class="rw">
+      <span class="kod">${esc(p.ada||"—")}/${esc(p.parsel)}</span>
+      <span class="orta"><b>${nf(p.alan_m2)} m²</b><small>${esc(duzgun(p.mahalle))}</small></span>
+      <span class="sag"><button class="pill gold" onclick="aiKopyala('${p.id}')">kopyala</button></span>
+    </div>`);
 }
-async function hesapSil(id){
-  if(!confirm("Bu kayıt ve vadeleri silinsin mi?")) return;
-  const { error } = await sb.from("hesap").delete().eq("id", id);
-  if(error) return toast("Olmadı: "+error.message);
-  toast("Silindi"); go("hesap");
+function yapayZekaListe(){ yapayZeka(); }
+
+async function aiKopyala(parselId){
+  const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
+  const { data:yl } = await sb.from("parcel_years").select("*").eq("parcel_id",parselId).order("yil",{ascending:false});
+  const { data:et } = await sb.from("parcel_tags").select("tags(name)").eq("parcel_id",parselId);
+  const y = yl?.[0] || {};
+  const etiket = (et||[]).map(e=>e.tags?.name).filter(Boolean);
+
+  const satirlar = [
+    `Konum: ${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)}`,
+    `Ada/parsel: ${p.ada||"—"}/${p.parsel}`,
+    `Yüzölçümü: ${nf2(gercekAlan(p))} m²`,
+    `Niteliği: ${p.nitelik||"—"}`,
+    p.mevkii ? `Mevkii: ${p.mevkii}` : null,
+    p.lat ? `Koordinat: ${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}` : null,
+    y.tapu_durumu === "hisseli" ? `Tapu: hisseli (${y.hisse_pay||"?"}), payımız ${nf(y.hisse_m2)} m²` : "Tapu: tek tapu",
+    y.m2_fiyat ? `m² fiyatı: ${nf(y.m2_fiyat)} ₺` : null,
+    y.toplam_fiyat ? `Toplam fiyat: ${nf(y.toplam_fiyat)} ₺` : null,
+    y.malik ? `Malik: ${String(y.malik).replace(/\n/g,", ")}` : null,
+    etiket.length ? `Özellikler: ${etiket.join(", ")}` : null
+  ].filter(Boolean);
+
+  try{ await navigator.clipboard.writeText(satirlar.join("\n")); toast("Kopyalandı, sohbete yapıştır"); }
+  catch(e){ toast("Kopyalanamadı"); }
 }
-async function vadeIsaret(vid, hid, deger){
-  await sb.from("hesap_vade").update({ odendi: deger }).eq("id", vid);
-  hesapAc(hid);
+
+async function alaniDuzelt(parselId, deger){
+  const { error } = await sb.from("parcels").update({ alan_m2: +deger }).eq("id", parselId);
+  if(error) return toast("Olmadı: " + error.message);
+  toast("Alan düzeltildi");
+  go("capAyar", parselId);
+}
+
+/* ================= PARSEL DOSYASI · tek rapor ================= */
+
+// emsallerden agirlikli taban fiyat
+function degerleme(p, emsaller, kendi, endeks){
+  const kayit = [], elenen = [];
+  const merkezNokta = { lat:p.lat, lng:p.lng };
+
+  emsaller.forEach(o=>{
+    const birim = +o.birim_fiyat || 0;
+    if(birim <= 0) return;
+    const guncel = bugunkuDeger(birim, o.tarih, endeks);
+    const mesafe = (o.lat && p.lat) ? uzaklik(merkezNokta, { lat:o.lat, lng:o.lng }) : null;
+    kayit.push({ ...o, birim, guncel, mesafe });
+  });
+  if(!kayit.length) return null;
+
+  // uc degerleri ele (ortancanin %55 alti / %180 ustu)
+  const sirali = kayit.map(k=>k.guncel).sort((a,b)=>a-b);
+  const ortanca = sirali.length % 2 ? sirali[(sirali.length-1)/2]
+    : (sirali[sirali.length/2-1] + sirali[sirali.length/2])/2;
+  const gecerli = [];
+  kayit.forEach(k=>{
+    if(kayit.length >= 4 && (k.guncel < ortanca*0.55 || k.guncel > ortanca*1.8)){
+      elenen.push({ ...k, sebep: k.guncel < ortanca ? "olağandışı düşük" : "olağandışı yüksek" });
+    }else gecerli.push(k);
+  });
+  if(!gecerli.length) return null;
+
+  // agirlik: mesafe + buyukluk benzerligi + tazelik
+  const bugun = new Date();
+  const ay = t => Math.max(0, (bugun.getFullYear()-new Date(t).getFullYear())*12 + (bugun.getMonth()-new Date(t).getMonth()));
+  let toplamA = 0, toplamD = 0;
+  gecerli.forEach(k=>{
+    const mAgirlik = k.mesafe == null ? 0.6 : 1/(1 + k.mesafe/2000);
+    const bOran = (k.alan_m2 && kendi.alan) ? Math.min(k.alan_m2, kendi.alan)/Math.max(k.alan_m2, kendi.alan) : 0.6;
+    const tAgirlik = 1/(1 + ay(k.tarih)/18);
+    k.agirlik = Math.round((mAgirlik*0.45 + bOran*0.3 + tAgirlik*0.25)*1000)/1000;
+    toplamA += k.agirlik; toplamD += k.guncel * k.agirlik;
+  });
+  const taban = toplamD / Math.max(0.0001, toplamA);
+
+  // kendi parselimizi emsallerle kiyasla
+  const ort = (alan) => { const a = gecerli.map(alan).filter(v=>v != null); return a.length ? a.reduce((x,y)=>x+y,0)/a.length : null; };
+  const duzeltme = [];
+  const emsalCephe = ort(k=>k.analiz?.yolaCephe);
+  if(emsalCephe != null && kendi.yolaCephe != null){
+    if(kendi.yolaCephe > emsalCephe*1.3) duzeltme.push(["Yola cephesi emsallerden geniş", 8]);
+    else if(kendi.yolaCephe < emsalCephe*0.5) duzeltme.push(["Yola cephesi emsallerden dar", -10]);
+  }else if(kendi.yolaCephe === 0) duzeltme.push(["Yola cephesi yok", -14]);
+
+  const emsalEgim = ort(k=>k.analiz?.egim);
+  if(emsalEgim != null && kendi.egim != null){
+    if(kendi.egim < emsalEgim - 3) duzeltme.push(["Emsallerden daha düz arazi", 7]);
+    else if(kendi.egim > emsalEgim + 3) duzeltme.push(["Emsallerden daha eğimli arazi", -9]);
+  }
+  if(kendi.yerlesimMesafe != null && kendi.yerlesimMesafe <= 500) duzeltme.push(["Yerleşime çok yakın", 10]);
+  if(kendi.hisseli) duzeltme.push(["Hisseli tapu", -12]);
+  if(kendi.duzgunluk != null && kendi.duzgunluk < 0.45) duzeltme.push(["Girintili / dar geometri", -7]);
+
+  let carpan = duzeltme.reduce((t,[,y])=>t+y, 0);
+  carpan = Math.max(-40, Math.min(45, carpan));
+  const sonuc = taban * (1 + carpan/100);
+
+  return {
+    taban: Math.round(taban), ortanca: Math.round(ortanca), sonuc: Math.round(sonuc),
+    enAz: Math.round(Math.min(...gecerli.map(k=>k.guncel))),
+    enCok: Math.round(Math.max(...gecerli.map(k=>k.guncel))),
+    gecerli, elenen, duzeltme, carpan
+  };
+}
+
+async function parselDosyasi(parselId){
+  const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
+  if(!p) return toast("Parsel bulunamadı");
+  if(!p.lat) return toast("Bu parselin konumu yok, önce TKGM'den tazele");
+
+  app.innerHTML = head("Parsel dosyası", `go('parsel','${parselId}')`) + `
+    <div class="card"><div class="spin"></div>
+      <p style="text-align:center;color:var(--ink-3);font-size:13px" id="rdurum">Hazırlanıyor…</p>
+      <p class="ipuc" style="text-align:center;margin:6px 0 0">Bu işlem bir iki dakika sürebilir, ekranı kapatma.</p></div>`;
+  const bildir = t => { const d = document.getElementById("rdurum"); if(d) d.textContent = t; };
+
+  try{
+    const m = { lat:p.lat, lng:p.lng };
+    const M = capHalkasi(p);
+    const alan = gercekAlan(p);
+
+    const [{ data:yl }, { data:et }, { data:emsaller }] = await Promise.all([
+      sb.from("parcel_years").select("*").eq("parcel_id",parselId).order("yil",{ascending:false}),
+      sb.from("parcel_tags").select("tags(name)").eq("parcel_id",parselId),
+      sb.from("emsal_kayit").select("*").order("tarih",{ascending:false}).limit(300)
+    ]);
+    const y = yl?.[0] || {};
+    const etiket = (et||[]).map(e=>e.tags?.name).filter(Boolean);
+
+    bildir("Çevre verisi taranıyor…");
+    let cevre = null;
+    try{ cevre = cevreOzet(await cevreVerisi(m.lat, m.lng, bildir), m); }catch(e){}
+    const yerlesim = cevre?.yerler?.[0];
+    const anaYol = cevre?.yollar?.primary || cevre?.yollar?.secondary || cevre?.yollar?.trunk || cevre?.yollar?.motorway;
+
+    bildir("Potansiyel hesaplanıyor…");
+    const pot = await potansiyelAnalizi(p, bildir).catch(()=>null);
+
+    bildir("Yola cephe ölçülüyor…");
+    const halka = (p.geojson.geometry.type === "Polygon"
+      ? p.geojson.geometry.coordinates[0] : p.geojson.geometry.coordinates[0][0]).slice();
+    if(halka.length>1 && halka[0][0]===halka[halka.length-1][0] && halka[0][1]===halka[halka.length-1][1]) halka.pop();
+    const cephe = await yolaCephe(M, halka, m.lat, m.lng).catch(()=>null);
+    const sekil = sekilAnalizi(M);
+
+    bildir("Ulaşım süresi hesaplanıyor…");
+    let surus = null;
+    if(yerlesim) surus = await surusSuresi(m.lat, m.lng, yerlesim.t ? yerlesim.t.lat ?? m.lat : m.lat, m.lng).catch(()=>null);
+    let ilceSurus = null;
+    try{
+      const ilceNok = cevre?.yerler?.find(o=>o.t.place === "town" || o.t.place === "city");
+      if(ilceNok) ilceSurus = await surusSuresi(m.lat, m.lng, ilceNok.nk?.lat ?? m.lat, ilceNok.nk?.lng ?? m.lng);
+    }catch(e){}
+
+    bildir("Bitki örtüsü geçmişi alınıyor…");
+    const ndvi = await ndviSerisi(p.geojson, 3).catch(()=>null);
+
+    bildir("Güneş potansiyeli sorgulanıyor…");
+    const gunes = await gunesPotansiyeli(m.lat, m.lng, pot?.veri?.yukseklik?.egim || 0).catch(()=>null);
+
+    bildir("Emsaller değerlendiriliyor…");
+    const endeks = await tufeEndeksi().catch(()=>null);
+    const kendi = {
+      alan, yolaCephe: cephe?.uzunluk ?? null, egim: pot?.veri?.yukseklik?.egim ?? null,
+      yerlesimMesafe: yerlesim?.u ?? null, hisseli: y.tapu_durumu === "hisseli",
+      duzgunluk: sekil?.duzgunluk ?? null
+    };
+    const yakin = (emsaller||[]).filter(o=>
+      sade(o.mahalle) === sade(p.mahalle) || sade(o.ilce) === sade(p.ilce));
+    const deger = degerleme(p, yakin.length ? yakin : (emsaller||[]), kendi, endeks);
+
+    bildir("Görseller hazırlanıyor…");
+    let uydu = null, capGorsel = null;
+    try{ uydu = await uyduGorseli(p.geojson, p.lat, p.lng, 1800, 1350); }catch(e){}
+    try{
+      if(p.cap_config && !Array.isArray(p.cap_config))
+        capGorsel = await yukleGorsel(capCizPng(p, p.cap_config));
+    }catch(e){}
+
+    // ---------- bolumler ----------
+    const bolumler = [];
+
+    bolumler.push({ baslik:"1 · Künye", satirlar:[
+      ["İl / ilçe / mahalle", `${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)}`],
+      ["Ada / parsel", `${p.ada||"—"} / ${p.parsel}`],
+      ["Tapu alanı", nf2(alan) + " m²"],
+      ["Niteliği", p.nitelik || "—"],
+      ["Mevkii", p.mevkii || "—"],
+      ["Koordinat", `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`],
+      ["Tapu durumu", y.tapu_durumu === "hisseli" ? `Hisseli · ${y.hisse_pay||""} (${nf2(y.hisse_m2||0)} m²)` : "Tek tapu"],
+      ["Malik", y.malik ? String(y.malik).replace(/\n/g,", ") : "—"],
+      ["Kayıtlı satış bedeli", y.toplam_fiyat ? nf(y.toplam_fiyat) + " ₺" : "—"],
+      ["Özellikler", etiket.length ? etiket.join(", ") : "—"]
+    ]});
+
+    if(uydu) bolumler.push({ baslik:"2 · Uydu görünümü", gorsel:uydu, oran:1350/1800 });
+    if(capGorsel) bolumler.push({ baslik:"3 · Çap ve parselasyon", gorsel:capGorsel, oran: capGorsel.naturalHeight/capGorsel.naturalWidth });
+
+    const ulasimSatir = [];
+    if(yerlesim) ulasimSatir.push([`En yakın yerleşim · ${yerlesim.t.name}`, km(yerlesim.u)]);
+    if(cevre?.yerler?.[1]) ulasimSatir.push([`İkinci yerleşim · ${cevre.yerler[1].t.name}`, km(cevre.yerler[1].u)]);
+    if(ilceSurus) ulasimSatir.push(["İlçe merkezine sürüş", `${ilceSurus.dakika} dk · ${ilceSurus.km} km`]);
+    if(anaYol) ulasimSatir.push(["Ana ulaşım aksı", km(anaYol.u)]);
+    if(cephe){
+      ulasimSatir.push(["Yola cephe uzunluğu", cephe.uzunluk > 0 ? cephe.uzunluk + " m" : "cephe yok"]);
+      if(cephe.mesafe != null) ulasimSatir.push(["En yakın yola mesafe", km(cephe.mesafe)]);
+      if(cephe.yol?.tip) ulasimSatir.push(["Cephe aldığı yol", `${cephe.yol.tip}${cephe.yol.ad ? " · " + cephe.yol.ad : ""}`]);
+    }
+    bolumler.push({ baslik:"4 · Konum ve ulaşım", satirlar: ulasimSatir.length ? ulasimSatir : [["Veri alınamadı",""]] });
+
+    bolumler.push({ baslik:"5 · Altyapı ve çevre", satirlar:[
+      ["Su kaynağı", cevre?.su ? km(cevre.su.u) : "kayıt yok"],
+      ["Su kuyusu", cevre?.kuyu ? km(cevre.kuyu.u) : "kayıt yok"],
+      ["Elektrik hattı", cevre?.elektrik ? km(cevre.elektrik.u) : "kayıt yok"],
+      ["Akaryakıt", cevre?.akaryakit ? km(cevre.akaryakit.u) : "kayıt yok"],
+      ["Okul", cevre?.okul ? km(cevre.okul.u) : "kayıt yok"],
+      ["Sağlık tesisi", cevre?.saglik ? km(cevre.saglik.u) : "kayıt yok"],
+      ["600 m içinde yapı", String(pot?.veri?.binaSayisi ?? "—")],
+      ["Yerleşim alanı", pot?.veri?.yerlesim ? km(pot.veri.yerlesim.u) : "yok"],
+      ["Sanayi / ticaret alanı", pot?.veri?.sanayi ? km(pot.veri.sanayi.u) : "yok"],
+      ["İnşaat alanı", pot?.veri?.insaat ? km(pot.veri.insaat.u) : "yok"]
+    ]});
+
+    const yuk = pot?.veri?.yukseklik;
+    bolumler.push({ baslik:"6 · Arazi yapısı", satirlar:[
+      ["Ortalama eğim", yuk ? "%" + yuk.egim : "—"],
+      ["Bakı", yuk ? yuk.baki : "—"],
+      ["Rakım", yuk ? yuk.ortalama + " m" : "—"],
+      ["Boy × en", sekil ? `${sekil.boy} × ${sekil.en} m` : "—"],
+      ["Çevre uzunluğu", sekil ? sekil.cevre + " m" : "—"],
+      ["Şekil düzgünlüğü", sekil ? `${sekil.duzgunluk} · ${sekil.yorum}` : "—"],
+      ["Arazi örtüsü (2018)", pot?.veri?.clc?.y2018?.ad || "—"],
+      ["Arazi örtüsü (2012)", pot?.veri?.clc?.y2012?.ad || "—"],
+      ["Örtü değişimi", (pot?.veri?.clc?.y2012?.kod && pot?.veri?.clc?.y2018?.kod)
+        ? (pot.veri.clc.y2012.kod === pot.veri.clc.y2018.kod ? "değişmemiş" : "değişmiş") : "—"]
+    ]});
+
+    if(ndvi){
+      const yorum = ndvi.genelOrt >= 0.45 ? "yoğun bitki örtüsü, düzenli işleniyor"
+        : ndvi.genelOrt >= 0.28 ? "orta yoğunlukta bitki örtüsü"
+        : "seyrek bitki örtüsü, kıraç ya da işlenmeyen arazi görünümü";
+      bolumler.push({ baslik:"7 · Bitki örtüsü geçmişi", satirlar:
+        ndvi.yilOrt.map(o=>[`${o.yil} yılı ortalaması`, o.ort.toFixed(3).replace(".",",")])
+        .concat([
+          ["Üç yıllık ortalama", String(ndvi.genelOrt).replace(".",",")],
+          ["En yüksek dönem", `${ndvi.enYuksek.tarih} · ${String(ndvi.enYuksek.ort).replace(".",",")}`],
+          ["En düşük dönem", `${ndvi.enDusuk.tarih} · ${String(ndvi.enDusuk.ort).replace(".",",")}`],
+          ["Değerlendirme", yorum]
+        ]) });
+    }
+
+    if(gunes){
+      bolumler.push({ baslik:"8 · Güneş enerjisi potansiyeli", satirlar:[
+        ["Yıllık ışınım", nf(gunes.isinim) + " kWh/m²"],
+        ["1 kWp panel yıllık üretim", nf(gunes.yillikKwh) + " kWh"],
+        ["Günlük ortalama", String(gunes.gunlukKwh).replace(".",",") + " kWh"],
+        ["Hesapta kullanılan eğim", "%" + gunes.aci],
+        ["100 kWp tesis (yaklaşık)", nf(gunes.yillikKwh*100) + " kWh/yıl"],
+        ["Kaynak", "PVGIS · Avrupa Komisyonu JRC"]
+      ]});
+    }
+
+    if(pot){
+      bolumler.push({ baslik:"9 · Potansiyel değerlendirmesi", satirlar:
+        [["Puan", `${pot.puan} / 100`], ["Sonuç", pot.yorum]]
+        .concat(pot.etkiler.map(([ad2,d])=>[ad2, (d>0?"+":"") + d])) });
+    }
+
+    if(deger){
+      const satir = [
+        ["Değerlendirmeye alınan emsal", String(deger.gecerli.length)],
+        ["Elenen emsal", String(deger.elenen.length)],
+        ["Emsal aralığı", `${nf(deger.enAz)} – ${nf(deger.enCok)} ₺/m²`],
+        ["Ortanca emsal", nf(deger.ortanca) + " ₺/m²"],
+        ["Ağırlıklı taban fiyat", nf(deger.taban) + " ₺/m²"]
+      ];
+      deger.duzeltme.forEach(([ad2,d])=>satir.push([`Düzeltme · ${ad2}`, (d>0?"+":"") + d + "%"]));
+      satir.push(["Toplam düzeltme", (deger.carpan>0?"+":"") + deger.carpan + "%"]);
+      satir.push(["Tahmini m² değeri", nf(deger.sonuc) + " ₺"]);
+      satir.push(["Parselin tahmini değeri", nf(Math.round(deger.sonuc*alan)) + " ₺"]);
+      if(y.tapu_durumu === "hisseli" && y.hisse_m2)
+        satir.push(["Payınızın tahmini değeri", nf(Math.round(deger.sonuc*y.hisse_m2)) + " ₺"]);
+      bolumler.push({ baslik:"10 · Değerleme", satirlar: satir });
+
+      bolumler.push({ baslik:"Kullanılan emsaller", satirlar: deger.gecerli.map(k=>[
+        `${duzgun(k.mahalle||"")} ${k.ada||""}/${k.parsel||"—"} · ${nf(Math.round(k.alan_m2||0))} m²`,
+        `${nf(Math.round(k.guncel))} ₺/m² · ağırlık ${k.agirlik}`
+      ]).concat(deger.elenen.map(k=>[
+        `${duzgun(k.mahalle||"")} ${k.ada||""}/${k.parsel||"—"} · elendi`,
+        `${nf(Math.round(k.guncel))} ₺/m² · ${k.sebep}`
+      ])) });
+    }else{
+      bolumler.push({ baslik:"10 · Değerleme", metin:
+        "Bu bölge için kayıtlı emsal bulunmadığından rakamsal değerleme yapılamamıştır. Parsel detayındaki \"Emsal ekle\" ekranından bölgede gördüğünüz ilanları girdiğinizde bu bölüm otomatik hesaplanır." });
+    }
+
+    bolumler.push({ baslik:"Yöntem ve kaynaklar", metin:
+      "Parsel sınırı, alan ve künye bilgileri TKGM parsel sorgu servisinden alınmıştır. Çevre, yol, yapı ve arazi kullanımı verileri OpenStreetMap açık verisinden; arazi örtüsü ve 2012-2018 değişimi Copernicus CORINE'den; eğim, bakı ve rakım SRTM yükseklik modelinden; bitki örtüsü geçmişi Sentinel-2 uydu görüntülerinden hesaplanan NDVI değerlerinden; güneş enerjisi potansiyeli Avrupa Komisyonu PVGIS servisinden; sürüş süreleri açık yol ağından elde edilmiştir. Emsal fiyatlar kullanıcının kendi gözlemidir ve TÜFE endeksiyle bugüne taşınmıştır. Değerleme, emsallerin mesafe, büyüklük benzerliği ve tazeliğine göre ağırlıklandırılması ve parselin kendi özellikleriyle kıyaslanması yoluyla hesaplanmıştır. Resmi imar durumu için e-Plan sorgusu, resmi değer tespiti için yetkili kıymet takdiri gereklidir." });
+
+    bildir("PDF yazılıyor…");
+    const { png, oran } = raporPng(
+      `${duzgun(p.mahalle)} ${p.ada||""}/${p.parsel}`,
+      `Parsel dosyası · ${duzgun(p.ilce)} / ${duzgun(p.il)}\n${nf2(alan)} m² · ${p.nitelik||""}`,
+      bolumler);
+    const blob = pngToPdfBlob(png, oran);
+    const ad2 = capDosyaAdi(p, "pdf").replace(".pdf", "-dosya.pdf");
+    indirBlob(blob, ad2);
+    if(ME.role !== 'uye'){
+      try{ await dosyaYukle(new File([blob], ad2, { type:"application/pdf" }), "arastirma", parselId); }catch(e){}
+    }
+    toast("Parsel dosyası hazır");
+    go("parsel", parselId);
+  }catch(e){
+    app.innerHTML = head("Parsel dosyası", `go('parsel','${parselId}')`) +
+      `<div class="empty"><b>Hazırlanamadı</b>${esc(e.message||e)}
+        <br><br><button class="btn ghost" onclick="go('parsel','${parselId}')">Geri dön</button></div>`;
+  }
+}
+
+/* ================= müşteri sunumu ================= */
+
+// Esri uydu karolarindan parselin ustten gorunumunu olustur
+async function uyduGorseli(geojson, lat, lng, G, Y){
+  const karo = (z, la, lo) => {
+    const n = Math.pow(2, z);
+    const x = (lo + 180) / 360 * n;
+    const rad = la * Math.PI/180;
+    const y = (1 - Math.log(Math.tan(rad) + 1/Math.cos(rad))/Math.PI) / 2 * n;
+    return { x, y };
+  };
+  let minLa = lat, maxLa = lat, minLo = lng, maxLo = lng;
+  if(geojson?.geometry){
+    JSON.stringify(geojson.geometry.coordinates).replace(/\[(-?\d+\.?\d*),(-?\d+\.?\d*)\]/g,(t,a,b)=>{
+      minLo = Math.min(minLo, +a); maxLo = Math.max(maxLo, +a);
+      minLa = Math.min(minLa, +b); maxLa = Math.max(maxLa, +b); return t;
+    });
+  }
+  const payLa = (maxLa-minLa)*0.25 || 0.0012, payLo = (maxLo-minLo)*0.25 || 0.0012;
+  minLa -= payLa; maxLa += payLa; minLo -= payLo; maxLo += payLo;
+
+  let z = 18;
+  for(; z > 12; z--){
+    const a = karo(z, maxLa, minLo), b = karo(z, minLa, maxLo);
+    if((b.x-a.x)*256 <= G && (b.y-a.y)*256 <= Y) break;
+  }
+  const ust = karo(z, maxLa, minLo), altk = karo(z, minLa, maxLo);
+  const gen = (altk.x-ust.x)*256, yuk = (altk.y-ust.y)*256;
+  const ol = Math.min(G/gen, Y/yuk);
+  const kx = (G - gen*ol)/2, ky = (Y - yuk*ol)/2;
+
+  const c = document.createElement("canvas"); c.width = G; c.height = Y;
+  const x = c.getContext("2d");
+  x.fillStyle = "#1A1A1A"; x.fillRect(0,0,G,Y);
+
+  const isler = [];
+  for(let tx = Math.floor(ust.x); tx <= Math.floor(altk.x); tx++)
+    for(let ty = Math.floor(ust.y); ty <= Math.floor(altk.y); ty++)
+      isler.push({ tx, ty });
+
+  await Promise.all(isler.map(({tx,ty})=>new Promise(res=>{
+    const im = new Image(); im.crossOrigin = "anonymous";
+    im.onload = () => {
+      const px = kx + (tx - ust.x)*256*ol, py = ky + (ty - ust.y)*256*ol;
+      try{ x.drawImage(im, px, py, 256*ol, 256*ol); }catch(e){}
+      res();
+    };
+    im.onerror = () => res();
+    im.src = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${ty}/${tx}`;
+  })));
+
+  if(geojson?.geometry){
+    const g = geojson.geometry;
+    const halka = g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0];
+    const E = k => {
+      const t = karo(z, k[1], k[0]);
+      return [ kx + (t.x - ust.x)*256*ol, ky + (t.y - ust.y)*256*ol ];
+    };
+    x.beginPath();
+    halka.forEach((k,i)=>{ const e = E(k); i ? x.lineTo(e[0],e[1]) : x.moveTo(e[0],e[1]); });
+    x.closePath();
+    x.fillStyle = "rgba(255,255,255,.16)"; x.fill();
+    x.lineWidth = 7; x.strokeStyle = "rgba(0,0,0,.5)"; x.stroke();
+    x.lineWidth = 4; x.strokeStyle = "#FFFFFF"; x.stroke();
+  }
+  return c;
 }
 
 /* ================= sunum görseli ================= */
@@ -4635,7 +5069,7 @@ async function cikis(){ await sb.auth.signOut(); location.reload(); }
 
 /* ================= yonlendirme ================= */
 
-const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, emsal:emsal, sunum:sunum, musteri:musteriSunumu, yz:yapayZeka, hesap:hesap, yeni:yeniParsel, parsel:parselDetay,
+const ekranlar = { ana:anaMenu, harita:harita, sesli:sesliDoldur, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, emsal:emsalEkle, sunum:sunum, dosya:parselDosyasi, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, yeni:yeniParsel, parsel:parselDetay,
                    fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
 function go(r,arg){ (ekranlar[r]||anaMenu)(arg); window.scrollTo(0,0); }
 
