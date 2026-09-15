@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 6.1";
+const SURUM = "beta 6.2";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1165,7 +1165,7 @@ async function parselDetay(id){
     <div class="card">
       <div style="font-size:12px;color:var(--ink-3)">${esc(duzgun(p.il))} · ${esc(duzgun(p.ilce))} · ${esc(duzgun(p.mahalle))}</div>
       <div style="font-size:19px;font-weight:600;margin-top:3px">Ada ${esc(p.ada||"—")} · Parsel ${esc(p.parsel)}</div>
-      <div class="kv" style="margin-top:10px"><span>Yüzölçümü</span><b class="mono">${nf(p.alan_m2)} m²</b></div>
+      <div class="kv" style="margin-top:10px"><span>Yüzölçümü</span><b class="mono">${nf2(gercekAlan(p))} m²</b></div>
       <div class="kv"><span>Niteliği</span><b>${esc(p.nitelik||"—")}</b></div>
       <div class="kv"><span>Mevkii</span><b>${esc(p.mevkii||"—")}</b></div>
       <div class="kv"><span>Kayıt tarihi</span><b class="mono">${new Date(p.created_at).toLocaleString("tr-TR",{day:"2-digit",month:"long",hour:"2-digit",minute:"2-digit"})}</b></div>
@@ -3594,6 +3594,18 @@ function mesafe(a, b){
 /* ---- geometri: metreye cevir, alan, yariduzlem kirpma, parcala ---- */
 
 // parselin dis halkasini metre duzlemine cevir
+// kayitli alan geometriden cok saparsa (eski hatali kayitlar) geometriyi esas al
+function gercekAlan(p){
+  const kayitli = +p?.alan_m2 || 0;
+  try{
+    const M = capHalkasi(p);
+    if(!M) return kayitli;
+    const geo = alanHesap(M);
+    if(geo > 1 && (kayitli < geo*0.5 || kayitli > geo*2)) return geo;
+    return kayitli || geo;
+  }catch(e){ return kayitli; }
+}
+
 function capHalkasi(p){
   if(!p?.geojson?.geometry) return null;
   const g = p.geojson.geometry;
@@ -3882,8 +3894,7 @@ async function capAyar(arg){
   const M0 = capHalkasi(p);
   const geoAlan = M0 ? alanHesap(M0) : 0;
   const kayitli = +p.alan_m2 || 0;
-  // kayitli deger geometriden cok saparsa (eski hatali kayitlar) geometriyi esas al
-  const alan = (geoAlan > 1 && (kayitli < geoAlan*0.5 || kayitli > geoAlan*2)) ? geoAlan : (kayitli || geoAlan);
+  const alan = gercekAlan(p);
   const eski = p.cap_config;
 
   PARCA.geometri = capHalkasi(p);
@@ -4061,7 +4072,7 @@ function dxfUret(p, cfg){
     const om = agirlikMerkezi(o.poly);
     const b2 = o.bilgi || {};
     yazi(om, String(b2.no || (i+1)), 3);
-    yazi([om[0], om[1]-4], `${Math.round(b2.m2 || alanHesap(o.poly))} m2`, 2);
+    yazi([om[0], om[1]-4], `${(b2.m2 ?? alanHesap(o.poly)).toFixed(2)} m2`, 2);
   });
 
   g(0,"ENDSEC"); g(0,"EOF");
@@ -4118,7 +4129,7 @@ function capKunye(x, p, sol, ust, gen){
   const satirlar = [
     ["İL", duzgun(p.il), "ADA", p.ada || "—"],
     ["İLÇE", duzgun(p.ilce), "PARSEL", p.parsel],
-    ["KÖY / MAH.", duzgun(p.mahalle), "YÜZÖLÇÜMÜ", nf2(p.alan_m2) + " m²"]
+    ["KÖY / MAH.", duzgun(p.mahalle), "YÜZÖLÇÜMÜ", nf2(gercekAlan(p)) + " m²"]
   ];
   x.lineWidth = 1.2; x.strokeStyle = CAP_R.cizgi;
   satirlar.forEach((r,i)=>{
