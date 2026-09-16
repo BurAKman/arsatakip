@@ -201,7 +201,7 @@ select option{background:#101614;color:var(--ink)}
 @keyframes sorguGir{from{opacity:0}to{opacity:1}}
 @keyframes sorguCik{to{opacity:0}}
 #sorguKat .kutu{text-align:center;max-width:min(76vw,320px)}
-#sorguKat img{width:100%;max-width:260px;border-radius:18px;display:block;margin:0 auto}
+#sorguKat video{width:100%;max-width:260px;border-radius:18px;display:block;margin:0 auto}
 #sorguKat .yazi{margin-top:14px;font-size:14.5px;font-weight:600;color:#fff}
 #sorguKat .alt{margin-top:5px;font-size:12px;color:var(--ink-3)}
 #sorguKat .nokta::after{content:"";animation:nokta 1.2s steps(4,end) infinite}
@@ -385,7 +385,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 1.8";
+const SURUM = "beta 1.9";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -756,23 +756,22 @@ const secimAdi = (pre,k) => {
 // Depoya sorgu.webp (animasyon) ve sorgu.mp3 (kisa ses) koyarsan kendiliginden kullanilir.
 const SES_ACIK = () => localStorage.getItem("sesKapali") !== "1";
 
-function sorguAnimasyonAc(baslik, alt){
+// dosya: sorgu.mp4 gibi; yoksa katman yine acilir, sadece video gorunmez
+function sorguAnimasyonAc(baslik, alt, dosya){
   sorguAnimasyonKapat(true);
   const k = document.createElement("div");
   k.id = "sorguKat";
   k.innerHTML = `<div class="kutu">
-    <img src="${gv('sorgu.webp')}" alt="" onerror="this.style.display='none'">
-    <div class="yazi">${esc(baslik || "Sorgulanıyor")}<span class="nokta"></span></div>
-    <div class="alt">${esc(alt || "TKGM kayıtlarına bakıyorum")}</div>
+    <video id="sorguVid" playsinline autoplay loop ${SES_ACIK() ? "" : "muted"}
+      onerror="this.style.display='none'"><source src="${gv(dosya || "sorgu.mp4")}" type="video/mp4"></video>
+    <div class="yazi">${esc(baslik || "Hazırlanıyor")}<span class="nokta"></span></div>
+    <div class="alt">${esc(alt || "")}</div>
   </div>`;
   document.body.appendChild(k);
-
-  if(SES_ACIK()){
-    try{
-      const a = new Audio(gv("sorgu.mp3"));
-      a.volume = 0.65;
-      a.play().catch(()=>{});
-    }catch(e){}
+  const v = document.getElementById("sorguVid");
+  if(v){
+    v.volume = 0.7;
+    v.play().catch(()=>{ v.muted = true; v.play().catch(()=>{}); });
   }
   return Date.now();
 }
@@ -825,29 +824,15 @@ async function adaParselSorgu(){
   const par = document.getElementById("hpar").value.trim();
   if(!mah || !par) return toast("Mahalle ve parsel gerekli");
 
-  const basladi = sorguAnimasyonAc("Parsel aranıyor", "TKGM kayıtlarına bakıyorum");
   document.getElementById("bilgi").innerHTML = `<div class="spin"></div>`;
-  try{
-    const sonuc = await tkgm(`${TB3}/parsel/${mah}/${ada||0}/${par}`);
-    await sorguAnimasyonKapat(false, basladi, 2400);
-    ciz(sonuc);
-  }catch(e){
-    await sorguAnimasyonKapat(false, basladi, 1400);
-    document.getElementById("bilgi").innerHTML = `<div class="empty">Bulunamadı<br><small>${esc(e.message)}</small></div>`;
-  }
+  try{ ciz(await tkgm(`${TB3}/parsel/${mah}/${ada||0}/${par}`)); }
+  catch(e){ document.getElementById("bilgi").innerHTML = `<div class="empty">Bulunamadı<br><small>${esc(e.message)}</small></div>`; }
 }
 
 async function noktaSorgu(lat,lng){
-  const basladi = sorguAnimasyonAc("Parsel aranıyor", "Haritadaki noktaya bakıyorum");
   document.getElementById("bilgi").innerHTML = `<div class="spin"></div>`;
-  try{
-    const sonuc = await tkgm(`${TB3}/parsel/${lat}/${lng}`);
-    await sorguAnimasyonKapat(false, basladi, 2200);
-    ciz(sonuc);
-  }catch(e){
-    await sorguAnimasyonKapat(false, basladi, 1200);
-    document.getElementById("bilgi").innerHTML = `<div class="empty">Burada kayıtlı parsel yok</div>`;
-  }
+  try{ ciz(await tkgm(`${TB3}/parsel/${lat}/${lng}`)); }
+  catch(e){ document.getElementById("bilgi").innerHTML = `<div class="empty">Burada kayıtlı parsel yok</div>`; }
 }
 
 function ciz(f){
@@ -1293,7 +1278,7 @@ async function parselDetay(id){
 
   const grup = {};
   (belgeler||[]).forEach(b=>(grup[b.kind] ||= []).push(b));
-  const grupSira = ["tapu","cap","kml","resim","video","sunum","arastirma","diger"];
+  const grupSira = ["tapu","cap","kml","resim","video","sunum","diger"];
 
   app.innerHTML = head(`${p.ada||"—"}/${p.parsel}`,"go('araziler')") + `
     <div class="card">
@@ -1320,31 +1305,6 @@ async function parselDetay(id){
 ` : ""}
     </div>
 
-    ${y ? `<div class="card">
-      <div class="bolum"><span class="rz altin">${svg("money")}</span><b>Tapu ve fiyat</b>
-        <span class="pill ${y.aktif?"on":"off"}">${y.yil} · ${y.aktif?"aktif":"pasif"}</span></div>
-      <div class="kv"><span>Tapu durumu</span><b>${y.tapu_durumu==="hisseli"?"Hisseli"+(y.hisse_pay?" · "+esc(y.hisse_pay):""):"Tek tapu"}</b></div>
-      <div class="kv"><span>Payınız</span><b class="mono">${y.tapu_durumu==="hisseli"?nf(y.hisse_m2)+" m²":"tamamı"}</b></div>
-      <div class="kv"><span>m² fiyatı</span><b class="mono">${nf(y.m2_fiyat)} ₺</b></div>
-      <div class="kv"><span>Toplam değer</span><b class="mono">${nf(y.toplam_fiyat)} ₺</b></div>
-      ${malikSatir.length?`<div style="border-top:1px solid var(--cizgi);margin-top:10px;padding-top:10px">
-        <div style="font-size:12px;color:var(--ink-2);margin-bottom:6px">Malik / hissedarlar</div>
-        ${malikSatir.map(ad2=>{
-          const k = esles(ad2);
-          const vb = k && kisiBelge[k.vekalet_doc_id], mb = k && kisiBelge[k.muvafakat_doc_id];
-          return `<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:6px 0">
-            <b style="font-size:13.5px;font-weight:500;flex:1;min-width:110px">${esc(ad2)}</b>
-            ${vb?`<button class="pill gold" onclick="dosyaAc('${esc(vb.file_path)}')">vekalet</button>
-                  <button class="pill sade" onclick="dosyaIndir('${esc(vb.file_path)}','${esc(vb.file_name||"vekalet")}')">indir</button>`:""}
-            ${mb?`<button class="pill gold" onclick="dosyaAc('${esc(mb.file_path)}')">muvafakat</button>`:""}
-            ${!k?`<span class="pill sade">belge yok</span>`:""}
-          </div>`;
-        }).join("")}</div>`:""}
-      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-        ${y.ilan_url?`<a class="pill gold" href="${esc(y.ilan_url)}" target="_blank">sahibinden ilanı</a>`:""}
-        ${ME.role==='admin'?`<button class="pill gold" onclick="go('fiyatDuzen','${y.id}')">düzenle</button>`:""}</div>
-    </div>` : ""}
-
     ${(parcalar||[]).length ? (() => {
       const alan = o => +o.m2 || 0, satis = o => (+o.m2||0)*(+o.m2_fiyat||0), mal = o => (+o.m2||0)*(+o.maliyet_m2||0);
       const topla = (l,f) => l.reduce((t,o)=>t+f(o),0);
@@ -1355,9 +1315,11 @@ async function parselDetay(id){
       const kar = stSatis - stMal, gKar = sdSatis - sdMal;
       return `<div class="card">
       <div class="bolum"><span class="rz altin">${svg("vector")}</span><b>Parçalar / hisseler</b>
+        ${y ? `<span class="pill ${y.aktif?"on":"off"}">${y.yil} · ${y.aktif?"aktif":"pasif"}</span>` : ""}
         <span class="sayi">${parcalar.length} parça</span></div>
       <div class="kv"><span>Satılık</span><b class="mono">${satilik.length} adet · ${nf2(stAlan)} m²</b></div>
       <div class="kv"><span>Ortalama m² fiyatı</span><b class="mono">${stAlan ? nf(Math.round(stSatis/stAlan)) + " ₺" : "—"}</b></div>
+      <div class="kv"><span>Ortalama m² maliyeti</span><b class="mono">${stAlan ? nf(Math.round(stMal/stAlan)) + " ₺" : "—"}</b></div>
       <div class="kv"><span>Satış bedeli</span><b class="mono">${nf(Math.round(stSatis))} ₺</b></div>
       <div class="kv"><span style="color:${kar>=0?"var(--green)":"var(--red)"}">Beklenen kâr</span>
         <b class="mono" style="color:${kar>=0?"var(--green)":"var(--red)"}">${nf(Math.round(kar))} ₺</b></div>
@@ -1373,7 +1335,12 @@ async function parselDetay(id){
             color:${renk};border:1px solid ${renk}55;border-radius:8px;padding:4px 6px">${esc(o.no||"")}</span>
           <div style="flex:1;min-width:0">
             <b style="font-size:13.5px;font-weight:500;display:block">${esc(o.ad || (o.no + " nolu parça"))}</b>
-            <small style="font-size:11.5px;color:var(--ink-3)">${nf2(o.m2||0)} m² · ${durum}${o.m2_fiyat ? " · " + nf(Math.round(o.m2_fiyat)) + " ₺/m²" : ""}</small></div>
+            <small style="font-size:11.5px;color:var(--ink-3);display:block">${nf2(o.m2||0)} m² · ${durum}${o.m2_fiyat ? " · " + nf(Math.round(o.m2_fiyat)) + " ₺/m²" : ""}</small>
+            ${(o.m2 && (o.m2_fiyat || o.maliyet_m2)) ? (() => {
+              const kr = (+o.m2||0)*((+o.m2_fiyat||0)-(+o.maliyet_m2||0));
+              return `<small style="font-size:11.5px;color:${kr>=0?"var(--green)":"var(--red)"};display:block;margin-top:1px">
+                Kâr: ${nf(Math.round(kr))} ₺${o.maliyet_m2 ? ` · maliyet ${nf(Math.round(o.maliyet_m2))} ₺/m²` : ""}</small>`; })() : ""}
+            ${o.notu ? `<small style="font-size:11px;color:var(--ink-3);display:block;margin-top:2px">${esc(o.notu)}</small>` : ""}</div>
           ${o.m2 && o.m2_fiyat ? `<b class="mono" style="color:var(--gold);font-size:13px">${nf(Math.round(o.m2*o.m2_fiyat))} ₺</b>` : ""}
         </div>`;
       }).join("")}
@@ -1516,11 +1483,7 @@ async function fiyatDuzen(id){
       ${p.lat?`<button class="btn ghost" style="margin-top:12px" id="tazele">TKGM'den tazele</button>`:""}
     </div>
 
-    <h3 style="font-size:14px;margin:20px 0 10px">Tapu ve hisse</h3>
-    <div class="field"><label>Tapu durumu</label><select id="td">
-      <option value="tek"${r.tapu_durumu!=="hisseli"?" selected":""}>Tek tapu · tamamı bizim</option>
-      <option value="hisseli"${r.tapu_durumu==="hisseli"?" selected":""}>Hisseli · payımız var</option></select></div>
-    <div class="field" id="hpAlan" style="border:1px solid var(--cizgi);border-radius:var(--r);padding:14px;background:var(--cam)">${hisseAlanlari("f", r.hisse_pay, r.hisse_m2)}</div>
+    <h3 style="font-size:14px;margin:20px 0 10px">Malik bilgisi</h3>
     <div class="field"><label>Malik / hissedarlar</label>
       <textarea id="mlk" rows="3" placeholder="Tapudaki isimler, hisseleriyle birlikte">${esc(r.malik||"")}</textarea></div>
 
@@ -1547,7 +1510,6 @@ async function fiyatDuzen(id){
       <button onclick="belgeEkle('${p.id}','resim','fiyatDuzen','${id}')">Fotoğraf</button>
       <button onclick="belgeEkle('${p.id}','video','fiyatDuzen','${id}')">Video</button>
       <button onclick="belgeEkle('${p.id}','sunum','fiyatDuzen','${id}')">İlan görseli</button>
-      <button onclick="belgeEkle('${p.id}','arastirma','fiyatDuzen','${id}')">Araştırma</button>
       <button onclick="belgeEkle('${p.id}','diger','fiyatDuzen','${id}')">Diğer</button>
     </div>
     <div class="card">${belgeListesiHtml(belgeler, p.id, "fiyatDuzen", id)}</div>
@@ -1613,7 +1575,7 @@ async function fiyatDuzen(id){
     const hisseli = g("td").value === "hisseli";
     e.target.disabled = true;
     const { error } = await sb.from("parcel_years").update({
-      tapu_durumu: g("td").value,
+      tapu_durumu: r.tapu_durumu || "tek",
       hisse_pay: hisseli ? h.kod : null,
       hisse_m2: hisseli ? h.pay : null,
       malik: g("mlk").value.trim() || null,
@@ -2533,6 +2495,7 @@ function parcaOzetCiz(){
       <div class="tur">Satılık</div>
       ${satir("Parça / alan", `${satilik.length} adet · ${nf2(stAlan)} m²`)}
       ${satir("Ortalama m² fiyatı", stAlan ? nf(Math.round(stSatis/stAlan)) + " ₺" : "—")}
+      ${satir("Ortalama m² maliyeti", stAlan ? nf(Math.round(stMal/stAlan)) + " ₺" : "—")}
       ${satir("Satış bedeli", nf(Math.round(stSatis)) + " ₺")}
       ${satir("Maliyet", nf(Math.round(stMal)) + " ₺")}
       ${satir("Beklenen kâr", nf(Math.round(bekleyenKar)) + " ₺" + oran(stMal),
@@ -3995,6 +3958,7 @@ function agirlikMerkezi(pts){
 
 async function capAyar(arg){
   const [parselId, belgeId] = String(arg||"").split("|");
+  const __anim = sorguAnimasyonAc("Çap hazırlanıyor", "Parselin sınırlarını alıyorum", "sorgu.mp4");
   const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
   if(!p || !p.geojson) return toast("Bu parselin sınır çizimi yok");
   const M0 = capHalkasi(p);
