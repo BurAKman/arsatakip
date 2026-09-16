@@ -1871,12 +1871,13 @@ function cevreSorgusu(lat, lng, kademe){
     way(around:1500,${lat},${lng})[waterway~"^(river|stream|canal)$"];
     way(around:1200,${lat},${lng})[landuse];
   );out center tags;`;
-  return `[out:json][timeout:25];(
+  return `[out:json][timeout:30];(
     node(around:12000,${lat},${lng})[place~"^(city|town|village|hamlet)$"];
     way(around:2000,${lat},${lng})[highway];
     way(around:2500,${lat},${lng})[waterway~"^(river|stream|canal|ditch)$"];
     way(around:2500,${lat},${lng})[natural=water];
     way(around:1800,${lat},${lng})[landuse];
+    way(around:600,${lat},${lng})[building];
     node(around:8000,${lat},${lng})[amenity~"^(school|hospital|pharmacy|fuel)$"];
     way(around:4000,${lat},${lng})[power=line];
     node(around:8000,${lat},${lng})[man_made=water_well];
@@ -2581,14 +2582,15 @@ async function corineKarsilastir(lat, lng){
 }
 
 // butun kaynaklari topla ve puanla
-async function potansiyelAnalizi(p, bildir){
+async function potansiyelAnalizi(p, bildir, hazirOsm){
   const m = { lat:p.lat, lng:p.lng };
   const M = capHalkasi(p);
   const sonuc = { puan:0, etkiler:[], veri:{} };
   const say = t => { if(bildir) bildir(t); };
 
-  say("Yapılaşma verisi taranıyor…");
-  const osm = await yapilasmaVerisi(m.lat, m.lng);
+  // ayni sorguyu tekrar atmamak icin hazir veri verilebilir
+  let osm = hazirOsm || null;
+  if(!osm){ say("Yapılaşma verisi taranıyor…"); osm = await yapilasmaVerisi(m.lat, m.lng); }
   if(osm){
     const ogeler = (osm.elements||[]).map(e=>{
       const nk = e.center ? { lat:e.center.lat, lng:e.center.lon } : { lat:e.lat, lng:e.lon };
@@ -3260,13 +3262,21 @@ async function parselDosyasi(parselId){
     const etiket = (et||[]).map(e=>e.tags?.name).filter(Boolean);
 
     bildir("Çevre verisi taranıyor…");
-    let cevre = null;
-    try{ cevre = cevreOzet(await cevreVerisi(m.lat, m.lng, bildir), m); }catch(e){}
+    let cevre = null, osmHam = null;
+    try{
+      osmHam = await cevreVerisi(m.lat, m.lng, bildir);
+      cevre = cevreOzet(osmHam, m);
+    }catch(e){
+      // bir kere daha dene: ucretsiz sunucular anlik yogunlukta reddedebiliyor
+      bildir("Çevre sunucusu meşgul, tekrar deneniyor…");
+      await new Promise(r=>setTimeout(r, 4000));
+      try{ osmHam = await cevreVerisi(m.lat, m.lng, bildir); cevre = cevreOzet(osmHam, m); }catch(e2){}
+    }
     const yerlesim = cevre?.yerler?.[0];
     const anaYol = cevre?.yollar?.primary || cevre?.yollar?.secondary || cevre?.yollar?.trunk || cevre?.yollar?.motorway;
 
     bildir("Potansiyel hesaplanıyor…");
-    const pot = await potansiyelAnalizi(p, bildir).catch(()=>null);
+    const pot = await potansiyelAnalizi(p, bildir, osmHam).catch(()=>null);
 
     bildir("Yola cephe ölçülüyor…");
     const halka = (p.geojson.geometry.type === "Polygon"
@@ -3276,12 +3286,11 @@ async function parselDosyasi(parselId){
     const sekil = sekilAnalizi(M);
 
     bildir("Ulaşım süresi hesaplanıyor…");
-    let surus = null;
-    if(yerlesim) surus = await surusSuresi(m.lat, m.lng, yerlesim.t ? yerlesim.t.lat ?? m.lat : m.lat, m.lng).catch(()=>null);
-    let ilceSurus = null;
+    let koySurus = null, ilceSurus = null;
     try{
-      const ilceNok = cevre?.yerler?.find(o=>o.t.place === "town" || o.t.place === "city");
-      if(ilceNok) ilceSurus = await surusSuresi(m.lat, m.lng, ilceNok.nk?.lat ?? m.lat, ilceNok.nk?.lng ?? m.lng);
+      if(yerlesim?.nk) koySurus = await surusSuresi(m.lat, m.lng, yerlesim.nk.lat, yerlesim.nk.lng);
+      const ilceNok = cevre?.yerler?.find(o=>(o.t.place === "town" || o.t.place === "city") && o.nk);
+      if(ilceNok) ilceSurus = await surusSuresi(m.lat, m.lng, ilceNok.nk.lat, ilceNok.nk.lng);
     }catch(e){}
 
     bildir("Bitki örtüsü geçmişi alınıyor…");
@@ -3334,7 +3343,8 @@ async function parselDosyasi(parselId){
     const ulasimSatir = [];
     if(yerlesim) ulasimSatir.push([`En yakın yerleşim · ${yerlesim.t.name}`, km(yerlesim.u)]);
     if(cevre?.yerler?.[1]) ulasimSatir.push([`İkinci yerleşim · ${cevre.yerler[1].t.name}`, km(cevre.yerler[1].u)]);
-    if(ilceSurus) ulasimSatir.push(["İlçe merkezine sürüş", `${ilceSurus.dakika} dk · ${ilceSurus.km} km`]);
+    if(koySurus) ulasimSatir.push([`${yerlesim.t.name}'e sürüş`, `${koySurus.dakika} dk · ${koySurus.km} km`]);
+    if(ilceSurus) ulasimSatir.push(["İlçe / şehir merkezine sürüş", `${ilceSurus.dakika} dk · ${ilceSurus.km} km`]);
     if(anaYol) ulasimSatir.push(["Ana ulaşım aksı", km(anaYol.u)]);
     if(cephe){
       ulasimSatir.push(["Yola cephe uzunluğu", cephe.uzunluk > 0 ? cephe.uzunluk + " m" : "cephe yok"]);
