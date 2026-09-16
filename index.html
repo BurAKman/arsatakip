@@ -56,9 +56,14 @@ a{color:var(--gold);text-decoration:none}
   align-items:center;justify-content:center;gap:0;transition:opacity .6s ease}
 #acilis.git{opacity:0;pointer-events:none}
 #acilis video{width:min(86vw,420px);max-height:56vh;border-radius:18px;display:block;object-fit:contain}
-#acilis .ad{margin-top:22px;font-size:26px;font-weight:700;letter-spacing:.16em;color:#fff;
-  text-shadow:0 2px 18px rgba(0,0,0,.8)}
-#acilis .yuk{margin-top:9px;font-size:13.5px;color:rgba(255,255,255,.62);letter-spacing:.04em}
+#acilis .ad{margin-top:26px;font-size:clamp(24px,7vw,34px);font-weight:300;letter-spacing:.34em;
+  text-indent:.34em;color:transparent;
+  background:linear-gradient(180deg,#FFFFFF 0%,#F0E6C8 42%,#C9A94E 100%);-webkit-background-clip:text;background-clip:text;
+  filter:drop-shadow(0 2px 14px rgba(0,0,0,.75))}
+#acilis .cizgi{margin-top:14px;width:clamp(120px,42vw,220px);height:1px;
+  background:linear-gradient(90deg,transparent,rgba(227,192,90,.75),transparent)}
+#acilis .yuk{margin-top:13px;font-size:11.5px;color:rgba(255,255,255,.5);
+  letter-spacing:.3em;text-indent:.3em;text-transform:uppercase;font-weight:500}
 #acilis .yuk i{font-style:normal}
 #acilis .yuk i::after{content:"";animation:acNokta 1.2s steps(4,end) infinite}
 @keyframes acNokta{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
@@ -70,10 +75,13 @@ a{color:var(--gold);text-decoration:none}
 .logo .mark{width:56px;height:56px;border-radius:50%;overflow:hidden;flex:0 0 auto;
   border:1.5px solid rgba(255,255,255,.55);background:#0A0C0B;box-shadow:0 2px 12px rgba(0,0,0,.5)}
 .logo .mark img{width:100%;height:100%;object-fit:cover;display:block}
-.logo b{font-size:19px;font-weight:700;letter-spacing:-.02em;display:block;line-height:1.1;color:#FFFFFF;
-  text-shadow:0 1px 8px rgba(0,0,0,.55)}
-.logo span{font-size:9px;letter-spacing:.15em;text-transform:uppercase;display:block;margin-top:2px;
-  color:rgba(255,255,255,.82);text-shadow:0 1px 6px rgba(0,0,0,.5)}
+.logo b{font-size:18.5px;font-weight:300;letter-spacing:.2em;text-indent:.2em;display:block;line-height:1.15;
+  color:transparent;background:linear-gradient(180deg,#FFFFFF,#F2E7C9 46%,#C9A94E);
+  -webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 1px 6px rgba(0,0,0,.6))}
+.logo span{font-size:8.5px;letter-spacing:.26em;text-indent:.26em;text-transform:uppercase;display:block;margin-top:5px;
+  color:rgba(227,192,90,.72);font-weight:500;position:relative;padding-top:5px}
+.logo span::before{content:"";position:absolute;top:0;left:0;width:26px;height:1px;
+  background:linear-gradient(90deg,rgba(227,192,90,.8),transparent)}
 .ibtn{width:38px;height:38px;border-radius:12px;border:1px solid var(--cizgi-2);background:var(--cam);
   display:grid;place-items:center;flex:0 0 auto;color:var(--ink);backdrop-filter:blur(10px)}
 .ibtn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -199,6 +207,24 @@ select option{background:#101614;color:var(--ink)}
 #sorguKat .alt{margin-top:5px;font-size:12px;color:var(--ink-3)}
 #sorguKat .nokta::after{content:"";animation:nokta 1.2s steps(4,end) infinite}
 @keyframes nokta{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+
+/* ---- mini tuslar: cam parlaklik ---- */
+.tile.mini{position:relative;overflow:hidden;border-width:1px;
+  background:linear-gradient(155deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 46%,rgba(255,255,255,.09));
+  backdrop-filter:blur(14px);box-shadow:0 6px 18px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.22)}
+.tile.mini::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(115deg,rgba(255,255,255,.34) 0%,rgba(255,255,255,.06) 28%,transparent 46%)}
+.tile.mini::after{content:"";position:absolute;top:-60%;left:-35%;width:45%;height:220%;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);
+  transform:rotate(18deg);animation:camParla 5.5s ease-in-out infinite}
+@keyframes camParla{0%,70%{left:-40%}88%,100%{left:120%}}
+.tile.mini b,.tile.mini small{position:relative;z-index:1}
+.tile.mini.gumus{border-color:rgba(255,255,255,.34)}
+.tile.mini.gumus b{color:#F6F8F9;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+.tile.mini.kizil{border-color:rgba(240,112,92,.5);
+  background:linear-gradient(155deg,rgba(240,112,92,.3),rgba(198,64,44,.12) 48%,rgba(240,112,92,.2))}
+.tile.mini.kizil b{color:#FFE2DB;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+.tile.mini.kizil::after{animation-delay:1.6s}
 
 /* ---- metalik panjur ---- */
 .panjur{border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.14);
@@ -333,9 +359,10 @@ select option{background:#101614;color:var(--ink)}
 </head>
 <body>
 <div id="acilis">
-  <video id="acilisVid" playsinline autoplay muted
+  <video id="acilisVid" playsinline autoplay
     onerror="this.style.display='none'"><source src="loading.mp4" type="video/mp4"></video>
   <div class="ad">PARSEL PARSEL</div>
+  <div class="cizgi"></div>
   <div class="yuk">Yükleniyor<i></i></div>
 </div>
 <div class="wrap" id="app"><div class="spin"></div></div>
@@ -379,7 +406,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 2.0";
+const SURUM = "beta 2.1";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -512,8 +539,8 @@ async function anaMenu(){
       ${tile("araziler","folder","Araziler","Her şey tek yerde","yesil","bg-araziler.jpg")}
       ${tile("fiyat","money","Tapu bilgileri","Hisse, malik, fiyat","gri","bg-tapu.jpg")}
       ${tile("ekler","file","Ekler","Vekalet, muvafakat","gri","bg-ekler.jpg")}
-      <button class="tile mavi mini" onclick="go('kml')"><b>KML</b><small>İndir, Earth'te aç</small></button>
-      <button class="tile mavi mini" onclick="go('cap')"><b>Çap</b><small>Çiz veya yükle</small></button>
+      <button class="tile mini gumus" onclick="go('kml')"><b>KML</b><small>İndir, Earth'te aç</small></button>
+      <button class="tile mini kizil" onclick="go('cap')"><b>Çap</b><small>Çiz veya yükle</small></button>
       <button class="tile wide sari gorselli" onclick="go('yz')">
         <div class="gorsel" style="background-image:url('${gv("bg-yz.jpg")}')"></div><div class="perde"></div>
         <div class="icerik"><b>Bir Bilene Danış!</b><small>Claude, ChatGPT, Gemini</small></div></button>
@@ -3956,7 +3983,7 @@ async function capAyar(arg){
   const [parselId, belgeId] = String(arg||"").split("|");
   const __anim = sorguAnimasyonAc("Çap hazırlanıyor", "Parselin sınırlarını alıyorum", "sorgu.mp4");
   const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
-  if(!p || !p.geojson) return toast("Bu parselin sınır çizimi yok");
+  if(!p || !p.geojson){ sorguAnimasyonKapat(true); return toast("Bu parselin sınır çizimi yok"); }
   const M0 = capHalkasi(p);
   const geoAlan = M0 ? alanHesap(M0) : 0;
   const kayitli = +p.alan_m2 || 0;
@@ -4006,6 +4033,7 @@ async function capAyar(arg){
   }
   PARCA.p = p;
   parcaKur(alan, duzen?.bloklar || null);
+  await sorguAnimasyonKapat(false, __anim, 2600);
   if(duzen){
     PARCA.enAzYol = 3;
     PARCA.ters = !!duzen.ters;
@@ -4045,7 +4073,7 @@ async function capAyar(arg){
 
 async function capCiz(parselId, cfg, belgeId){
   const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
-  if(!p || !p.geojson) return toast("Bu parselin sınır çizimi yok");
+  if(!p || !p.geojson){ sorguAnimasyonKapat(true); return toast("Bu parselin sınır çizimi yok"); }
   toast("Çap çiziliyor…");
   try{
     const { jsPDF } = window.jspdf;
@@ -4454,7 +4482,7 @@ function capCizPng(p, cfg, kucuk){
 
 async function kmlIndirParsel(parselId){
   const { data:p } = await sb.from("parcels").select("geojson,mahalle,ada,parsel").eq("id",parselId).single();
-  if(!p || !p.geojson) return toast("Bu parselin sınır çizimi yok");
+  if(!p || !p.geojson){ sorguAnimasyonKapat(true); return toast("Bu parselin sınır çizimi yok"); }
   const f = p.geojson;
   const b = new Blob([kmlMetni(f)], { type:"application/vnd.google-earth.kml+xml" });
   const a = document.createElement("a");
@@ -4712,9 +4740,17 @@ function acilisiKapat(){
 (function(){
   const v = document.getElementById("acilisVid");
   if(v){
+    v.volume = 0.8;
     v.addEventListener("ended", () => acilisiKapat());
-    v.play().catch(()=>{});
-    setTimeout(acilisiKapat, 9000);   // guvenlik: video takilirsa bekletme
+    // tarayicilar dokunmadan sesli oynatmayi engelleyebilir:
+    // once sesli dene, olmazsa sessiz basla ve ilk dokunusta sesi ac
+    v.play().catch(()=>{
+      v.muted = true;
+      v.play().catch(()=>{});
+      const ac = () => { v.muted = false; document.removeEventListener("pointerdown", ac); };
+      document.addEventListener("pointerdown", ac, { once:true });
+    });
+    setTimeout(acilisiKapat, 12000);
   }else setTimeout(acilisiKapat, 3000);
 })();
 
