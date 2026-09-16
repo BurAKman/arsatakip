@@ -89,6 +89,12 @@ a{color:var(--gold);text-decoration:none}
   color:rgba(227,192,90,.72);font-weight:500;position:relative;padding-top:5px}
 .logo span::before{content:"";position:absolute;top:0;left:0;width:26px;height:1px;
   background:linear-gradient(90deg,rgba(227,192,90,.8),transparent)}
+.ibtn.geri{width:44px;height:44px;border-radius:14px;border:1px solid rgba(227,192,90,.42);
+  background:linear-gradient(155deg,rgba(227,192,90,.26),rgba(227,192,90,.08));
+  box-shadow:0 3px 12px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.18)}
+.ibtn.geri{color:var(--gold)}
+.ibtn.geri svg{width:22px;height:22px}
+.ibtn.geri:active{background:rgba(227,192,90,.34)}
 .ibtn{width:38px;height:38px;border-radius:12px;border:1px solid var(--cizgi-2);background:var(--cam);
   display:grid;place-items:center;flex:0 0 auto;color:var(--ink);backdrop-filter:blur(10px)}
 .ibtn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -201,6 +207,26 @@ select option{background:#101614;color:var(--ink)}
 .pill.off{background:var(--red-soft);color:var(--red);border-color:rgba(240,112,92,.3)}
 .pill.gold{background:var(--gold-soft);color:var(--gold);border-color:rgba(227,192,90,.32)}
 .pill.sade{background:var(--cam-2);color:var(--ink-2);border-color:var(--cizgi)}
+
+#tuval .altPerde{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(0deg,rgba(0,0,0,.95) 0%,rgba(0,0,0,.45) 26%,rgba(0,0,0,0) 55%)}
+
+/* ---- sunum sekmeleri ve secim kartlari ---- */
+.sekmeler{display:flex;gap:7px;margin:14px 0 14px;background:rgba(0,0,0,.28);padding:5px;
+  border-radius:14px;border:1px solid var(--cizgi)}
+.sekmeler .sek{flex:1;padding:10px 6px;border:0;border-radius:10px;background:transparent;
+  color:var(--ink-2);font-size:13px;font-weight:600;letter-spacing:.04em;cursor:pointer}
+.sekmeler .sek.aktif{color:#14110A;
+  background:linear-gradient(160deg,#F0DFA8,#D9B65A);box-shadow:0 2px 10px rgba(0,0,0,.4)}
+
+.kutuSecim,.stilSecim{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:8px}
+.kutuKart,.stilKart{padding:8px;border-radius:13px;border:1px solid var(--cizgi-2);background:var(--cam);
+  color:var(--ink);cursor:pointer;text-align:center;display:block}
+.kutuKart canvas,.stilKart canvas{width:100%;height:auto;border-radius:9px;display:block;
+  border:1px solid rgba(255,255,255,.08)}
+.kutuKart span,.stilKart span{display:block;margin-top:7px;font-size:11.5px;color:var(--ink-2);font-weight:600}
+.stilKart.aktif{border-color:var(--gold);box-shadow:0 0 0 1px rgba(227,192,90,.4), 0 4px 14px rgba(0,0,0,.4)}
+.stilKart.aktif span{color:var(--gold)}
 
 /* ---- gorselli kartlar: buzlu cam ve isik gecisi ---- */
 .tile.gorselli{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.26);
@@ -417,7 +443,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 2.2";
+const SURUM = "beta 2.3";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -506,7 +532,9 @@ function girisEkrani(){
 
 function head(title, back){
   return `<div class="top">
-    ${back?`<button class="ibtn geri" onclick="${back}" aria-label="Geri">‹</button>`:""}
+    ${back?`<button class="ibtn geri" onclick="${back}" aria-label="Geri">
+      <svg viewBox="0 0 24 24" fill="none"><polyline points="15 18 9 12 15 6" stroke="currentColor"
+        stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`:""}
     ${title
       ? `<h1>${esc(title)}</h1>`
       : `<div class="logo"><span class="mark"><img src="logo.png" alt=""></span>
@@ -516,6 +544,94 @@ function head(title, back){
   </div>`;
 }
 function cikisSor(){ if(confirm("Çıkış yapılsın mı?")) cikis(); }
+
+/* ---- marka kimligi ---- */
+let MARKA = null;
+
+async function markaYukle(){
+  try{
+    const { data } = await sb.from("teams").select("marka").eq("id", ME.team_id).single();
+    MARKA = data?.marka || null;
+  }catch(e){ MARKA = null; }
+}
+
+function markaVarMi(){
+  return !!(MARKA && (MARKA.ad || MARKA.telefon || MARKA.logo));
+}
+
+function markaEkran(){
+  const m = MARKA || {};
+  app.innerHTML = head("Marka kimliği","go('ayarlar')") + `
+    <p class="ipuc">Buraya girdiklerin hazırladığın sunum görsellerinin köşesine basılır.
+      Boş bırakırsan görselde hiçbir ibare çıkmaz.</p>
+    <div class="card">
+      <div class="field"><label>Ad / firma</label>
+        <input id="mkAd" value="${esc(m.ad||"")}" placeholder="Burak Akman"></div>
+      <div class="field"><label>Telefon</label>
+        <input id="mkTel" value="${esc(m.telefon||"")}" placeholder="0500 000 00 00"></div>
+      <div class="field" style="margin:0"><label>Alt not (isteğe bağlı)</label>
+        <input id="mkNot" value="${esc(m.notu||"")}" placeholder="Emlak · Tarla · Arsa"></div>
+      <div style="margin-top:14px">
+        <label style="font-size:11px;color:var(--ink-2);letter-spacing:.06em;text-transform:uppercase">Logo</label>
+        <div id="mkLogoKutu" style="margin-top:8px">
+          ${m.logo?`<img src="${m.logo}" style="width:84px;height:84px;object-fit:contain;border-radius:14px;
+            background:rgba(255,255,255,.06);border:1px solid var(--cizgi);padding:6px;display:block">`:
+            `<div style="font-size:13px;color:var(--ink-3)">Logo eklenmedi</div>`}
+        </div>
+        <div class="acts" style="margin-top:10px">
+          <button onclick="markaLogoSec()">Logo seç</button>
+          ${m.logo?`<button class="kirmizi" onclick="markaLogoSil()">Logoyu kaldır</button>`:""}
+        </div>
+      </div>
+    </div>
+    <button class="btn" onclick="markaKaydet()">Kaydet</button>
+    ${markaVarMi()?`<button class="btn ghost" style="margin-top:8px" onclick="markaSil()">Marka bilgilerini tamamen sil</button>`:""}`;
+}
+
+let MK_LOGO = undefined;   // undefined = degismedi, null = silindi, string = yeni
+
+async function markaLogoSec(){
+  const f = await dosyaSec("image/*");
+  if(!f) return;
+  const veri = await new Promise(res=>{ const r = new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(f); });
+  // kucult: gorsele gomulecegi icin 400px yeter
+  const im = await yukleGorsel(veri);
+  const k = Math.min(400/im.naturalWidth, 400/im.naturalHeight, 1);
+  const c = document.createElement("canvas");
+  c.width = Math.round(im.naturalWidth*k); c.height = Math.round(im.naturalHeight*k);
+  c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+  MK_LOGO = c.toDataURL("image/png");
+  document.getElementById("mkLogoKutu").innerHTML =
+    `<img src="${MK_LOGO}" style="width:84px;height:84px;object-fit:contain;border-radius:14px;
+      background:rgba(255,255,255,.06);border:1px solid var(--cizgi);padding:6px;display:block">`;
+  toast("Logo hazır, kaydetmeyi unutma");
+}
+
+function markaLogoSil(){
+  MK_LOGO = null;
+  document.getElementById("mkLogoKutu").innerHTML = `<div style="font-size:13px;color:var(--ink-3)">Logo eklenmedi</div>`;
+}
+
+async function markaKaydet(){
+  const v = k => document.getElementById(k).value.trim();
+  const yeni = {
+    ad: v("mkAd") || null, telefon: v("mkTel") || null, notu: v("mkNot") || null,
+    logo: MK_LOGO === undefined ? (MARKA?.logo || null) : MK_LOGO
+  };
+  const bos = !yeni.ad && !yeni.telefon && !yeni.notu && !yeni.logo;
+  const { error } = await sb.from("teams").update({ marka: bos ? null : yeni }).eq("id", ME.team_id);
+  if(error) return toast("Olmadı: " + error.message);
+  MARKA = bos ? null : yeni; MK_LOGO = undefined;
+  toast(bos ? "Marka bilgisi temizlendi" : "Kaydedildi");
+  go("ayarlar");
+}
+
+async function markaSil(){
+  if(!confirm("Marka bilgileri tamamen silinsin mi?")) return;
+  await sb.from("teams").update({ marka: null }).eq("id", ME.team_id);
+  MARKA = null; MK_LOGO = undefined;
+  toast("Silindi"); go("ayarlar");
+}
 
 /* ================= ana menu ================= */
 
@@ -3005,6 +3121,19 @@ function kutuMetrik(o, w, h){
 }
 
 // kutuyu canvas'a ciz
+// kucuk onizleme: secim kartlarinda kullanilir
+function kutuOnizleme(canvas, stilIx, ust, alt){
+  const G = 220, Y = 110;
+  canvas.width = G; canvas.height = Y;
+  const x = canvas.getContext("2d");
+  x.clearRect(0,0,G,Y);
+  // arka plan: koyu zemin uzerine kutu
+  x.fillStyle = "#12161A"; x.fillRect(0,0,G,Y);
+  try{
+    kutuCiz(x, { stil: stilIx, ust: ust || "", alt: alt || "" }, G, Y);
+  }catch(e){}
+}
+
 function kutuCiz(x, o, w, h){
   const st = KUTU_STIL[o.stil ?? 0];
   x.save();
@@ -3143,97 +3272,243 @@ async function sunum(parselId){
   const { data:et } = await sb.from("parcel_tags").select("tags(name)").eq("parcel_id", parselId);
   const etiketler = (et||[]).map(e=>e.tags?.name).filter(Boolean);
   const { data:yl } = await sb.from("parcel_years").select("*").eq("parcel_id",parselId).order("yil",{ascending:false});
-  SUNUM = { parselId, ogeler:[], secili:null, arka:null, oranIx:0, kaydir:50, p, y: yl?.[0] || {}, etiketler };
+  const { data:parcalar } = await sb.from("parca").select("*").eq("parcel_id",parselId).order("sira");
+  SUNUM = { parselId, ogeler:[], secili:null, arka:null, oranIx:0, kaydir:50, zum:1, perde:.35,
+            p, y: yl?.[0] || {}, etiketler, parcalar: parcalar || [], sonStil:0 };
   sunumEkran();
 }
 
+let SUNUM_SEKME = "zemin";
+
 function sunumEkran(){
   const p = SUNUM.p, etiketler = SUNUM.etiketler || [];
+  const secili = SUNUM.secili != null ? SUNUM.ogeler[SUNUM.secili] : null;
+
+  const sekmeTus = (k, ad2) =>
+    `<button class="sek ${SUNUM_SEKME===k?"aktif":""}" onclick="sunumSekme('${k}')">${ad2}</button>`;
+
   app.innerHTML = head("Sunum görseli", `go('parsel','${SUNUM.parselId}')`) + `
-    <p class="ipuc">Arka planı yükle, parçaları sürükleyip yerleştir. Seçili parçayı sağ alttan büyütür, sol alttan döndürür, sağ üstten silersin.</p>
     <div id="tuval"></div>
 
-    <div class="field"><label>Çıktı oranı</label><select id="oranSec">
-      ${ORANLAR.map((o,i)=>`<option value="${i}"${i===SUNUM.oranIx?" selected":""}>${o.ad} · ${o.w}×${o.h}</option>`).join("")}
-    </select></div>
-    ${SUNUM.arka?`<div class="field"><label>Arka planın hangi kısmı görünsün</label>
-      <input type="range" id="kaydirSec" min="0" max="100" value="${SUNUM.kaydir}" style="padding:0"></div>`:""}
-
-    <div class="acts" style="margin-bottom:14px">
-      <button class="pri" id="arkaSec">${SUNUM.arka?"Arka planı değiştir":"Arka plan yükle"}</button>
-      <button id="capEkle">Çap ekle</button>
-      <button id="yaziEkle">Serbest yazı</button>
+    <div class="sekmeler">
+      ${sekmeTus("zemin","Zemin")}${sekmeTus("cap","Çap")}${sekmeTus("kutu","Kutular")}
     </div>
 
-    <h3 style="font-size:14px;margin:18px 0 8px">Kutu ekle</h3>
-    <div class="field"><label>Kutu tasarımı</label><select id="kstil">
-      ${KUTU_STIL.map((k,i)=>`<option value="${i}">${k.ad}</option>`).join("")}</select></div>
-    <div class="acts" style="margin:0 0 14px">
-      <button id="baslikKutu">Başlık</button>
-      <button id="fiyatKutu">Fiyat</button>
-      <button id="ozellikKutu">Özellikler</button>
-      <button id="serbestKutu">Boş kutu</button>
-    </div>
+    <div id="sekmeIcerik"></div>
 
-    ${etiketler.length?`<h3 style="font-size:14px;margin:18px 0 8px">Etiketler</h3>
-    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
-      ${etiketler.map(t=>`<button class="pill gold" onclick="sunumKutu('serbest','ÖZELLİK','${esc(t)}')">${esc(t)}</button>`).join("")}
-    </div>`:""}
+    <button class="btn" id="uret" style="margin-top:14px">Görseli üret ve kaydet</button>
+    <button class="btn ghost" id="sablonKaydet" style="margin-top:8px">Bu düzeni şablon olarak kaydet</button>`;
 
-    ${SUNUM.secili!=null && SUNUM.ogeler[SUNUM.secili] && SUNUM.ogeler[SUNUM.secili].tur==="cap" ? `
-      <h3 style="font-size:14px;margin:18px 0 8px">Seçili çap</h3>
-      <div class="card">
-        <div class="field"><label>Saydamlık · fotoğrafla üst üste getirmek için</label>
-          <input type="range" id="capSaydam" min="20" max="100" step="5"
-            value="${Math.round((SUNUM.ogeler[SUNUM.secili].saydam ?? 1)*100)}" style="padding:0"></div>
-        <button class="btn ghost" id="capHizala">İki noktayla hizala</button>
-        <p class="ipuc" id="hizalaNot" style="margin:10px 2px 0">
-          Bas, sonra fotoğrafta parselin iki ucuna sırayla dokun; çap o iki noktaya göre kendini döndürüp ölçekler.</p>
-      </div>` : ""}
-
-    ${SUNUM.secili!=null && SUNUM.ogeler[SUNUM.secili] && SUNUM.ogeler[SUNUM.secili].tur!=="cap" ? `
-      <h3 style="font-size:14px;margin:18px 0 8px">Seçili kutu</h3>
-      <div class="card">
-        <div class="field"><label>Üst yazı</label><input id="dzUst" value="${esc(SUNUM.ogeler[SUNUM.secili].ust||"")}"></div>
-        <div class="field" style="margin:0"><label>Alt yazı (satır satır yazabilirsin)</label>
-          <textarea id="dzAlt" rows="3">${esc(SUNUM.ogeler[SUNUM.secili].alt||"")}</textarea></div>
-        <div class="field" style="margin:12px 0 0"><label>Tasarım</label><select id="dzStil">
-          ${KUTU_STIL.map((k,i)=>`<option value="${i}"${i===(SUNUM.ogeler[SUNUM.secili].stil??0)?" selected":""}>${k.ad}</option>`).join("")}</select></div>
-      </div>` : ""}
-
-    <button class="btn" id="uret" style="margin-top:8px">Görseli üret ve kaydet</button>`;
-
-  document.getElementById("oranSec").onchange = e => { SUNUM.oranIx = +e.target.value; sunumCiz(); };
-  const ks = document.getElementById("kaydirSec");
-  if(ks) ks.oninput = e => { SUNUM.kaydir = +e.target.value; sunumCiz(); };
-  document.getElementById("arkaSec").onclick = sunumArka;
-  document.getElementById("capEkle").onclick = sunumCap;
-  document.getElementById("yaziEkle").onclick = () => sunumKutu("serbest","","Yazı");
-  document.getElementById("baslikKutu").onclick = () => sunumKutu("baslik");
-  document.getElementById("fiyatKutu").onclick = () => sunumKutu("fiyat");
-  document.getElementById("ozellikKutu").onclick = () => sunumKutu("ozellik");
-  document.getElementById("serbestKutu").onclick = () => sunumKutu("serbest","BAŞLIK","İçerik");
   document.getElementById("uret").onclick = sunumUret;
-
-  const cs = document.getElementById("capSaydam");
-  if(cs) cs.oninput = () => { SUNUM.ogeler[SUNUM.secili].saydam = +cs.value/100; sunumCiz(); };
-  const ch = document.getElementById("capHizala");
-  if(ch) ch.onclick = () => {
-    const o = SUNUM.ogeler[SUNUM.secili];
-    if(!o.ank) return toast("Bu çap kendi çizdiğimiz çap değil, hizalama yapılamıyor");
-    SUNUM.hizala = { i: SUNUM.secili, noktalar: [] };
-    document.getElementById("hizalaNot").textContent = "Fotoğrafta parselin BİR ucuna dokun.";
-    toast("Birinci noktaya dokun");
-  };
-
-  const dzU = document.getElementById("dzUst"), dzA = document.getElementById("dzAlt"), dzS = document.getElementById("dzStil");
-  if(dzU){
-    const o = SUNUM.ogeler[SUNUM.secili];
-    dzU.oninput = () => { o.ust = dzU.value; sunumCiz(); };
-    dzA.oninput = () => { o.alt = dzA.value; sunumCiz(); };
-    dzS.onchange = () => { o.stil = +dzS.value; sunumCiz(); };
-  }
+  document.getElementById("sablonKaydet").onclick = sablonKaydet;
+  sekmeCiz();
   sunumCiz();
+}
+
+function sunumSekme(k){ SUNUM_SEKME = k; sunumEkran(); }
+
+function sekmeCiz(){
+  const kutu = document.getElementById("sekmeIcerik");
+  if(!kutu) return;
+  const p = SUNUM.p, etiketler = SUNUM.etiketler || [];
+  const secili = SUNUM.secili != null ? SUNUM.ogeler[SUNUM.secili] : null;
+
+  if(SUNUM_SEKME === "zemin"){
+    kutu.innerHTML = `
+      <div class="field"><label>Çıktı oranı</label><select id="oranSec">
+        ${ORANLAR.map((o,i)=>`<option value="${i}"${i===SUNUM.oranIx?" selected":""}>${o.ad} · ${o.w}×${o.h}</option>`).join("")}
+      </select></div>
+      <button class="btn ${SUNUM.arka?"ghost":""}" id="arkaSec">${SUNUM.arka?"Fotoğrafı değiştir":"Fotoğraf yükle"}</button>
+      ${SUNUM.arka?`
+        <div class="card" style="margin-top:12px">
+          <div class="field"><label>Dikey konum</label>
+            <input type="range" id="kaydirSec" min="0" max="100" value="${SUNUM.kaydir}" style="padding:0"></div>
+          <div class="field"><label>Yakınlaştırma</label>
+            <input type="range" id="zumSec" min="100" max="240" value="${Math.round((SUNUM.zum||1)*100)}" style="padding:0"></div>
+          <div class="field" style="margin:0"><label>Alt karartma · yazılar okunsun diye</label>
+            <input type="range" id="perdeSec" min="0" max="80" value="${Math.round((SUNUM.perde??.35)*100)}" style="padding:0"></div>
+        </div>`
+      : `<p class="ipuc" style="margin-top:12px">Fotoğrafı yükleyince seçtiğin orana göre kendiliğinden kırpılır; sonra kaydırıp yakınlaştırırsın.</p>`}
+
+      <h3 style="font-size:13px;margin:20px 0 9px;letter-spacing:.06em;color:var(--ink-2)">HAZIR ŞABLONLAR</h3>
+      <div id="sablonListe"><div class="ipuc">Yükleniyor…</div></div>`;
+
+    document.getElementById("oranSec").onchange = e => { SUNUM.oranIx = +e.target.value; sunumCiz(); };
+    document.getElementById("arkaSec").onclick = sunumArka;
+    const ks = document.getElementById("kaydirSec");
+    if(ks) ks.oninput = e => { SUNUM.kaydir = +e.target.value; sunumCiz(); };
+    const zs = document.getElementById("zumSec");
+    if(zs) zs.oninput = e => { SUNUM.zum = +e.target.value/100; sunumCiz(); };
+    const ps = document.getElementById("perdeSec");
+    if(ps) ps.oninput = e => { SUNUM.perde = +e.target.value/100; sunumCiz(); };
+    sablonlariListele();
+    return;
+  }
+
+  if(SUNUM_SEKME === "cap"){
+    const capOge = SUNUM.ogeler.find(o=>o.tur === "cap");
+    const capIx = SUNUM.ogeler.indexOf(capOge);
+    kutu.innerHTML = `
+      ${capOge ? `
+        <div class="card">
+          <div class="bolum"><span class="rz altin">${svg("vector")}</span><b>Tuvaldeki çap</b></div>
+          <div class="field"><label>Saydamlık · fotoğrafla üst üste getirmek için</label>
+            <input type="range" id="capSaydam" min="20" max="100" step="5"
+              value="${Math.round((capOge.saydam ?? 1)*100)}" style="padding:0"></div>
+          <div class="acts">
+            <button class="pri" onclick="sunumHizalaBaslat(${capIx})">İki noktayla hizala</button>
+            <button onclick="sunumCap(${capIx})">Görünümü değiştir</button>
+            <button class="kirmizi" onclick="capOgeSil(${capIx})">Kaldır</button>
+          </div>
+          <p class="ipuc" id="hizalaNot" style="margin:10px 2px 0">
+            İki parmakla döndürüp büyütebilirsin. Hizala tuşundan sonra fotoğrafta parselin iki ucuna sırayla dokun.</p>
+        </div>`
+      : `<button class="btn" onclick="sunumCap()">Çap ekle</button>
+         <p class="ipuc" style="margin-top:12px">Çizdirdiğin çapı saydam olarak tuvale bindirir, fotoğraftaki parselin üstüne oturtursun.</p>`}`;
+
+    const cs = document.getElementById("capSaydam");
+    if(cs) cs.oninput = () => { capOge.saydam = +cs.value/100; sunumCiz(); };
+    return;
+  }
+
+  // ---- kutular ----
+  kutu.innerHTML = `
+    <h3 style="font-size:13px;margin:0 0 9px;letter-spacing:.06em;color:var(--ink-2)">KUTU EKLE</h3>
+    <div class="kutuSecim" id="kutuSecim"></div>
+
+    ${etiketler.length?`
+      <h3 style="font-size:13px;margin:20px 0 9px;letter-spacing:.06em;color:var(--ink-2)">ETİKETLER</h3>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        ${etiketler.map(t=>`<button class="pill gold" onclick="sunumKutu('serbest','ÖZELLİK','${esc(t)}')">${esc(t)}</button>`).join("")}
+      </div>`:""}
+
+    ${secili && secili.tur !== "cap" ? `
+      <h3 style="font-size:13px;margin:20px 0 9px;letter-spacing:.06em;color:var(--ink-2)">SEÇİLİ KUTU</h3>
+      <div class="card">
+        <div class="field"><label>Üst yazı</label><input id="dzUst" value="${esc(secili.ust||"")}"></div>
+        <div class="field"><label>Alt yazı · satır satır yazabilirsin</label>
+          <textarea id="dzAlt" rows="3">${esc(secili.alt||"")}</textarea></div>
+        <label style="font-size:11px;color:var(--ink-2);letter-spacing:.06em;text-transform:uppercase">Tasarım</label>
+        <div class="stilSecim" id="stilSecim"></div>
+        <button class="btn ghost" style="margin-top:12px" onclick="ogeSil(${SUNUM.secili})">Bu kutuyu kaldır</button>
+      </div>` : `<p class="ipuc" style="margin-top:16px">Tuvalde bir kutuya dokunursan yazılarını ve tasarımını burada değiştirirsin.</p>`}`;
+
+  // kutu tur kartlari
+  const turler = [
+    { rol:"baslik",  ad:"Başlık",   ornek:["KONUM", (duzgun(p.mahalle)||"Köy") + " " + (p.ada||"") + "/" + p.parsel] },
+    { rol:"fiyat",   ad:"Fiyat",    ornek:["FİYAT", "1.250.000 ₺"] },
+    { rol:"ozellik", ad:"Özellik",  ornek:["ALAN", nf2(gercekAlan(p)) + " m²"] },
+    { rol:"serbest", ad:"Boş kutu", ornek:["BAŞLIK", "İçerik"] },
+    { rol:"yazi",    ad:"Yazı",     ornek:["", "Serbest yazı"] }
+  ];
+  const ks = document.getElementById("kutuSecim");
+  ks.innerHTML = turler.map((t,i)=>`
+    <button class="kutuKart" onclick="${t.rol==='yazi'
+      ? `sunumKutu('serbest','','Yazı',true)` : `sunumKutu('${t.rol}')`}">
+      <canvas class="onizleme" data-tur="${i}"></canvas>
+      <span>${t.ad}</span></button>`).join("");
+  turler.forEach((t,i)=>{
+    const c = ks.querySelector(`canvas[data-tur="${i}"]`);
+    if(c) kutuOnizleme(c, secili?.stil ?? 0, t.ornek[0], t.ornek[1]);
+  });
+
+  // tasarim secici
+  const ss = document.getElementById("stilSecim");
+  if(ss && secili){
+    ss.innerHTML = KUTU_STIL.map((k,i)=>`
+      <button class="stilKart ${i===(secili.stil??0)?"aktif":""}" onclick="stilSec(${i})">
+        <canvas class="onizleme" data-stil="${i}"></canvas>
+        <span>${esc(k.ad)}</span></button>`).join("");
+    KUTU_STIL.forEach((k,i)=>{
+      const c = ss.querySelector(`canvas[data-stil="${i}"]`);
+      if(c) kutuOnizleme(c, i, secili.ust || "BAŞLIK", (secili.alt || "İçerik").split("\n")[0]);
+    });
+  }
+
+  const dzU = document.getElementById("dzUst"), dzA = document.getElementById("dzAlt");
+  if(dzU && secili){
+    dzU.oninput = () => { secili.ust = dzU.value; sunumCiz(); };
+    dzA.oninput = () => { secili.alt = dzA.value; sunumCiz(); };
+  }
+  if(SUNUM.odakAlt && dzA){ dzA.focus(); dzA.select(); SUNUM.odakAlt = false; }
+}
+
+function stilSec(i){
+  const o = SUNUM.ogeler[SUNUM.secili];
+  if(!o) return;
+  o.stil = i; SUNUM.sonStil = i; sunumCiz(); sekmeCiz();
+}
+function ogeSil(i){
+  SUNUM.ogeler.splice(i,1); SUNUM.secili = null; sunumEkran();
+}
+function capOgeSil(i){ ogeSil(i); }
+function sunumHizalaBaslat(i){
+  const o = SUNUM.ogeler[i];
+  if(!o?.ank) return toast("Bu çap uygulamanın çizdiği çap değil, hizalama yapılamıyor");
+  SUNUM.secili = i;
+  SUNUM.hizala = { i, noktalar: [] };
+  const n = document.getElementById("hizalaNot");
+  if(n) n.textContent = "Fotoğrafta parselin BİR ucuna dokun.";
+  toast("Birinci noktaya dokun");
+  sunumCiz();
+}
+
+async function sablonlariListele(){
+  const kutu = document.getElementById("sablonListe");
+  if(!kutu) return;
+  const { data } = await sb.from("sunum_sablon").select("*").order("created_at",{ascending:false}).limit(20);
+  if(!data?.length){
+    kutu.innerHTML = `<p class="ipuc" style="margin:0">Henüz şablon yok. Bir düzen hazırlayıp aşağıdaki
+      "şablon olarak kaydet" tuşuna basarsan burada birikir.</p>`;
+    return;
+  }
+  kutu.innerHTML = data.map(o=>`
+    <div style="display:flex;align-items:center;gap:9px;border-top:1px solid var(--cizgi);padding:10px 0">
+      <b style="flex:1;font-size:13.5px;font-weight:500">${esc(o.ad)}</b>
+      <button class="pill gold" onclick="sablonUygula('${o.id}')">uygula</button>
+      ${ME.role==='admin'?`<button class="pill sade" onclick="sablonSil('${o.id}')">sil</button>`:""}
+    </div>`).join("");
+}
+
+async function sablonKaydet(){
+  const kutular = SUNUM.ogeler.filter(o=>o.tur !== "cap");
+  if(!kutular.length) return toast("Önce kutu ekle");
+  const ad2 = prompt("Şablonun adı:", "Satılık tarla ilanı");
+  if(!ad2) return;
+  const veri = {
+    oranIx: SUNUM.oranIx, perde: SUNUM.perde,
+    ogeler: kutular.map(o=>({ tur:o.tur, rol:o.rol, ust:o.ust, alt:o.alt, stil:o.stil,
+                              x:o.x, y:o.y, w:o.w, h:o.h, rot:o.rot }))
+  };
+  const { error } = await sb.from("sunum_sablon").insert({
+    team_id: ME.team_id, ad: ad2.trim(), veri, created_by: ME.id });
+  if(error) return toast("Olmadı: " + error.message);
+  toast("Şablon kaydedildi");
+  if(SUNUM_SEKME === "zemin") sablonlariListele();
+}
+
+async function sablonUygula(id){
+  const { data:o } = await sb.from("sunum_sablon").select("veri").eq("id",id).single();
+  if(!o?.veri) return toast("Şablon okunamadı");
+  const cap = SUNUM.ogeler.filter(x=>x.tur === "cap");
+  SUNUM.oranIx = o.veri.oranIx ?? SUNUM.oranIx;
+  SUNUM.perde = o.veri.perde ?? SUNUM.perde;
+  // kutulari guncel parsel bilgileriyle yeniden doldur
+  SUNUM.ogeler = cap.concat((o.veri.ogeler||[]).map(k=>{
+    const taze = sunumKutuIcerik(k.rol);
+    return { ...k, tur:"kutu",
+             ust: (k.rol && k.rol !== "serbest" && taze) ? taze.ust : k.ust,
+             alt: (k.rol && k.rol !== "serbest" && taze) ? taze.alt : k.alt };
+  }));
+  SUNUM.secili = null;
+  toast("Şablon uygulandı");
+  sunumEkran();
+}
+
+async function sablonSil(id){
+  if(!confirm("Bu şablon silinsin mi?")) return;
+  await sb.from("sunum_sablon").delete().eq("id", id);
+  sablonlariListele();
 }
 
 async function sunumArka(){
@@ -3340,27 +3615,36 @@ function sunumCap(duzenleIx){
 
 function geriSunum(){ sunumEkran(); }
 
-function sunumKutu(rol, ust, alt){
+// role gore guncel parsel bilgisini uret
+function sunumKutuIcerik(rol){
   const p = SUNUM.p, y = SUNUM.y || {};
-  const stil = +(document.getElementById("kstil")?.value ?? 0);
-  let u = ust ?? "", a = alt ?? "", k = { x:.08, y:.44, w:.55, h:.13 };
-  if(rol === "baslik"){
-    u = `${duzgun(p.mahalle).toLocaleUpperCase("tr")} · ${p.ada||""}/${p.parsel}`;
-    a = `${nf(p.alan_m2)} m²  ·  ${p.nitelik||""}`;
-    k = { x:.06, y:.04, w:.70, h:.13 };
-  }
+  if(rol === "baslik") return {
+    ust: `${duzgun(p.mahalle).toLocaleUpperCase("tr")} · ${p.ada||""}/${p.parsel}`,
+    alt: `${nf2(gercekAlan(p))} m²  ·  ${p.nitelik||""}`,
+    yer: { x:.06, y:.04, w:.70, h:.13 } };
   if(rol === "fiyat"){
-    u = "FİYAT";
-    a = y.toplam_fiyat ? nf(y.toplam_fiyat) + " ₺" : "Fiyat girin";
-    k = { x:.06, y:.82, w:.46, h:.12 };
+    const parcaFiyat = (SUNUM.parcalar||[]).filter(o=>o.satilik && !o.satildi && o.m2_fiyat);
+    const toplam = parcaFiyat.reduce((t,o)=>t + (+o.m2||0)*(+o.m2_fiyat||0), 0);
+    return { ust:"FİYAT",
+      alt: toplam ? nf(Math.round(toplam)) + " ₺" : (y.toplam_fiyat ? nf(y.toplam_fiyat) + " ₺" : "Fiyat girin"),
+      yer: { x:.06, y:.82, w:.46, h:.12 } };
   }
-  if(rol === "ozellik"){
-    u = "ÖZELLİKLER";
-    a = (SUNUM.etiketler||[]).slice(0,5).join("\n") || "Özellik ekleyin";
-    k = { x:.52, y:.66, w:.42, h:.24 };
-  }
+  if(rol === "ozellik") return {
+    ust:"ÖZELLİKLER",
+    alt:(SUNUM.etiketler||[]).slice(0,5).join("\n") || "Özellik ekleyin",
+    yer: { x:.52, y:.66, w:.42, h:.24 } };
+  return null;
+}
+
+function sunumKutu(rol, ust, alt, altaOdaklan){
+  const stil = SUNUM.sonStil ?? 0;
+  const hazir = sunumKutuIcerik(rol);
+  let u = ust ?? "", a = alt ?? "", k = { x:.08, y:.44, w:.55, h:.13 };
+  if(hazir){ u = hazir.ust; a = hazir.alt; k = hazir.yer; }
   SUNUM.ogeler.push({ tur:"kutu", rol, ust:u, alt:a, stil, ...k, rot:0 });
   SUNUM.secili = SUNUM.ogeler.length-1;
+  if(altaOdaklan) SUNUM.odakAlt = true;
+  SUNUM_SEKME = "kutu";
   sunumEkran();
 }
 
@@ -3376,7 +3660,8 @@ function sunumCiz(){
   const W = t.clientWidth, H = W * (oran.h / oran.w);
   t.style.height = H + "px";
   t.innerHTML = `<div class="arka" style="background-image:url('${SUNUM.arka.url}');
-     background-position:50% ${SUNUM.kaydir}%"></div>
+     background-position:50% ${SUNUM.kaydir}%;background-size:${Math.round((SUNUM.zum||1)*100)}% auto"></div>
+     <div class="altPerde" style="opacity:${SUNUM.perde ?? .35}"></div>
      <div class="olcu">${oran.w}×${oran.h}</div>
      ${SUNUM.hizala ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,.25);display:grid;place-items:center;
        color:#fff;font-size:13px;font-weight:600;pointer-events:none">
@@ -3554,10 +3839,20 @@ async function sunumUret(){
   const arka = await yukleGorsel(SUNUM.arka.url);
 
   // "cover" kirpma: onizlemedeki background-size:cover ile birebir ayni
-  const ol = Math.max(W/arka.naturalWidth, H/arka.naturalHeight);
+  const ol = Math.max(W/arka.naturalWidth, H/arka.naturalHeight) * (SUNUM.zum || 1);
   const dw = arka.naturalWidth*ol, dh = arka.naturalHeight*ol;
   x.fillStyle = "#000"; x.fillRect(0,0,W,H);
   x.drawImage(arka, (W-dw)/2, (H-dh)*(SUNUM.kaydir/100), dw, dh);
+
+  // alt karartma: yazilar okunsun
+  const perde = SUNUM.perde ?? .35;
+  if(perde > 0){
+    const gr = x.createLinearGradient(0, H, 0, H*0.45);
+    gr.addColorStop(0, `rgba(0,0,0,${(perde*0.95).toFixed(2)})`);
+    gr.addColorStop(.55, `rgba(0,0,0,${(perde*0.45).toFixed(2)})`);
+    gr.addColorStop(1, "rgba(0,0,0,0)");
+    x.fillStyle = gr; x.fillRect(0, H*0.45, W, H*0.55);
+  }
 
   for(const o of SUNUM.ogeler){
     const ox = o.x*W, oy = o.y*H, ow = o.w*W, oh = o.h*H;
@@ -3573,6 +3868,42 @@ async function sunumUret(){
     }else{
       kutuCiz(x, o, ow, oh);
     }
+    x.restore();
+  }
+
+  // marka kimligi: tanimliysa sag alta basilir, tanimsizsa hicbir ibare cikmaz
+  if(markaVarMi()){
+    const pay = Math.round(W*0.035);
+    const yazilar = [MARKA.ad, MARKA.telefon, MARKA.notu].filter(Boolean);
+    const punto = Math.round(W*0.026);
+    x.font = `600 ${punto}px Arial`;
+    const genislik = Math.max(...yazilar.map(t=>x.measureText(t).width), 0);
+    let logo = null, logoBoy = 0;
+    if(MARKA.logo){
+      try{ logo = await yukleGorsel(MARKA.logo); logoBoy = Math.round(W*0.085); }catch(e){}
+    }
+    const satirY = punto*1.5;
+    const kutuY = Math.max(logoBoy, yazilar.length*satirY) + pay;
+    const kutuG = genislik + pay*2 + (logo ? logoBoy + pay*0.6 : 0);
+    const bx = W - kutuG - pay, by = H - kutuY - pay;
+
+    x.save();
+    x.fillStyle = "rgba(8,10,12,.62)";
+    x.beginPath(); x.roundRect(bx, by, kutuG, kutuY, Math.round(W*0.022)); x.fill();
+    x.strokeStyle = "rgba(227,192,90,.45)"; x.lineWidth = Math.max(1, W*0.0018); x.stroke();
+
+    let tx = bx + pay;
+    if(logo){
+      x.drawImage(logo, tx, by + (kutuY-logoBoy)/2, logoBoy, logoBoy);
+      tx += logoBoy + pay*0.6;
+    }
+    x.textAlign = "left"; x.textBaseline = "middle";
+    const basla = by + (kutuY - yazilar.length*satirY)/2 + satirY/2;
+    yazilar.forEach((t,i)=>{
+      x.font = i === 0 ? `700 ${punto}px Arial` : `400 ${Math.round(punto*0.86)}px Arial`;
+      x.fillStyle = i === 0 ? "#F2E7C9" : "rgba(255,255,255,.82)";
+      x.fillText(t, tx, basla + i*satirY);
+    });
     x.restore();
   }
 
@@ -4620,6 +4951,8 @@ async function ayarlar(){
           ${localStorage.getItem("sesKapali") === "1" ? "" : "checked"}
           onchange="localStorage.setItem('sesKapali', this.checked ? '0' : '1')">
         <span style="flex:1">Uygulama sesleri açık</span></label>
+      ${ME.role==='admin'?`<button class="btn ghost" style="margin-top:12px" onclick="go('marka')">
+        Marka kimliği ${markaVarMi()?"· tanımlı":"· tanımsız"}</button>`:""}
     </div>
     <h3 style="font-size:14px;margin:22px 0 10px">Kullanıcılar</h3>
     ${(kisiler||[]).map(k=>{
@@ -4669,7 +5002,7 @@ async function cikis(){ await sb.auth.signOut(); location.reload(); }
 
 /* ================= yonlendirme ================= */
 
-const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, sunum:sunum, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, yeni:yeniParsel, parsel:parselDetay,
+const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, sunum:sunum, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, marka:markaEkran, yeni:yeniParsel, parsel:parselDetay,
                    fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
 // gezinti gecmisi: telefonun geri tusu uygulamadan cikmasin, bir ekran geri gitsin
 let GEZINTI = [{ r:"ana", arg:undefined }];
@@ -4688,18 +5021,29 @@ function go(r, arg){
   ekraniCiz(r, arg);
 }
 
+// her ekranin bir ust sekmesi: telefonun geri tusu buraya gider
+const UST_EKRAN = {
+  harita:"ana", araziler:"ana", ekler:"ana", kml:"ana", cap:"ana", hesap:"ana",
+  yaklasan:"ana", yz:"ana", fiyat:"ana", ayarlar:"ana", marka:"ayarlar", yeni:"araziler",
+  parsel:"araziler", parcalar:"parsel", sunum:"parsel", fiyatDuzen:"fiyat", capAyar:"cap"
+};
+
 window.addEventListener("popstate", () => {
   if(!window.__acildi) return;
-  if(GEZINTI.length > 1){
-    GEZINTI.pop();
-    const h = GEZINTI[GEZINTI.length-1];
-    ekraniCiz(h.r, h.arg);
-    // bir adim daha geri gidilebilsin diye gecmise yeniden yer ac
-    try{ history.pushState({ n: GEZINTI.length }, ""); }catch(e){}
-  }else{
+  const simdi = GEZINTI[GEZINTI.length-1] || { r:"ana" };
+  const ust = UST_EKRAN[simdi.r];
+
+  if(!ust || simdi.r === "ana"){
     ekraniCiz("ana");
-    try{ history.pushState({ n: 1 }, ""); }catch(e){}
+    GEZINTI = [{ r:"ana", arg:undefined }];
+  }else{
+    // alt ekranlar ust ekrana parsel kimligiyle doner
+    const arg = (ust === "parsel") ? (simdi.arg ? String(simdi.arg).split("|")[0] : undefined) : undefined;
+    GEZINTI.pop();
+    GEZINTI.push({ r:ust, arg });
+    ekraniCiz(ust, arg);
   }
+  try{ history.pushState({ n: GEZINTI.length }, ""); }catch(e){}
 });
 
 function acilisiKapat(){
@@ -4752,6 +5096,7 @@ async function baslat(){
     try{ await sb.from("profiles").update({ full_name: gAd }).eq("id", prof.id); prof.full_name = gAd; }catch(e){}
   }
   ME = prof;
+  await markaYukle();
   GEZINTI = [{ r:"ana", arg:undefined }];
   try{ history.pushState({ n:1 }, ""); }catch(e){}
   anaMenu();
