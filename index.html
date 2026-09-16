@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 1.0";
+const SURUM = "beta 1.1";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -686,8 +686,18 @@ const RAKAM_SOZ = { "sıfır":0,"bir":1,"iki":2,"üç":3,"dört":4,"beş":5,"alt
 
 function sozdenSayi(metin){
   const t = String(metin||"").toLocaleLowerCase("tr").trim();
-  const d = t.replace(/[^\d]/g,"");
-  if(d) return +d;
+  // rakam gruplarini ayikla: "bir yuz on dort" ya da "1 1 4" gibi bolunmus okumalari birlestir
+  const ham = t.replace(/[.,]/g, " ");
+  const gruplar = ham.match(/\d[\d\s]*/g);
+  if(gruplar){
+    const temiz = gruplar.map(g=>g.replace(/\s/g,"")).filter(g=>g.length && g.length <= 6);
+    if(temiz.length){
+      // birden fazla grup varsa en sonuncusunu al (kullanici tekrar etmis olabilir)
+      const secilen = temiz[temiz.length-1];
+      const n = +secilen;
+      if(isFinite(n) && n > 0 && n < 1000000) return n;
+    }
+  }
   let toplam = 0, gecici = 0, bulundu = false;
   t.split(/\s+/).forEach(k=>{
     const v = RAKAM_SOZ[k];
@@ -728,7 +738,11 @@ function dinle(){
       let gecici = "";
       for(let i=0;i<e.results.length;i++){
         const r = e.results[i];
-        if(r.isFinal) biriken += r[0].transcript + " "; else gecici += r[0].transcript;
+        if(r.isFinal){
+          const yeni = r[0].transcript.trim();
+          // ayni ifade ust uste gelirse tekrarlama
+          if(yeni && !biriken.trim().endsWith(yeni)) biriken += yeni + " ";
+        } else gecici += r[0].transcript;
       }
       const c = document.getElementById("sesCanli");
       if(c) c.textContent = (biriken + gecici).trim();
@@ -840,11 +854,18 @@ async function sesAdimCalistir(){
     if(a.sayi){
       const n = sozdenSayi(duyulan);
       if(n == null || n <= 0){
-        sesEkraniCiz(`"${duyulan}" bir numara değil, tekrar söyle.`, duyulan);
+        sesEkraniCiz(`"${duyulan}" bir numara değil, tekrar söyle ya da elle yaz.`, duyulan);
         await konus("Anlayamadım, numarayı tekrar söyleyin"); return;
       }
+      // numarayi onaya sun: yanlis duymussa elle duzeltsin
       SES.secim[a.alan] = String(n);
-      await sesSonraki(`${a.etiket} ${n}`);
+      sesEkraniCiz(`${a.etiket} ${n} · doğruysa devam, değilse elle yaz.`, duyulan);
+      await konus(`${a.etiket} ${n}`);
+      SES.adim++;
+      if(SES.adim >= SES_ADIM.length) return sesTamamla();
+      await sesListeYukle();
+      sesEkraniCiz("Hazır, dokunup söyle.");
+      sesAdimCalistir();
       return;
     }
 
@@ -1394,6 +1415,7 @@ async function parselDetay(id){
     sb.from("ekler").select("*"),
     sb.from("notes").select("content,created_at,profiles(full_name)").eq("parcel_id",id).order("created_at",{ascending:false})
   ]);
+  const { data:parcalar } = await sb.from("parca").select("*").eq("parcel_id",id).order("sira");
   const y = (yillar||[]).find(x=>x.yil===YEAR) || (yillar||[])[0];
   const kisiBelge = {};
   const kimlikler = (kisiler||[]).flatMap(k=>[k.vekalet_doc_id,k.muvafakat_doc_id]).filter(Boolean);
@@ -1433,13 +1455,13 @@ async function parselDetay(id){
         <a class="dis mavib" href="${earthUrl(p.lat,p.lng)}" target="_blank" rel="noopener">Earth'te aç</a>
         <a class="dis yesilb" href="${yandexUrl(p.lat,p.lng)}" target="_blank" rel="noopener">Yandex uydu</a>
         <a class="dis yesilb" href="${yandexPanoUrl(p.lat,p.lng)}" target="_blank" rel="noopener">Sokak görünümü</a>
-        <a class="dis kirmizi" href="https://e-plan.gov.tr/" target="_blank" rel="noopener">İmar planı</a></div>`:""}
+        ${ME.role!=='uye'?`<button class="kirmizi" onclick="go('dosya','${id}')">RAPOR</button>`:""}</div>`:""}
       ${y && ME.role==='admin' ? `<button class="btn ghost" style="margin-top:10px"
         onclick="SONPARSELID='${id}';go('fiyatDuzen','${y.id}')">Tapu bilgilerini düzenle</button>
       <button class="btn ghost" style="margin-top:8px" onclick="go('sunum','${id}')">Sunum görseli hazırla</button>
+      <button class="btn ghost" style="margin-top:8px" onclick="go('parcalar','${id}')">Parçalar / hisseler</button>
       <button class="btn ghost" style="margin-top:8px" onclick="go('emsal','${id}')">Emsal ekle</button>
-      <button class="btn" style="margin-top:8px;background:linear-gradient(160deg,#F0705C,#C6402C);color:#fff"
-        onclick="go('dosya','${id}')">RAPOR · parsel dosyası hazırla</button>` : ""}
+` : ""}
     </div>
 
     ${y ? `<div class="card">
@@ -1465,6 +1487,19 @@ async function parselDetay(id){
       <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
         ${y.ilan_url?`<a class="pill gold" href="${esc(y.ilan_url)}" target="_blank">sahibinden ilanı</a>`:""}
         ${ME.role==='admin'?`<button class="pill gold" onclick="go('fiyatDuzen','${y.id}')">düzenle</button>`:""}</div>
+    </div>` : ""}
+
+    ${(parcalar||[]).length ? `<div class="card">
+      <div class="bolum"><span class="rz altin">${svg("vector")}</span><b>Parçalar</b>
+        <span class="sayi">${parcalar.filter(o=>o.satilik).length} satılık / ${parcalar.length}</span></div>
+      ${parcalar.map(o=>`<div style="display:flex;align-items:center;gap:9px;border-top:1px solid var(--cizgi);padding:9px 0">
+        <span class="pill ${o.satilik?"on":"off"}" style="min-width:34px;text-align:center">${esc(o.no||"")}</span>
+        <div style="flex:1;min-width:0">
+          <b style="font-size:13.5px;font-weight:500;display:block">${esc(o.ad || (o.no + " nolu parça"))}</b>
+          <small style="font-size:11.5px;color:var(--ink-3)">${nf2(o.m2||0)} m²${o.m2_fiyat ? " · " + nf(Math.round(o.m2_fiyat)) + " ₺/m²" : ""}</small></div>
+        ${o.m2 && o.m2_fiyat ? `<b class="mono" style="color:var(--gold);font-size:13px">${nf(Math.round(o.m2*o.m2_fiyat))} ₺</b>` : ""}
+      </div>`).join("")}
+      ${ME.role!=='uye' ? `<button class="btn ghost" style="margin-top:12px" onclick="go('parcalar','${id}')">Parçaları düzenle</button>` : ""}
     </div>` : ""}
 
     <div class="card">
@@ -2620,6 +2655,149 @@ async function potansiyelAnalizi(p, bildir){
 
 let SON_POTANSIYEL = null;
 
+/* ================= parçalar / hisseler ================= */
+
+async function parcalarEkran(parselId){
+  const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
+  if(!p) return toast("Parsel bulunamadı");
+  const { data:liste } = await sb.from("parca").select("*").eq("parcel_id",parselId).order("sira");
+  const capVar = p.cap_config && !Array.isArray(p.cap_config) && p.cap_config.parcalar?.length;
+
+  app.innerHTML = head("Parçalar","go('parsel','" + parselId + "')") + `
+    <div class="card">
+      <div style="font-size:12px;color:var(--ink-3)">${esc(duzgun(p.mahalle))}</div>
+      <div style="font-size:17px;font-weight:600;margin-top:2px">Ada ${esc(p.ada||"—")} · Parsel ${esc(p.parsel)}</div>
+      <div class="kv" style="margin-top:8px"><span>Tapu alanı</span><b class="mono">${nf2(gercekAlan(p))} m²</b></div>
+    </div>
+    <p class="ipuc">Parsel tek tapu olsa bile çaptaki parçaları burada ayrı ayrı tutabilirsin. Her parçaya kendi adını,
+      metrekaresini ve fiyatını yazarsın; rapor değerlemeyi bunlara göre parça parça yapar.</p>
+
+    <div class="acts" style="margin-bottom:14px">
+      ${capVar ? `<button class="pri" onclick="parcalariCaptanAl('${parselId}')">Çaptan al (${p.cap_config.parcalar.length} parça)</button>` : ""}
+      <button onclick="parcaSatirEkle('${parselId}')">+ Parça ekle</button>
+    </div>
+
+    <div id="parcaListe"></div>
+    ${(liste||[]).length ? `<button class="btn" onclick="parcalariKaydet('${parselId}')">Değişiklikleri kaydet</button>` : ""}`;
+
+  PARCA_LISTE = (liste||[]).map(o=>({ ...o }));
+  parcaListeCiz(parselId);
+}
+
+let PARCA_LISTE = [];
+
+function parcaListeCiz(parselId){
+  const kutu = document.getElementById("parcaListe");
+  if(!kutu) return;
+  if(!PARCA_LISTE.length){
+    kutu.innerHTML = `<div class="empty"><b>Parça yok</b>Çaptan alabilir ya da elle ekleyebilirsin.</div>`;
+    return;
+  }
+  const satilikToplam = PARCA_LISTE.filter(o=>o.satilik)
+    .reduce((t,o)=>t + (+o.m2||0) * (+o.m2_fiyat||0), 0);
+  const satilikAlan = PARCA_LISTE.filter(o=>o.satilik).reduce((t,o)=>t + (+o.m2||0), 0);
+
+  kutu.innerHTML = `
+    <div class="card">
+      <div class="kv"><span>Satılık parça</span><b class="mono">${PARCA_LISTE.filter(o=>o.satilik).length} / ${PARCA_LISTE.length}</b></div>
+      <div class="kv"><span>Satılık alan</span><b class="mono">${nf2(satilikAlan)} m²</b></div>
+      <div class="kv"><span>Satılık toplam bedel</span><b class="mono" style="color:var(--gold)">${nf(Math.round(satilikToplam))} ₺</b></div>
+    </div>
+    ${PARCA_LISTE.map((o,i)=>`
+      <div class="card" style="padding:12px;${o.satilik?"":"opacity:.62"}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span class="kod" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--gold);
+            background:var(--gold-soft);border:1px solid rgba(227,192,90,.3);border-radius:9px;padding:6px 10px">
+            ${esc(o.no || (i+1))}</span>
+          <span style="flex:1"></span>
+          <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2);margin:0">
+            <input type="checkbox" id="ps${i}" style="width:19px;height:19px" ${o.satilik?"checked":""}> satılık</label>
+          <button class="sil" style="width:32px;height:32px" onclick="parcaSil(${i},'${parselId}')">${svg("trash")}</button>
+        </div>
+        <div class="field" style="margin:0 0 10px"><label>Parçanın adı / açıklaması</label>
+          <input id="pa${i}" value="${esc(o.ad||"")}" placeholder="1 nolu parça · satılık"></div>
+        <div class="row2">
+          <div class="field" style="margin:0 0 10px"><label>Alan (m²)</label>
+            <input id="pm${i}" inputmode="decimal" value="${o.m2 != null ? nfAkilli(o.m2) : ""}"></div>
+          <div class="field" style="margin:0 0 10px"><label>m² fiyatı (₺)</label>
+            <input id="pf${i}" inputmode="decimal" value="${o.m2_fiyat != null ? nfAkilli(o.m2_fiyat) : ""}"></div>
+        </div>
+        <div class="field" style="margin:0"><label>Not</label>
+          <input id="pn${i}" value="${esc(o.notu||"")}" placeholder="isteğe bağlı"></div>
+        <div class="ipuc" id="pt${i}" style="margin:8px 2px 0"></div>
+      </div>`).join("")}`;
+
+  PARCA_LISTE.forEach((o,i)=>{
+    const g = k => document.getElementById(k+i);
+    const gun = () => {
+      o.ad = g("pa").value;
+      o.m2 = sayiCoz(g("pm").value) || 0;
+      o.m2_fiyat = sayiCoz(g("pf").value) || 0;
+      o.notu = g("pn").value;
+      o.satilik = g("ps").checked;
+      g("pt").textContent = (o.m2 && o.m2_fiyat)
+        ? `Toplam: ${nf(Math.round(o.m2 * o.m2_fiyat))} ₺` : "Toplam: —";
+    };
+    ["pa","pm","pf","pn"].forEach(k=>{ const el = g(k); if(el) el.oninput = gun; });
+    g("ps").onchange = () => { gun(); parcaListeCiz(parselId); };
+    gun();
+  });
+}
+
+async function parcalariCaptanAl(parselId){
+  const { data:p } = await sb.from("parcels").select("cap_config").eq("id",parselId).single();
+  const cfg = p?.cap_config;
+  if(!cfg || Array.isArray(cfg) || !cfg.parcalar?.length) return toast("Bu parselde kayıtlı çap yok");
+  const mevcut = {};
+  PARCA_LISTE.forEach(o=>{ if(o.no) mevcut[String(o.no)] = o; });
+  PARCA_LISTE = cfg.parcalar.map((o,i)=>{
+    const eski = mevcut[String(o.no)] || {};
+    return {
+      id: eski.id, no: String(o.no || (i+1)),
+      ad: eski.ad || `${o.no || (i+1)} nolu parça`,
+      m2: +o.m2 || 0,
+      satilik: eski.satilik !== undefined ? eski.satilik : true,
+      m2_fiyat: eski.m2_fiyat ?? null, notu: eski.notu || "", sira: i
+    };
+  });
+  parcaListeCiz(parselId);
+  toast(`${PARCA_LISTE.length} parça çaptan alındı, kaydetmeyi unutma`);
+}
+
+function parcaSatirEkle(parselId){
+  PARCA_LISTE.push({ no: String(PARCA_LISTE.length+1), ad:"", m2:0, satilik:true,
+    m2_fiyat:null, notu:"", sira: PARCA_LISTE.length });
+  parcaListeCiz(parselId);
+}
+
+function parcaSil(i, parselId){
+  const o = PARCA_LISTE[i];
+  if(o.id){ o._sil = true; PARCA_LISTE.splice(i,1); SILINECEK_PARCA.push(o.id); }
+  else PARCA_LISTE.splice(i,1);
+  parcaListeCiz(parselId);
+}
+let SILINECEK_PARCA = [];
+
+async function parcalariKaydet(parselId){
+  try{
+    if(SILINECEK_PARCA.length){
+      await sb.from("parca").delete().in("id", SILINECEK_PARCA);
+      SILINECEK_PARCA = [];
+    }
+    const yeni = PARCA_LISTE.filter(o=>!o.id).map((o,i)=>({
+      team_id:ME.team_id, parcel_id:parselId, no:o.no, ad:o.ad, m2:o.m2||null,
+      satilik:!!o.satilik, m2_fiyat:o.m2_fiyat||null, notu:o.notu||null, sira:o.sira ?? i
+    }));
+    if(yeni.length) await sb.from("parca").insert(yeni);
+    for(const o of PARCA_LISTE.filter(o=>o.id)){
+      await sb.from("parca").update({ no:o.no, ad:o.ad, m2:o.m2||null, satilik:!!o.satilik,
+        m2_fiyat:o.m2_fiyat||null, notu:o.notu||null, sira:o.sira ?? 0 }).eq("id", o.id);
+    }
+    toast("Parçalar kaydedildi");
+    go("parsel", parselId);
+  }catch(e){ toast("Olmadı: " + (e.message||e)); }
+}
+
 /* ================= hesap - kitap ================= */
 
 let HESAP_TIP = "alacak";
@@ -3052,10 +3230,11 @@ async function parselDosyasi(parselId){
     const M = capHalkasi(p);
     const alan = gercekAlan(p);
 
-    const [{ data:yl }, { data:et }, { data:emsaller }] = await Promise.all([
+    const [{ data:yl }, { data:et }, { data:emsaller }, { data:parcalar }] = await Promise.all([
       sb.from("parcel_years").select("*").eq("parcel_id",parselId).order("yil",{ascending:false}),
       sb.from("parcel_tags").select("tags(name)").eq("parcel_id",parselId),
-      sb.from("emsal_kayit").select("*").order("tarih",{ascending:false}).limit(300)
+      sb.from("emsal_kayit").select("*").order("tarih",{ascending:false}).limit(300),
+      sb.from("parca").select("*").eq("parcel_id",parselId).order("sira")
     ]);
     const y = yl?.[0] || {};
     const etiket = (et||[]).map(e=>e.tags?.name).filter(Boolean);
@@ -3123,7 +3302,10 @@ async function parselDosyasi(parselId){
       ["Tapu durumu", y.tapu_durumu === "hisseli" ? `Hisseli · ${y.hisse_pay||""} (${nf2(y.hisse_m2||0)} m²)` : "Tek tapu"],
       ["Malik", y.malik ? String(y.malik).replace(/\n/g,", ") : "—"],
       ["Kayıtlı satış bedeli", y.toplam_fiyat ? nf(y.toplam_fiyat) + " ₺" : "—"],
-      ["Özellikler", etiket.length ? etiket.join(", ") : "—"]
+      ["Özellikler", etiket.length ? etiket.join(", ") : "—"],
+      ["Parça durumu", (parcalar||[]).length
+        ? `${parcalar.length} parça · ${parcalar.filter(o=>o.satilik).length} tanesi satılık`
+        : "parçalara ayrılmamış"]
     ]});
 
     if(uydu) bolumler.push({ baslik:"2 · Uydu görünümü", gorsel:uydu, oran:1350/1800 });
@@ -3215,6 +3397,33 @@ async function parselDosyasi(parselId){
         satir.push(["Payınızın tahmini değeri", nf(Math.round(deger.sonuc*y.hisse_m2)) + " ₺"]);
       bolumler.push({ baslik:"10 · Değerleme", satirlar: satir });
 
+      // parca bazli degerleme
+      if((parcalar||[]).length){
+        const satir2 = [];
+        let satilikAlan = 0, satilikBedel = 0, kendiBedel = 0;
+        parcalar.forEach(o=>{
+          const m2 = +o.m2 || 0;
+          const birim = +o.m2_fiyat || deger.sonuc;
+          const kendiVar = !!o.m2_fiyat;
+          const toplam = m2 * birim;
+          satir2.push([
+            `${o.no || ""} · ${o.ad || "parça"}${o.satilik ? "" : " (satılık değil)"}`,
+            `${nf2(m2)} m² × ${nf(Math.round(birim))} ₺${kendiVar ? "" : " (tahmin)"} = ${nf(Math.round(toplam))} ₺`
+          ]);
+          if(o.satilik){
+            satilikAlan += m2; satilikBedel += toplam;
+            if(kendiVar) kendiBedel += toplam; else kendiBedel += m2 * deger.sonuc;
+          }
+        });
+        satir2.push(["Satılık parça alanı", nf2(satilikAlan) + " m²"]);
+        satir2.push(["Satılık parçaların toplam bedeli", nf(Math.round(satilikBedel)) + " ₺"]);
+        if(satilikAlan > 0)
+          satir2.push(["Satılık ortalama m² fiyatı", nf(Math.round(satilikBedel/satilikAlan)) + " ₺"]);
+        bolumler.push({ baslik:"11 · Parça bazlı değerleme", satirlar: satir2 });
+        bolumler.push({ baslik:"", metin:
+          "Parçaların m² fiyatı girilmişse o fiyat, girilmemişse yukarıdaki emsal değerlemesinden çıkan tahmini m² değeri kullanılmıştır. Satılık işaretlenmeyen parçalar toplama dahil edilmemiştir." });
+      }
+
       bolumler.push({ baslik:"Kullanılan emsaller", satirlar: deger.gecerli.map(k=>[
         `${duzgun(k.mahalle||"")} ${k.ada||""}/${k.parsel||"—"} · ${nf(Math.round(k.alan_m2||0))} m²`,
         `${nf(Math.round(k.guncel))} ₺/m² · ağırlık ${k.agirlik}`
@@ -3223,6 +3432,18 @@ async function parselDosyasi(parselId){
         `${nf(Math.round(k.guncel))} ₺/m² · ${k.sebep}`
       ])) });
     }else{
+      if((parcalar||[]).length){
+        let alanT = 0, bedelT = 0;
+        const satir2 = parcalar.map(o=>{
+          const m2 = +o.m2 || 0, birim = +o.m2_fiyat || 0;
+          if(o.satilik){ alanT += m2; bedelT += m2*birim; }
+          return [`${o.no || ""} · ${o.ad || "parça"}${o.satilik ? "" : " (satılık değil)"}`,
+                  birim ? `${nf2(m2)} m² × ${nf(Math.round(birim))} ₺ = ${nf(Math.round(m2*birim))} ₺` : `${nf2(m2)} m² · fiyat girilmemiş`];
+        });
+        satir2.push(["Satılık alan", nf2(alanT) + " m²"]);
+        satir2.push(["Satılık toplam bedel", nf(Math.round(bedelT)) + " ₺"]);
+        bolumler.push({ baslik:"11 · Parça bazlı değerleme", satirlar: satir2 });
+      }
       bolumler.push({ baslik:"10 · Değerleme", metin:
         "Bu bölge için kayıtlı emsal bulunmadığından rakamsal değerleme yapılamamıştır. Parsel detayındaki \"Emsal ekle\" ekranından bölgede gördüğünüz ilanları girdiğinizde bu bölüm otomatik hesaplanır." });
     }
@@ -5069,7 +5290,7 @@ async function cikis(){ await sb.auth.signOut(); location.reload(); }
 
 /* ================= yonlendirme ================= */
 
-const ekranlar = { ana:anaMenu, harita:harita, sesli:sesliDoldur, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, emsal:emsalEkle, sunum:sunum, dosya:parselDosyasi, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, yeni:yeniParsel, parsel:parselDetay,
+const ekranlar = { ana:anaMenu, harita:harita, sesli:sesliDoldur, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, emsal:emsalEkle, sunum:sunum, dosya:parselDosyasi, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, yeni:yeniParsel, parsel:parselDetay,
                    fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
 function go(r,arg){ (ekranlar[r]||anaMenu)(arg); window.scrollTo(0,0); }
 
