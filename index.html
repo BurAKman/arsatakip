@@ -119,10 +119,10 @@ a{color:var(--gold);text-decoration:none}
 .tile.mavi .ic{color:#CFE6FF}
 .tile.sari{background:linear-gradient(155deg,rgba(227,192,90,.28),rgba(227,192,90,.08));border-color:rgba(227,192,90,.42)}
 .tile.sari .ic{color:#F6E3AA}
-.tile .gorsel{position:absolute;inset:0;background-repeat:no-repeat;background-position:center;
+.tile .gorsel{position:absolute;inset:0;background-repeat:no-repeat;background-position:center top;
   background-size:cover;pointer-events:none}
 .tile .perde{position:absolute;inset:0;pointer-events:none;
-  background:linear-gradient(0deg,rgba(4,7,6,.92) 0%,rgba(4,7,6,.62) 30%,rgba(4,7,6,.12) 62%,rgba(4,7,6,0) 100%)}
+  background:linear-gradient(0deg,rgba(4,7,6,.9) 0%,rgba(4,7,6,.5) 26%,rgba(4,7,6,.06) 55%,rgba(4,7,6,0) 100%)}
 .tile .icerik{position:relative;z-index:2}
 .tile.gorselli{aspect-ratio:1/1;display:flex;flex-direction:column;justify-content:flex-end;padding:14px 13px}
 .tile.gorselli .icerik b{font-size:17px;text-shadow:0 2px 10px rgba(0,0,0,.7)}
@@ -385,7 +385,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 1.6";
+const SURUM = "beta 1.7";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -514,7 +514,7 @@ async function anaMenu(){
       <div class="zaman" id="stamp" style="flex:1;margin:0"></div></div>
 
     <div class="grid">
-      ${tile("harita","map","Harita","Sorgula · Araştır","kirmizi","bg-harita.jpg")}
+      ${tile("harita","map","Harita","","kirmizi","bg-harita.jpg")}
       ${tile("araziler","folder","Araziler","Her şey tek yerde","yesil","bg-araziler.jpg")}
       ${tile("fiyat","money","Tapu bilgileri","Hisse, malik, fiyat","gri","bg-tapu.jpg")}
       ${tile("ekler","file","Ekler","Vekalet, muvafakat","gri","bg-ekler.jpg")}
@@ -551,7 +551,7 @@ async function yaklasanRozet(){
 const tile = (r,i,t,s2,renk,gorsel) =>
   `<button class="tile ${renk||"gri"}${gorsel?" gorselli":""}" onclick="go('${r}')">
      ${gorsel?`<div class="gorsel" style="background-image:url('${gorsel}')"></div><div class="perde"></div>`:""}
-     <div class="icerik">${gorsel?"":`<div class="ic">${svg(i)}</div>`}<b>${t}</b><small>${s2}</small></div></button>`;
+     <div class="icerik">${gorsel?"":`<div class="ic">${svg(i)}</div>`}<b>${t}</b>${s2?`<small>${s2}</small>`:""}</div></button>`;
 
 async function kurlar(){
   const box = document.getElementById("rates"), st = document.getElementById("stamp");
