@@ -345,7 +345,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 1.1";
+const SURUM = "beta 1.3";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1489,9 +1489,19 @@ async function parselDetay(id){
         ${ME.role==='admin'?`<button class="pill gold" onclick="go('fiyatDuzen','${y.id}')">düzenle</button>`:""}</div>
     </div>` : ""}
 
-    ${(parcalar||[]).length ? `<div class="card">
-      <div class="bolum"><span class="rz altin">${svg("vector")}</span><b>Parçalar</b>
-        <span class="sayi">${parcalar.filter(o=>o.satilik).length} satılık / ${parcalar.length}</span></div>
+    ${(parcalar||[]).length ? (() => {
+      const sat = parcalar.filter(o=>o.satilik);
+      const satAlan = sat.reduce((t,o)=>t+(+o.m2||0),0);
+      const satBedel = sat.reduce((t,o)=>t+(+o.m2||0)*(+o.m2_fiyat||0),0);
+      const ortB = satAlan ? satBedel/satAlan : 0;
+      return `<div class="card">
+      <div class="bolum"><span class="rz altin">${svg("vector")}</span><b>Parçalar / hisseler</b>
+        <span class="sayi">${sat.length} satılık / ${parcalar.length}</span></div>
+      <div class="kv"><span>Satılık alan</span><b class="mono">${nf2(satAlan)} m²</b></div>
+      <div class="kv"><span>Ortalama m² fiyatı</span><b class="mono">${ortB ? nf(Math.round(ortB)) + " ₺" : "—"}</b></div>
+      <div class="kv" style="border-bottom:1px solid var(--cizgi);padding-bottom:9px;margin-bottom:2px">
+        <span style="color:var(--gold)">Satılık toplam bedel</span>
+        <b class="mono" style="color:var(--gold)">${nf(Math.round(satBedel))} ₺</b></div>
       ${parcalar.map(o=>`<div style="display:flex;align-items:center;gap:9px;border-top:1px solid var(--cizgi);padding:9px 0">
         <span class="pill ${o.satilik?"on":"off"}" style="min-width:34px;text-align:center">${esc(o.no||"")}</span>
         <div style="flex:1;min-width:0">
@@ -1500,7 +1510,7 @@ async function parselDetay(id){
         ${o.m2 && o.m2_fiyat ? `<b class="mono" style="color:var(--gold);font-size:13px">${nf(Math.round(o.m2*o.m2_fiyat))} ₺</b>` : ""}
       </div>`).join("")}
       ${ME.role!=='uye' ? `<button class="btn ghost" style="margin-top:12px" onclick="go('parcalar','${id}')">Parçaları düzenle</button>` : ""}
-    </div>` : ""}
+    </div>`; })() : ""}
 
     <div class="card">
       <div class="bolum"><span class="rz yesil">${svg("tag")}</span><b>Arazi özellikleri</b></div>
@@ -2678,7 +2688,8 @@ async function parcalarEkran(parselId){
     </div>
 
     <div id="parcaListe"></div>
-    ${(liste||[]).length ? `<button class="btn" onclick="parcalariKaydet('${parselId}')">Değişiklikleri kaydet</button>` : ""}`;
+    <button class="btn" id="parcaKaydetTus" onclick="parcalariKaydet('${parselId}')"
+      style="position:sticky;bottom:14px;box-shadow:0 8px 24px rgba(0,0,0,.45)">Kaydet</button>`;
 
   PARCA_LISTE = (liste||[]).map(o=>({ ...o }));
   parcaListeCiz(parselId);
@@ -2693,15 +2704,24 @@ function parcaListeCiz(parselId){
     kutu.innerHTML = `<div class="empty"><b>Parça yok</b>Çaptan alabilir ya da elle ekleyebilirsin.</div>`;
     return;
   }
-  const satilikToplam = PARCA_LISTE.filter(o=>o.satilik)
-    .reduce((t,o)=>t + (+o.m2||0) * (+o.m2_fiyat||0), 0);
-  const satilikAlan = PARCA_LISTE.filter(o=>o.satilik).reduce((t,o)=>t + (+o.m2||0), 0);
+  const satiliklar = PARCA_LISTE.filter(o=>o.satilik);
+  const satilikToplam = satiliklar.reduce((t,o)=>t + (+o.m2||0) * (+o.m2_fiyat||0), 0);
+  const satilikAlan = satiliklar.reduce((t,o)=>t + (+o.m2||0), 0);
+  const tumAlan = PARCA_LISTE.reduce((t,o)=>t + (+o.m2||0), 0);
+  const ortBirim = satilikAlan > 0 ? satilikToplam/satilikAlan : 0;
+  const fiyatsiz = satiliklar.filter(o=>!(+o.m2_fiyat)).length;
 
   kutu.innerHTML = `
     <div class="card">
-      <div class="kv"><span>Satılık parça</span><b class="mono">${PARCA_LISTE.filter(o=>o.satilik).length} / ${PARCA_LISTE.length}</b></div>
+      <div class="kv"><span>Toplam parça</span><b class="mono">${PARCA_LISTE.length}</b></div>
+      <div class="kv"><span>Satılık parça</span><b class="mono">${satiliklar.length}</b></div>
+      <div class="kv"><span>Parçaların toplam alanı</span><b class="mono">${nf2(tumAlan)} m²</b></div>
       <div class="kv"><span>Satılık alan</span><b class="mono">${nf2(satilikAlan)} m²</b></div>
-      <div class="kv"><span>Satılık toplam bedel</span><b class="mono" style="color:var(--gold)">${nf(Math.round(satilikToplam))} ₺</b></div>
+      <div class="kv"><span>Ortalama m² fiyatı</span><b class="mono">${ortBirim ? nf(Math.round(ortBirim)) + " ₺" : "—"}</b></div>
+      <div class="kv" style="border-top:1px solid var(--cizgi);margin-top:6px;padding-top:8px">
+        <span style="color:var(--gold)">Satılık toplam bedel</span>
+        <b class="mono" style="color:var(--gold)">${nf(Math.round(satilikToplam))} ₺</b></div>
+      ${fiyatsiz ? `<p class="ipuc" style="margin:8px 2px 0;color:var(--gold)">${fiyatsiz} satılık parçanın m² fiyatı boş; raporda emsal tahmini kullanılır.</p>` : ""}
     </div>
     ${PARCA_LISTE.map((o,i)=>`
       <div class="card" style="padding:12px;${o.satilik?"":"opacity:.62"}">
@@ -3420,8 +3440,64 @@ async function parselDosyasi(parselId){
         if(satilikAlan > 0)
           satir2.push(["Satılık ortalama m² fiyatı", nf(Math.round(satilikBedel/satilikAlan)) + " ₺"]);
         bolumler.push({ baslik:"11 · Parça bazlı değerleme", satirlar: satir2 });
-        bolumler.push({ baslik:"", metin:
-          "Parçaların m² fiyatı girilmişse o fiyat, girilmemişse yukarıdaki emsal değerlemesinden çıkan tahmini m² değeri kullanılmıştır. Satılık işaretlenmeyen parçalar toplama dahil edilmemiştir." });
+
+        // fiyat gerekcesi: kullanicinin fiyati ile emsal tahminini karsilastiran yorum
+        const kendiOrt = satilikAlan > 0 ? satilikBedel/satilikAlan : 0;
+        const cumleler = [];
+        if(kendiOrt > 0){
+          const fark = ((kendiOrt - deger.sonuc) / Math.max(1, deger.sonuc)) * 100;
+          cumleler.push(`Satışa konu parçalar için belirlenen ortalama birim fiyat ${nf(Math.round(kendiOrt))} ₺/m², emsal değerlendirmesinden çıkan tahmini birim değer ise ${nf(deger.sonuc)} ₺/m²'dir.`);
+          if(Math.abs(fark) < 12)
+            cumleler.push("Belirlenen fiyat emsal analiziyle büyük ölçüde örtüşmektedir; bölge koşulları dikkate alındığında gerçekçi bir seviyededir.");
+          else if(fark < 0)
+            cumleler.push(`Belirlenen fiyat emsal tahmininin %${Math.abs(Math.round(fark))} altındadır. Bunun başlıca nedeni, bölgede bulunabilen emsallerin ağırlıklı olarak imarlı arsa niteliğinde olması ve tarla vasfındaki taşınmazın bu ilanlarla doğrudan kıyaslanamamasıdır. Satıcı tarafından belirlenen seviye, taşınmazın mevcut vasfı ve gerçekleşebilir satış koşulları gözetilerek benimsenmiştir.`);
+          else
+            cumleler.push(`Belirlenen fiyat emsal tahmininin %${Math.round(fark)} üzerindedir. Bu farkın, taşınmazın konum, cephe ve altyapı üstünlüklerinden kaynaklandığı değerlendirilmektedir.`);
+        }
+        const gerekce = [];
+        if(cephe?.uzunluk > 0) gerekce.push(`yola ${cephe.uzunluk} m cephesinin bulunması`);
+        if(yerlesim && yerlesim.u <= 800) gerekce.push(`yerleşime ${km(yerlesim.u)} mesafede olması`);
+        if(pot?.veri?.yukseklik && pot.veri.yukseklik.egim <= 5) gerekce.push(`arazinin %${pot.veri.yukseklik.egim} eğimle düz sayılması`);
+        if(sekil && sekil.duzgunluk >= 0.6) gerekce.push("parselin düzgün geometriye sahip olması");
+        if(ndvi && ndvi.genelOrt >= 0.4) gerekce.push("uydu verilerinde düzenli bitki örtüsü görülmesi");
+        if(gerekce.length)
+          cumleler.push(`Değeri destekleyen başlıca unsurlar şunlardır: ${gerekce.join(", ")}.`);
+        const zayif = [];
+        if(cephe && cephe.uzunluk === 0) zayif.push("yola doğrudan cephesinin bulunmaması");
+        if(pot?.veri?.yukseklik && pot.veri.yukseklik.egim > 10) zayif.push(`arazinin %${pot.veri.yukseklik.egim} eğimli olması`);
+        if(y.tapu_durumu === "hisseli") zayif.push("tapunun hisseli olması");
+        if(zayif.length)
+          cumleler.push(`Buna karşılık ${zayif.join(", ")} fiyatı sınırlayan unsurlar olarak değerlendirilmiştir.`);
+        cumleler.push("Parçaların m² fiyatı girilmişse o fiyat, girilmemişse emsal değerlemesinden çıkan tahmini değer kullanılmıştır. Satılık işaretlenmeyen parçalar toplama dahil edilmemiştir.");
+        bolumler.push({ baslik:"12 · Fiyat gerekçesi", metin: cumleler.join(" ") });
+
+        // ---- nihai kanaat ----
+        const taban2 = kendiOrt > 0 ? kendiOrt : deger.sonuc;
+        const puanEtki = pot ? Math.max(-12, Math.min(12, ((pot.puan - 50) / 50) * 12)) : 0;
+        const kanaat = Math.round(taban2 * (1 + puanEtki/100));
+        const altSinir = Math.round(kanaat * 0.9), ustSinir = Math.round(kanaat * 1.12);
+        const kanaatToplam = Math.round(kanaat * satilikAlan);
+
+        const kanaatSatir = [
+          ["Değerlendirmeye esas birim fiyat", nf(Math.round(taban2)) + " ₺/m²"],
+          ["Parsel özelliklerinden düzeltme", (puanEtki>=0?"+":"") + puanEtki.toFixed(1).replace(".",",") + "%"],
+          ["Kanaat birim değeri", nf(kanaat) + " ₺/m²"],
+          ["Makul pazarlık aralığı", `${nf(altSinir)} – ${nf(ustSinir)} ₺/m²`],
+          ["Satılık alan", nf2(satilikAlan) + " m²"],
+          ["Satılık parçaların kanaat değeri", nf(kanaatToplam) + " ₺"],
+          ["Alt–üst bant (toplam)", `${nf(Math.round(altSinir*satilikAlan))} – ${nf(Math.round(ustSinir*satilikAlan))} ₺`]
+        ];
+        if(y.tapu_durumu === "hisseli" && y.hisse_m2)
+          kanaatSatir.push(["Payınızın kanaat değeri", nf(Math.round(kanaat * y.hisse_m2)) + " ₺"]);
+        bolumler.push({ baslik:"13 · Nihai kanaat", satirlar: kanaatSatir });
+
+        const kanaatCumle = [
+          `Yukarıdaki bütün veriler birlikte değerlendirildiğinde, taşınmazın satışa konu ${nf2(satilikAlan)} m²'lik bölümü için makul birim değerin ${nf(kanaat)} ₺/m² olduğu kanaatine varılmıştır.`,
+          `Pazarlık payı gözetildiğinde ${nf(altSinir)} – ${nf(ustSinir)} ₺/m² aralığı gerçekçi kabul edilebilir; bu da toplamda yaklaşık ${nf(Math.round(altSinir*satilikAlan))} – ${nf(Math.round(ustSinir*satilikAlan))} ₺ bedele karşılık gelmektedir.`,
+          pot ? `Bu değerlendirmede parselin ${pot.puan}/100 potansiyel puanı ve ${pot.yorum.toLocaleLowerCase("tr")} değerlendirmesi dikkate alınmıştır.` : "",
+          "Belirtilen rakamlar piyasa gözlemi ve açık veri analizine dayalı bir öngörüdür; resmi değer tespiti niteliği taşımaz, yetkili kıymet takdiri yerine geçmez."
+        ].filter(Boolean).join(" ");
+        bolumler.push({ baslik:"", metin: kanaatCumle });
       }
 
       bolumler.push({ baslik:"Kullanılan emsaller", satirlar: deger.gecerli.map(k=>[
@@ -3443,6 +3519,21 @@ async function parselDosyasi(parselId){
         satir2.push(["Satılık alan", nf2(alanT) + " m²"]);
         satir2.push(["Satılık toplam bedel", nf(Math.round(bedelT)) + " ₺"]);
         bolumler.push({ baslik:"11 · Parça bazlı değerleme", satirlar: satir2 });
+
+        if(alanT > 0 && bedelT > 0){
+          const birim = bedelT/alanT;
+          const puanEtki = pot ? Math.max(-12, Math.min(12, ((pot.puan - 50) / 50) * 12)) : 0;
+          const kanaat = Math.round(birim * (1 + puanEtki/100));
+          bolumler.push({ baslik:"12 · Nihai kanaat", satirlar:[
+            ["Belirlenen birim fiyat", nf(Math.round(birim)) + " ₺/m²"],
+            ["Parsel özelliklerinden düzeltme", (puanEtki>=0?"+":"") + puanEtki.toFixed(1).replace(".",",") + "%"],
+            ["Kanaat birim değeri", nf(kanaat) + " ₺/m²"],
+            ["Makul pazarlık aralığı", `${nf(Math.round(kanaat*0.9))} – ${nf(Math.round(kanaat*1.12))} ₺/m²`],
+            ["Satılık parçaların kanaat değeri", nf(Math.round(kanaat*alanT)) + " ₺"]
+          ]});
+          bolumler.push({ baslik:"", metin:
+            `Bölgede kayıtlı emsal bulunmadığından bu kanaat, belirlenen satış fiyatı ile parselin ölçülen özellikleri (eğim, cephe, konum, arazi örtüsü) birlikte değerlendirilerek oluşturulmuştur. Emsal girildikçe değerlendirme daha isabetli hale gelecektir. Belirtilen rakamlar bir öngörüdür; resmi değer tespiti niteliği taşımaz.` });
+        }
       }
       bolumler.push({ baslik:"10 · Değerleme", metin:
         "Bu bölge için kayıtlı emsal bulunmadığından rakamsal değerleme yapılamamıştır. Parsel detayındaki \"Emsal ekle\" ekranından bölgede gördüğünüz ilanları girdiğinizde bu bölüm otomatik hesaplanır." });
