@@ -194,6 +194,19 @@ select option{background:#101614;color:var(--ink)}
 .pill.gold{background:var(--gold-soft);color:var(--gold);border-color:rgba(227,192,90,.32)}
 .pill.sade{background:var(--cam-2);color:var(--ink-2);border-color:var(--cizgi)}
 
+/* ---- sorgu animasyonu ---- */
+#sorguKat{position:fixed;inset:0;z-index:70;display:grid;place-items:center;
+  background:rgba(10,12,11,.86);backdrop-filter:blur(6px);animation:sorguGir .22s ease}
+#sorguKat.cik{animation:sorguCik .3s ease forwards}
+@keyframes sorguGir{from{opacity:0}to{opacity:1}}
+@keyframes sorguCik{to{opacity:0}}
+#sorguKat .kutu{text-align:center;max-width:min(76vw,320px)}
+#sorguKat img{width:100%;max-width:260px;border-radius:18px;display:block;margin:0 auto}
+#sorguKat .yazi{margin-top:14px;font-size:14.5px;font-weight:600;color:#fff}
+#sorguKat .alt{margin-top:5px;font-size:12px;color:var(--ink-3)}
+#sorguKat .nokta::after{content:"";animation:nokta 1.2s steps(4,end) infinite}
+@keyframes nokta{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
+
 /* ---- metalik panjur ---- */
 .panjur{border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.14);
   background:linear-gradient(180deg,#2B2F33,#1C2023 40%,#23272B);
@@ -372,7 +385,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 1.5";
+const SURUM = "beta 1.6";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -736,6 +749,44 @@ const secimAdi = (pre,k) => {
 
 
 
+/* ---- sorgu animasyonu ve sesi ---- */
+// Depoya sorgu.webp (animasyon) ve sorgu.mp3 (kisa ses) koyarsan kendiliginden kullanilir.
+const SES_ACIK = () => localStorage.getItem("sesKapali") !== "1";
+
+function sorguAnimasyonAc(baslik, alt){
+  sorguAnimasyonKapat(true);
+  const k = document.createElement("div");
+  k.id = "sorguKat";
+  k.innerHTML = `<div class="kutu">
+    <img src="sorgu.webp" alt="" onerror="this.style.display='none'">
+    <div class="yazi">${esc(baslik || "Sorgulanıyor")}<span class="nokta"></span></div>
+    <div class="alt">${esc(alt || "TKGM kayıtlarına bakıyorum")}</div>
+  </div>`;
+  document.body.appendChild(k);
+
+  if(SES_ACIK()){
+    try{
+      const a = new Audio("sorgu.mp3");
+      a.volume = 0.65;
+      a.play().catch(()=>{});
+    }catch(e){}
+  }
+  return Date.now();
+}
+
+// en az belirtilen sure ekranda kalsin ki animasyon tamamlansin
+async function sorguAnimasyonKapat(hemen, baslangic, enAz){
+  const k = document.getElementById("sorguKat");
+  if(!k) return;
+  if(!hemen && baslangic){
+    const gecen = Date.now() - baslangic;
+    const bekle = Math.max(0, (enAz || 2400) - gecen);
+    if(bekle) await new Promise(r=>setTimeout(r, bekle));
+  }
+  k.classList.add("cik");
+  setTimeout(()=>k.remove(), 300);
+}
+
 /* ================= harita ================= */
 
 let HARITA = null, KATMAN = null, SONPARSEL = null;
@@ -770,15 +821,30 @@ async function adaParselSorgu(){
   const ada = document.getElementById("hada").value.trim();
   const par = document.getElementById("hpar").value.trim();
   if(!mah || !par) return toast("Mahalle ve parsel gerekli");
+
+  const basladi = sorguAnimasyonAc("Parsel aranıyor", "TKGM kayıtlarına bakıyorum");
   document.getElementById("bilgi").innerHTML = `<div class="spin"></div>`;
-  try{ ciz(await tkgm(`${TB3}/parsel/${mah}/${ada||0}/${par}`)); }
-  catch(e){ document.getElementById("bilgi").innerHTML = `<div class="empty">Bulunamadı<br><small>${esc(e.message)}</small></div>`; }
+  try{
+    const sonuc = await tkgm(`${TB3}/parsel/${mah}/${ada||0}/${par}`);
+    await sorguAnimasyonKapat(false, basladi, 2400);
+    ciz(sonuc);
+  }catch(e){
+    await sorguAnimasyonKapat(false, basladi, 1400);
+    document.getElementById("bilgi").innerHTML = `<div class="empty">Bulunamadı<br><small>${esc(e.message)}</small></div>`;
+  }
 }
 
 async function noktaSorgu(lat,lng){
+  const basladi = sorguAnimasyonAc("Parsel aranıyor", "Haritadaki noktaya bakıyorum");
   document.getElementById("bilgi").innerHTML = `<div class="spin"></div>`;
-  try{ ciz(await tkgm(`${TB3}/parsel/${lat}/${lng}`)); }
-  catch(e){ document.getElementById("bilgi").innerHTML = `<div class="empty">Burada kayıtlı parsel yok</div>`; }
+  try{
+    const sonuc = await tkgm(`${TB3}/parsel/${lat}/${lng}`);
+    await sorguAnimasyonKapat(false, basladi, 2200);
+    ciz(sonuc);
+  }catch(e){
+    await sorguAnimasyonKapat(false, basladi, 1200);
+    document.getElementById("bilgi").innerHTML = `<div class="empty">Burada kayıtlı parsel yok</div>`;
+  }
 }
 
 function ciz(f){
@@ -4586,6 +4652,11 @@ async function ayarlar(){
       <div class="kv"><span>Hesap</span><b>${esc((ME.full_name && !ME.full_name.includes("@")) ? ME.full_name : (ME.email||"").split("@")[0])}</b></div>
       <div class="kv"><span>E-posta</span><b>${esc(ME.email||"")}</b></div>
       <div class="kv"><span>Yetki</span><b>${rolAd[ME.role]}</b></div>
+      <label style="display:flex;align-items:center;gap:10px;margin:12px 0 0;font-size:13.5px;color:var(--ink)">
+        <input type="checkbox" id="sesKutu" style="width:20px;height:20px"
+          ${localStorage.getItem("sesKapali") === "1" ? "" : "checked"}
+          onchange="localStorage.setItem('sesKapali', this.checked ? '0' : '1')">
+        <span style="flex:1">Sorgu sesi açık</span></label>
     </div>
     <h3 style="font-size:14px;margin:22px 0 10px">Kullanıcılar</h3>
     ${(kisiler||[]).map(k=>{
