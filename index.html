@@ -30,6 +30,15 @@
 .ustIkon{display:flex;gap:7px}
 .surumRozet.ufak{font-size:8px;letter-spacing:.12em;padding:2px 7px}
 .ustSag .zaman{margin:0;font-size:10px;text-align:right;white-space:nowrap}
+body[data-tema="vitrin"] .ibtn{border-radius:8px;border-color:rgba(216,69,58,.35);
+  background:linear-gradient(180deg,rgba(216,69,58,.18),rgba(216,69,58,.06))}
+body[data-tema="vitrin"] .ibtn svg{stroke:#F08070}
+body[data-tema="loca"] .ibtn{border-radius:3px;border-color:rgba(224,122,60,.35);
+  background:linear-gradient(160deg,rgba(224,122,60,.16),rgba(224,122,60,.05))}
+body[data-tema="loca"] .ibtn svg{stroke:#EFA36B}
+body[data-tema="tugra"] .ibtn{border-radius:12px 4px 12px 4px;border-color:rgba(232,199,103,.38);
+  background:linear-gradient(152deg,rgba(232,199,103,.2),rgba(255,255,255,.04))}
+body[data-tema="tugra"] .ibtn svg{stroke:#EBD08A}
 
 /* ---- tema paletleri: ic sayfalar dahil her yer bu degiskenlerden beslenir ---- */
 body[data-tema="tugra"]{
@@ -99,15 +108,16 @@ a{color:var(--gold);text-decoration:none}
 #acilis[data-tema="vitrin"] .kare{border-color:rgba(216,69,58,.45);
   box-shadow:0 18px 50px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.14), 0 0 52px rgba(216,69,58,.16);
   border-radius:8px}
-#acilis[data-tema="vitrin"] .ad{background:linear-gradient(180deg,#FFFFFF,#E7D9D6 44%,#D8453A);
-  letter-spacing:.24em;font-weight:600}
+#acilis[data-tema="vitrin"] .ad{background-image:linear-gradient(180deg,#FFFFFF,#E7D9D6 44%,#D8453A);
+  -webkit-background-clip:text;background-clip:text;letter-spacing:.24em;font-weight:600}
 #acilis[data-tema="vitrin"] .cizgi{background:linear-gradient(90deg,transparent,rgba(216,69,58,.8),transparent)}
 #acilis[data-tema="vitrin"] .yuk{color:rgba(237,234,230,.45)}
 
 #acilis[data-tema="loca"] .kare{border-color:rgba(224,122,60,.45);border-radius:4px;
   box-shadow:0 18px 50px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.1), 0 0 60px rgba(224,122,60,.14)}
 #acilis[data-tema="loca"] .ad{font-family:Georgia,serif;font-weight:400;letter-spacing:.3em;
-  background:linear-gradient(180deg,#FFF6EC,#F0C79A 46%,#E07A3C)}
+  background-image:linear-gradient(180deg,#FFF6EC,#F0C79A 46%,#E07A3C);
+  -webkit-background-clip:text;background-clip:text}
 #acilis[data-tema="loca"] .cizgi{background:linear-gradient(90deg,transparent,rgba(224,122,60,.8),transparent)}
 #acilis[data-tema="loca"] .yuk{color:rgba(242,234,224,.45);font-family:Georgia,serif;letter-spacing:.34em}
 
@@ -135,9 +145,11 @@ a{color:var(--gold);text-decoration:none}
   color:transparent;background:linear-gradient(180deg,#FFFFFF,#F2E7C9 46%,#C9A94E);
   -webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 1px 6px rgba(0,0,0,.6))}
 body[data-tema="vitrin"] .logo b{font-weight:700;letter-spacing:.2em;
-  background:linear-gradient(180deg,#FFFFFF,#E4D4D1 44%,#D8453A)}
+  background-image:linear-gradient(180deg,#FFFFFF,#E4D4D1 44%,#D8453A);
+  -webkit-background-clip:text;background-clip:text}
 body[data-tema="loca"] .logo b{font-family:Georgia,serif;font-weight:400;letter-spacing:.22em;
-  background:linear-gradient(180deg,#FFF6EC,#EFC79C 48%,#E07A3C)}
+  background-image:linear-gradient(180deg,#FFF6EC,#EFC79C 48%,#E07A3C);
+  -webkit-background-clip:text;background-clip:text}
 body[data-tema="vitrin"] .logo span{color:rgba(216,69,58,.75)}
 body[data-tema="loca"] .logo span{color:rgba(224,122,60,.75);font-family:Georgia,serif;letter-spacing:.2em}
 /* logo cercevesi temaya gore */
@@ -285,11 +297,14 @@ select option{background:#101614;color:var(--ink)}
 /* ================= MORDOR ================= */
 body[data-tema="vitrin"] .vitrin{display:flex;flex-direction:column;gap:clamp(4px,.7vh,7px)}
 body[data-tema="vitrin"] .kurSerit{position:relative;overflow:hidden;border-radius:10px;
-  height:clamp(38px,5.2vh,48px);display:flex;align-items:center;padding:0 14px;
+  height:clamp(50px,7vh,64px);display:flex;align-items:center;padding:0 16px;
   background:linear-gradient(180deg,#2A2D30,#141618 46%,#1F2225);
   border:1px solid rgba(255,255,255,.1);border-left:3px solid #D8453A;
   box-shadow:0 3px 10px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.1)}
-body[data-tema="vitrin"] .kurSerit .rates{position:relative;z-index:1;margin:0;font-size:11px}
+body[data-tema="vitrin"] .kurSerit .rates{position:relative;z-index:1;margin:0;font-size:12.5px}
+body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;left:-40%;width:38%;height:220%;
+  pointer-events:none;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
+  transform:rotate(18deg);animation:camParla 8s ease-in-out infinite}
 .serit{position:relative;overflow:hidden;width:100%;border:0;padding:0;cursor:pointer;
   height:clamp(44px,6.4vh,60px);border-radius:10px;
   background:linear-gradient(180deg,#2A2D30,#141618 46%,#1F2225);
@@ -304,7 +319,7 @@ body[data-tema="vitrin"] .kurSerit .rates{position:relative;z-index:1;margin:0;f
 .serit .sIkon{position:absolute;left:15px;top:50%;transform:translateY(-50%);
   width:28px;height:28px;display:grid;place-items:center;border-radius:7px;
   background:rgba(216,69,58,.14);border:1px solid rgba(216,69,58,.4);color:#F08070}
-.serit.ikincil .sIkon{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16);color:#A9A5A0}
+
 .serit .sIkon svg{width:15px;height:15px}
 .serit .sIcerik{position:absolute;left:55px;right:38px;top:50%;transform:translateY(-50%);text-align:left}
 .serit .sIcerik b{display:block;font-size:clamp(12px,1.75vh,14px);font-weight:700;letter-spacing:.14em;
@@ -317,6 +332,13 @@ body[data-tema="vitrin"] .kurSerit .rates{position:relative;z-index:1;margin:0;f
   color:#12100F;background:#D8453A;border-radius:20px;padding:2px 7px}
 .serit .rozet:empty{display:none}
 .serit:active{background:linear-gradient(180deg,#3A3E42,#1C1F22);transform:scale(.996)}
+/* sonuk isik gecisi */
+.serit::after{content:"";position:absolute;top:-60%;left:-40%;width:34%;height:220%;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.075),transparent);
+  transform:rotate(18deg);animation:camParla 9s ease-in-out infinite}
+.serit:nth-child(3)::after{animation-delay:1s} .serit:nth-child(4)::after{animation-delay:2s}
+.serit:nth-child(5)::after{animation-delay:3s} .serit:nth-child(6)::after{animation-delay:4s}
+.serit:nth-child(7)::after{animation-delay:5s} .serit:nth-child(8)::after{animation-delay:6s}
 
 /* ================= MINAS MORGUL ================= */
 .tugra{display:grid;gap:clamp(5px,.9vh,9px);grid-template-columns:1.15fr 1fr;
@@ -347,8 +369,7 @@ body[data-tema="vitrin"] .kurSerit .rates{position:relative;z-index:1;margin:0;f
   box-shadow:0 7px 20px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.3);
   min-height:clamp(52px,7.4vh,78px)}
 .tugra .tPano{min-height:clamp(104px,15.6vh,164px);border-radius:26px 8px 26px 8px}
-.tugra .tTakip1,.tugra .tTakip2{min-height:clamp(42px,5.6vh,58px);border-radius:14px 6px 14px 6px;
-  background:linear-gradient(152deg,rgba(255,255,255,.1),rgba(255,255,255,.03))}
+.tugra .tTakip1,.tugra .tTakip2{background:linear-gradient(152deg,rgba(255,255,255,.11),rgba(255,255,255,.035))}
 .tugra .tGorsel{position:absolute;inset:0;background-size:cover;background-position:center 30%;
   filter:saturate(.8) brightness(.76);transition:transform .7s cubic-bezier(.22,.61,.36,1)}
 .tugra .tKart:active .tGorsel{transform:scale(1.05)}
@@ -362,7 +383,8 @@ body[data-tema="vitrin"] .kurSerit .rates{position:relative;z-index:1;margin:0;f
 .tugra .tOrta1 .tIsik{animation-delay:2.4s} .tugra .tOrta2 .tIsik{animation-delay:3.2s}
 .tugra .tAlt1 .tIsik{animation-delay:4s} .tugra .tAlt2 .tIsik{animation-delay:4.8s}
 .tugra .tYazi{position:absolute;left:13px;right:13px;bottom:10px;text-align:left;z-index:2}
-.tugra .tYazi b{display:block;font-size:clamp(11.5px,1.72vh,14px);font-weight:700;letter-spacing:.13em;
+.tugra .tYazi b{display:block;font-size:clamp(10.5px,1.62vh,13px);font-weight:700;letter-spacing:.1em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   text-transform:uppercase;color:#FDFBF5;text-shadow:0 2px 10px rgba(0,0,0,.85)}
 .tugra .tPano .tYazi b{font-size:clamp(15px,2.4vh,20px);letter-spacing:.17em}
 .tugra .tYazi small{display:block;margin-top:2px;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;
@@ -381,7 +403,7 @@ body[data-tema="vitrin"] .kurSerit .rates{position:relative;z-index:1;margin:0;f
   background:#07090B;border:1px solid rgba(224,122,60,.22);border-radius:4px;
   box-shadow:0 10px 28px rgba(0,0,0,.62), inset 0 0 0 1px rgba(255,255,255,.03)}
 .loca .lHero{height:clamp(118px,17.5vh,180px)}
-.loca .lKart{height:clamp(62px,9vh,104px)}
+.loca .lKart{height:clamp(70px,10.2vh,116px)}
 .loca .lGorsel{position:absolute;inset:0;background-size:cover;background-position:center 32%;
   filter:grayscale(.3) sepia(.12) saturate(.8) brightness(.64) contrast(1.08);
   transition:transform .8s cubic-bezier(.22,.61,.36,1), filter .6s ease}
@@ -395,7 +417,8 @@ body[data-tema="vitrin"] .kurSerit .rates{position:relative;z-index:1;margin:0;f
   border:1px solid rgba(224,122,60,.3);border-radius:2px;padding:1px 6px;background:rgba(6,4,3,.45)}
 .loca .lAlt{position:absolute;left:12px;right:12px;bottom:9px;text-align:left}
 .loca .lAlt b{display:block;font-family:Georgia,serif;font-weight:400;
-  font-size:clamp(12.5px,1.9vh,17px);letter-spacing:.18em;text-indent:.18em;text-transform:uppercase;
+  font-size:clamp(11px,1.72vh,15px);letter-spacing:.12em;text-indent:.12em;text-transform:uppercase;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   color:#F4ECE2;text-shadow:0 2px 12px rgba(0,0,0,.9)}
 .loca .lHero .lAlt b{font-size:clamp(17px,2.9vh,25px)}
 .loca .lCizgi{display:block;width:30px;height:1px;margin:6px 0 5px;
@@ -709,7 +732,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 3.9";
+const SURUM = "beta 4.1";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -928,7 +951,8 @@ function temaEkran(){
         <b style="flex:1;font-size:15px;font-weight:600">${t.ad}</b>
         ${t.k===secili?`<span class="pill gold">seçili</span>`:""}
       </div>
-      <canvas class="onizleme" data-tema="${t.k}" style="width:100%;height:auto;border-radius:10px;display:block"></canvas>
+      <canvas class="onizleme" data-tema="${t.k}"
+        style="width:100%;height:auto;border-radius:12px;display:block;border:1px solid var(--cizgi)"></canvas>
       <div style="font-size:12px;color:var(--ink-3);margin-top:9px">${t.aciklama}</div>
     </button>`).join("");
 
@@ -938,67 +962,111 @@ function temaEkran(){
   });
 }
 
-// kucuk tema onizlemesi
+// kucuk tema onizlemesi: o temanin gercek renkleri ve duzeniyle
 function temaOnizleme(canvas, k){
-  const G = 320, Y = 200;
+  const G = 320, Y = 210;
   canvas.width = G; canvas.height = Y;
   const x = canvas.getContext("2d");
-  x.fillStyle = "#0A0D10"; x.fillRect(0,0,G,Y);
-  const altin = "#D9B65A";
 
-  const kutu = (bx,by,bw,bh,dolgu) => {
-    x.fillStyle = dolgu; x.beginPath(); x.roundRect(bx,by,bw,bh,8); x.fill();
+  const P = {
+    tugra:  { zemin:["#161C22","#0C1116"], vurgu:"#E8C767", yazi:"#FDFBF5", kart:"rgba(255,255,255,.1)" },
+    vitrin: { zemin:["#20242A","#0B0C0D"], vurgu:"#D8453A", yazi:"#EDEAE6", kart:"#1E2225" },
+    loca:   { zemin:["#1E1410","#070506"], vurgu:"#E07A3C", yazi:"#F4ECE2", kart:"#12100E" }
+  }[k] || {};
+
+  const zg = x.createLinearGradient(0,0,G,Y);
+  zg.addColorStop(0, P.zemin[0]); zg.addColorStop(1, P.zemin[1]);
+  x.fillStyle = zg; x.fillRect(0,0,G,Y);
+
+  // ust bar: logo + baslik + ikonlar
+  x.fillStyle = P.kart;
+  x.beginPath(); x.roundRect(12,10,28,28, k==="loca"?3:(k==="vitrin"?7:10)); x.fill();
+  x.strokeStyle = P.vurgu; x.lineWidth = 1; x.stroke();
+  x.fillStyle = P.vurgu; x.globalAlpha = .9; x.fillRect(48,17,86,6); x.globalAlpha = 1;
+  x.fillStyle = "rgba(255,255,255,.28)"; x.fillRect(48,28,54,4);
+  for(let i=0;i<3;i++){
+    x.strokeStyle = P.vurgu; x.globalAlpha = .55;
+    x.beginPath(); x.roundRect(G-28-i*24, 14, 18, 18, k==="loca"?2:5); x.stroke();
+  }
+  x.globalAlpha = 1;
+
+  const yazi = (bx,by,w1,w2) => {
+    x.fillStyle = P.yazi; x.globalAlpha = .9; x.fillRect(bx,by,w1,5); x.globalAlpha = 1;
+    x.fillStyle = P.vurgu; x.globalAlpha = .75; x.fillRect(bx,by+9,w2,2.5); x.globalAlpha = 1;
   };
 
   if(k === "vitrin"){
-    for(let i=0;i<4;i++){
-      const by = 14 + i*46;
-      kutu(14, by, G-28, 38, "#1A2026");
-      x.fillStyle = altin; x.fillRect(14, by+8, 3, 22);
-      x.fillStyle = "rgba(255,255,255,.85)"; x.fillRect(28, by+14, 78, 5);
-      x.fillStyle = "rgba(255,255,255,.3)"; x.fillRect(28, by+24, 48, 4);
-    }
+    // kur cubugu + panjur seritleri
+    const serit = (by,h,vurgulu) => {
+      const g2 = x.createLinearGradient(0,by,0,by+h);
+      g2.addColorStop(0,"#2A2D30"); g2.addColorStop(.5,"#141618"); g2.addColorStop(1,"#1F2225");
+      x.fillStyle = g2; x.beginPath(); x.roundRect(12,by,G-24,h,7); x.fill();
+      x.strokeStyle = "rgba(255,255,255,.1)"; x.stroke();
+      x.fillStyle = vurgulu ? P.vurgu : "rgba(255,255,255,.2)";
+      x.fillRect(12,by+3,3,h-6);
+      for(let t=by+2;t<by+h-1;t+=3){ x.fillStyle="rgba(255,255,255,.04)"; x.fillRect(12,t,G-24,1); }
+      x.fillStyle = "rgba(216,69,58,.18)"; x.beginPath(); x.roundRect(24,by+(h-16)/2,16,16,4); x.fill();
+      x.strokeStyle = "rgba(216,69,58,.5)"; x.stroke();
+      yazi(48, by+(h-14)/2, 74, 40);
+    };
+    serit(48, 26, true);
+    [80,108,136,164,188].forEach((by,i)=>serit(by, 24, false));
     return;
   }
+
   if(k === "loca"){
-    // buyuk kart
-    x.fillStyle = "#151B21"; x.fillRect(14, 14, G-28, 84);
-    x.strokeStyle = "rgba(227,192,90,.35)"; x.lineWidth = 1; x.strokeRect(14.5, 14.5, G-29, 83);
-    x.fillStyle = "rgba(4,6,8,.55)"; x.fillRect(14, 58, G-28, 40);
-    x.fillStyle = "rgba(246,241,228,.92)"; x.fillRect(26, 74, 96, 7);
-    x.fillStyle = altin; x.fillRect(26, 86, 30, 2);
-    x.strokeStyle = "rgba(227,192,90,.5)";
-    x.strokeRect(G-52.5, 20.5, 30, 15);
-    // kose isaretleri
-    x.beginPath(); x.moveTo(22,32); x.lineTo(22,22); x.lineTo(32,22); x.stroke();
-    // kucuk kartlar
+    // sinematik pano + numarali kartlar
+    x.fillStyle = P.kart; x.fillRect(12,48,G-24,74);
+    x.strokeStyle = "rgba(224,122,60,.35)"; x.strokeRect(12.5,48.5,G-25,73);
+    const fg = x.createLinearGradient(0,48,0,122);
+    fg.addColorStop(0,"rgba(6,4,3,0)"); fg.addColorStop(1,"rgba(6,4,3,.9)");
+    x.fillStyle = fg; x.fillRect(12,48,G-24,74);
+    yazi(26, 96, 110, 52);
+    x.strokeStyle = "rgba(224,122,60,.5)"; x.strokeRect(G-48.5,56.5,30,15);
+    x.beginPath(); x.moveTo(20,64); x.lineTo(20,56); x.lineTo(28,56); x.stroke();
     for(let i=0;i<4;i++){
-      const bx = 14 + (i%2)*156, by = 108 + Math.floor(i/2)*46;
-      x.fillStyle = "#12171D"; x.fillRect(bx, by, 142, 40);
-      x.strokeStyle = "rgba(227,192,90,.28)"; x.strokeRect(bx+.5, by+.5, 141, 39);
-      x.fillStyle = "rgba(246,241,228,.8)"; x.fillRect(bx+10, by+22, 58, 5);
-      x.fillStyle = altin; x.fillRect(bx+10, by+31, 20, 1.5);
-      x.fillStyle = "rgba(227,192,90,.45)"; x.fillRect(bx+120, by+8, 14, 8);
+      const bx = 12 + (i%2)*154, by = 130 + Math.floor(i/2)*40;
+      x.fillStyle = P.kart; x.fillRect(bx,by,142,34);
+      x.strokeStyle = "rgba(224,122,60,.3)"; x.strokeRect(bx+.5,by+.5,141,33);
+      yazi(bx+9, by+16, 58, 26);
     }
     return;
   }
-  // tugra: asimetrik mozaik
-  const cizKutu = (bx,by,bw,bh,buyuk) => {
-    kutu(bx,by,bw,bh,"#161C22");
-    x.strokeStyle = "rgba(255,255,255,.14)"; x.lineWidth = 1;
-    x.beginPath(); x.roundRect(bx+.5,by+.5,bw-1,bh-1,8); x.stroke();
-    x.fillStyle = "rgba(227,192,90,.4)";
-    x.beginPath(); x.roundRect(bx+7,by+7,buyuk?16:12,buyuk?16:12,4); x.fill();
-    x.fillStyle = "rgba(251,248,241,.85)"; x.fillRect(bx+7, by+bh-18, buyuk?70:46, buyuk?6:4.5);
-    x.fillStyle = "rgba(227,192,90,.6)"; x.fillRect(bx+7, by+bh-9, buyuk?40:28, 2.5);
+
+  // Minas Morgul: cam kur + mozaik
+  x.fillStyle = "rgba(232,199,103,.14)";
+  x.beginPath(); x.roundRect(12,46,G-24,22,10); x.fill();
+  x.strokeStyle = "rgba(232,199,103,.35)"; x.stroke();
+  x.fillStyle = P.vurgu; x.globalAlpha=.8; x.fillRect(22,54,40,5); x.globalAlpha=1;
+  x.fillStyle = "rgba(255,255,255,.3)"; x.fillRect(74,55,120,4);
+
+  const cam = (bx,by,bw,bh,buyuk) => {
+    const g2 = x.createLinearGradient(bx,by,bx+bw,by+bh);
+    g2.addColorStop(0,"rgba(255,255,255,.15)"); g2.addColorStop(.5,"rgba(255,255,255,.04)");
+    g2.addColorStop(1,"rgba(232,199,103,.1)");
+    x.fillStyle = g2;
+    x.beginPath();
+    const r1 = buyuk?18:12, r2 = 4;
+    x.moveTo(bx+r1,by); x.lineTo(bx+bw-r2,by); x.quadraticCurveTo(bx+bw,by,bx+bw,by+r2);
+    x.lineTo(bx+bw,by+bh-r1); x.quadraticCurveTo(bx+bw,by+bh,bx+bw-r1,by+bh);
+    x.lineTo(bx+r2,by+bh); x.quadraticCurveTo(bx,by+bh,bx,by+bh-r2);
+    x.lineTo(bx,by+r1); x.quadraticCurveTo(bx,by,bx+r1,by); x.closePath();
+    x.fill();
+    x.strokeStyle = "rgba(255,255,255,.2)"; x.lineWidth = 1; x.stroke();
+    x.save(); x.clip();
+    x.fillStyle = "rgba(255,255,255,.14)";
+    x.beginPath(); x.moveTo(bx-10,by+bh); x.lineTo(bx+bw*.4,by-10); x.lineTo(bx+bw*.58,by-10);
+    x.lineTo(bx+bw*.1,by+bh); x.closePath(); x.fill();
+    x.restore();
+    yazi(bx+9, by+bh-20, buyuk?76:52, buyuk?40:28);
   };
-  cizKutu(14, 14, 168, 110, true);
-  cizKutu(190, 14, 116, 52);
-  cizKutu(190, 72, 116, 52);
-  cizKutu(14, 130, 142, 30);
-  cizKutu(164, 130, 142, 30);
-  cizKutu(14, 166, 142, 24);
-  cizKutu(164, 166, 142, 24);
+  cam(12, 76, 166, 74, true);
+  cam(186, 76, 122, 34);
+  cam(186, 116, 122, 34);
+  cam(12, 156, 148, 22);
+  cam(166, 156, 142, 22);
+  cam(12, 184, 148, 20);
+  cam(166, 184, 142, 20);
 }
 
 /* ================= ana menu ================= */
@@ -1023,10 +1091,10 @@ const MENULER = [
   { r:"harita",   i:"map",    ad:"Harita",         alt:"Parsel sorgula",       renk:"kirmizi", g:"bg-harita.jpg", buyuk:true },
   { r:"araziler", i:"folder", ad:"Araziler",       alt:"Her şey tek yerde",    renk:"yesil",   g:"bg-araziler.jpg", buyuk:true },
   { r:"fiyat",    i:"money",  ad:"Tapu Bilgileri", alt:"Fiyat, parça, belge",  renk:"gri",     g:"bg-tapu.jpg", buyuk:true },
-  { r:"ekler",    i:"file",   ad:"Ekler",          alt:"Vekalet, muvafakat",   renk:"gri",     g:"bg-ekler.jpg", buyuk:true },
+  { r:"ekler",    i:"note",   ad:"Ekler",          alt:"Vekalet, muvafakat",   renk:"gri",     g:"bg-ekler.jpg", buyuk:true },
   { r:"yz",       i:"spark",  ad:"İdrak Makamı",   alt:"Claude, ChatGPT, Gemini", renk:"sari", g:"bg-yz.jpg" },
   { r:"cap",      i:"vector", ad:"Çap",            alt:"Çiz veya yükle",       renk:"kizil",   g:null },
-  { r:"kml",      i:"map",    ad:"KML",            alt:"İndir, Earth'te aç",   renk:"gumus",   g:null }
+  { r:"kml",      i:"globe",  ad:"KML",            alt:"İndir, Earth'te aç",   renk:"gumus",   g:null }
 ];
 
 async function anaMenu(){
