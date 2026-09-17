@@ -522,7 +522,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 3.0";
+const SURUM = "beta 3.1";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -551,6 +551,9 @@ const svg = k => `<svg viewBox="0 0 24 24">${ic[k]}</svg>`;
 const esc = s => (s??"").toString().replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
 const nf2 = n => (n == null || n === "" || !isFinite(n)) ? "—"
   : Number(n).toLocaleString("tr-TR", { minimumFractionDigits:2, maximumFractionDigits:2 });
+// duzenlenebilir kutular icin: binlik ayraci yok, ondalik virgullu
+const ham = v => (v == null || v === "" || !isFinite(v)) ? ""
+  : String(Math.round(v*100)/100).replace(".", ",");
 const nfAkilli = n => (n == null || !isFinite(n)) ? "—"
   : (Math.abs(n - Math.round(n)) < 0.005 ? Number(n).toLocaleString("tr-TR") : nf2(n));
 const nf = n => n==null||n===""?"—":Number(n).toLocaleString("tr-TR");
@@ -619,6 +622,7 @@ function head(title, back){
       ? `<h1>${esc(title)}</h1>`
       : `<div class="logo"><span class="mark"><img src="logo.png" alt=""></span>
            <span><b>Parsel Parsel</b><span>çapımız alayınıza yeter</span></span></div>`}
+    ${!back?`<button class="ibtn ak" onclick="go('tema')" aria-label="Tema">${svg("tag")}</button>`:""}
     ${!back&&ME.role==='admin'?`<button class="ibtn ak" onclick="go('ayarlar')" aria-label="Ayarlar">${svg("gear")}</button>`:""}
     ${!back?`<button class="ibtn cik" onclick="cikisSor()" aria-label="Çıkış yap">${svg("out")}</button>`:""}
   </div>`;
@@ -713,15 +717,100 @@ async function markaSil(){
   toast("Silindi"); go("ayarlar");
 }
 
+/* ---- tema secimi ---- */
+
+function temaEkran(){
+  const secili = anaTema();
+  app.innerHTML = head("Tema Seç","go('ana')") + `
+    <p class="ipuc">Ana ekranın görünümünü seç. İstediğin zaman değiştirebilirsin.</p>
+    <div id="temaKartlar"></div>`;
+
+  document.getElementById("temaKartlar").innerHTML = ANA_TEMALAR.map(t=>`
+    <button class="card" style="display:block;width:100%;text-align:left;padding:14px;
+      ${t.k===secili?"border-color:var(--gold);box-shadow:0 0 0 1px rgba(227,192,90,.35)":""}"
+      onclick="anaTemaSec('${t.k}');go('ana')">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:11px">
+        <b style="flex:1;font-size:15px;font-weight:600">${t.ad}</b>
+        ${t.k===secili?`<span class="pill gold">seçili</span>`:""}
+      </div>
+      <canvas class="onizleme" data-tema="${t.k}" style="width:100%;height:auto;border-radius:10px;display:block"></canvas>
+      <div style="font-size:12px;color:var(--ink-3);margin-top:9px">${t.aciklama}</div>
+    </button>`).join("");
+
+  ANA_TEMALAR.forEach(t=>{
+    const c = document.querySelector(`canvas[data-tema="${t.k}"]`);
+    if(c) temaOnizleme(c, t.k);
+  });
+}
+
+// kucuk tema onizlemesi
+function temaOnizleme(canvas, k){
+  const G = 320, Y = 200;
+  canvas.width = G; canvas.height = Y;
+  const x = canvas.getContext("2d");
+  x.fillStyle = "#0A0D10"; x.fillRect(0,0,G,Y);
+  const altin = "#D9B65A";
+
+  const kutu = (bx,by,bw,bh,dolgu) => {
+    x.fillStyle = dolgu; x.beginPath(); x.roundRect(bx,by,bw,bh,8); x.fill();
+  };
+
+  if(k === "vitrin"){
+    for(let i=0;i<4;i++){
+      const by = 14 + i*46;
+      kutu(14, by, G-28, 38, "#1A2026");
+      x.fillStyle = altin; x.fillRect(14, by+8, 3, 22);
+      x.fillStyle = "rgba(255,255,255,.85)"; x.fillRect(28, by+14, 78, 5);
+      x.fillStyle = "rgba(255,255,255,.3)"; x.fillRect(28, by+24, 48, 4);
+    }
+    return;
+  }
+  if(k === "kesit"){
+    for(let i=0;i<4;i++){
+      const bx = 14 + (i%2)*156, by = 14 + Math.floor(i/2)*90;
+      x.save();
+      x.beginPath();
+      x.moveTo(bx,by); x.lineTo(bx+142,by); x.lineTo(bx+142,by+56); x.lineTo(bx+108,by+80);
+      x.lineTo(bx,by+80); x.closePath(); x.clip();
+      x.fillStyle = "#1C232A"; x.fillRect(bx,by,142,80);
+      x.strokeStyle = altin; x.lineWidth = 4;
+      x.beginPath(); x.moveTo(bx+96,by+92); x.lineTo(bx+152,by+40); x.stroke();
+      x.fillStyle = "rgba(255,255,255,.8)"; x.fillRect(bx+10, by+56, 54, 5);
+      x.restore();
+    }
+    return;
+  }
+  if(k === "perde"){
+    for(let i=0;i<4;i++){
+      const bx = 14 + (i%2)*156, by = 14 + Math.floor(i/2)*90;
+      kutu(bx, by, 142, 80, i === 0 ? "#3A4550" : "#12171C");
+      x.fillStyle = i === 0 ? "rgba(255,255,255,.9)" : "rgba(255,255,255,.55)";
+      x.fillRect(bx+40, by+36, 62, 5);
+      x.fillStyle = "rgba(255,255,255,.22)"; x.fillRect(bx+52, by+48, 38, 4);
+    }
+    return;
+  }
+  // kart
+  for(let i=0;i<4;i++){
+    const bx = 14 + (i%2)*156, by = 14 + Math.floor(i/2)*78;
+    kutu(bx, by, 142, 68, "#1B222A");
+    x.fillStyle = "rgba(227,192,90,.5)"; x.beginPath(); x.roundRect(bx+10,by+10,22,22,6); x.fill();
+    x.fillStyle = "rgba(255,255,255,.8)"; x.fillRect(bx+10, by+44, 58, 5);
+    x.fillStyle = "rgba(255,255,255,.28)"; x.fillRect(bx+10, by+54, 40, 4);
+  }
+  kutu(14, 174, 142, 16, "#20272E");
+  kutu(170, 174, 136, 16, "#3A2326");
+}
+
 /* ================= ana menu ================= */
 
 let PANJUR_ACIK = false;
 
 const ANA_TEMALAR = [
-  { k:"kart",   ad:"Kart" },
-  { k:"vitrin", ad:"Vitrin" },
-  { k:"kesit",  ad:"Kesit" },
-  { k:"perde",  ad:"Perde" }
+  { k:"kart",   ad:"Kart",   aciklama:"Cam dokulu kare kartlar, altta küçük tuşlar." },
+  { k:"vitrin", ad:"Vitrin", aciklama:"Boydan boya şeritler, solda altın çizgi. Ağır ve sade." },
+  { k:"kesit",  ad:"Kesit",  aciklama:"Köşesi çapraz kesik kartlar, kesikten geçen altın şerit." },
+  { k:"perde",  ad:"Perde",  aciklama:"Görseller koyu perde altında; dokununca açılır." }
 ];
 const anaTema = () => localStorage.getItem("anaTema") || "kart";
 function anaTemaSec(k){ localStorage.setItem("anaTema", k); anaMenu(); }
@@ -756,14 +845,9 @@ async function anaMenu(){
       </div>
     </div>
 
-    <div class="temaSerit">
-      ${ANA_TEMALAR.map(t=>`<button class="temaTus ${tema===t.k?"aktif":""}"
-        onclick="anaTemaSec('${t.k}')">${t.ad}</button>`).join("")}
-      <span style="flex:1"></span>
+    <div style="display:flex;align-items:center;gap:8px;margin:12px 2px 10px">
       <span class="surumRozet">${SURUM.toLocaleUpperCase("tr")}</span>
-    </div>
-
-    <div class="zaman" id="stamp" style="margin:0 2px 10px"></div>
+      <div class="zaman" id="stamp" style="flex:1;margin:0"></div></div>
     ${menuGovde(tema)}`;
   kurlar();
   yaklasanRozet();
@@ -2638,8 +2722,12 @@ function parcaKur(toplam, mevcut){
     numaralariTazele(); bloklariCiz();
   };
   if(g("blokYol")) g("blokYol").onclick = () => {
-    const pay = Math.round(Math.max(150, PARCA.toplam*0.06));
-    PARCA.bloklar.push({ tip:"yol", parcalar:[], sol:[yeniParca(pay)], sag:[yeniParca(pay)] });
+    // kalan alani iki yana esit dagit
+    const kullanilan = PARCA.bloklar.flatMap(blokParcalari).reduce((t,o)=>t+(+o.m2||0), 0);
+    const kalan = Math.max(200, PARCA.toplam - kullanilan);
+    const pay = Math.round(kalan/4);
+    PARCA.bloklar.push({ tip:"yol", parcalar:[],
+      sol:[yeniParca(pay), yeniParca(pay)], sag:[yeniParca(pay), yeniParca(pay)] });
     numaralariTazele(); bloklariCiz();
   };
   const ol = g("polcu"), yt = g("pyoltip"), yk = g("pyolkonum"), tr = g("pters");
@@ -2662,7 +2750,7 @@ function numaralariTazele(){
 function parcaSatirHtml(o, bi, yer, j){
   return `<div style="display:flex;gap:7px;align-items:center;margin-bottom:7px">
     <input id="pn${o.id}" value="${esc(o.no)}" style="width:52px;text-align:center;padding:10px 3px">
-    <input id="pm${o.id}" inputmode="decimal" value="${nfAkilli(o.m2)}" style="flex:1;text-align:right">
+    <input id="pm${o.id}" inputmode="decimal" value="${ham(o.m2)}" style="flex:1;text-align:right">
     <input type="color" id="pr${o.id}" value="${o.renk}" style="width:44px;height:40px;padding:3px;border-radius:9px">
     <button class="sil" style="width:32px;height:32px" onclick="parcaSil(${bi},'${yer}',${j})">${svg("trash")}</button>
   </div>`;
@@ -2691,7 +2779,8 @@ function bloklariCiz(){
     }
     const sutun = (yer, ad2) => `
       <div style="flex:1 1 46%;min-width:150px">
-        <div style="font-size:11px;color:var(--gold);letter-spacing:.08em;margin-bottom:6px">${ad2} · ${b[yer].length} parça</div>
+        <div style="font-size:11px;color:var(--gold);letter-spacing:.08em;margin-bottom:6px">
+          ${ad2} TARAF · ${b[yer].length} parça · ${nf2(b[yer].reduce((t,o)=>t+(+o.m2||0),0))} m²</div>
         ${b[yer].map((o,j)=>parcaSatirHtml(o,i,yer,j)).join("")}
         <button class="pill sade" onclick="parcaEkle(${i},'${yer}')">+ parça</button>
       </div>`;
@@ -2848,12 +2937,12 @@ function parcaListeCiz(parselId){
           <input id="pa${i}" value="${esc(o.ad||"")}" placeholder="1 nolu parça"></div>
         <div class="row2">
           <div class="field" style="margin:0 0 10px"><label>Alan (m²)</label>
-            <input id="pm${i}" inputmode="decimal" value="${o.m2 != null ? nfAkilli(o.m2) : ""}"></div>
+            <input id="pm${i}" inputmode="decimal" value="${ham(o.m2)}"></div>
           <div class="field" style="margin:0 0 10px"><label>Maliyet (₺/m²)</label>
-            <input id="pk${i}" inputmode="decimal" value="${o.maliyet_m2 != null ? nfAkilli(o.maliyet_m2) : ""}"></div>
+            <input id="pk${i}" inputmode="decimal" value="${ham(o.maliyet_m2)}"></div>
         </div>
         <div class="field" style="margin:0 0 10px"><label>Satış fiyatı (₺/m²)</label>
-          <input id="pf${i}" inputmode="decimal" value="${o.m2_fiyat != null ? nfAkilli(o.m2_fiyat) : ""}"></div>
+          <input id="pf${i}" inputmode="decimal" value="${ham(o.m2_fiyat)}"></div>
 
         <div style="background:rgba(0,0,0,.22);border-radius:10px;padding:10px 12px;margin-bottom:10px" id="ph${i}"></div>
 
@@ -5417,6 +5506,11 @@ async function ayarlar(){
           ${localStorage.getItem("sesKapali") === "1" ? "" : "checked"}
           onchange="localStorage.setItem('sesKapali', this.checked ? '0' : '1')">
         <span style="flex:1">Uygulama sesleri açık</span></label>
+      <label style="display:flex;align-items:center;gap:10px;margin:10px 0 0;font-size:13.5px;color:var(--ink)">
+        <input type="checkbox" id="introKutu" style="width:20px;height:20px"
+          ${localStorage.getItem("introSesKapali") === "1" ? "checked" : ""}
+          onchange="localStorage.setItem('introSesKapali', this.checked ? '1' : '0')">
+        <span style="flex:1">Açılış videosunun sesi kapalı</span></label>
       ${ME.role==='admin'?`<button class="btn ghost" style="margin-top:12px" onclick="go('marka')">
         Marka kimliği ${markaVarMi()?"· tanımlı":"· tanımsız"}</button>`:""}
     </div>
@@ -5468,7 +5562,7 @@ async function cikis(){ await sb.auth.signOut(); location.reload(); }
 
 /* ================= yonlendirme ================= */
 
-const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, sunum:sunum, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, marka:markaEkran, yeni:yeniParsel, parsel:parselDetay,
+const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, sunum:sunum, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, marka:markaEkran, tema:temaEkran, yeni:yeniParsel, parsel:parselDetay,
                    fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
 // gezinti gecmisi: telefonun geri tusu uygulamadan cikmasin, bir ekran geri gitsin
 let GEZINTI = [{ r:"ana", arg:undefined }];
@@ -5490,7 +5584,7 @@ function go(r, arg){
 // her ekranin bir ust sekmesi: telefonun geri tusu buraya gider
 const UST_EKRAN = {
   harita:"ana", araziler:"ana", ekler:"ana", kml:"ana", cap:"ana", hesap:"ana",
-  yaklasan:"ana", yz:"ana", fiyat:"ana", ayarlar:"ana", marka:"ayarlar", yeni:"araziler",
+  yaklasan:"ana", yz:"ana", fiyat:"ana", ayarlar:"ana", marka:"ayarlar", tema:"ana", yeni:"araziler",
   parsel:"araziler", parcalar:"parsel", sunum:"parsel", fiyatDuzen:"fiyat", capAyar:"cap"
 };
 
@@ -5521,8 +5615,9 @@ function acilisiKapat(){
 // video bir kere oynar, bitince acilis kapanir; video yoksa 3 saniyede kapanir
 (function(){
   const v = document.getElementById("acilisVid");
+  if(v && localStorage.getItem("introSesKapali") === "1"){ v.muted = true; }
   if(v){
-    v.volume = 0.8;
+    v.volume = 0.42;
     v.addEventListener("ended", () => acilisiKapat());
     // tarayicilar dokunmadan sesli oynatmayi engelleyebilir:
     // once sesli dene, olmazsa sessiz basla ve ilk dokunusta sesi ac
