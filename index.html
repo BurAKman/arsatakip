@@ -25,6 +25,39 @@
   --cizgi-2:rgba(255,255,255,.22);
   --r:16px;
 }
+.top{align-items:flex-start}
+.ustSag{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:0 0 auto}
+.ustIkon{display:flex;gap:7px}
+.surumRozet.ufak{font-size:8px;letter-spacing:.12em;padding:2px 7px}
+.ustSag .zaman{margin:0;font-size:10px;text-align:right;white-space:nowrap}
+
+/* ---- tema paletleri: ic sayfalar dahil her yer bu degiskenlerden beslenir ---- */
+body[data-tema="tugra"]{
+  --gold:#E8C767; --gold-soft:rgba(232,199,103,.16);
+  --ink:#F7F3E8; --ink-2:#C4C8BF; --ink-3:#8B8F86;
+  --cizgi:rgba(255,255,255,.14); --cizgi-2:rgba(232,199,103,.28);
+  --cam:rgba(255,255,255,.07); --cam-2:rgba(255,255,255,.11);
+  --zemin1:#0C1116; --zemin2:#161C22;
+}
+body[data-tema="vitrin"]{
+  --gold:#D8453A; --gold-soft:rgba(216,69,58,.15);
+  --ink:#EDEAE6; --ink-2:#ADA9A4; --ink-3:#7C7772;
+  --cizgi:rgba(255,255,255,.11); --cizgi-2:rgba(216,69,58,.34);
+  --cam:rgba(255,255,255,.055); --cam-2:rgba(255,255,255,.095);
+  --green:#8FB08A; --blue:#8A95A0;
+  --zemin1:#0B0C0D; --zemin2:#1A1D20;
+}
+body[data-tema="loca"]{
+  --gold:#E07A3C; --gold-soft:rgba(224,122,60,.15);
+  --ink:#F2EAE0; --ink-2:#BFB2A6; --ink-3:#8A7E74;
+  --cizgi:rgba(255,235,210,.12); --cizgi-2:rgba(224,122,60,.3);
+  --cam:rgba(255,240,225,.06); --cam-2:rgba(255,240,225,.1);
+  --green:#79C08C; --blue:#7FA3C4;
+  --zemin1:#080607; --zemin2:#17110E;
+}
+body[data-tema="vitrin"]{ background:radial-gradient(130% 100% at 50% 0%,#20242A 0%,#0B0C0D 62%) fixed }
+body[data-tema="loca"]{ background:radial-gradient(130% 100% at 50% 0%,#1E1410 0%,#070506 60%) fixed }
+
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
 body{
@@ -63,6 +96,21 @@ a{color:var(--gold);text-decoration:none}
 #acilis .kare::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:22px;
   background:linear-gradient(140deg,rgba(255,255,255,.22) 0%,rgba(255,255,255,.04) 26%,transparent 44%)}
 #acilis video{width:100%;height:100%;display:block;object-fit:cover}
+#acilis[data-tema="vitrin"] .kare{border-color:rgba(216,69,58,.45);
+  box-shadow:0 18px 50px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.14), 0 0 52px rgba(216,69,58,.16);
+  border-radius:8px}
+#acilis[data-tema="vitrin"] .ad{background:linear-gradient(180deg,#FFFFFF,#E7D9D6 44%,#D8453A);
+  letter-spacing:.24em;font-weight:600}
+#acilis[data-tema="vitrin"] .cizgi{background:linear-gradient(90deg,transparent,rgba(216,69,58,.8),transparent)}
+#acilis[data-tema="vitrin"] .yuk{color:rgba(237,234,230,.45)}
+
+#acilis[data-tema="loca"] .kare{border-color:rgba(224,122,60,.45);border-radius:4px;
+  box-shadow:0 18px 50px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.1), 0 0 60px rgba(224,122,60,.14)}
+#acilis[data-tema="loca"] .ad{font-family:Georgia,serif;font-weight:400;letter-spacing:.3em;
+  background:linear-gradient(180deg,#FFF6EC,#F0C79A 46%,#E07A3C)}
+#acilis[data-tema="loca"] .cizgi{background:linear-gradient(90deg,transparent,rgba(224,122,60,.8),transparent)}
+#acilis[data-tema="loca"] .yuk{color:rgba(242,234,224,.45);font-family:Georgia,serif;letter-spacing:.34em}
+
 #acilis .ad{margin-top:26px;font-size:clamp(24px,7vw,34px);font-weight:300;letter-spacing:.34em;
   text-indent:.34em;color:transparent;
   background:linear-gradient(180deg,#FFFFFF 0%,#F0E6C8 42%,#C9A94E 100%);-webkit-background-clip:text;background-clip:text;
@@ -82,9 +130,23 @@ a{color:var(--gold);text-decoration:none}
 .logo .mark{width:56px;height:56px;border-radius:50%;overflow:hidden;flex:0 0 auto;
   border:1.5px solid rgba(255,255,255,.55);background:#0A0C0B;box-shadow:0 2px 12px rgba(0,0,0,.5)}
 .logo .mark img{width:100%;height:100%;object-fit:cover;display:block}
-.logo b{font-size:18.5px;font-weight:300;letter-spacing:.2em;text-indent:.2em;display:block;line-height:1.15;
+.logo b{font-size:clamp(14px,4.4vw,18px);font-weight:300;letter-spacing:.14em;text-indent:.14em;display:block;
+  line-height:1.15;white-space:nowrap;
   color:transparent;background:linear-gradient(180deg,#FFFFFF,#F2E7C9 46%,#C9A94E);
   -webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 1px 6px rgba(0,0,0,.6))}
+body[data-tema="vitrin"] .logo b{font-weight:700;letter-spacing:.2em;
+  background:linear-gradient(180deg,#FFFFFF,#E4D4D1 44%,#D8453A)}
+body[data-tema="loca"] .logo b{font-family:Georgia,serif;font-weight:400;letter-spacing:.22em;
+  background:linear-gradient(180deg,#FFF6EC,#EFC79C 48%,#E07A3C)}
+body[data-tema="vitrin"] .logo span{color:rgba(216,69,58,.75)}
+body[data-tema="loca"] .logo span{color:rgba(224,122,60,.75);font-family:Georgia,serif;letter-spacing:.2em}
+/* logo cercevesi temaya gore */
+body[data-tema="vitrin"] .logo .mark{border-radius:10px;border:1px solid rgba(216,69,58,.45);
+  box-shadow:0 0 18px rgba(216,69,58,.2)}
+body[data-tema="loca"] .logo .mark{border-radius:3px;border:1px solid rgba(224,122,60,.45);
+  box-shadow:0 0 18px rgba(224,122,60,.18)}
+body[data-tema="tugra"] .logo .mark{border:1px solid rgba(232,199,103,.42);
+  box-shadow:0 0 18px rgba(232,199,103,.2)}
 .logo span{font-size:8.5px;letter-spacing:.26em;text-indent:.26em;text-transform:uppercase;display:block;margin-top:5px;
   color:rgba(227,192,90,.72);font-weight:500;position:relative;padding-top:5px}
 .logo span::before{content:"";position:absolute;top:0;left:0;width:26px;height:1px;
@@ -220,132 +282,185 @@ select option{background:#101614;color:var(--ink)}
 .surumRozet{font-size:9px;letter-spacing:.14em;font-weight:700;color:var(--gold);
   background:var(--gold-soft);border:1px solid rgba(227,192,90,.3);border-radius:20px;padding:3px 9px}
 
-/* ---- tema: vitrin ---- */
-.vitrin{display:flex;flex-direction:column;gap:clamp(5px,.9vh,9px)}
+/* ================= MORDOR ================= */
+body[data-tema="vitrin"] .vitrin{display:flex;flex-direction:column;gap:clamp(4px,.7vh,7px)}
+body[data-tema="vitrin"] .kurSerit{position:relative;overflow:hidden;border-radius:10px;
+  height:clamp(38px,5.2vh,48px);display:flex;align-items:center;padding:0 14px;
+  background:linear-gradient(180deg,#2A2D30,#141618 46%,#1F2225);
+  border:1px solid rgba(255,255,255,.1);border-left:3px solid #D8453A;
+  box-shadow:0 3px 10px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.1)}
+body[data-tema="vitrin"] .kurSerit .rates{position:relative;z-index:1;margin:0;font-size:11px}
 .serit{position:relative;overflow:hidden;width:100%;border:0;padding:0;cursor:pointer;
-  height:clamp(48px,7.3vh,66px);border-radius:12px;
-  background:linear-gradient(180deg,#2B3034,#1B2024 42%,#23282C);
-  border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 4px 12px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.12)}
-.serit .sDoku{position:absolute;inset:0;pointer-events:none;
-  background:repeating-linear-gradient(180deg,rgba(255,255,255,.05) 0 1px,transparent 1px 4px)}
-.serit .sCizgi{position:absolute;left:0;top:16%;bottom:16%;width:3px;border-radius:0 3px 3px 0;
-  background:linear-gradient(180deg,#F0DFA8,#C29B3E)}
-.serit .sIkon{position:absolute;left:18px;top:50%;transform:translateY(-50%);
-  width:30px;height:30px;display:grid;place-items:center;border-radius:9px;
-  background:var(--gold-soft);border:1px solid rgba(227,192,90,.3);color:var(--gold)}
-.serit .sIkon svg{width:16px;height:16px}
-.serit .sIcerik{position:absolute;left:60px;right:40px;top:50%;transform:translateY(-50%);text-align:left}
-.serit .sIcerik b{display:block;font-size:clamp(13px,1.9vh,15px);font-weight:600;letter-spacing:.09em;
-  color:#F3F1EA;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.serit .sIcerik small{display:block;margin-top:2px;font-size:9.5px;letter-spacing:.09em;
-  color:rgba(255,255,255,.45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.serit .sOk{position:absolute;right:14px;top:50%;transform:translateY(-50%);opacity:.55}
-.serit .sOk svg{width:16px;height:16px;stroke:var(--gold);fill:none;stroke-width:2;transform:rotate(-90deg)}
-.serit:active{background:linear-gradient(180deg,#343A3F,#22282D);transform:scale(.995)}
+  height:clamp(44px,6.4vh,60px);border-radius:10px;
+  background:linear-gradient(180deg,#2A2D30,#141618 46%,#1F2225);
+  border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 3px 10px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.1)}
+.serit.ikincil{background:linear-gradient(180deg,#232629,#101214 46%,#1A1D1F);opacity:.94}
+.serit .sDoku,.kurSerit .sDoku{position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(180deg,rgba(255,255,255,.045) 0 1px,transparent 1px 4px)}
+.serit .sCizgi{position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,#F05A48,#8E1A12)}
+.serit.ikincil .sCizgi{background:linear-gradient(180deg,#6B7075,#3A3E42)}
+.serit .sIkon{position:absolute;left:15px;top:50%;transform:translateY(-50%);
+  width:28px;height:28px;display:grid;place-items:center;border-radius:7px;
+  background:rgba(216,69,58,.14);border:1px solid rgba(216,69,58,.4);color:#F08070}
+.serit.ikincil .sIkon{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16);color:#A9A5A0}
+.serit .sIkon svg{width:15px;height:15px}
+.serit .sIcerik{position:absolute;left:55px;right:38px;top:50%;transform:translateY(-50%);text-align:left}
+.serit .sIcerik b{display:block;font-size:clamp(12px,1.75vh,14px);font-weight:700;letter-spacing:.14em;
+  color:#EDEAE6;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.serit .sIcerik small{display:block;margin-top:1px;font-size:8.5px;letter-spacing:.12em;
+  color:rgba(237,234,230,.4);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.serit .sOk{position:absolute;right:12px;top:50%;transform:translateY(-50%);opacity:.5}
+.serit .sOk svg{width:15px;height:15px;stroke:#D8453A;fill:none;stroke-width:2.2;transform:rotate(-90deg)}
+.serit .rozet{position:absolute;right:32px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;
+  color:#12100F;background:#D8453A;border-radius:20px;padding:2px 7px}
+.serit .rozet:empty{display:none}
+.serit:active{background:linear-gradient(180deg,#3A3E42,#1C1F22);transform:scale(.996)}
 
-/* ---- tema: tugra ---- */
-.tugra{display:grid;gap:clamp(6px,1.1vh,10px);
-  grid-template-columns:1.18fr 1fr;
+/* ================= MINAS MORGUL ================= */
+.tugra{display:grid;gap:clamp(5px,.9vh,9px);grid-template-columns:1.15fr 1fr;
   grid-template-areas:
+    "kur kur"
     "pano sag1"
     "pano sag2"
     "orta1 orta2"
-    "alt1 alt2"}
-.tugra .tPano{grid-area:pano}
-.tugra .tSag1{grid-area:sag1}
-.tugra .tSag2{grid-area:sag2}
-.tugra .tOrta1{grid-area:orta1}
-.tugra .tOrta2{grid-area:orta2}
-.tugra .tAlt1{grid-area:alt1}
-.tugra .tAlt2{grid-area:alt2}
+    "alt1 alt2"
+    "tak1 tak2"}
+.tugra .tKur{grid-area:kur;position:relative;display:flex;align-items:center;gap:10px;
+  padding:7px 13px;border-radius:14px;min-height:clamp(34px,4.6vh,44px);
+  background:linear-gradient(120deg,rgba(232,199,103,.16),rgba(255,255,255,.05) 46%,rgba(232,199,103,.1));
+  border:1px solid rgba(232,199,103,.3);backdrop-filter:blur(12px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28)}
+.tugra .tKurEtiket{font-size:8.5px;letter-spacing:.22em;color:var(--gold);font-weight:700;flex:0 0 auto}
+.tugra .tKur .rates{margin:0;font-size:11px;flex:1}
+.tugra .tPano{grid-area:pano} .tugra .tSag1{grid-area:sag1} .tugra .tSag2{grid-area:sag2}
+.tugra .tOrta1{grid-area:orta1} .tugra .tOrta2{grid-area:orta2}
+.tugra .tAlt1{grid-area:alt1} .tugra .tAlt2{grid-area:alt2}
+.tugra .tTakip1{grid-area:tak1} .tugra .tTakip2{grid-area:tak2}
 
-.tugra .tKart{position:relative;overflow:hidden;padding:0;cursor:pointer;border-radius:18px;
-  border:1px solid rgba(255,255,255,.14);
-  background:
-    radial-gradient(120% 100% at 85% 0%,rgba(227,192,90,.14),transparent 58%),
-    linear-gradient(158deg,#1A2026,#0C1116 62%,#151B21);
-  box-shadow:0 8px 22px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.14);
-  min-height:clamp(58px,8.6vh,88px)}
-.tugra .tPano{min-height:clamp(124px,18.5vh,190px)}
-
+.tugra .tKart{position:relative;overflow:hidden;padding:0;cursor:pointer;
+  border-radius:20px 6px 20px 6px;
+  border:1px solid rgba(255,255,255,.16);
+  background:linear-gradient(152deg,rgba(255,255,255,.14),rgba(255,255,255,.04) 44%,rgba(232,199,103,.09));
+  backdrop-filter:blur(10px);
+  box-shadow:0 7px 20px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.3);
+  min-height:clamp(52px,7.4vh,78px)}
+.tugra .tPano{min-height:clamp(104px,15.6vh,164px);border-radius:26px 8px 26px 8px}
+.tugra .tTakip1,.tugra .tTakip2{min-height:clamp(42px,5.6vh,58px);border-radius:14px 6px 14px 6px;
+  background:linear-gradient(152deg,rgba(255,255,255,.1),rgba(255,255,255,.03))}
 .tugra .tGorsel{position:absolute;inset:0;background-size:cover;background-position:center 30%;
-  filter:saturate(.78) brightness(.72);transition:transform .7s cubic-bezier(.22,.61,.36,1)}
+  filter:saturate(.8) brightness(.76);transition:transform .7s cubic-bezier(.22,.61,.36,1)}
 .tugra .tKart:active .tGorsel{transform:scale(1.05)}
 .tugra .tCam{position:absolute;inset:0;pointer-events:none;
-  background:
-    linear-gradient(0deg,rgba(6,9,12,.94) 0%,rgba(6,9,12,.46) 34%,rgba(6,9,12,0) 70%),
-    linear-gradient(145deg,rgba(255,255,255,.2) 0%,rgba(255,255,255,.04) 22%,transparent 40%)}
+  background:linear-gradient(0deg,rgba(8,10,13,.92) 0%,rgba(8,10,13,.4) 32%,rgba(8,10,13,0) 66%)}
+/* parlayan isik gecisi */
+.tugra .tIsik{position:absolute;top:-60%;left:-45%;width:40%;height:230%;pointer-events:none;z-index:1;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);
+  transform:rotate(18deg);animation:camParla 6.5s ease-in-out infinite}
+.tugra .tSag1 .tIsik{animation-delay:.8s} .tugra .tSag2 .tIsik{animation-delay:1.6s}
+.tugra .tOrta1 .tIsik{animation-delay:2.4s} .tugra .tOrta2 .tIsik{animation-delay:3.2s}
+.tugra .tAlt1 .tIsik{animation-delay:4s} .tugra .tAlt2 .tIsik{animation-delay:4.8s}
+.tugra .tYazi{position:absolute;left:13px;right:13px;bottom:10px;text-align:left;z-index:2}
+.tugra .tYazi b{display:block;font-size:clamp(11.5px,1.72vh,14px);font-weight:700;letter-spacing:.13em;
+  text-transform:uppercase;color:#FDFBF5;text-shadow:0 2px 10px rgba(0,0,0,.85)}
+.tugra .tPano .tYazi b{font-size:clamp(15px,2.4vh,20px);letter-spacing:.17em}
+.tugra .tYazi small{display:block;margin-top:2px;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(232,199,103,.78)}
+.tugra .tHale{position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(232,199,103,0);transition:box-shadow .3s ease}
+.tugra .tKart:active .tHale{box-shadow:inset 0 0 0 1px rgba(232,199,103,.8), 0 0 26px rgba(232,199,103,.28)}
+.tugra .rozet{position:absolute;top:9px;right:11px;z-index:2;font-size:10px;font-weight:700;color:#14110A;
+  background:var(--gold);border-radius:20px;padding:2px 7px}
+.tugra .rozet:empty{display:none}
 
-.tugra .tIkon{position:absolute;top:11px;left:11px;width:30px;height:30px;display:grid;place-items:center;
-  border-radius:10px;background:rgba(10,13,16,.6);border:1px solid rgba(227,192,90,.34);
-  color:var(--gold);backdrop-filter:blur(8px);z-index:2}
-.tugra .tIkon svg{width:15px;height:15px}
-.tugra .tPano .tIkon{width:36px;height:36px}
-.tugra .tPano .tIkon svg{width:18px;height:18px}
-
-.tugra .tYazi{position:absolute;left:12px;right:12px;bottom:11px;text-align:left;z-index:2}
-.tugra .tYazi b{display:block;font-size:clamp(12px,1.8vh,14.5px);font-weight:700;letter-spacing:.12em;
-  text-transform:uppercase;color:#FBF8F1;text-shadow:0 2px 10px rgba(0,0,0,.8)}
-.tugra .tPano .tYazi b{font-size:clamp(16px,2.6vh,21px);letter-spacing:.16em}
-.tugra .tYazi small{display:block;margin-top:3px;font-size:9px;letter-spacing:.14em;text-transform:uppercase;
-  color:rgba(227,192,90,.72)}
-
-/* altin hale: dokununca canlanir */
-.tugra .tHale{position:absolute;inset:0;border-radius:18px;pointer-events:none;
-  box-shadow:inset 0 0 0 1px rgba(227,192,90,0);transition:box-shadow .3s ease}
-.tugra .tKart:active .tHale{box-shadow:inset 0 0 0 1px rgba(227,192,90,.75), 0 0 24px rgba(227,192,90,.25)}
-
-/* ---- tema: loca ---- */
-.loca{display:flex;flex-direction:column;gap:clamp(8px,1.4vh,12px)}
-.loca .lIzgara{display:grid;grid-template-columns:1fr 1fr;gap:clamp(8px,1.4vh,12px)}
-
+/* ================= MELKOR ================= */
+.loca{display:flex;flex-direction:column;gap:clamp(6px,1vh,10px)}
+.loca .lIzgara{display:grid;grid-template-columns:1fr 1fr;gap:clamp(6px,1vh,10px)}
 .loca .lHero,.loca .lKart{position:relative;overflow:hidden;padding:0;cursor:pointer;
-  background:#07090B;border:1px solid rgba(214,182,96,.22);border-radius:4px;
-  box-shadow:0 10px 30px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.03)}
-.loca .lHero{height:clamp(150px,24vh,230px)}
-.loca .lKart{height:clamp(96px,15vh,140px)}
-.loca .lKart.genis{grid-column:1 / -1;height:clamp(70px,10vh,96px)}
-
+  background:#07090B;border:1px solid rgba(224,122,60,.22);border-radius:4px;
+  box-shadow:0 10px 28px rgba(0,0,0,.62), inset 0 0 0 1px rgba(255,255,255,.03)}
+.loca .lHero{height:clamp(118px,17.5vh,180px)}
+.loca .lKart{height:clamp(62px,9vh,104px)}
 .loca .lGorsel{position:absolute;inset:0;background-size:cover;background-position:center 32%;
-  filter:grayscale(.28) saturate(.72) brightness(.66) contrast(1.06);
+  filter:grayscale(.3) sepia(.12) saturate(.8) brightness(.64) contrast(1.08);
   transition:transform .8s cubic-bezier(.22,.61,.36,1), filter .6s ease}
-.loca .lHero:active .lGorsel,.loca .lKart:active .lGorsel{transform:scale(1.05);filter:grayscale(0) saturate(.95) brightness(.82)}
-
-/* film dokusu + alt karartma */
+.loca .lHero:active .lGorsel,.loca .lKart:active .lGorsel{transform:scale(1.05);filter:grayscale(0) sepia(.05) brightness(.84)}
 .loca .lFilm{position:absolute;inset:0;pointer-events:none;
   background:
-    linear-gradient(0deg,rgba(4,6,8,.96) 0%,rgba(4,6,8,.62) 30%,rgba(4,6,8,.08) 66%,rgba(4,6,8,0) 100%),
-    repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px)}
-
-/* sirali numara */
-.loca .lNo{position:absolute;top:10px;right:12px;font-family:Georgia,'Times New Roman',serif;
-  font-size:clamp(13px,2vh,17px);letter-spacing:.1em;color:rgba(214,182,96,.55);
-  border:1px solid rgba(214,182,96,.28);border-radius:2px;padding:2px 7px;
-  background:rgba(4,6,8,.42);backdrop-filter:blur(4px)}
-
-/* alt yazi blogu */
-.loca .lAlt{position:absolute;left:14px;right:14px;bottom:12px;text-align:left}
-.loca .lAlt b{display:block;font-family:Georgia,'Times New Roman',serif;font-weight:400;
-  font-size:clamp(14px,2.2vh,19px);letter-spacing:.2em;text-indent:.2em;text-transform:uppercase;
-  color:#F6F1E4;text-shadow:0 2px 12px rgba(0,0,0,.85)}
-.loca .lHero .lAlt b{font-size:clamp(19px,3.2vh,27px)}
-.loca .lCizgi{display:block;width:34px;height:1px;margin:7px 0 6px;
-  background:linear-gradient(90deg,#E3C05A,rgba(227,192,90,.15))}
-.loca .lHero .lCizgi{width:56px}
-.loca .lAlt small{display:block;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
-  color:rgba(246,241,228,.5)}
-
-/* kose isaretleri */
-.loca .lKose{position:absolute;width:13px;height:13px;pointer-events:none;opacity:.5}
-.loca .lKose1{top:8px;left:8px;border-top:1px solid #E3C05A;border-left:1px solid #E3C05A}
-.loca .lKose2{bottom:8px;right:8px;border-bottom:1px solid #E3C05A;border-right:1px solid #E3C05A}
-
-/* gorseli olmayan kartlar */
+    linear-gradient(0deg,rgba(6,4,3,.96) 0%,rgba(6,4,3,.6) 32%,rgba(6,4,3,.06) 68%,rgba(6,4,3,0) 100%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.016) 0 1px,transparent 1px 3px)}
+.loca .lNo{position:absolute;top:8px;right:10px;font-family:Georgia,serif;
+  font-size:clamp(11px,1.7vh,15px);letter-spacing:.1em;color:rgba(224,122,60,.62);
+  border:1px solid rgba(224,122,60,.3);border-radius:2px;padding:1px 6px;background:rgba(6,4,3,.45)}
+.loca .lAlt{position:absolute;left:12px;right:12px;bottom:9px;text-align:left}
+.loca .lAlt b{display:block;font-family:Georgia,serif;font-weight:400;
+  font-size:clamp(12.5px,1.9vh,17px);letter-spacing:.18em;text-indent:.18em;text-transform:uppercase;
+  color:#F4ECE2;text-shadow:0 2px 12px rgba(0,0,0,.9)}
+.loca .lHero .lAlt b{font-size:clamp(17px,2.9vh,25px)}
+.loca .lCizgi{display:block;width:30px;height:1px;margin:6px 0 5px;
+  background:linear-gradient(90deg,#E07A3C,rgba(224,122,60,.12))}
+.loca .lHero .lCizgi{width:52px}
+.loca .lAlt small{display:block;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:rgba(244,236,226,.45)}
+.loca .lKose{position:absolute;width:12px;height:12px;pointer-events:none;opacity:.5}
+.loca .lKose1{top:7px;left:7px;border-top:1px solid #E07A3C;border-left:1px solid #E07A3C}
+.loca .lKose2{bottom:7px;right:7px;border-bottom:1px solid #E07A3C;border-right:1px solid #E07A3C}
 .loca .yalin{background:
-  radial-gradient(120% 90% at 20% 0%,rgba(227,192,90,.12),transparent 60%),
-  linear-gradient(160deg,#141A20,#0A0E12)}
-.loca .yalin .lFilm{background:linear-gradient(0deg,rgba(4,6,8,.5),transparent 60%)}
+  radial-gradient(120% 90% at 20% 0%,rgba(224,122,60,.14),transparent 62%),
+  linear-gradient(160deg,#1A1210,#0A0707)}
+.loca .yalin .lFilm{background:linear-gradient(0deg,rgba(6,4,3,.55),transparent 62%)}
+
+/* Melkor acilir kor kutusu */
+.kor{border-radius:4px;overflow:hidden;border:1px solid rgba(224,122,60,.26);
+  background:linear-gradient(160deg,#1B1310,#0A0706);box-shadow:0 8px 22px rgba(0,0,0,.6)}
+.kor-bas{width:100%;display:flex;align-items:center;gap:10px;padding:8px 12px;background:none;
+  border:0;color:var(--ink);cursor:pointer;position:relative}
+.kor-kose{position:absolute;left:6px;top:6px;width:10px;height:10px;
+  border-top:1px solid #E07A3C;border-left:1px solid #E07A3C;opacity:.6}
+.kor-bas .rates{flex:1;margin:0;font-size:11px;padding-left:8px}
+.kor-ok{width:24px;height:24px;display:grid;place-items:center;border-radius:2px;flex:0 0 auto;
+  background:rgba(224,122,60,.12);border:1px solid rgba(224,122,60,.34);transition:transform .3s ease}
+.kor-ok i{display:block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;
+  border-top:6px solid #E07A3C;margin-top:2px}
+.kor.acik .kor-ok{transform:rotate(180deg)}
+.kor-ic{max-height:0;overflow:hidden;transition:max-height .34s cubic-bezier(.4,0,.2,1)}
+.kor.acik .kor-ic{max-height:180px}
+.kor-sat{width:100%;display:flex;align-items:center;gap:11px;padding:11px 13px;background:rgba(0,0,0,.34);
+  border:0;border-top:1px solid rgba(224,122,60,.16);color:var(--ink);text-align:left;cursor:pointer}
+.kor-no{width:26px;height:26px;display:grid;place-items:center;flex:0 0 auto;font-family:Georgia,serif;
+  font-size:12px;color:#E07A3C;border:1px solid rgba(224,122,60,.34);border-radius:2px}
+.kor-sat b{display:block;font-family:Georgia,serif;font-size:13.5px;letter-spacing:.08em}
+.kor-sat small{display:block;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-top:2px}
+.kor-sat .rozet{margin-left:auto;font-size:10px;font-weight:700;color:#14100C;background:#E07A3C;
+  border-radius:2px;padding:2px 7px}
+.kor-sat .rozet:empty{display:none}
+
+/* ---- ic sayfalar temaya gore ---- */
+body[data-tema="vitrin"] .card{border-radius:10px;
+  background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));
+  border-color:rgba(255,255,255,.1);box-shadow:0 3px 12px rgba(0,0,0,.45)}
+body[data-tema="vitrin"] .bolum b{letter-spacing:.1em;text-transform:uppercase;font-size:13px}
+body[data-tema="vitrin"] .btn{border-radius:9px;
+  background:linear-gradient(180deg,#E8584A,#B32A20);color:#FFF4F2;
+  box-shadow:0 4px 14px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.22)}
+body[data-tema="vitrin"] h3{letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+body[data-tema="vitrin"] .pill.gold{background:rgba(216,69,58,.18);border-color:rgba(216,69,58,.45);color:#F2A69C}
+
+body[data-tema="loca"] .card{border-radius:4px;
+  background:linear-gradient(160deg,rgba(255,240,225,.06),rgba(255,240,225,.02));
+  border-color:rgba(224,122,60,.2);box-shadow:0 8px 22px rgba(0,0,0,.55)}
+body[data-tema="loca"] .bolum b,body[data-tema="loca"] h3{font-family:Georgia,serif;font-weight:400;
+  letter-spacing:.14em;text-transform:uppercase}
+body[data-tema="loca"] .btn{border-radius:3px;font-family:Georgia,serif;letter-spacing:.1em;
+  background:linear-gradient(180deg,#F0A063,#C05A23);color:#160C05;
+  box-shadow:0 5px 16px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.28)}
+body[data-tema="loca"] .pill.gold{background:rgba(224,122,60,.16);border-color:rgba(224,122,60,.4);color:#F0B184}
+
+body[data-tema="tugra"] .card{border-radius:18px 6px 18px 6px;
+  background:linear-gradient(152deg,rgba(255,255,255,.09),rgba(255,255,255,.035));
+  border-color:rgba(232,199,103,.2)}
+body[data-tema="tugra"] .btn{border-radius:14px 6px 14px 6px}
 
 /* ---- tus dili ---- */
 .btn{border-radius:14px;font-weight:600;letter-spacing:.015em;
@@ -546,6 +661,7 @@ h3{letter-spacing:.02em}
 </head>
 <body>
 <div id="acilis">
+  <script>document.write('');</script>
   <div class="kare"><video id="acilisVid" playsinline autoplay
     onerror="this.style.display='none'"><source src="loading.mp4" type="video/mp4"></video></div>
   <div class="ad">PARSEL PARSEL</div>
@@ -593,7 +709,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 3.7";
+const SURUM = "beta 3.9";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -616,7 +732,8 @@ const ic = {
   photo:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="M21 16l-5-5-6 6"/>',
   trash:'<path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M10 11v6M14 11v6"/>',
   tag:'<path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.2"/>',
-  chevron:'<polyline points="6 9 12 15 18 9"/>'
+  chevron:'<polyline points="6 9 12 15 18 9"/>',
+  palet:'<path d="M12 3a9 9 0 0 0 0 18c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.4-.3-.4-.5-.9-.5-1.4 0-1.1.9-2 2-2h1.5A4 4 0 0 0 21 9.2C21 5.8 16.9 3 12 3z"/><circle cx="7.5" cy="10.5" r="1.1"/><circle cx="12" cy="7.5" r="1.1"/><circle cx="16.5" cy="10.5" r="1.1"/>'
 };
 const svg = k => `<svg viewBox="0 0 24 24">${ic[k]}</svg>`;
 const esc = s => (s??"").toString().replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
@@ -685,6 +802,15 @@ function girisEkrani(){
 /* ================= ust bar ================= */
 
 function head(title, back){
+  const sag = back ? "" : `<div class="ustSag">
+      <span class="surumRozet ufak">${SURUM.toLocaleUpperCase("tr")}</span>
+      <div class="ustIkon">
+        <button class="ibtn ak" onclick="go('tema')" aria-label="Tema">${svg("palet")}</button>
+        ${ME.role==='admin'?`<button class="ibtn ak" onclick="go('ayarlar')" aria-label="Ayarlar">${svg("gear")}</button>`:""}
+        <button class="ibtn cik" onclick="cikisSor()" aria-label="Çıkış yap">${svg("out")}</button>
+      </div>
+      <div class="zaman" id="stamp"></div>
+    </div>`;
   return `<div class="top">
     ${back?`<button class="ibtn geri" onclick="${back}" aria-label="Geri">
       <svg viewBox="0 0 24 24" fill="none"><polyline points="15 18 9 12 15 6" stroke="currentColor"
@@ -693,9 +819,7 @@ function head(title, back){
       ? `<h1>${esc(title)}</h1>`
       : `<div class="logo"><span class="mark"><img src="logo.png" alt=""></span>
            <span><b>Parsel Parsel</b><span>çapımız alayınıza yeter</span></span></div>`}
-    ${!back?`<button class="ibtn ak" onclick="go('tema')" aria-label="Tema">${svg("tag")}</button>`:""}
-    ${!back&&ME.role==='admin'?`<button class="ibtn ak" onclick="go('ayarlar')" aria-label="Ayarlar">${svg("gear")}</button>`:""}
-    ${!back?`<button class="ibtn cik" onclick="cikisSor()" aria-label="Çıkış yap">${svg("out")}</button>`:""}
+    ${sag}
   </div>`;
 }
 function cikisSor(){ if(confirm("Çıkış yapılsın mı?")) cikis(); }
@@ -882,12 +1006,17 @@ function temaOnizleme(canvas, k){
 let PANJUR_ACIK = false;
 
 const ANA_TEMALAR = [
-  { k:"tugra",  ad:"Tuğra",  aciklama:"Asimetrik mozaik düzen: solda yüksek pano, yanında cam levhalar. Altın mikro etiketler." },
-  { k:"vitrin", ad:"Vitrin", aciklama:"Boydan boya şeritler, solda altın çizgi. Ağır ve sade." },
-  { k:"loca",   ad:"Loca",   aciklama:"Üstte sinematik büyük kart, altında numaralı vitrin kartları. Serif başlıklar, altın saç teli çizgiler." }
+  { k:"tugra",  ad:"Minas Morgul",  aciklama:"Altın ve beyaz. Asimetrik cam levhalar, parlayan ışık; kur ve takip kartları ana ekranda." },
+  { k:"vitrin", ad:"Mordor", aciklama:"Füme, kırmızı ve siyah. Metal panjur şeritleri, görselsiz, sert ve ağır." },
+  { k:"loca",   ad:"Melkor",   aciklama:"Obsidyen ve kor. Sinematik pano, numaralı kartlar, serif başlıklar, açılır kor kutusu." }
 ];
 const anaTema = () => localStorage.getItem("anaTema") || "kart";
-function anaTemaSec(k){ localStorage.setItem("anaTema", k); anaMenu(); }
+function anaTemaSec(k){ localStorage.setItem("anaTema", k); temaUygula(); anaMenu(); }
+
+// govdeye tema isaretini koy: butun ic sayfalar da bu palete doner
+function temaUygula(){
+  document.body.dataset.tema = anaTema();
+}
 
 // menu listesi tek yerde dursun
 const MENULER = [
@@ -902,99 +1031,109 @@ const MENULER = [
 
 async function anaMenu(){
   const tema = anaTema();
-  app.innerHTML = head() + `
-    <div class="panjur ${PANJUR_ACIK ? "acik" : ""}" id="panjur">
-      <button class="panjur-bas" onclick="panjurAcKapa()">
-        <div id="rates" class="rates"></div>
-        <span class="panjur-ok"><i></i></span>
-      </button>
-      <div class="panjur-ic">
-        <button class="panjur-sat" onclick="go('yaklasan')">
-          <div class="ic">${svg("note")}</div>
-          <div><b>Yaklaşanlar</b><small>Vekalet süreleri, vadeler</small></div>
-          <span class="rozet" id="yakRozet"></span></button>
-        <button class="panjur-sat" onclick="go('hesap')">
-          <div class="ic">${svg("money")}</div>
-          <div><b>Hesap - Kitap</b><small>Alacaklar, borçlar, vadeler</small></div></button>
-      </div>
-    </div>
-
-    <div style="display:flex;align-items:center;gap:8px;margin:12px 2px 10px">
-      <span class="surumRozet">${SURUM.toLocaleUpperCase("tr")}</span>
-      <div class="zaman" id="stamp" style="flex:1;margin:0"></div></div>
-    ${menuGovde(tema)}`;
+  temaUygula();
+  app.innerHTML = head() + menuGovde(tema);
   kurlar();
   yaklasanRozet();
 }
 
-function menuGovde(tema){
-  if(tema === "vitrin") return `<div class="vitrin">${MENULER.map((m,i)=>`
-    <button class="serit" onclick="go('${m.r}')">
-      <div class="sDoku"></div><div class="sCizgi"></div>
-      <span class="sIkon">${svg(m.i)}</span>
-      <div class="sIcerik"><b>${m.ad}</b>${m.alt?`<small>${m.alt}</small>`:""}</div>
-      <span class="sOk">${svg("chevron")}</span>
-    </button>`).join("")}</div>`;
+// Melkor'a ozel acilir kor kutusu
+function korKutusu(){
+  return `<div class="kor ${PANJUR_ACIK ? "acik" : ""}" id="panjur">
+    <button class="kor-bas" onclick="panjurAcKapa()">
+      <span class="kor-kose"></span>
+      <div id="rates" class="rates"></div>
+      <span class="kor-ok"><i></i></span>
+    </button>
+    <div class="kor-ic">
+      <button class="kor-sat" onclick="go('yaklasan')">
+        <span class="kor-no">A</span>
+        <div><b>Yaklaşanlar</b><small>Vekalet süreleri, vadeler</small></div>
+        <span class="rozet" id="yakRozet"></span></button>
+      <button class="kor-sat" onclick="go('hesap')">
+        <span class="kor-no">B</span>
+        <div><b>Hesap - Kitap</b><small>Alacaklar, borçlar, vadeler</small></div></button>
+    </div>
+  </div>`;
+}
 
-  if(tema === "tugra"){
-    const kutu = (m, sinif) => `
-      <button class="tKart ${sinif}" onclick="go('${m.r}')">
-        ${m.g?`<div class="tGorsel" style="background-image:url('${gv(m.g)}')"></div>`:""}
-        <div class="tCam"></div>
-        <span class="tIkon">${svg(m.i)}</span>
-        <div class="tYazi"><b>${m.ad}</b>${m.alt?`<small>${m.alt}</small>`:""}</div>
-        <span class="tHale"></span>
+// temaya gore gorsel klasoru; her temanin kendi gorselleri olacak
+const TEMA_KLASOR = { tugra:"", vitrin:"", loca:"" };
+const tgv = m => gv((TEMA_KLASOR[anaTema()] || "") + m);
+
+function menuGovde(tema){
+  const kurKutu = { r:"__kur" };
+
+  // ---------- MORDOR: panjur seritleri ----------
+  if(tema === "vitrin"){
+    const serit = (m, ikon, ad2, alt2, ek) => `
+      <button class="serit ${ek||""}" onclick="${m}">
+        <div class="sDoku"></div><div class="sCizgi"></div>
+        <span class="sIkon">${ikon}</span>
+        <div class="sIcerik"><b>${ad2}</b>${alt2?`<small>${alt2}</small>`:""}</div>
+        <span class="sOk">${svg("chevron")}</span>
       </button>`;
-    const [harita, araziler, tapu, ekler, yz, cap, kml] = MENULER;
-    return `<div class="tugra">
-      ${kutu(harita, "tPano")}
-      ${kutu(araziler, "tSag1")}
-      ${kutu(tapu, "tSag2")}
-      ${kutu(ekler, "tOrta1")}
-      ${kutu(yz, "tOrta2")}
-      ${kutu(cap, "tAlt1")}
-      ${kutu(kml, "tAlt2")}
+    return `<div class="vitrin">
+      <div class="kurSerit"><div class="sDoku"></div><div id="rates" class="rates"></div></div>
+      ${MENULER.map(m=>serit(`go('${m.r}')`, svg(m.i), m.ad, m.alt)).join("")}
+      ${serit("go('yaklasan')", svg("note"), "Yaklaşanlar", "Vekalet süreleri, vadeler", "ikincil")
+        .replace("</button>", `<span class="rozet" id="yakRozet"></span></button>`)}
+      ${serit("go('hesap')", svg("money"), "Hesap - Kitap", "Alacaklar, borçlar", "ikincil")}
     </div>`;
   }
 
+  // ---------- MELKOR: sinematik pano + numarali kartlar ----------
   if(tema === "loca"){
     const [bas, ...kalan] = MENULER;
     const kutu = (m, i) => `
       <button class="lKart ${m.g?"":"yalin"}" onclick="go('${m.r}')">
-        ${m.g?`<div class="lGorsel" style="background-image:url('${gv(m.g)}')"></div>`:""}
+        ${m.g?`<div class="lGorsel" style="background-image:url('${tgv(m.g)}')"></div>`:""}
         <div class="lFilm"></div>
         <span class="lNo">${String(i).padStart(2,"0")}</span>
-        <div class="lAlt">
-          <b>${m.ad}</b>
-          <span class="lCizgi"></span>
-          ${m.alt?`<small>${m.alt}</small>`:""}
-        </div>
+        <div class="lAlt"><b>${m.ad}</b><span class="lCizgi"></span>${m.alt?`<small>${m.alt}</small>`:""}</div>
         <span class="lKose lKose1"></span><span class="lKose lKose2"></span>
       </button>`;
     return `<div class="loca">
+      ${korKutusu()}
       <button class="lHero" onclick="go('${bas.r}')">
-        <div class="lGorsel" style="background-image:url('${gv(bas.g)}')"></div>
-        <div class="lFilm"></div>
-        <span class="lNo">01</span>
-        <div class="lAlt">
-          <b>${bas.ad}</b><span class="lCizgi"></span>
-          <small>Parsel sorgula · araştır</small>
-        </div>
+        <div class="lGorsel" style="background-image:url('${tgv(bas.g)}')"></div>
+        <div class="lFilm"></div><span class="lNo">01</span>
+        <div class="lAlt"><b>${bas.ad}</b><span class="lCizgi"></span><small>${bas.alt}</small></div>
         <span class="lKose lKose1"></span><span class="lKose lKose2"></span>
       </button>
       <div class="lIzgara">${kalan.map((m,i)=>kutu(m, i+2)).join("")}</div>
     </div>`;
   }
 
-  // varsayilan: kart
-  return `<div class="grid">
-    ${MENULER.filter(m=>m.buyuk).map(m=>tile(m.r,m.i,m.ad,m.alt,m.renk,m.g)).join("")}
-    <button class="tile mini gumus" onclick="go('kml')"><b>KML</b><small>İndir, Earth'te aç</small></button>
-    <button class="tile mini kizil" onclick="go('cap')"><b>Çap</b><small>Çiz veya yükle</small></button>
-    <button class="tile wide sari gorselli" onclick="go('yz')">
-      <div class="gorsel" style="background-image:url('${gv("bg-yz.jpg")}')"></div><div class="perde"></div>
-      <div class="cam"></div><div class="isik"></div>
-      <div class="icerik"><b>İdrak Makamı</b><small>Claude, ChatGPT, Gemini</small></div></button>
+  // ---------- MINAS MORGUL: asimetrik cam levhalar ----------
+  const kart = (m, sinif) => `
+    <button class="tKart ${sinif}" onclick="go('${m.r}')">
+      ${m.g?`<div class="tGorsel" style="background-image:url('${tgv(m.g)}')"></div>`:""}
+      <div class="tCam"></div><span class="tIsik"></span>
+      <div class="tYazi"><b>${m.ad}</b>${m.alt?`<small>${m.alt}</small>`:""}</div>
+      <span class="tHale"></span>
+    </button>`;
+  const [harita, araziler, tapu, ekler, yz, cap, kml] = MENULER;
+  return `<div class="tugra">
+    <div class="tKur">
+      <span class="tKurEtiket">PİYASA</span>
+      <div id="rates" class="rates"></div>
+    </div>
+    ${kart(harita, "tPano")}
+    ${kart(araziler, "tSag1")}
+    ${kart(tapu, "tSag2")}
+    ${kart(ekler, "tOrta1")}
+    ${kart(yz, "tOrta2")}
+    ${kart(cap, "tAlt1")}
+    ${kart(kml, "tAlt2")}
+    <button class="tKart tTakip1" onclick="go('yaklasan')">
+      <div class="tCam"></div><span class="tIsik"></span>
+      <div class="tYazi"><b>Yaklaşanlar</b><small>Vade, vekalet</small></div>
+      <span class="rozet" id="yakRozet"></span><span class="tHale"></span></button>
+    <button class="tKart tTakip2" onclick="go('hesap')">
+      <div class="tCam"></div><span class="tIsik"></span>
+      <div class="tYazi"><b>Hesap - Kitap</b><small>Alacak, borç</small></div>
+      <span class="tHale"></span></button>
   </div>`;
 }
 
@@ -5743,6 +5882,15 @@ function acilisiKapat(){
   setTimeout(()=>a.remove(), 600);
 }
 // video bir kere oynar, bitince acilis kapanir; video yoksa 3 saniyede kapanir
+// acilis ekranini secili temanin paletine boya
+(function(){
+  try{
+    const t = localStorage.getItem("anaTema") || "tugra";
+    document.body.dataset.tema = t;
+    document.getElementById("acilis").dataset.tema = t;
+  }catch(e){}
+})();
+
 (function(){
   const v = document.getElementById("acilisVid");
   if(v && localStorage.getItem("introSesKapali") === "1"){ v.muted = true; }
@@ -5787,6 +5935,7 @@ async function baslat(){
     try{ await sb.from("profiles").update({ full_name: gAd }).eq("id", prof.id); prof.full_name = gAd; }catch(e){}
   }
   ME = prof;
+  temaUygula();
   await markaYukle();
   GEZINTI = [{ r:"ana", arg:undefined }];
   try{ history.pushState({ n:1 }, ""); }catch(e){}
