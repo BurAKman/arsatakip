@@ -522,7 +522,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 3.2";
+const SURUM = "beta 3.3";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -2752,11 +2752,21 @@ function numaralariTazele(){
 }
 
 function parcaSatirHtml(o, bi, yer, j){
-  return `<div style="display:flex;gap:7px;align-items:center;margin-bottom:7px">
-    <input id="pn${o.id}" value="${esc(o.no)}" style="width:52px;text-align:center;padding:10px 3px">
-    <input id="pm${o.id}" inputmode="decimal" value="${ham(o.m2)}" style="flex:1;text-align:right">
-    <input type="color" id="pr${o.id}" value="${o.renk}" style="width:44px;height:40px;padding:3px;border-radius:9px">
-    <button class="sil" style="width:32px;height:32px" onclick="parcaSil(${bi},'${yer}',${j})">${svg("trash")}</button>
+  return `<div style="background:rgba(0,0,0,.2);border:1px solid var(--cizgi);border-radius:11px;
+      padding:9px;margin-bottom:8px">
+    <div style="display:flex;gap:7px;align-items:center;margin-bottom:7px">
+      <span style="font-size:10px;color:var(--ink-3);letter-spacing:.08em">NO</span>
+      <input id="pn${o.id}" value="${esc(o.no)}" onfocus="this.select()"
+        style="width:54px;text-align:center;padding:9px 4px">
+      <span style="flex:1"></span>
+      <input type="color" id="pr${o.id}" value="${o.renk}" style="width:44px;height:38px;padding:3px;border-radius:9px">
+      <button class="sil" style="width:34px;height:34px" onclick="parcaSil(${bi},'${yer}',${j})">${svg("trash")}</button>
+    </div>
+    <div style="display:flex;gap:7px;align-items:center">
+      <span style="font-size:10px;color:var(--ink-3);letter-spacing:.08em;white-space:nowrap">M²</span>
+      <input id="pm${o.id}" inputmode="decimal" value="${ham(o.m2)}" onfocus="this.select()"
+        style="flex:1;text-align:right;font-size:15px;font-family:'IBM Plex Mono',monospace">
+    </div>
   </div>`;
 }
 
@@ -2782,14 +2792,17 @@ function bloklariCiz(){
       </div>`;
     }
     const sutun = (yer, ad2) => `
-      <div style="flex:1 1 46%;min-width:150px">
-        <div style="font-size:11px;color:var(--gold);letter-spacing:.08em;margin-bottom:6px">
-          ${ad2} TARAF · ${b[yer].length} parça · ${nf2(b[yer].reduce((t,o)=>t+(+o.m2||0),0))} m²</div>
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="font-size:11px;color:var(--gold);letter-spacing:.1em;font-weight:600">${ad2} TARAF</span>
+          <span style="font-size:11px;color:var(--ink-3)">${b[yer].length} parça · ${nf2(b[yer].reduce((t,o)=>t+(+o.m2||0),0))} m²</span>
+          <span style="flex:1"></span>
+          <button class="pill sade" onclick="tarafEsitle(${i},'${yer}')">eşit böl</button></div>
         ${b[yer].map((o,j)=>parcaSatirHtml(o,i,yer,j)).join("")}
         <button class="pill sade" onclick="parcaEkle(${i},'${yer}')">+ parça</button>
       </div>`;
     return `<div class="card" style="padding:12px">${bas}
-      <div style="display:flex;gap:12px;flex-wrap:wrap">${sutun("sol","SOL")}${sutun("sag","SAĞ")}</div>
+      ${sutun("sol","SOL")}<div style="height:10px"></div>${sutun("sag","SAĞ")}
       <div class="ipuc" style="margin:10px 2px 0">Yol bu bloğun ortasından geçer; sol ve sağ kendi içinde dizilir.</div>
     </div>`;
   }).join("");
@@ -2805,6 +2818,17 @@ function bloklariCiz(){
     if(c) c.oninput = () => { o.renk = c.value; onizlemeCiz(); };
   }));
   ozetCiz();
+}
+
+// bir tarafin parcalarini kendi toplami icinde esitle
+function tarafEsitle(i, yer){
+  const liste = PARCA.bloklar[i][yer];
+  if(!liste.length) return;
+  const toplam = liste.reduce((t,o)=>t + (isFinite(+o.m2) ? +o.m2 : 0), 0) || (PARCA.toplam/2);
+  const pay = Math.round((toplam/liste.length)*100)/100;
+  liste.forEach((o,j)=>{ o.m2 = j === liste.length-1
+    ? Math.round((toplam - pay*(liste.length-1))*100)/100 : pay; });
+  bloklariCiz();
 }
 
 function parcaEkle(i, yer){
@@ -2947,12 +2971,12 @@ function parcaListeCiz(parselId){
           <input id="pa${i}" value="${esc(o.ad||"")}" placeholder="1 nolu parça"></div>
         <div class="row2">
           <div class="field" style="margin:0 0 10px"><label>Alan (m²)</label>
-            <input id="pm${i}" inputmode="decimal" value="${ham(o.m2)}"></div>
+            <input id="pm${i}" inputmode="decimal" value="${ham(o.m2)}" onfocus="this.select()"></div>
           <div class="field" style="margin:0 0 10px"><label>Maliyet (₺/m²)</label>
-            <input id="pk${i}" inputmode="decimal" value="${ham(o.maliyet_m2)}"></div>
+            <input id="pk${i}" inputmode="decimal" value="${ham(o.maliyet_m2)}" onfocus="this.select()"></div>
         </div>
         <div class="field" style="margin:0 0 10px"><label>Satış fiyatı (₺/m²)</label>
-          <input id="pf${i}" inputmode="decimal" value="${ham(o.m2_fiyat)}"></div>
+          <input id="pf${i}" inputmode="decimal" value="${ham(o.m2_fiyat)}" onfocus="this.select()"></div>
 
         <div style="background:rgba(0,0,0,.22);border-radius:10px;padding:10px 12px;margin-bottom:10px" id="ph${i}"></div>
 
