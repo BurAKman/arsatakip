@@ -241,40 +241,56 @@ select option{background:#101614;color:var(--ink)}
   transform:rotate(-90deg)}
 .serit:active{transform:scale(.995)}
 
-/* ---- tema: kesit ---- */
-.kesitAlan .kesitKart{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.14);
-  border-radius:12px;padding:0;cursor:pointer;background:#10141A;
-  min-height:clamp(78px,13vh,122px);
-  clip-path:polygon(0 0, 100% 0, 100% 74%, 74% 100%, 0 100%);
-  box-shadow:0 6px 18px rgba(0,0,0,.5)}
-.kesitAlan .kesitKart.genis{grid-column:1 / -1;min-height:clamp(58px,8.5vh,80px)}
-.kesitAlan .kGorsel{position:absolute;inset:0;background-size:cover;background-position:center top;
-  filter:saturate(.62) brightness(.72)}
-.kesitAlan .kSerit{position:absolute;right:-18%;bottom:-6%;width:56%;height:10px;transform:rotate(-45deg);
-  background:linear-gradient(90deg,transparent,#E3C05A,#F5E3AE,#C29B3E,transparent);
-  box-shadow:0 0 16px rgba(227,192,90,.55)}
-.kesitAlan .kYazi{position:absolute;left:10px;bottom:10px;padding:6px 10px;border-radius:8px;
-  background:rgba(8,11,13,.66);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);text-align:left}
-.kesitAlan .kYazi b{display:block;font-size:12.5px;font-weight:600;letter-spacing:.09em;color:#fff;text-transform:uppercase}
-.kesitAlan .kYazi small{display:block;font-size:9.5px;color:rgba(255,255,255,.55);margin-top:2px}
-.kesitAlan .yalin{background:linear-gradient(155deg,rgba(255,255,255,.12),rgba(255,255,255,.03))}
+/* ---- tema: loca ---- */
+.loca{display:flex;flex-direction:column;gap:clamp(8px,1.4vh,12px)}
+.loca .lIzgara{display:grid;grid-template-columns:1fr 1fr;gap:clamp(8px,1.4vh,12px)}
 
-/* ---- tema: perde ---- */
-.perdeAlan .perdeKart{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.1);
-  border-radius:16px;padding:0;cursor:pointer;background:#0A0D10;
-  min-height:clamp(78px,13vh,122px);box-shadow:0 6px 18px rgba(0,0,0,.5)}
-.perdeAlan .perdeKart.genis{grid-column:1 / -1;min-height:clamp(58px,8.5vh,80px)}
-.perdeAlan .pGorsel{position:absolute;inset:0;background-size:cover;background-position:center top;
-  filter:grayscale(.5) saturate(.5) brightness(.8);transition:filter .5s ease,transform .6s ease}
-.perdeAlan .pOrtu{position:absolute;inset:0;background:rgba(5,7,9,.8);transition:background .45s ease}
-.perdeAlan .perdeKart:active .pOrtu{background:rgba(5,7,9,.18)}
-.perdeAlan .perdeKart:active .pGorsel{filter:grayscale(0) saturate(1) brightness(1);transform:scale(1.04)}
-.perdeAlan .pYazi{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;text-align:center;padding:10px}
-.perdeAlan .pYazi b{font-size:clamp(12.5px,1.9vh,15px);font-weight:300;letter-spacing:.22em;text-indent:.22em;
-  color:#fff;text-transform:uppercase}
-.perdeAlan .pYazi small{margin-top:6px;font-size:9.5px;letter-spacing:.1em;color:rgba(255,255,255,.45);
-  text-transform:uppercase}
+.loca .lHero,.loca .lKart{position:relative;overflow:hidden;padding:0;cursor:pointer;
+  background:#07090B;border:1px solid rgba(214,182,96,.22);border-radius:4px;
+  box-shadow:0 10px 30px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.03)}
+.loca .lHero{height:clamp(150px,24vh,230px)}
+.loca .lKart{height:clamp(96px,15vh,140px)}
+.loca .lKart.genis{grid-column:1 / -1;height:clamp(70px,10vh,96px)}
+
+.loca .lGorsel{position:absolute;inset:0;background-size:cover;background-position:center 32%;
+  filter:grayscale(.28) saturate(.72) brightness(.66) contrast(1.06);
+  transition:transform .8s cubic-bezier(.22,.61,.36,1), filter .6s ease}
+.loca .lHero:active .lGorsel,.loca .lKart:active .lGorsel{transform:scale(1.05);filter:grayscale(0) saturate(.95) brightness(.82)}
+
+/* film dokusu + alt karartma */
+.loca .lFilm{position:absolute;inset:0;pointer-events:none;
+  background:
+    linear-gradient(0deg,rgba(4,6,8,.96) 0%,rgba(4,6,8,.62) 30%,rgba(4,6,8,.08) 66%,rgba(4,6,8,0) 100%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px)}
+
+/* sirali numara */
+.loca .lNo{position:absolute;top:10px;right:12px;font-family:Georgia,'Times New Roman',serif;
+  font-size:clamp(13px,2vh,17px);letter-spacing:.1em;color:rgba(214,182,96,.55);
+  border:1px solid rgba(214,182,96,.28);border-radius:2px;padding:2px 7px;
+  background:rgba(4,6,8,.42);backdrop-filter:blur(4px)}
+
+/* alt yazi blogu */
+.loca .lAlt{position:absolute;left:14px;right:14px;bottom:12px;text-align:left}
+.loca .lAlt b{display:block;font-family:Georgia,'Times New Roman',serif;font-weight:400;
+  font-size:clamp(14px,2.2vh,19px);letter-spacing:.2em;text-indent:.2em;text-transform:uppercase;
+  color:#F6F1E4;text-shadow:0 2px 12px rgba(0,0,0,.85)}
+.loca .lHero .lAlt b{font-size:clamp(19px,3.2vh,27px)}
+.loca .lCizgi{display:block;width:34px;height:1px;margin:7px 0 6px;
+  background:linear-gradient(90deg,#E3C05A,rgba(227,192,90,.15))}
+.loca .lHero .lCizgi{width:56px}
+.loca .lAlt small{display:block;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:rgba(246,241,228,.5)}
+
+/* kose isaretleri */
+.loca .lKose{position:absolute;width:13px;height:13px;pointer-events:none;opacity:.5}
+.loca .lKose1{top:8px;left:8px;border-top:1px solid #E3C05A;border-left:1px solid #E3C05A}
+.loca .lKose2{bottom:8px;right:8px;border-bottom:1px solid #E3C05A;border-right:1px solid #E3C05A}
+
+/* gorseli olmayan kartlar */
+.loca .yalin{background:
+  radial-gradient(120% 90% at 20% 0%,rgba(227,192,90,.12),transparent 60%),
+  linear-gradient(160deg,#141A20,#0A0E12)}
+.loca .yalin .lFilm{background:linear-gradient(0deg,rgba(4,6,8,.5),transparent 60%)}
 
 /* ---- tus dili ---- */
 .btn{border-radius:14px;font-weight:600;letter-spacing:.015em;
@@ -522,7 +538,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 3.5";
+const SURUM = "beta 3.6";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -765,28 +781,25 @@ function temaOnizleme(canvas, k){
     }
     return;
   }
-  if(k === "kesit"){
+  if(k === "loca"){
+    // buyuk kart
+    x.fillStyle = "#151B21"; x.fillRect(14, 14, G-28, 84);
+    x.strokeStyle = "rgba(227,192,90,.35)"; x.lineWidth = 1; x.strokeRect(14.5, 14.5, G-29, 83);
+    x.fillStyle = "rgba(4,6,8,.55)"; x.fillRect(14, 58, G-28, 40);
+    x.fillStyle = "rgba(246,241,228,.92)"; x.fillRect(26, 74, 96, 7);
+    x.fillStyle = altin; x.fillRect(26, 86, 30, 2);
+    x.strokeStyle = "rgba(227,192,90,.5)";
+    x.strokeRect(G-52.5, 20.5, 30, 15);
+    // kose isaretleri
+    x.beginPath(); x.moveTo(22,32); x.lineTo(22,22); x.lineTo(32,22); x.stroke();
+    // kucuk kartlar
     for(let i=0;i<4;i++){
-      const bx = 14 + (i%2)*156, by = 14 + Math.floor(i/2)*90;
-      x.save();
-      x.beginPath();
-      x.moveTo(bx,by); x.lineTo(bx+142,by); x.lineTo(bx+142,by+56); x.lineTo(bx+108,by+80);
-      x.lineTo(bx,by+80); x.closePath(); x.clip();
-      x.fillStyle = "#1C232A"; x.fillRect(bx,by,142,80);
-      x.strokeStyle = altin; x.lineWidth = 4;
-      x.beginPath(); x.moveTo(bx+96,by+92); x.lineTo(bx+152,by+40); x.stroke();
-      x.fillStyle = "rgba(255,255,255,.8)"; x.fillRect(bx+10, by+56, 54, 5);
-      x.restore();
-    }
-    return;
-  }
-  if(k === "perde"){
-    for(let i=0;i<4;i++){
-      const bx = 14 + (i%2)*156, by = 14 + Math.floor(i/2)*90;
-      kutu(bx, by, 142, 80, i === 0 ? "#3A4550" : "#12171C");
-      x.fillStyle = i === 0 ? "rgba(255,255,255,.9)" : "rgba(255,255,255,.55)";
-      x.fillRect(bx+40, by+36, 62, 5);
-      x.fillStyle = "rgba(255,255,255,.22)"; x.fillRect(bx+52, by+48, 38, 4);
+      const bx = 14 + (i%2)*156, by = 108 + Math.floor(i/2)*46;
+      x.fillStyle = "#12171D"; x.fillRect(bx, by, 142, 40);
+      x.strokeStyle = "rgba(227,192,90,.28)"; x.strokeRect(bx+.5, by+.5, 141, 39);
+      x.fillStyle = "rgba(246,241,228,.8)"; x.fillRect(bx+10, by+22, 58, 5);
+      x.fillStyle = altin; x.fillRect(bx+10, by+31, 20, 1.5);
+      x.fillStyle = "rgba(227,192,90,.45)"; x.fillRect(bx+120, by+8, 14, 8);
     }
     return;
   }
@@ -809,8 +822,7 @@ let PANJUR_ACIK = false;
 const ANA_TEMALAR = [
   { k:"kart",   ad:"Kart",   aciklama:"Cam dokulu kare kartlar, altta küçük tuşlar." },
   { k:"vitrin", ad:"Vitrin", aciklama:"Boydan boya şeritler, solda altın çizgi. Ağır ve sade." },
-  { k:"kesit",  ad:"Kesit",  aciklama:"Köşesi çapraz kesik kartlar, kesikten geçen altın şerit." },
-  { k:"perde",  ad:"Perde",  aciklama:"Görseller koyu perde altında; dokununca açılır." }
+  { k:"loca",   ad:"Loca",   aciklama:"Üstte sinematik büyük kart, altında numaralı vitrin kartları. Serif başlıklar, altın saç teli çizgiler." }
 ];
 const anaTema = () => localStorage.getItem("anaTema") || "kart";
 function anaTemaSec(k){ localStorage.setItem("anaTema", k); anaMenu(); }
@@ -858,25 +870,38 @@ function menuGovde(tema){
     <button class="serit" onclick="go('${m.r}')">
       ${m.g?`<div class="sGorsel" style="background-image:url('${gv(m.g)}')"></div>`:""}
       <div class="sPerde"></div><div class="sCizgi"></div>
-      <div class="sIcerik">
-        <b>${m.ad}</b>${m.alt?`<small>${m.alt}</small>`:""}
-      </div>
+      <div class="sIcerik"><b>${m.ad}</b>${m.alt?`<small>${m.alt}</small>`:""}</div>
       <span class="sOk">${svg("chevron")}</span>
     </button>`).join("")}</div>`;
 
-  if(tema === "kesit") return `<div class="grid kesitAlan">${MENULER.map(m=>`
-    <button class="kesitKart ${m.genis?"genis":""} ${m.g?"":"yalin"}" onclick="go('${m.r}')">
-      ${m.g?`<div class="kGorsel" style="background-image:url('${gv(m.g)}')"></div>`:""}
-      <div class="kSerit"></div>
-      <div class="kYazi"><b>${m.ad}</b>${m.alt?`<small>${m.alt}</small>`:""}</div>
-    </button>`).join("")}</div>`;
-
-  if(tema === "perde") return `<div class="grid perdeAlan">${MENULER.map(m=>`
-    <button class="perdeKart ${m.genis?"genis":""}" onclick="go('${m.r}')">
-      ${m.g?`<div class="pGorsel" style="background-image:url('${gv(m.g)}')"></div>`:""}
-      <div class="pOrtu"></div>
-      <div class="pYazi"><b>${m.ad}</b>${m.alt?`<small>${m.alt}</small>`:""}</div>
-    </button>`).join("")}</div>`;
+  if(tema === "loca"){
+    const [bas, ...kalan] = MENULER;
+    const kutu = (m, i) => `
+      <button class="lKart ${m.genis?"genis":""} ${m.g?"":"yalin"}" onclick="go('${m.r}')">
+        ${m.g?`<div class="lGorsel" style="background-image:url('${gv(m.g)}')"></div>`:""}
+        <div class="lFilm"></div>
+        <span class="lNo">${String(i).padStart(2,"0")}</span>
+        <div class="lAlt">
+          <b>${m.ad}</b>
+          <span class="lCizgi"></span>
+          ${m.alt?`<small>${m.alt}</small>`:""}
+        </div>
+        <span class="lKose lKose1"></span><span class="lKose lKose2"></span>
+      </button>`;
+    return `<div class="loca">
+      <button class="lHero" onclick="go('${bas.r}')">
+        <div class="lGorsel" style="background-image:url('${gv(bas.g)}')"></div>
+        <div class="lFilm"></div>
+        <span class="lNo">01</span>
+        <div class="lAlt">
+          <b>${bas.ad}</b><span class="lCizgi"></span>
+          <small>Parsel sorgula · araştır</small>
+        </div>
+        <span class="lKose lKose1"></span><span class="lKose lKose2"></span>
+      </button>
+      <div class="lIzgara">${kalan.map((m,i)=>kutu(m, i+2)).join("")}</div>
+    </div>`;
+  }
 
   // varsayilan: kart
   return `<div class="grid">
