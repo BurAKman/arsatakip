@@ -522,7 +522,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 3.4";
+const SURUM = "beta 3.5";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1255,81 +1255,10 @@ async function haritadanKaydet(){
 }
 
 // kaydettikten hemen sonra tek soru: tek tapu mu, hisseli mi
-function hisseSor(yilKaydiId, alan){
-  const kutu = document.querySelector("#bilgi .acts");
-  if(!kutu) return;
-  kutu.insertAdjacentHTML("beforeend", `
-    <div style="flex:1 1 100%;border-top:1px solid var(--cizgi);margin-top:12px;padding-top:14px">
-      <label>Bu yer sizde nasıl kayıtlı?</label>
-      <select id="ktd">
-        <option value="tek">Tek tapu · tamamı bizim</option>
-        <option value="hisseli">Hisseli · payımız var</option>
-      </select>
-      <div id="khp" style="display:none;margin-top:12px">${hisseAlanlari("k")}</div>
-      <button class="btn" style="margin-top:14px" id="khk">Bilgiyi kaydet</button>
-      <p class="ipuc" style="margin:10px 2px 0">Toplam alan (${nf(alan)} m²) değişmez; sadece payınız kaydedilir.</p>
-    </div>`);
-
-  const td = document.getElementById("ktd"), hp = document.getElementById("khp");
-  const hesap = hisseBagla("k", alan);
-  td.onchange = () => { hp.style.display = td.value === "hisseli" ? "block" : "none"; hesap(); };
-
-  document.getElementById("khk").onclick = async e => {
-    const hisseli = td.value === "hisseli";
-    const yeni = { tapu_durumu: td.value, hisse_pay: null, hisse_m2: null };
-    if(hisseli){
-      const r = hesap(); if(!r) return toast("Hisse bilgisini düzelt");
-      yeni.hisse_pay = r.pay; yeni.hisse_m2 = r.m2;
-    }
-    e.target.disabled = true; e.target.textContent = "Kaydediliyor…";
-    const { error } = await sb.from("parcel_years").update(yeni).eq("id", yilKaydiId);
-    e.target.disabled = false; e.target.textContent = "Bilgiyi kaydet";
-    if(error) return toast("Olmadı: "+error.message);
-    e.target.parentElement.innerHTML =
-      `<div style="color:var(--green);font-size:13px;font-weight:600;padding-top:12px;border-top:1px solid var(--cizgi)">✓ Tapu bilgisi kaydedildi</div>`;
-  };
-}
 
 // pay girisi: tapudaki oran ya da dogrudan metrekare
-function hisseAlanlari(p, mevcutPay, mevcutM2){
-  const oranMi = !mevcutM2 || !!mevcutPay;
-  return `<label>Payınızı nasıl gireceksin?</label>
-    <select id="${p}bic">
-      <option value="oran"${oranMi?" selected":""}>Tapudaki oran · 1/4, 3/16…</option>
-      <option value="m2"${oranMi?"":" selected"}>Doğrudan metrekare</option>
-    </select>
-    <div id="${p}oranK" style="margin-top:10px${oranMi?"":";display:none"}">
-      <label>Hisse payı</label><input id="${p}oran" value="${esc(mevcutPay||"")}" placeholder="1/16"></div>
-    <div id="${p}m2K" style="margin-top:10px${oranMi?";display:none":""}">
-      <label>Payınız (m²)</label><input id="${p}m2" inputmode="decimal" value="${mevcutM2??""}" placeholder="236"></div>
-    <div id="${p}bilgi" style="font-size:12px;color:var(--ink-3);margin-top:8px"></div>`;
-}
 
 // alanlari birbirine bagla; hesaplayan islevi dondur
-function hisseBagla(p, alan){
-  const g = k => document.getElementById(p+k);
-  const hesap = () => {
-    if(!g("bic")) return null;
-    const bic = g("bic").value;
-    g("oranK").style.display = bic === "oran" ? "block" : "none";
-    g("m2K").style.display   = bic === "m2"   ? "block" : "none";
-    if(bic === "oran"){
-      const o = payOran(g("oran").value);
-      if(o === null){ g("bilgi").innerHTML = `<span style="color:var(--red)">1/4 gibi yaz</span>`; return null; }
-      const m2 = Math.round(alan * o);
-      g("bilgi").textContent = `Toplam ${nf(alan)} m² · payınız ${nf(m2)} m²`;
-      return { pay: g("oran").value.trim(), m2 };
-    }
-    const m2 = sayiCoz(g("m2").value);
-    if(!isFinite(m2) || m2 <= 0){ g("bilgi").innerHTML = `<span style="color:var(--red)">Metrekare yaz</span>`; return null; }
-    const yuzde = alan ? (m2/alan*100) : 0;
-    g("bilgi").textContent = `Toplam ${nf(alan)} m² · payınız ${nf(Math.round(m2))} m²${alan?` (%${yuzde.toFixed(1)})`:""}`;
-    return { pay: null, m2: Math.round(m2) };
-  };
-  ["bic","oran","m2"].forEach(k => { const el = g(k); if(el){ el.oninput = hesap; el.onchange = hesap; } });
-  hesap();
-  return hesap;
-}
 
 function sonucGoster(mesaj, basarili){
   const kutu = document.querySelector("#bilgi .acts");
@@ -1758,12 +1687,22 @@ async function fiyat(){
   fiyatListele();
 }
 
+let FIYAT_PARCA = {};
+
 async function fiyatListele(){
   const box = document.getElementById("fl");
   const { data, error } = await sb.from("parcel_years")
-    .select("*,parcels(id,il,ilce,mahalle,ada,parsel,alan_m2)").eq("yil",YEAR);
+    .select("*,parcels(id,il,ilce,mahalle,ada,parsel,alan_m2,geojson)").eq("yil",YEAR);
   if(error) return box.innerHTML = `<div class="empty">${esc(error.message)}</div>`;
   const rows = (data||[]).filter(r=>r.parcels);
+
+  // parcalari topluca cek, satirlarda ozetlensin
+  FIYAT_PARCA = {};
+  try{
+    const { data:pc } = await sb.from("parca").select("*")
+      .in("parcel_id", rows.map(r=>r.parcels.id));
+    (pc||[]).forEach(o=>(FIYAT_PARCA[o.parcel_id] ||= []).push(o));
+  }catch(e){}
   if(!rows.length) return box.innerHTML = `<div class="empty"><b>${YEAR} boş</b>Önce haritadan parsel ekle.</div>`;
   box.innerHTML = grupla(rows).map(([k,gr])=>{
     const acik = acikGrup === k;
@@ -1773,19 +1712,38 @@ async function fiyatListele(){
 }
 
 function fiyatSatir(r){
-  const p = r.parcels, hisseli = r.tapu_durumu === "hisseli";
-  return `<div style="border-top:1px solid var(--cizgi);background:var(--cam-2);padding:14px" ${r.aktif?"":'data-p="1" style="opacity:.55"'}>
+  const p = r.parcels;
+  const pc = (FIYAT_PARCA[p.id] || []);
+  const alan = o => +o.m2 || 0, satis = o => (+o.m2||0)*(+o.m2_fiyat||0), mal = o => (+o.m2||0)*(+o.maliyet_m2||0);
+  const topla = (l,f) => l.reduce((t,o)=>t+f(o),0);
+  const satilik = pc.filter(o=>o.satilik && !o.satildi);
+  const satilan = pc.filter(o=>o.satildi);
+  const stAlan = topla(satilik,alan), stSatis = topla(satilik,satis);
+  const kar = stSatis - topla(satilik,mal);
+
+  return `<div style="border-top:1px solid var(--cizgi);background:var(--cam-2);padding:14px;${r.aktif?"":"opacity:.55"}">
     <div style="display:flex;align-items:center;gap:10px">
-      <span class="kod" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--gold);background:var(--gold-soft);border-radius:8px;padding:6px 10px">${esc(p.ada||"—")}/${esc(p.parsel)}</span>
-      <span class="pill ${hisseli?"gold":"on"}">${hisseli?"hisseli · "+esc(r.hisse_pay||"?"):"tek tapu"}</span>
-      <span class="dot ${r.aktif?"on":"off"}" style="margin-left:auto"></span></div>
-    <div class="kv" style="margin-top:10px"><span>Alan</span><b class="mono">${nf2(gercekAlan(p))} m²</b></div>
-    <div class="kv"><span>Payınız</span><b class="mono">${hisseli?nf(r.hisse_m2)+" m²":"tamamı"}</b></div>
-    <div class="kv"><span>m² fiyatı</span><b class="mono">${nf(r.m2_fiyat)} ₺</b></div>
-    <div class="kv"><span>Toplam</span><b class="mono">${nf(r.toplam_fiyat)} ₺</b></div>
+      <span class="kod" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--gold);
+        background:var(--gold-soft);border-radius:8px;padding:6px 10px">${esc(p.ada||"—")}/${esc(p.parsel)}</span>
+      <span class="pill ${r.aktif?"on":"off"}">${r.yil} · ${r.aktif?"aktif":"pasif"}</span>
+      <span style="flex:1"></span>
+      ${pc.length?`<span class="pill sade">${pc.length} parça</span>`:""}
+    </div>
+    <div class="kv" style="margin-top:10px"><span>Yüzölçümü</span><b class="mono">${nf2(gercekAlan(p))} m²</b></div>
+    ${pc.length ? `
+      <div class="kv"><span>Satılık</span><b class="mono">${satilik.length} parça · ${nf2(stAlan)} m²</b></div>
+      <div class="kv"><span>Ortalama m² fiyatı</span><b class="mono">${stAlan?nf(Math.round(stSatis/stAlan))+" ₺":"—"}</b></div>
+      <div class="kv"><span>Satış bedeli</span><b class="mono">${nf(Math.round(stSatis))} ₺</b></div>
+      <div class="kv"><span style="color:${kar>=0?"var(--green)":"var(--red)"}">Beklenen kâr</span>
+        <b class="mono" style="color:${kar>=0?"var(--green)":"var(--red)"}">${nf(Math.round(kar))} ₺</b></div>
+      ${satilan.length?`<div class="kv"><span>Satılan</span><b class="mono">${satilan.length} parça · ${nf(Math.round(topla(satilan,satis)))} ₺</b></div>`:""}
+    ` : `
+      <div class="kv"><span>m² fiyatı</span><b class="mono">${r.m2_fiyat?nf(r.m2_fiyat)+" ₺":"—"}</b></div>
+      <div style="font-size:12px;color:var(--ink-3);margin-top:8px">Parçalara ayrılmamış.</div>`}
     <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-      ${r.ilan_url?`<a class="pill gold" href="${esc(r.ilan_url)}" target="_blank">sahibinden ilanı</a>`:""}
-      ${ME.role==='admin'?`<button class="pill gold" onclick="go('fiyatDuzen','${r.id}')">düzenle</button>`:""}
+      ${r.ilan_url?`<a class="pill gold" href="${esc(r.ilan_url)}" target="_blank" rel="noopener">ilan</a>`:""}
+      <button class="pill sade" onclick="go('parcalar','${p.id}')">parçalar</button>
+      ${ME.role!=='uye'?`<button class="pill gold" onclick="go('fiyatDuzen','${r.id}')">düzenle</button>`:""}
     </div></div>`;
 }
 
@@ -1810,14 +1768,17 @@ async function fiyatDuzen(id){
     <div class="field" style="display:none"><label>Malik</label>
       <textarea id="mlk" rows="3">${esc(r.malik||"")}</textarea></div>
 
-    <h3 style="font-size:14px;margin:20px 0 10px">Fiyat ve ilan</h3>
-    <div class="field"><label>m² fiyatı (₺)</label><input id="mf" inputmode="decimal" value="${r.m2_fiyat??""}"></div>
-    <div class="field"><label>sahibinden ilan bağlantısı</label><input id="il2" value="${esc(r.ilan_url||"")}" placeholder="https://..."></div>
+    <div class="card" id="parcaOzetKart"></div>
+
+    <h3 style="font-size:14px;margin:20px 0 10px">Fiyat ve İlan</h3>
+    <div class="field"><label>Genel m² fiyatı (₺) · parçalara ayırmadıysan</label>
+      <input id="mf" inputmode="decimal" value="${ham(r.m2_fiyat)}" onfocus="this.select()"></div>
+    <div class="field"><label>sahibinden ilan bağlantısı</label>
+      <input id="il2" value="${esc(r.ilan_url||"")}" placeholder="https://..."></div>
     <div class="field"><label>Durum</label><select id="ak">
       <option value="1"${r.aktif?" selected":""}>Aktif · satışta</option>
       <option value="0"${!r.aktif?" selected":""}>Pasif · satışta değil</option></select></div>
-    <div id="onizle" class="card" style="font-size:13px"></div>
-    <button class="btn" id="kay">Bilgileri kaydet</button>
+    <button class="btn" id="kay">Bilgileri Kaydet</button>
 
     <h3 style="font-size:14px;margin:26px 0 10px">Arazi özellikleri</h3>
     <div class="card">
@@ -1855,28 +1816,36 @@ async function fiyatDuzen(id){
     etiketleriGoster(p.id);
   };
 
-  const alan = +p.alan_m2 || 0;
-  const hisseHesap = hisseBagla("f", alan);
+  const alan = gercekAlan(p);
   const g = k => document.getElementById(k);
 
-  const hesapla = () => {
-    const hisseli = g("td").value === "hisseli";
-    g("hpAlan").style.display = hisseli ? "block" : "none";
-    let pay = alan, kod = null;
-    if(hisseli){
-      const rr = hisseHesap();
-      if(!rr){ g("onizle").innerHTML = `<span style="color:var(--red)">Hisse bilgisini düzelt</span>`; return null; }
-      pay = rr.m2; kod = rr.pay;
-    }
-    const mf = sayiCoz(g("mf").value) || 0, toplam = Math.round(pay * mf);
-    g("onizle").innerHTML =
-      `<div class="kv"><span>Parselin toplam alanı</span><b class="mono">${nf(alan)} m²</b></div>
-       <div class="kv"><span>Payınıza düşen</span><b class="mono">${nf(pay)} m²</b></div>
-       <div class="kv"><span>Toplam değer</span><b class="mono">${nf(toplam)} ₺</b></div>`;
-    return { pay, toplam, kod };
-  };
-  ["td","mf","fbic","foran","fm2"].forEach(k => { const el = g(k); if(el){ el.oninput = hesapla; el.onchange = hesapla; } });
-  hesapla();
+  // parca ozeti: bu ekranda sadece gosterilir, duzenleme parcalar ekraninda
+  (async () => {
+    const { data:pc } = await sb.from("parca").select("*").eq("parcel_id", p.id).order("sira");
+    FIYAT_PARCA[p.id] = pc || [];
+    const kutu = g("parcaOzetKart");
+    if(!kutu) return;
+    const A = o => +o.m2 || 0, S = o => (+o.m2||0)*(+o.m2_fiyat||0), M = o => (+o.m2||0)*(+o.maliyet_m2||0);
+    const T = (l,f) => l.reduce((t,o)=>t+f(o),0);
+    const satilik = (pc||[]).filter(o=>o.satilik && !o.satildi);
+    const satilan = (pc||[]).filter(o=>o.satildi);
+    const stAlan = T(satilik,A), stSatis = T(satilik,S), kar = stSatis - T(satilik,M);
+
+    kutu.innerHTML = `
+      <div class="bolum"><span class="rz altin">${svg("vector")}</span><b>Parçalar / Hisseler</b>
+        <span class="sayi">${(pc||[]).length} parça</span></div>
+      ${(pc||[]).length ? `
+        <div class="kv"><span>Satılık</span><b class="mono">${satilik.length} parça · ${nf2(stAlan)} m²</b></div>
+        <div class="kv"><span>Ortalama m² fiyatı</span><b class="mono">${stAlan?nf(Math.round(stSatis/stAlan))+" ₺":"—"}</b></div>
+        <div class="kv"><span>Satış bedeli</span><b class="mono">${nf(Math.round(stSatis))} ₺</b></div>
+        <div class="kv"><span style="color:${kar>=0?"var(--green)":"var(--red)"}">Beklenen kâr</span>
+          <b class="mono" style="color:${kar>=0?"var(--green)":"var(--red)"}">${nf(Math.round(kar))} ₺</b></div>
+        ${satilan.length?`<div class="kv"><span>Satılan</span><b class="mono">${satilan.length} parça · ${nf(Math.round(T(satilan,S)))} ₺</b></div>`:""}`
+      : `<div style="font-size:13px;color:var(--ink-3)">Bu parsel parçalara ayrılmamış.
+          Çap çizdikten sonra parçaları oradan alabilirsin.</div>`}
+      ${ME.role!=='uye'?`<button class="btn ghost" style="margin-top:12px" onclick="go('parcalar','${p.id}')">
+        Parçaları Düzenle</button>`:""}`;
+  })();
 
   const tz = g("tazele");
   if(tz) tz.onclick = async e => {
@@ -1895,16 +1864,16 @@ async function fiyatDuzen(id){
   };
 
   g("kay").onclick = async e => {
-    const h = hesapla(); if(!h) return toast("Hisse bilgisini düzelt");
-    const hisseli = g("td").value === "hisseli";
     e.target.disabled = true;
+    const birim = sayiCoz(g("mf").value) || null;
+    const parcaToplam = (FIYAT_PARCA[p.id]||[])
+      .filter(o=>o.satilik && !o.satildi)
+      .reduce((t,o)=>t + (+o.m2||0)*(+o.m2_fiyat||0), 0);
     const { error } = await sb.from("parcel_years").update({
-      tapu_durumu: r.tapu_durumu || "tek",
-      hisse_pay: hisseli ? h.kod : null,
-      hisse_m2: hisseli ? h.pay : null,
       malik: g("mlk").value.trim() || null,
-      m2_fiyat: sayiCoz(g("mf").value) || null,
-      toplam_fiyat: h.toplam,
+      m2_fiyat: birim,
+      toplam_fiyat: parcaToplam > 0 ? Math.round(parcaToplam)
+        : (birim ? Math.round(birim * gercekAlan(p)) : null),
       ilan_url: g("il2").value.trim() || null,
       aktif: g("ak").value === "1",
       pasif_tarihi: g("ak").value === "1" ? null : (r.pasif_tarihi || new Date().toISOString())
@@ -3460,6 +3429,7 @@ async function aiKopyala(parselId){
   const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
   const { data:yl } = await sb.from("parcel_years").select("*").eq("parcel_id",parselId).order("yil",{ascending:false});
   const { data:et } = await sb.from("parcel_tags").select("tags(name)").eq("parcel_id",parselId);
+  const { data:pc } = await sb.from("parca").select("m2,satilik,satildi,m2_fiyat").eq("parcel_id",parselId);
   const y = yl?.[0] || {};
   const etiket = (et||[]).map(e=>e.tags?.name).filter(Boolean);
 
@@ -3470,7 +3440,7 @@ async function aiKopyala(parselId){
     `Niteliği: ${p.nitelik||"—"}`,
     p.mevkii ? `Mevkii: ${p.mevkii}` : null,
     p.lat ? `Koordinat: ${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}` : null,
-    y.tapu_durumu === "hisseli" ? `Tapu: hisseli (${y.hisse_pay||"?"}), payımız ${nf(y.hisse_m2)} m²` : "Tapu: tek tapu",
+    (pc||[]).length ? `Parçalar: ${pc.length} adet, ${pc.filter(o=>o.satilik && !o.satildi).length} tanesi satılık` : null,
     y.m2_fiyat ? `m² fiyatı: ${nf(y.m2_fiyat)} ₺` : null,
     y.toplam_fiyat ? `Toplam fiyat: ${nf(y.toplam_fiyat)} ₺` : null,
     y.malik ? `Malik: ${String(y.malik).replace(/\n/g,", ")}` : null,
