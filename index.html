@@ -457,7 +457,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 2.4";
+const SURUM = "beta 2.5";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -3267,18 +3267,14 @@ function capSeffafPng(p, cfg, mod, ayar){
 
       if(mod === 3){
         const om = E(agirlikMerkezi(d));
-        const ol = parcaOlcu(d);
         x.textAlign = "center"; x.textBaseline = "middle";
         x.lineWidth = 7; x.strokeStyle = tema.yaziGolge;
-        x.font = "700 60px Arial";
+        x.font = "700 62px Arial";
         const no = String(bilgi.no || (i+1));
-        x.strokeText(no, om[0], om[1]-34); x.fillStyle = tema.yaziRenk; x.fillText(no, om[0], om[1]-34);
-        x.font = "700 34px Arial";
+        x.strokeText(no, om[0], om[1]-20); x.fillStyle = tema.yaziRenk; x.fillText(no, om[0], om[1]-20);
+        x.font = "700 36px Arial";
         const m2 = nfAkilli(bilgi.m2 ?? alanHesap(d)) + " m²";
-        x.strokeText(m2, om[0], om[1]+14); x.fillText(m2, om[0], om[1]+14);
-        x.font = "700 24px Arial";
-        const ov = `${ol.en.toFixed(1).replace(".",",")} × ${ol.boy.toFixed(1).replace(".",",")} m`;
-        x.strokeText(ov, om[0], om[1]+52); x.fillText(ov, om[0], om[1]+52);
+        x.strokeText(m2, om[0], om[1]+28); x.fillText(m2, om[0], om[1]+28);
       }
     });
 
@@ -3603,6 +3599,14 @@ function sunumCap(duzenleIx){
         <div class="stilSecim" id="temaSecim"></div>
       </div>
 
+      ${kayitli?`<div class="card" id="renkKart">
+        <div class="bolum"><span class="rz kirmizi">${svg("tag")}</span><b>Parça Renkleri</b>
+          <button class="pill sade" onclick="capRenkSifirla()">sıfırla</button></div>
+        <p class="ipuc" style="margin:0 0 10px">Bu renkler sadece bu sunum görselinde geçerli;
+          çap dosyandaki renkler değişmez.</p>
+        <div id="renkSecim" style="display:flex;flex-wrap:wrap;gap:9px"></div>
+      </div>`:""}
+
       <div class="card">
         <div class="bolum"><span class="rz altin">${svg("tag")}</span><b>İnce Ayar</b></div>
         <div class="row2">
@@ -3626,23 +3630,41 @@ function sunumCap(duzenleIx){
   const g = k => document.getElementById(k);
   let yuklenen = a.kaynak === "yukle" ? mevcutOge?.src : null;
   let temaIx = a.tema ?? 0;
+  let renkler = { ...(a.renkler || {}) };
 
   const ayarTopla = () => ({
     kaynak: g("ckaynak").value,
     mod: kayitli ? +(g("cmod")?.value || 3) : 1,
     tema: temaIx, dis: g("cdis").value, ic: g("cic").value,
-    dolgu: (+g("cdolgu").value)/100
+    dolgu: (+g("cdolgu").value)/100,
+    renkler: { ...renkler }
   });
 
   const onizle = () => {
     const ay = ayarTopla();
     if(ay.kaynak === "yukle") return;
     try{
-      const cfg = (ay.mod === 1 || !kayitli) ? null : kayitli;
+      const cfg = (ay.mod === 1 || !kayitli) ? null : capRenkUygula(kayitli, renkler);
       const png = capSeffafPng(p, cfg, ay.mod, ay);
       g("capOniz").src = png;
     }catch(e){ toast("Önizleme çizilemedi: " + (e.message||e)); }
   };
+
+  const renkCiz = () => {
+    const kutu = g("renkSecim");
+    if(!kutu || !kayitli) return;
+    kutu.innerHTML = (kayitli.parcalar||[]).map((o,i)=>`
+      <label style="display:flex;flex-direction:column;align-items:center;gap:4px;margin:0">
+        <input type="color" id="pr_${i}" value="${renkler[i] || o.renk || "#FFFFFF"}"
+          style="width:44px;height:40px;padding:3px;border-radius:10px">
+        <span style="font-size:10.5px;color:var(--ink-3);font-family:'IBM Plex Mono',monospace">${esc(o.no||(i+1))}</span>
+      </label>`).join("");
+    (kayitli.parcalar||[]).forEach((o,i)=>{
+      const el = g("pr_"+i);
+      if(el) el.oninput = () => { renkler[i] = el.value; onizle(); };
+    });
+  };
+  capRenkSifirla = () => { renkler = {}; renkCiz(); onizle(); };
 
   const temaCiz = () => {
     const kutu = g("temaSecim");
@@ -3670,6 +3692,7 @@ function sunumCap(duzenleIx){
   g("cic").oninput = onizle;
   g("cdolgu").oninput = onizle;
   temaCiz();
+  renkCiz();
   kaynakGun();
 
   g("capDosya").onclick = async () => {
@@ -3688,7 +3711,7 @@ function sunumCap(duzenleIx){
     }else{
       if(!p.geojson) return toast("Bu parselin sınır çizimi yok");
       try{
-        const cfg = (ay.mod === 1 || !kayitli) ? null : kayitli;
+        const cfg = (ay.mod === 1 || !kayitli) ? null : capRenkUygula(kayitli, renkler);
         src = capSeffafPng(p, cfg, ay.mod, ay);
         ank = SON_CAP_ANKRAJ;
       }catch(e){ return toast("Çap çizilemedi: " + (e.message||e)); }
@@ -3704,6 +3727,26 @@ function sunumCap(duzenleIx){
 }
 
 let capTemaSec = () => {};
+let capRenkSifirla = () => {};
+
+// sunuma ozel renkleri capin kayitli duzenine uygula
+function capRenkUygula(kayitli, renkler){
+  if(!kayitli) return kayitli;
+  const kopya = JSON.parse(JSON.stringify(kayitli));
+  let ix = 0;
+  const boya = liste => (liste||[]).forEach(o=>{
+    if(renkler && renkler[ix]) o.renk = renkler[ix];
+    ix++;
+  });
+  (kopya.bloklar||[]).forEach(b=>{
+    if(b.tip === "yol"){ boya(b.sol); boya(b.sag); }
+    else boya(b.parcalar);
+  });
+  // duz liste de guncellensin
+  ix = 0;
+  (kopya.parcalar||[]).forEach(o=>{ if(renkler && renkler[ix]) o.renk = renkler[ix]; ix++; });
+  return kopya;
+}
 
 // tema onizleme karesi
 function capTemaOnizleme(canvas, ix){
