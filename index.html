@@ -522,7 +522,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 3.3";
+const SURUM = "beta 3.4";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -2746,6 +2746,19 @@ function parcaKur(toplam, mevcut){
 
 function blokParcalari(b){ return b.tip === "yol" ? b.sol.concat(b.sag) : b.parcalar; }
 
+// parselin yonune gore iki yanin adi: dikey parselde sol/sag, yatay parselde alt/ust
+function yanAdlari(){
+  try{
+    const M = PARCA.geometri;
+    if(!M) return { sol:"SOL", sag:"SAĞ" };
+    let ana = anaYon(M);
+    if(PARCA.ters) ana = [-ana[0], -ana[1]];
+    const dik = [-ana[1], ana[0]];
+    return Math.abs(dik[0]) >= Math.abs(dik[1])
+      ? { sol:"SOL", sag:"SAĞ" } : { sol:"ALT", sag:"ÜST" };
+  }catch(e){ return { sol:"SOL", sag:"SAĞ" }; }
+}
+
 function numaralariTazele(){
   let n = 0;
   PARCA.bloklar.forEach(b=>blokParcalari(b).forEach(o=>{ n++; if(!String(o.no||"").trim()) o.no = String(n); }));
@@ -2802,7 +2815,8 @@ function bloklariCiz(){
         <button class="pill sade" onclick="parcaEkle(${i},'${yer}')">+ parça</button>
       </div>`;
     return `<div class="card" style="padding:12px">${bas}
-      ${sutun("sol","SOL")}<div style="height:10px"></div>${sutun("sag","SAĞ")}
+      ${(()=>{ const y = yanAdlari();
+        return sutun("sol", y.sol) + `<div style="height:10px"></div>` + sutun("sag", y.sag); })()}
       <div class="ipuc" style="margin:10px 2px 0">Yol bu bloğun ortasından geçer; sol ve sağ kendi içinde dizilir.</div>
     </div>`;
   }).join("");
@@ -4725,7 +4739,10 @@ function yolGenisligiOner(alan){
 function capYerlesim(M, cfg){
   let ana = anaYon(M);
   if(cfg.ters) ana = [-ana[0], -ana[1]];
-  const dik = [-ana[1], ana[0]];
+  let dik = [-ana[1], ana[0]];
+  // dik ekseni tutarli yone baksin: agirlikli olarak saga, dikey ise yukari
+  const yatayMi = Math.abs(dik[0]) >= Math.abs(dik[1]);
+  if((yatayMi && dik[0] < 0) || (!yatayMi && dik[1] < 0)) dik = [-dik[0], -dik[1]];
   const bos = { parcalar:[], yol:[], ana, dik, yolGenislik:0, yolAlan:0 };
 
   const bloklar = (cfg.bloklar||[]).map(b=>{
