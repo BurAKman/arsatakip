@@ -457,7 +457,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 2.5";
+const SURUM = "beta 2.6";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -3614,7 +3614,8 @@ function sunumCap(duzenleIx){
           <div class="field"><label>Parça çizgisi</label><input type="color" id="cic" value="${a.ic||"#FFFFFF"}" style="height:46px"></div>
         </div>
         <div class="field" style="margin:0"><label>Dolgu koyuluğu</label>
-          <input type="range" id="cdolgu" min="0" max="90" value="${Math.round((a.dolgu??.42)*100)}" style="padding:0"></div>
+          <input type="range" id="cdolgu" min="0" max="100" value="${Math.round((a.dolgu??.9)*100)}" style="padding:0">
+          <p class="ipuc" style="margin:8px 2px 0">Sola çekersen saydam, sağa çekersen parçalar dümdüz renk olur.</p></div>
       </div>
 
       <div class="card">
