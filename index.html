@@ -522,7 +522,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 2.9";
+const SURUM = "beta 3.0";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1427,7 +1427,7 @@ function parselSatir(r){
     <span class="kod">${esc(p.ada||"—")}/${esc(p.parsel)}</span>
     <button class="orta" onclick="go('parsel','${p.id}')">
       <b>${esc(p.nitelik||"Parsel")}</b>
-      <small>${nf(p.alan_m2)} m²${r.aktif?"":" · pasif"}</small></button>
+      <small>${nf2(gercekAlan(p))} m²${r.aktif?"":" · pasif"}</small></button>
     <span class="sag">
       <span class="dot ${r.aktif?"on":"off"}"></span>
       ${ME.role==='admin'?`<button class="sil" aria-label="Sil" onclick="parselSil('${r.id}','${p.id}','${esc(p.mahalle)} ${esc(p.ada||"")}/${esc(p.parsel)}')">${svg("trash")}</button>`:""}
@@ -1695,7 +1695,7 @@ function fiyatSatir(r){
       <span class="kod" style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--gold);background:var(--gold-soft);border-radius:8px;padding:6px 10px">${esc(p.ada||"—")}/${esc(p.parsel)}</span>
       <span class="pill ${hisseli?"gold":"on"}">${hisseli?"hisseli · "+esc(r.hisse_pay||"?"):"tek tapu"}</span>
       <span class="dot ${r.aktif?"on":"off"}" style="margin-left:auto"></span></div>
-    <div class="kv" style="margin-top:10px"><span>Alan</span><b class="mono">${nf(p.alan_m2)} m²</b></div>
+    <div class="kv" style="margin-top:10px"><span>Alan</span><b class="mono">${nf2(gercekAlan(p))} m²</b></div>
     <div class="kv"><span>Payınız</span><b class="mono">${hisseli?nf(r.hisse_m2)+" m²":"tamamı"}</b></div>
     <div class="kv"><span>m² fiyatı</span><b class="mono">${nf(r.m2_fiyat)} ₺</b></div>
     <div class="kv"><span>Toplam</span><b class="mono">${nf(r.toplam_fiyat)} ₺</b></div>
@@ -1718,13 +1718,13 @@ async function fiyatDuzen(id){
     <div class="card">
       <div style="font-size:12px;color:var(--ink-3)">${esc(duzgun(p.il))} · ${esc(duzgun(p.ilce))} · ${esc(duzgun(p.mahalle))}</div>
       <div style="font-size:17px;font-weight:600;margin-top:3px">Ada ${esc(p.ada||"—")} · Parsel ${esc(p.parsel)}</div>
-      <div class="kv" style="margin-top:8px"><span>Yüzölçümü</span><b class="mono">${nf(p.alan_m2)} m²</b></div>
+      <div class="kv" style="margin-top:8px"><span>Yüzölçümü</span><b class="mono">${nf2(gercekAlan(p))} m²</b></div>
       <div class="kv"><span>Niteliği</span><b>${esc(p.nitelik||"—")}</b></div>
       ${p.lat?`<button class="btn ghost" style="margin-top:12px" id="tazele">TKGM'den Tazele</button>`:""}
     </div>
 
-    <div style="display:none"><div class="field"><label>Malik</label>
-      <textarea id="mlk" rows="3" placeholder="Tapudaki isimler, hisseleriyle birlikte">${esc(r.malik||"")}</textarea></div>
+    <div class="field" style="display:none"><label>Malik</label>
+      <textarea id="mlk" rows="3">${esc(r.malik||"")}</textarea></div>
 
     <h3 style="font-size:14px;margin:20px 0 10px">Fiyat ve ilan</h3>
     <div class="field"><label>m² fiyatı (₺)</label><input id="mf" inputmode="decimal" value="${r.m2_fiyat??""}"></div>
@@ -3313,7 +3313,7 @@ async function yapayZeka(){
   document.getElementById("aiList").innerHTML = await parselSecici("yapayZekaListe", p=>`
     <div class="rw">
       <span class="kod">${esc(p.ada||"—")}/${esc(p.parsel)}</span>
-      <span class="orta"><b>${nf(p.alan_m2)} m²</b><small>${esc(duzgun(p.mahalle))}</small></span>
+      <span class="orta"><b>${nf2(gercekAlan(p))} m²</b><small>${esc(duzgun(p.mahalle))}</small></span>
       <span class="sag"><button class="pill gold" onclick="aiKopyala('${p.id}')">kopyala</button></span>
     </div>`);
 }
@@ -4417,7 +4417,7 @@ async function kmlListele(){
   document.getElementById("kl").innerHTML = await parselSecici("kmlListele", p=>`
     <div class="rw">
       <span class="kod">${esc(p.ada||"—")}/${esc(p.parsel)}</span>
-      <span class="orta"><b>${nf(p.alan_m2)} m²</b>
+      <span class="orta"><b>${nf2(gercekAlan(p))} m²</b>
         <small>${p.geojson?"sınır çizimi var":"çizim yok, TKGM'den tazele"}</small></span>
       <span class="sag">
         ${p.geojson?`<button class="pill gold" onclick="kmlIndirParsel('${p.id}')">KML</button>`:""}
@@ -4436,7 +4436,7 @@ async function capListele(){
   document.getElementById("cl").innerHTML = await parselSecici("capListele", p=>`
     <div class="rw">
       <span class="kod">${esc(p.ada||"—")}/${esc(p.parsel)}</span>
-      <span class="orta"><b>${nf(p.alan_m2)} m²</b>
+      <span class="orta"><b>${nf2(gercekAlan(p))} m²</b>
         <small>${p.geojson?"sınır çizimi hazır":"önce TKGM'den tazele"}</small></span>
       <span class="sag">
         ${ME.role!=='uye'&&p.geojson?`<button class="pill gold" onclick="go('capAyar','${p.id}')">çizdir</button>`:""}
