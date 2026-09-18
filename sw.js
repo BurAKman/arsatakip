@@ -3,14 +3,16 @@
 // Strateji: HTML her zaman once agdan (guncelleme aninda gelsin),
 // gorseller ve kutuphaneler once onbellekten (hizli acilsin).
 
-const SURUM = "cc-v3";
+const SURUM = "cc-v5";
 const TEMEL = [
   "./",
   "./index.html",
   "./manifest.json",
   "./logo.png",
   "./icon.png",
-  "./loading.png"
+  "./loading.png",
+  "./loading-mordor.jpg",
+  "./mordor-fon.jpg"
 ];
 
 self.addEventListener("install", (e) => {
