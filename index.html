@@ -26,7 +26,7 @@
   --r:16px;
 }
 .top{align-items:flex-start}
-.ustSag{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:0 0 auto}
+.ustSag{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:0 0 auto;margin-left:6px}
 .ustIkon{display:flex;gap:7px}
 .surumRozet.ufak{font-size:8px;letter-spacing:.12em;padding:2px 7px}
 .ustSag .zaman{margin:0;font-size:10px;text-align:right;white-space:nowrap}
@@ -122,8 +122,8 @@ a{color:var(--gold);text-decoration:none}
 #acilis[data-tema="loca"] .yuk{color:rgba(236,231,242,.45);font-family:Georgia,serif;letter-spacing:.34em}
 
 /* Mordor acilis: tam ekran gorsel + alev bari */
-.lgKare{position:fixed;inset:0;width:100vw;height:100vh;
-  background:url('loading-mordor.jpg?v=5') center center / cover no-repeat}
+.lgKare{position:relative;width:min(100vw,100vh);aspect-ratio:1/1;margin:auto;
+  background:url('loading-mordor.jpg?v=6') center center / contain no-repeat}
 .lgBar{position:absolute;left:26.5%;right:31.5%;top:88.4%;height:2.6%;border-radius:2px;overflow:hidden;
   background:rgba(20,8,4,.55)}
 .lgBar i{display:block;height:100%;width:0;border-radius:2px;
@@ -155,12 +155,12 @@ a{color:var(--gold);text-decoration:none}
 /* ---- ust bar ---- */
 .top{display:flex;align-items:center;gap:11px;padding:14px 0 12px}
 .top h1{font-size:19px;flex:1}
-.logo{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
+.logo{display:flex;align-items:center;gap:9px;flex:1 1 auto;min-width:0;overflow:hidden}
 .logo .mark{width:clamp(62px,17vw,76px);height:clamp(62px,17vw,76px);border-radius:50%;
   overflow:visible;flex:0 0 auto;border:0;background:transparent;box-shadow:none}
 .logo .mark img{width:100%;height:100%;object-fit:contain;display:block;
   filter:drop-shadow(0 2px 8px rgba(0,0,0,.6))}
-.logo b{font-size:clamp(14px,4.4vw,18px);font-weight:300;letter-spacing:.14em;text-indent:.14em;display:block;
+.logo b{font-size:clamp(12.5px,3.7vw,17px);max-width:100%;overflow:hidden;text-overflow:ellipsis;font-weight:300;letter-spacing:.14em;text-indent:.14em;display:block;
   line-height:1.15;white-space:nowrap;
   color:transparent;background:linear-gradient(180deg,#FFFFFF,#F2E7C9 46%,#C9A94E);
   -webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 1px 6px rgba(0,0,0,.6))}
@@ -176,17 +176,16 @@ body[data-tema="vitrin"] .logo span{font-weight:700;letter-spacing:.2em;font-siz
   background-image:linear-gradient(180deg,#F2F5F8 0%,#B9C2CA 42%,#6E767E 72%,#9AA3AB 100%);
   -webkit-background-clip:text;background-clip:text;
   filter:drop-shadow(0 1px 1px rgba(0,0,0,.85))}
-body[data-tema="vitrin"] .logo span::before{background:linear-gradient(90deg,#E4571A,transparent)}
+
 body[data-tema="loca"] .logo span{color:rgba(201,169,97,.75);font-family:Georgia,serif;letter-spacing:.2em}
 /* logo cercevesi temaya gore */
 body[data-tema="vitrin"] .logo .mark{border:0;box-shadow:none;
   filter:drop-shadow(0 0 10px rgba(216,69,58,.35))}
 body[data-tema="loca"] .logo .mark{border:0;box-shadow:none;
   filter:drop-shadow(0 0 10px rgba(201,169,97,.32))}
-.logo span{font-size:8.5px;letter-spacing:.26em;text-indent:.26em;text-transform:uppercase;display:block;margin-top:5px;
-  color:rgba(227,192,90,.72);font-weight:500;position:relative;padding-top:5px}
-.logo span::before{content:"";position:absolute;top:0;left:0;width:26px;height:1px;
-  background:linear-gradient(90deg,rgba(227,192,90,.8),transparent)}
+.logo span{font-size:8.5px;letter-spacing:.24em;text-transform:uppercase;display:block;margin-top:4px;
+  color:rgba(227,192,90,.72);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 .ibtn.geri{width:44px;height:44px;border-radius:14px;border:1px solid rgba(227,192,90,.42);
   background:linear-gradient(155deg,rgba(227,192,90,.26),rgba(227,192,90,.08));
   box-shadow:0 3px 12px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.18)}
@@ -331,7 +330,7 @@ select option{background:#101614;color:var(--ink)}
 body[data-tema="vitrin"] .vitrin{display:flex;flex-direction:column;gap:clamp(4px,.7vh,7px)}
 body[data-tema="vitrin"] .kurSerit{position:relative;overflow:hidden;
   border-radius:24px 24px 10px 10px;
-  height:clamp(52px,7.2vh,68px);display:flex;align-items:center;padding:0 18px;
+  height:clamp(58px,8vh,76px);display:flex;align-items:center;padding:0 20px;
   background:
     radial-gradient(130% 170% at 50% -40%,rgba(224,31,51,.34),transparent 62%),
     linear-gradient(180deg,rgba(52,58,63,.86),rgba(18,20,22,.82) 52%,rgba(32,36,40,.86));
@@ -340,22 +339,22 @@ body[data-tema="vitrin"] .kurSerit{position:relative;overflow:hidden;
     inset 0 -16px 28px rgba(224,87,26,.12)}
 body[data-tema="vitrin"] .kurSerit::before{content:"";position:absolute;left:10%;right:10%;bottom:0;height:2px;
   background:linear-gradient(90deg,transparent,#E4571A,#E01F33,#E4571A,transparent);opacity:.85;z-index:2}
-body[data-tema="vitrin"] .kurSerit .rates{position:relative;z-index:1;margin:0;font-size:12.5px}
+body[data-tema="vitrin"] .kurSerit .rates{position:relative;z-index:1;margin:0;font-size:13px;
+  letter-spacing:.04em;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;width:100%}
 body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;left:-40%;width:38%;height:220%;
   pointer-events:none;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
   transform:rotate(18deg);animation:camParla 8s ease-in-out infinite}
 .serit{position:relative;overflow:hidden;width:100%;border:0;padding:0;cursor:pointer;
   height:clamp(44px,6.4vh,60px);border-radius:10px;
-  background:linear-gradient(180deg,rgba(46,51,56,.7),rgba(14,16,18,.62) 50%,rgba(28,32,36,.7));
+  background:linear-gradient(90deg,rgba(26,29,32,.94) 0%,rgba(26,29,32,.88) 42%,
+    rgba(26,29,32,.34) 72%,rgba(26,29,32,.12) 100%);
   border:1px solid rgba(255,255,255,.12);
   box-shadow:0 3px 12px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.12)}
 /* yazinin arkasi net kalsin diye sol tarafa koyu perde */
-.serit .sIcerik::before{content:"";position:absolute;left:-60px;right:-14px;top:-12px;bottom:-12px;
-  background:linear-gradient(90deg,rgba(8,9,10,.88) 0%,rgba(8,9,10,.7) 62%,transparent 100%);
-  border-radius:10px;z-index:-1}
-.serit .sIcerik{z-index:1}
-.serit.ikincil{background:linear-gradient(180deg,rgba(38,42,46,.68),rgba(12,14,16,.6) 50%,rgba(24,27,30,.68))}
-.serit .sDoku,.kurSerit .sDoku{position:absolute;inset:0;pointer-events:none;
+.serit .sIcerik{z-index:2;text-shadow:0 1px 4px rgba(0,0,0,.95), 0 0 12px rgba(0,0,0,.7)}
+.serit.ikincil{background:linear-gradient(90deg,rgba(20,23,26,.94) 0%,rgba(20,23,26,.86) 42%,
+  rgba(20,23,26,.3) 72%,rgba(20,23,26,.1) 100%)}
+.serit .sDoku,.kurSerit .sDoku{position:absolute;inset:0;pointer-events:none;z-index:1;
   background:repeating-linear-gradient(180deg,rgba(255,255,255,.045) 0 1px,transparent 1px 4px)}
 .serit.kizil .sCizgi{background:linear-gradient(180deg,#E01F33,#6B0810);
   box-shadow:0 0 12px rgba(224,31,51,.5)}
@@ -853,7 +852,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 5.1";
+const SURUM = "beta 5.4";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -2705,13 +2704,13 @@ let SON_POTANSIYEL = null;
 let PARCA = { bloklar:[], toplam:0, geometri:null, yolAlan:0, yolGenislik:0,
               p:null, enAzYol:3, ters:false, yolTipi:"parsel", yolKonum:"oto",
               capTema:"yatay", olculer:true,
-              resmiGenislik:0, resmiKenar:"alt", resmiAlan:0, resmiAday:null };
+              resmiGenislik:0, resmiKenar:"alt", resmiAlan:0, yolKaydir:0 };
 
 let PSAYAC = 0;
 const yeniParca = (m2) => {
   const v = Number(m2);
   const guvenli = (isFinite(v) && v > 0) ? Math.round(v*100)/100 : 200;
-  return { id: ++PSAYAC, no:"", m2: guvenli, renk:"#FFFFFF" };
+  return { id: ++PSAYAC, no:"", m2: guvenli, renk:"#C6D9A7" };
 };
 
 function parcaAyarHtml(){
@@ -2746,12 +2745,21 @@ function parcaAyarHtml(){
           <option value="3">3 m</option>
           <option value="7">7 m</option></select></div>
         <div class="field" style="margin:0 0 10px"><label>Hangi kenardan</label><select id="prk">
-          <option value="alt">Alt</option><option value="ust">Üst</option>
-          <option value="sol">Sol</option><option value="sag">Sağ</option></select></div>
+          <option value="alt">Alt kenar</option><option value="ust">Üst kenar</option>
+          <option value="sol">Sol kenar</option><option value="sag">Sağ kenar</option></select></div>
       </div>
       <div class="ipuc" id="resmiNot" style="margin:0">Otomatik bul dersen dört kenarın komşusunu sorgularım:
         bitişik parsel varsa yol yoktur, arada boşluk varsa orası resmî yoldur. Resmî yol parselin dışında
         çizilir, alandan düşülmez.</div>
+    </div>
+    <div class="card">
+      <div class="bolum"><span class="rz yesil">${svg("cetvel")}</span><b>Parsel Yolu</b></div>
+      <div class="field" style="margin:0 0 10px"><label>Genişlik (m)</label>
+        <input id="pyg" inputmode="decimal" value="${PARCA.enAzYol || 3}" onfocus="this.select()"></div>
+      <div class="field" style="margin:0"><label>Yolun yatay konumu · sola/sağa kaydır</label>
+        <input type="range" id="pyk" min="-40" max="40" value="${Math.round((PARCA.yolKaydir||0)*100)}" style="padding:0">
+        <p class="ipuc" style="margin:8px 2px 0">Yol, iki yanlı blokların arasından geçer; sürgüyle
+          güzergâhı sola ya da sağa kaydırabilirsin.</p></div>
     </div>
     <div class="card" id="capOzet" style="font-size:13px"></div>`;
 }
@@ -2760,9 +2768,9 @@ function parcaKur(toplam, mevcut){
   PARCA.toplam = toplam;
   PARCA.bloklar = (mevcut && mevcut.length) ? mevcut.map(b=>({
     tip: b.tip === "yol" ? "yol" : "tam",
-    parcalar: (b.parcalar||[]).map(o=>({ id:++PSAYAC, no:o.no||"", m2:+o.m2||1, renk:o.renk||"#FFFFFF" })),
-    sol: (b.sol||[]).map(o=>({ id:++PSAYAC, no:o.no||"", m2:+o.m2||1, renk:o.renk||"#FFFFFF" })),
-    sag: (b.sag||[]).map(o=>({ id:++PSAYAC, no:o.no||"", m2:+o.m2||1, renk:o.renk||"#FFFFFF" }))
+    parcalar: (b.parcalar||[]).map(o=>({ id:++PSAYAC, no:o.no||"", m2:+o.m2||1, renk:o.renk||"#C6D9A7" })),
+    sol: (b.sol||[]).map(o=>({ id:++PSAYAC, no:o.no||"", m2:+o.m2||1, renk:o.renk||"#C6D9A7" })),
+    sag: (b.sag||[]).map(o=>({ id:++PSAYAC, no:o.no||"", m2:+o.m2||1, renk:o.renk||"#C6D9A7" }))
   })) : [];
   if(!PARCA.bloklar.length)
     PARCA.bloklar = [{ tip:"tam", parcalar:[yeniParca(Math.round(toplam*0.5))], sol:[], sag:[] }];
@@ -2783,6 +2791,10 @@ function parcaKur(toplam, mevcut){
       sol:[yeniParca(pay), yeniParca(pay)], sag:[yeniParca(pay), yeniParca(pay)] });
     numaralariTazele(); bloklariCiz();
   };
+  const yg = g("pyg"), yk2 = g("pyk");
+  if(yg) yg.oninput = () => { PARCA.enAzYol = Math.max(1, Math.min(12, sayiCoz(yg.value) || 3)); ozetCiz(); };
+  if(yk2) yk2.oninput = () => { PARCA.yolKaydir = (+yk2.value)/100; ozetCiz(); };
+
   const rg = g("prg"), rk = g("prk");
   if(rg){ rg.value = String(PARCA.resmiGenislik || 0);
     rg.onchange = () => { PARCA.resmiGenislik = +rg.value; ozetCiz(); }; }
@@ -2827,7 +2839,7 @@ function parcaSatirHtml(o, bi, yer, j){
       <input id="pn${o.id}" value="${esc(o.no)}" onfocus="this.select()"
         style="width:54px;text-align:center;padding:9px 4px">
       <span style="flex:1"></span>
-      <input type="color" id="pr${o.id}" value="${o.renk}" style="width:44px;height:38px;padding:3px;border-radius:9px">
+      <input type="color" id="pr${o.id}" value="${o.renk || "#C6D9A7"}" style="width:44px;height:38px;padding:3px;border-radius:9px">
       <button class="sil" style="width:34px;height:34px" onclick="parcaSil(${bi},'${yer}',${j})">${svg("trash")}</button>
     </div>
     <div style="display:flex;gap:7px;align-items:center">
@@ -2999,6 +3011,7 @@ function ozetCiz(){
 function parcaCfg(){
   return { enAzYol: 3, ters: PARCA.ters, yolTipi: PARCA.yolTipi, yolKonum: PARCA.yolKonum,
     resmiGenislik: PARCA.resmiGenislik || 0, resmiKenar: PARCA.resmiKenar || "alt",
+    yolKaydir: PARCA.yolKaydir || 0,
     capTema: "yatay", olculer: PARCA.olculer !== false,
     bloklar: PARCA.bloklar.map(b=> b.tip === "yol"
       ? { tip:"yol", sol:b.sol.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })),
@@ -3788,8 +3801,14 @@ function capSeffafPng(p, cfg, mod, ayar){
   const halka = (g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0]).slice();
   if(halka.length>1 && halka[0][0]===halka[halka.length-1][0] && halka[0][1]===halka[halka.length-1][1]) halka.pop();
   const M = metreye(halka);
-  const minX = Math.min(...M.map(k=>k[0])), maxX = Math.max(...M.map(k=>k[0]));
-  const minY = Math.min(...M.map(k=>k[1])), maxY = Math.max(...M.map(k=>k[1]));
+  // resmi yol disarida kaldigi icin cizim sinirlarina onu da kat
+  let kapsam = M.slice();
+  try{
+    const on = capYerlesim(M, cfg || {});
+    if(on.resmiYol && on.resmiYol.length > 2) kapsam = kapsam.concat(on.resmiYol);
+  }catch(e){}
+  const minX = Math.min(...kapsam.map(k=>k[0])), maxX = Math.max(...kapsam.map(k=>k[0]));
+  const minY = Math.min(...kapsam.map(k=>k[1])), maxY = Math.max(...kapsam.map(k=>k[1]));
   const B = 1600, pay = 50;
   const olcek = Math.min((B-pay*2)/((maxX-minX)||1), (B-pay*2)/((maxY-minY)||1));
   const W = Math.round((maxX-minX)*olcek + pay*2), H = Math.round((maxY-minY)*olcek + pay*2);
@@ -5014,7 +5033,9 @@ function capYerlesim(M, cfg){
 
     // iki yanli: yol ortadan, sol ve sag kendi icinde alt alta
     const oS = b2.sol.reduce((t,o)=>t+o.m2,0), oG = b2.sag.reduce((t,o)=>t+o.m2,0);
-    const ayirici = cdMin + cW * (oS / Math.max(1, oS + oG));
+    let ayirici = cdMin + cW * (oS / Math.max(1, oS + oG));
+    ayirici += cW * (+cfg.yolKaydir || 0);       // elle kaydirma
+    ayirici = Math.max(cdMin + w, Math.min(cdMax - w, ayirici));
     const yd0 = ayirici - w/2, yd1 = ayirici + w/2;
 
     const ys = serit(calisma, a0, a1, yd0, yd1);
@@ -5035,7 +5056,9 @@ function capYerlesim(M, cfg){
     const b3 = bloklar[yolIx];
     if(b3){
       const oS = b3.sol.reduce((t,o)=>t+o.m2,0), oG = b3.sag.reduce((t,o)=>t+o.m2,0);
-      const ayirici = cdMin + cW * (oS / Math.max(1, oS + oG));
+      let ayirici = cdMin + cW * (oS / Math.max(1, oS + oG));
+      ayirici += cW * (+cfg.yolKaydir || 0);
+      ayirici = Math.max(cdMin + w, Math.min(cdMax - w, ayirici));
       const kd0 = ayirici - w/2, kd1 = ayirici + w/2;
       const altKenar = (rKenar === "alt" || rKenar === "sol");
       kol = altKenar
@@ -5496,8 +5519,14 @@ function capCizPng(p, cfg, kucuk){
   else capCerceve(x, G, Y, "PARSELASYON KROKİSİ");
   const S = k => kucuk ? Math.max(8, Math.round(k*0.66)) : k;
 
-  const minX = Math.min(...M.map(k=>k[0])), maxX = Math.max(...M.map(k=>k[0]));
-  const minY = Math.min(...M.map(k=>k[1])), maxY = Math.max(...M.map(k=>k[1]));
+  // resmi yol disarida kaldigi icin cizim sinirlarina onu da kat
+  let kapsam = M.slice();
+  try{
+    const on = capYerlesim(M, cfg || {});
+    if(on.resmiYol && on.resmiYol.length > 2) kapsam = kapsam.concat(on.resmiYol);
+  }catch(e){}
+  const minX = Math.min(...kapsam.map(k=>k[0])), maxX = Math.max(...kapsam.map(k=>k[0]));
+  const minY = Math.min(...kapsam.map(k=>k[1])), maxY = Math.max(...kapsam.map(k=>k[1]));
   const alanG = G - kenar*2, alanY = Y - ustAlan - altAlan;
   const olcek = Math.min(alanG/((maxX-minX)||1e-9), alanY/((maxY-minY)||1e-9));
   const gX = kenar + (alanG - (maxX-minX)*olcek)/2;
@@ -5529,7 +5558,8 @@ function capCizPng(p, cfg, kucuk){
     yer.parcalar.forEach((o,i)=>{
       const d = o.poly, ek = d.map(E), bilgi = o.bilgi || liste[i] || {};
       yol(ek);
-      x.fillStyle = bilgi.renk || "#C6D9A7"; x.globalAlpha = bilgi.renk ? .55 : 1; x.fill(); x.globalAlpha = 1;
+      const dolguRenk = (!bilgi.renk || bilgi.renk.toUpperCase() === "#FFFFFF") ? "#C6D9A7" : bilgi.renk;
+      x.fillStyle = dolguRenk; x.fill();
       x.lineWidth = kucuk ? 1 : 1.5; x.strokeStyle = "#1A1A1A"; x.stroke();
 
       const om = E(agirlikMerkezi(d));
@@ -5559,39 +5589,13 @@ function capCizPng(p, cfg, kucuk){
       }
     });
 
-    // parsel yolu: once tum parcalar dolgu (birlesik gorunsun), sonra seyrek cizgiler
-    (yer.yol||[]).forEach(yp=>{
-      if(!yp || yp.length < 3) return;
-      yol(yp.map(E)); x.fillStyle = "#EDF0F3"; x.fill();
-    });
-    x.save();
-    x.beginPath();
-    (yer.yol||[]).forEach(yp=>{ if(yp && yp.length > 2){ const e2 = yp.map(E);
-      e2.forEach((k,i)=> i ? x.lineTo(k[0],k[1]) : x.moveTo(k[0],k[1])); x.closePath(); } });
-    x.clip();
-    x.strokeStyle = "#C2C9D0"; x.lineWidth = 1; x.setLineDash([5,9]);
-    const adim = kucuk ? 7 : 11;
-    const kose = Math.atan2(yer.ana[1], yer.ana[0]);
-    for(let t=-Y; t<G+Y; t+=adim){
-      x.beginPath();
-      x.moveTo(t, 0); x.lineTo(t + Y*Math.tan(kose), Y);
-      x.stroke();
-    }
-    x.setLineDash([]); x.restore();
-    if((yer.yol||[]).length && !kucuk){
-      const enBuyuk = yer.yol.reduce((a,b2)=>
-        (b2.length>2 && alanHesap(b2) > (a && a.length>2 ? alanHesap(a) : 0)) ? b2 : a, yer.yol[0]);
-      if(enBuyuk && enBuyuk.length > 2){
-        const om = E(agirlikMerkezi(enBuyuk));
-        x.save(); x.translate(om[0], om[1]);
-        let ac = Math.atan2(yer.ana[1], yer.ana[0]);
-        x.rotate(-ac + (Math.abs(ac) > Math.PI/2 ? Math.PI : 0));
-        x.textAlign = "center"; x.textBaseline = "middle";
-        x.font = "700 12px Arial"; x.fillStyle = "#5A6169";
-        x.fillText(cfg.yolTipi === "resmi" ? "RESMİ YOL" : "PARSEL YOLU", 0, 0);
-        x.restore();
-      }
-    }
+    // ---- yollar: taramali serit, parcalarin uzerine ----
+    if(yer.resmiYol && yer.resmiYol.length > 2)
+      yolSeridiCiz(x, [yer.resmiYol.map(E)], yer.ana, "RESMİ YOL", kucuk);
+    const yolEkran = (yer.yol||[]).filter(p=>p && p.length > 2).map(p=>p.map(E));
+    if(yolEkran.length)
+      yolSeridiCiz(x, yolEkran, yer.ana, "PARSEL YOLU", kucuk);
+
   }else{
     yol(N); x.fillStyle = "#F4F6F0"; x.fill();
   }
