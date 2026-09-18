@@ -57,10 +57,10 @@ body[data-tema="loca"]{
 }
 body[data-tema="vitrin"]{
   background:
-    linear-gradient(180deg,rgba(8,9,10,.82) 0%,rgba(8,9,10,.9) 46%,rgba(8,9,10,.97) 100%),
-    url('mordor-fon.jpg?v=4') center 12% / 190% auto no-repeat,
-    radial-gradient(130% 100% at 50% 0%,#1C2026 0%,#08090A 64%);
-  background-attachment:scroll, fixed, fixed}
+    linear-gradient(180deg,rgba(8,9,10,.5) 0%,rgba(8,9,10,.62) 40%,rgba(8,9,10,.86) 100%),
+    url('mordor-fon.jpg?v=5') center top / cover no-repeat,
+    linear-gradient(180deg,#1C2026,#08090A);
+  background-attachment:fixed, fixed, fixed}
 body[data-tema="loca"]{ background:radial-gradient(135% 100% at 50% 0%,#241A3C 0%,#0C0814 48%,#050409 100%) fixed }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -94,7 +94,8 @@ a{color:var(--gold);text-decoration:none}
 
 /* ---- acilis ekrani ---- */
 #acilis{position:fixed;inset:0;z-index:200;background:#05070A;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:0;transition:opacity .6s ease}
+  align-items:center;justify-content:center;gap:0;transition:opacity .6s ease;overflow:hidden}
+#acilisIc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
 #acilis.git{opacity:0;pointer-events:none}
 #acilis .kare{position:relative;width:min(78vw,360px);aspect-ratio:1080/1620;max-height:58vh;
   border-radius:22px;overflow:hidden;
@@ -121,9 +122,9 @@ a{color:var(--gold);text-decoration:none}
 #acilis[data-tema="loca"] .yuk{color:rgba(236,231,242,.45);font-family:Georgia,serif;letter-spacing:.34em}
 
 /* Mordor acilis: tam ekran gorsel + alev bari */
-.lgKare{position:relative;width:min(100vw,calc(100vh * 1));aspect-ratio:1/1;max-width:100vw;max-height:100vh;
-  background:url('loading-mordor.jpg?v=4') center/contain no-repeat;margin:0 auto}
-.lgBar{position:absolute;left:26.5%;right:31.5%;top:88.4%;height:3.4%;border-radius:2px;overflow:hidden;
+.lgKare{position:fixed;inset:0;width:100vw;height:100vh;
+  background:url('loading-mordor.jpg?v=5') center center / cover no-repeat}
+.lgBar{position:absolute;left:26.5%;right:31.5%;top:88.4%;height:2.6%;border-radius:2px;overflow:hidden;
   background:rgba(20,8,4,.55)}
 .lgBar i{display:block;height:100%;width:0;border-radius:2px;
   background:linear-gradient(90deg,#8E1A06,#F0670F 45%,#FFC24A 75%,#FFE9A8);
@@ -155,22 +156,26 @@ a{color:var(--gold);text-decoration:none}
 .top{display:flex;align-items:center;gap:11px;padding:14px 0 12px}
 .top h1{font-size:19px;flex:1}
 .logo{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
-.logo .mark{width:56px;height:56px;border-radius:50%;overflow:visible;flex:0 0 auto;
-  border:1.5px solid rgba(255,255,255,.55);background:#0A0C0B;box-shadow:0 2px 12px rgba(0,0,0,.5)}
+.logo .mark{width:clamp(62px,17vw,76px);height:clamp(62px,17vw,76px);border-radius:50%;
+  overflow:visible;flex:0 0 auto;border:0;background:transparent;box-shadow:none}
 .logo .mark img{width:100%;height:100%;object-fit:contain;display:block;
   filter:drop-shadow(0 2px 8px rgba(0,0,0,.6))}
 .logo b{font-size:clamp(14px,4.4vw,18px);font-weight:300;letter-spacing:.14em;text-indent:.14em;display:block;
   line-height:1.15;white-space:nowrap;
   color:transparent;background:linear-gradient(180deg,#FFFFFF,#F2E7C9 46%,#C9A94E);
   -webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 1px 6px rgba(0,0,0,.6))}
-body[data-tema="vitrin"] .logo b{font-weight:800;letter-spacing:.22em;
-  background-image:linear-gradient(180deg,#FFE9C9 0%,#F0781E 38%,#E01F33 68%,#7A0A12 100%);
+body[data-tema="vitrin"] .logo b{font-weight:800;letter-spacing:.2em;
+  background-image:linear-gradient(180deg,#E8CDB4 0%,#C0421C 34%,#8E0E1C 66%,#4A060D 100%);
   -webkit-background-clip:text;background-clip:text;
-  filter:drop-shadow(0 0 10px rgba(224,87,26,.45))}
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.9)) drop-shadow(0 0 8px rgba(160,20,30,.35))}
 body[data-tema="loca"] .logo b{font-family:Georgia,serif;font-weight:400;letter-spacing:.22em;
   background-image:linear-gradient(180deg,#FFF6EC,#EFC79C 48%,#C9A961);
   -webkit-background-clip:text;background-clip:text}
-body[data-tema="vitrin"] .logo span{color:#C9CFD5;letter-spacing:.24em}
+body[data-tema="vitrin"] .logo span{font-weight:700;letter-spacing:.2em;font-size:9.5px;
+  color:transparent;
+  background-image:linear-gradient(180deg,#F2F5F8 0%,#B9C2CA 42%,#6E767E 72%,#9AA3AB 100%);
+  -webkit-background-clip:text;background-clip:text;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.85))}
 body[data-tema="vitrin"] .logo span::before{background:linear-gradient(90deg,#E4571A,transparent)}
 body[data-tema="loca"] .logo span{color:rgba(201,169,97,.75);font-family:Georgia,serif;letter-spacing:.2em}
 /* logo cercevesi temaya gore */
@@ -324,21 +329,32 @@ select option{background:#101614;color:var(--ink)}
 
 /* ================= MORDOR ================= */
 body[data-tema="vitrin"] .vitrin{display:flex;flex-direction:column;gap:clamp(4px,.7vh,7px)}
-body[data-tema="vitrin"] .kurSerit{position:relative;overflow:hidden;border-radius:10px;
-  height:clamp(50px,7vh,64px);display:flex;align-items:center;padding:0 16px;
-  background:linear-gradient(180deg,#2A2D30,#141618 46%,#1F2225);
-  border:1px solid rgba(255,255,255,.1);border-left:3px solid #D8453A;
-  box-shadow:0 3px 10px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.1)}
+body[data-tema="vitrin"] .kurSerit{position:relative;overflow:hidden;
+  border-radius:24px 24px 10px 10px;
+  height:clamp(52px,7.2vh,68px);display:flex;align-items:center;padding:0 18px;
+  background:
+    radial-gradient(130% 170% at 50% -40%,rgba(224,31,51,.34),transparent 62%),
+    linear-gradient(180deg,rgba(52,58,63,.86),rgba(18,20,22,.82) 52%,rgba(32,36,40,.86));
+  border:1px solid rgba(255,255,255,.14);border-top:1px solid rgba(240,120,30,.5);
+  box-shadow:0 5px 18px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.16),
+    inset 0 -16px 28px rgba(224,87,26,.12)}
+body[data-tema="vitrin"] .kurSerit::before{content:"";position:absolute;left:10%;right:10%;bottom:0;height:2px;
+  background:linear-gradient(90deg,transparent,#E4571A,#E01F33,#E4571A,transparent);opacity:.85;z-index:2}
 body[data-tema="vitrin"] .kurSerit .rates{position:relative;z-index:1;margin:0;font-size:12.5px}
 body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;left:-40%;width:38%;height:220%;
   pointer-events:none;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
   transform:rotate(18deg);animation:camParla 8s ease-in-out infinite}
 .serit{position:relative;overflow:hidden;width:100%;border:0;padding:0;cursor:pointer;
   height:clamp(44px,6.4vh,60px);border-radius:10px;
-  background:linear-gradient(180deg,#2A2D30,#141618 46%,#1F2225);
-  border:1px solid rgba(255,255,255,.1);
-  box-shadow:0 3px 10px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.1)}
-.serit.ikincil{background:linear-gradient(180deg,#232629,#101214 46%,#1A1D1F);opacity:.94}
+  background:linear-gradient(180deg,rgba(46,51,56,.7),rgba(14,16,18,.62) 50%,rgba(28,32,36,.7));
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 3px 12px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.12)}
+/* yazinin arkasi net kalsin diye sol tarafa koyu perde */
+.serit .sIcerik::before{content:"";position:absolute;left:-60px;right:-14px;top:-12px;bottom:-12px;
+  background:linear-gradient(90deg,rgba(8,9,10,.88) 0%,rgba(8,9,10,.7) 62%,transparent 100%);
+  border-radius:10px;z-index:-1}
+.serit .sIcerik{z-index:1}
+.serit.ikincil{background:linear-gradient(180deg,rgba(38,42,46,.68),rgba(12,14,16,.6) 50%,rgba(24,27,30,.68))}
 .serit .sDoku,.kurSerit .sDoku{position:absolute;inset:0;pointer-events:none;
   background:repeating-linear-gradient(180deg,rgba(255,255,255,.045) 0 1px,transparent 1px 4px)}
 .serit.kizil .sCizgi{background:linear-gradient(180deg,#E01F33,#6B0810);
@@ -837,7 +853,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 4.6";
+const SURUM = "beta 5.1";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1149,7 +1165,6 @@ function temaOnizleme(canvas, k){
 
 /* ================= ana menu ================= */
 
-let PANJUR_ACIK = false;
 
 const ANA_TEMALAR = [
   { k:"vitrin", ad:"Mordor", aciklama:"Füme, kızıl ve is. Dövme metal panjur şeritleri, görselsiz, sert ve ağır." },
@@ -1238,10 +1253,6 @@ async function anaMenu(){
   yaklasanRozet();
 }
 
-function panjurAcKapa(){
-  PANJUR_ACIK = !PANJUR_ACIK;
-  document.getElementById("panjur")?.classList.toggle("acik", PANJUR_ACIK);
-}
 
 // panjur basliginda kac yaklasan var
 async function yaklasanRozet(){
@@ -2662,172 +2673,19 @@ async function parseleIliskilendir(p, blob, ad2, tur){
 /* ================= ek veri kaynaklari ================= */
 
 // OSRM: gercek yol agindan surus suresi
-async function surusSuresi(lat1, lng1, lat2, lng2){
-  const u = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=false`;
-  const r = await zamanAsimi(tkgm(u), 15000);
-  const y = r?.routes?.[0];
-  if(!y) return null;
-  return { dakika: Math.round(y.duration/60), km: Math.round(y.distance/100)/10 };
-}
 
 // PVGIS: gunes enerjisi uretim potansiyeli (Avrupa Komisyonu, ucretsiz)
-async function gunesPotansiyeli(lat, lng, egim){
-  const aci = Math.max(0, Math.min(60, Math.round(egim || 0)));
-  const u = `https://re.jrc.ec.europa.eu/api/v5_2/PVcalc?lat=${lat.toFixed(5)}&lon=${lng.toFixed(5)}`
-    + `&peakpower=1&loss=14&angle=${aci}&outputformat=json`;
-  const r = await zamanAsimi(tkgm(u), 20000);
-  const t = r?.outputs?.totals?.fixed;
-  if(!t) return null;
-  return {
-    yillikKwh: Math.round(t.E_y),          // 1 kWp basina yillik uretim
-    gunlukKwh: Math.round(t.E_d*10)/10,
-    isinim: Math.round(t["H(i)_y"]),
-    aci
-  };
-}
 
 // Sentinel-2 NDVI: bitki ortusu zaman serisi
-async function ndviSerisi(geojson, yilSayisi){
-  if(!geojson?.geometry) return null;
-  const bitis = new Date();
-  const baslangic = new Date(bitis.getFullYear() - (yilSayisi||3), bitis.getMonth(), 1);
-  const g = geojson.geometry.type === "MultiPolygon"
-    ? { type:"Polygon", coordinates: geojson.geometry.coordinates[0] }
-    : geojson.geometry;
-
-  const { data, error } = await sb.functions.invoke(FN || "quick-task", { body:{
-    mod:"ndvi", geometry:g,
-    baslangic: baslangic.toISOString().slice(0,10) + "T00:00:00Z",
-    bitis: bitis.toISOString().slice(0,10) + "T23:59:59Z"
-  }});
-  if(error || !data || data.error) return null;
-
-  const kayitlar = [];
-  (data.data||[]).forEach(o=>{
-    const d = o.outputs?.ndvi?.bands?.B0?.stats;
-    if(!d || d.sampleCount === 0 || d.mean == null) return;
-    kayitlar.push({ tarih: o.interval.from.slice(0,7), ort: Math.round(d.mean*1000)/1000 });
-  });
-  if(kayitlar.length < 4) return null;
-
-  // yillik ortalamalar ve egilim
-  const yillar = {};
-  kayitlar.forEach(k=>{ const y = k.tarih.slice(0,4); (yillar[y] ||= []).push(k.ort); });
-  const yilOrt = Object.entries(yillar).map(([y,a])=>({ yil:y, ort: a.reduce((x,z)=>x+z,0)/a.length }));
-  const enYuksek = kayitlar.reduce((a,b)=> b.ort > a.ort ? b : a, kayitlar[0]);
-  const enDusuk  = kayitlar.reduce((a,b)=> b.ort < a.ort ? b : a, kayitlar[0]);
-  const genelOrt = kayitlar.reduce((t,k)=>t+k.ort,0)/kayitlar.length;
-
-  return { kayitlar, yilOrt, enYuksek, enDusuk, genelOrt: Math.round(genelOrt*1000)/1000 };
-}
 
 // TCMB tuketici fiyat endeksi: eski emsalleri bugune tasimak icin
 let TUFE_ONBELLEK = null;
-async function tufeEndeksi(){
-  if(TUFE_ONBELLEK) return TUFE_ONBELLEK;
-  const bugun = new Date();
-  const bas = new Date(bugun.getFullYear()-4, 0, 1);
-  const bicim = d => `${String(d.getDate()).padStart(2,"0")}-${String(d.getMonth()+1).padStart(2,"0")}-${d.getFullYear()}`;
-  try{
-    const { data, error } = await sb.functions.invoke(FN || "quick-task", { body:{
-      mod:"tcmb", seri:"TP.FG.J0", baslangic:bicim(bas), bitis:bicim(bugun) }});
-    if(error || !data || data.error || !data.items) return null;
-    const harita = {};
-    data.items.forEach(o=>{
-      const deger = parseFloat(String(o["TP_FG_J0"] ?? "").replace(",", "."));
-      if(isFinite(deger) && o.Tarih){
-        const [ay, yil] = String(o.Tarih).split("-");
-        harita[`${yil}-${String(ay).padStart(2,"0")}`] = deger;
-      }
-    });
-    TUFE_ONBELLEK = harita;
-    return harita;
-  }catch(e){ return null; }
-}
 
 // bir tarihteki fiyati bugune tasi
-function bugunkuDeger(fiyat, tarih, endeks){
-  if(!endeks || !tarih) return fiyat;
-  const anahtarlar = Object.keys(endeks).sort();
-  if(!anahtarlar.length) return fiyat;
-  const oAy = String(tarih).slice(0,7);
-  const oDeger = endeks[oAy] || endeks[anahtarlar.find(k=>k >= oAy)] || null;
-  const sonDeger = endeks[anahtarlar[anahtarlar.length-1]];
-  if(!oDeger || !sonDeger) return fiyat;
-  return fiyat * (sonDeger / oDeger);
-}
 
 // parselin sekil ozellikleri
-function sekilAnalizi(M){
-  if(!M || M.length < 3) return null;
-  const alan = alanHesap(M);
-  let cevre = 0;
-  for(let i=0;i<M.length;i++){
-    const j = (i+1)%M.length;
-    cevre += Math.hypot(M[j][0]-M[i][0], M[j][1]-M[i][1]);
-  }
-  const ana = anaYon(M), dik = [-ana[1], ana[0]];
-  const a = M.map(p=>p[0]*ana[0]+p[1]*ana[1]);
-  const d = M.map(p=>p[0]*dik[0]+p[1]*dik[1]);
-  const boy = Math.max(...a)-Math.min(...a);
-  const en  = Math.max(...d)-Math.min(...d);
-  // duzgunluk: 1 = daireye yakin, 0 = cok girintili
-  const duzgunluk = Math.round((4*Math.PI*alan/(cevre*cevre))*100)/100;
-  return {
-    cevre: Math.round(cevre), boy: Math.round(boy*10)/10, en: Math.round(en*10)/10,
-    oran: Math.round((boy/Math.max(1,en))*100)/100, duzgunluk,
-    yorum: duzgunluk >= 0.7 ? "düzgün geometri" : duzgunluk >= 0.45 ? "kabul edilebilir geometri" : "girintili / dar geometri"
-  };
-}
 
 // yola cephe uzunlugu: parsel sinirinin yola degen bolumu
-async function yolaCephe(M, halkaCoord, lat, lng){
-  const sorgu = `[out:json][timeout:25];(
-    way(around:120,${lat},${lng})[highway];
-  );out geom;`;
-  let veri = null;
-  for(const sunucu of OVER_SUNUCU){
-    try{ veri = await zamanAsimi(tkgm(sunucu + encodeURIComponent(sorgu)), 25000); if(veri?.elements) break; }catch(e){}
-  }
-  if(!veri?.elements?.length) return { uzunluk:0, yol:null };
-
-  const lat0 = halkaCoord.reduce((t,k)=>t+k[1],0)/halkaCoord.length;
-  const kx = Math.cos(lat0*Math.PI/180)*111320, ky = 110540;
-  const x0 = halkaCoord[0][0], y0 = halkaCoord[0][1];
-  const metre = (lo,la) => [ (lo-x0)*kx, (la-y0)*ky ];
-
-  const yollar = [];
-  veri.elements.forEach(e=>{
-    if(!e.geometry) return;
-    const nok = e.geometry.map(g=>metre(g.lon, g.lat));
-    for(let i=0;i<nok.length-1;i++) yollar.push({ a:nok[i], b:nok[i+1], ad:e.tags?.name, tip:e.tags?.highway });
-  });
-  if(!yollar.length) return { uzunluk:0, yol:null };
-
-  const parcaMesafe = (p, s) => {
-    const vx = s.b[0]-s.a[0], vy = s.b[1]-s.a[1];
-    const uzun = vx*vx + vy*vy;
-    let t = uzun ? ((p[0]-s.a[0])*vx + (p[1]-s.a[1])*vy)/uzun : 0;
-    t = Math.max(0, Math.min(1, t));
-    return Math.hypot(p[0]-(s.a[0]+t*vx), p[1]-(s.a[1]+t*vy));
-  };
-
-  let toplam = 0, enYakinYol = null, enYakinMesafe = Infinity;
-  for(let i=0;i<M.length;i++){
-    const j = (i+1)%M.length;
-    const orta = [ (M[i][0]+M[j][0])/2, (M[i][1]+M[j][1])/2 ];
-    const kenarUz = Math.hypot(M[j][0]-M[i][0], M[j][1]-M[i][1]);
-    let enAz = Infinity, yol = null;
-    yollar.forEach(s2=>{ const m = parcaMesafe(orta, s2); if(m < enAz){ enAz = m; yol = s2; } });
-    if(enAz < enYakinMesafe){ enYakinMesafe = enAz; enYakinYol = yol; }
-    if(enAz <= 14) toplam += kenarUz;
-  }
-  return {
-    uzunluk: Math.round(toplam*10)/10,
-    mesafe: isFinite(enYakinMesafe) ? Math.round(enYakinMesafe) : null,
-    yol: enYakinYol ? { ad: enYakinYol.ad, tip: YOL_AD[enYakinYol.tip] || enYakinYol.tip } : null
-  };
-}
 
 /* ================= potansiyel analizi ================= */
 // Ucretsiz ve acik kaynaklardan parselin yatirim potansiyelini olcer:
@@ -2835,153 +2693,10 @@ async function yolaCephe(M, halkaCoord, lat, lng){
 //  - Copernicus CORINE 2018 ve 2012: arazi ortusu ve degisimi
 //  - OpenTopoData (SRTM): yukseklik izgarasindan egim ve baki
 
-async function yukseklikIzgarasi(M, merkezNokta){
-  // parselin uzerinde 3x3 nokta ornekle
-  const lat = merkezNokta.lat, lng = merkezNokta.lng;
-  const d = 0.0008;
-  const noktalar = [];
-  for(let i=-1;i<=1;i++) for(let j=-1;j<=1;j++)
-    noktalar.push(`${(lat + i*d).toFixed(6)},${(lng + j*d).toFixed(6)}`);
-  const u = "https://api.opentopodata.org/v1/srtm30m?locations=" + encodeURIComponent(noktalar.join("|"));
-  const r = await zamanAsimi(tkgm(u), 20000);
-  const y = (r?.results||[]).map(o=>o.elevation).filter(v=>typeof v === "number");
-  if(y.length < 9) return null;
 
-  // 3x3 izgaradan egim ve baki
-  const h = (i,j) => y[i*3 + j];
-  const adimX = 111320 * Math.cos(lat*Math.PI/180) * d;
-  const adimY = 110540 * d;
-  const dzdx = ((h(0,2)+2*h(1,2)+h(2,2)) - (h(0,0)+2*h(1,0)+h(2,0))) / (8*adimX);
-  const dzdy = ((h(2,0)+2*h(2,1)+h(2,2)) - (h(0,0)+2*h(0,1)+h(0,2))) / (8*adimY);
-  const egimYuzde = Math.sqrt(dzdx*dzdx + dzdy*dzdy) * 100;
-  let bakiAci = Math.atan2(dzdy, -dzdx) * 180/Math.PI;
-  if(bakiAci < 0) bakiAci += 360;
-  const yonAd = ["Kuzey","Kuzeydoğu","Doğu","Güneydoğu","Güney","Güneybatı","Batı","Kuzeybatı"][Math.round(bakiAci/45)%8];
-  return {
-    ortalama: Math.round(y.reduce((a,b)=>a+b,0)/y.length),
-    enDusuk: Math.min(...y), enYuksek: Math.max(...y),
-    egim: Math.round(egimYuzde*10)/10,
-    baki: yonAd
-  };
-}
 
-async function yapilasmaVerisi(lat, lng){
-  const sorgu = `[out:json][timeout:25];(
-    way(around:1500,${lat},${lng})[landuse~"^(residential|industrial|commercial|construction|retail)$"];
-    way(around:600,${lat},${lng})[building];
-    node(around:1500,${lat},${lng})[place~"^(town|village)$"];
-    way(around:2500,${lat},${lng})[highway~"^(motorway|trunk|primary|secondary)$"];
-  );out center tags;`;
-  for(const sunucu of OVER_SUNUCU){
-    try{
-      const r = await zamanAsimi(tkgm(sunucu + encodeURIComponent(sorgu)), 30000);
-      if(r?.elements) return r;
-    }catch(e){}
-  }
-  return null;
-}
-
-async function corineKarsilastir(lat, lng){
-  const cek = async (yil) => {
-    const d = 0.0009;
-    const u = `https://image.discomap.eea.europa.eu/arcgis/rest/services/Corine/CLC${yil}_WM/MapServer/identify`
-      + `?f=json&geometryType=esriGeometryPoint&sr=4326&layers=all&tolerance=3&returnGeometry=false`
-      + `&imageDisplay=400,400,96&mapExtent=${lng-d},${lat-d},${lng+d},${lat+d}`
-      + `&geometry=${encodeURIComponent(JSON.stringify({ x:lng, y:lat, spatialReference:{ wkid:4326 } }))}`;
-    const r = await zamanAsimi(tkgm(u), 15000);
-    const sonuc = r?.results?.[0];
-    if(!sonuc) return null;
-    const metin = Object.values(sonuc.attributes||{}).map(v=>String(v)).join(" ");
-    const kod = (metin.match(/\b([1-5]\d\d)\b/) || [])[1];
-    return kod ? { kod, ad: CLC_AD[kod] || sonuc.value } : null;
-  };
-  const [y2018, y2012] = await Promise.all([cek(2018).catch(()=>null), cek(2012).catch(()=>null)]);
-  return { y2018, y2012 };
-}
 
 // butun kaynaklari topla ve puanla
-async function potansiyelAnalizi(p, bildir, hazirOsm){
-  const m = { lat:p.lat, lng:p.lng };
-  const M = capHalkasi(p);
-  const sonuc = { puan:0, etkiler:[], veri:{} };
-  const say = t => { if(bildir) bildir(t); };
-
-  // ayni sorguyu tekrar atmamak icin hazir veri verilebilir
-  let osm = hazirOsm || null;
-  if(!osm){ say("Yapılaşma verisi taranıyor…"); osm = await yapilasmaVerisi(m.lat, m.lng); }
-  if(osm){
-    const ogeler = (osm.elements||[]).map(e=>{
-      const nk = e.center ? { lat:e.center.lat, lng:e.center.lon } : { lat:e.lat, lng:e.lon };
-      if(!isFinite(nk.lat)) return null;
-      return { t:e.tags||{}, u:uzaklik(m, nk) };
-    }).filter(Boolean).sort((a,b)=>a.u-b.u);
-
-    const binalar = ogeler.filter(o=>o.t.building);
-    const yerlesim = ogeler.find(o=>o.t.landuse === "residential");
-    const sanayi = ogeler.find(o=>o.t.landuse === "industrial" || o.t.landuse === "commercial" || o.t.landuse === "retail");
-    const insaat = ogeler.find(o=>o.t.landuse === "construction");
-    const anaYol = ogeler.find(o=>o.t.highway);
-
-    sonuc.veri.binaSayisi = binalar.length;
-    sonuc.veri.yerlesim = yerlesim; sonuc.veri.sanayi = sanayi;
-    sonuc.veri.insaat = insaat; sonuc.veri.anaYol = anaYol;
-
-    if(yerlesim){
-      if(yerlesim.u <= 300) sonuc.etkiler.push(["Yerleşim alanına 300 m'den yakın", 22]);
-      else if(yerlesim.u <= 800) sonuc.etkiler.push([`Yerleşim alanına ${km(yerlesim.u)}`, 14]);
-      else if(yerlesim.u <= 1500) sonuc.etkiler.push([`Yerleşim alanına ${km(yerlesim.u)}`, 6]);
-    }else sonuc.etkiler.push(["Yakında işaretli yerleşim alanı yok", -8]);
-
-    if(sanayi && sanayi.u <= 1000) sonuc.etkiler.push([`Sanayi/ticaret alanına ${km(sanayi.u)}`, 16]);
-    if(insaat) sonuc.etkiler.push([`Aktif inşaat alanı ${km(insaat.u)} mesafede`, 12]);
-    if(binalar.length >= 30) sonuc.etkiler.push([`600 m içinde ${binalar.length} yapı · yoğun doku`, 14]);
-    else if(binalar.length >= 8) sonuc.etkiler.push([`600 m içinde ${binalar.length} yapı`, 8]);
-    else if(binalar.length === 0) sonuc.etkiler.push(["600 m içinde yapı yok", -6]);
-
-    if(anaYol){
-      if(anaYol.u <= 500) sonuc.etkiler.push([`Ana ulaşım aksına ${km(anaYol.u)}`, 15]);
-      else if(anaYol.u <= 2000) sonuc.etkiler.push([`Ana ulaşım aksına ${km(anaYol.u)}`, 7]);
-    }
-  }
-
-  say("Arazi örtüsü ve değişimi sorgulanıyor…");
-  const clc = await corineKarsilastir(m.lat, m.lng).catch(()=>({}));
-  sonuc.veri.clc = clc;
-  if(clc?.y2018?.kod){
-    const k = clc.y2018.kod;
-    if(k.startsWith("11") || k === "121" || k === "133")
-      sonuc.etkiler.push([`Arazi örtüsü: ${clc.y2018.ad}`, 18]);
-    else if(k === "212" || k === "213") sonuc.etkiler.push([`Arazi örtüsü: ${clc.y2018.ad}`, 8]);
-    else if(k.startsWith("31") || k.startsWith("32")) sonuc.etkiler.push([`Arazi örtüsü: ${clc.y2018.ad}`, -6]);
-    else if(k.startsWith("41") || k.startsWith("51")) sonuc.etkiler.push([`Arazi örtüsü: ${clc.y2018.ad}`, -16]);
-  }
-  if(clc?.y2012?.kod && clc?.y2018?.kod && clc.y2012.kod !== clc.y2018.kod){
-    const yapiya = clc.y2018.kod.startsWith("1") && !clc.y2012.kod.startsWith("1");
-    sonuc.etkiler.push([
-      `2012'de ${clc.y2012.ad}, 2018'de ${clc.y2018.ad}` + (yapiya ? " · yapılaşmaya dönüşüm" : ""),
-      yapiya ? 20 : 4
-    ]);
-  }
-
-  say("Eğim ve bakı hesaplanıyor…");
-  const yuk = await yukseklikIzgarasi(M, m).catch(()=>null);
-  sonuc.veri.yukseklik = yuk;
-  if(yuk){
-    if(yuk.egim <= 3) sonuc.etkiler.push([`Eğim %${yuk.egim} · düz arazi`, 12]);
-    else if(yuk.egim <= 8) sonuc.etkiler.push([`Eğim %${yuk.egim} · hafif eğimli`, 5]);
-    else if(yuk.egim <= 15) sonuc.etkiler.push([`Eğim %${yuk.egim} · orta eğimli`, -6]);
-    else sonuc.etkiler.push([`Eğim %${yuk.egim} · dik arazi`, -16]);
-    if(["Güney","Güneydoğu","Güneybatı"].includes(yuk.baki))
-      sonuc.etkiler.push([`Bakı: ${yuk.baki} · güneş alan yön`, 6]);
-  }
-
-  sonuc.puan = Math.max(0, Math.min(100, 50 + sonuc.etkiler.reduce((t,[,y])=>t+y, 0)));
-  sonuc.yorum = sonuc.puan >= 75 ? "Yüksek potansiyel"
-    : sonuc.puan >= 60 ? "Potansiyeli güçlü"
-    : sonuc.puan >= 45 ? "Orta potansiyel"
-    : sonuc.puan >= 30 ? "Sınırlı potansiyel" : "Düşük potansiyel";
-  return sonuc;
-}
 
 let SON_POTANSIYEL = null;
 
@@ -2989,7 +2704,8 @@ let SON_POTANSIYEL = null;
 
 let PARCA = { bloklar:[], toplam:0, geometri:null, yolAlan:0, yolGenislik:0,
               p:null, enAzYol:3, ters:false, yolTipi:"parsel", yolKonum:"oto",
-              capTema:"yatay", olculer:true };
+              capTema:"yatay", olculer:true,
+              resmiGenislik:0, resmiKenar:"alt", resmiAlan:0, resmiAday:null };
 
 let PSAYAC = 0;
 const yeniParca = (m2) => {
@@ -3021,6 +2737,22 @@ function parcaAyarHtml(){
     </div>
     <p class="ipuc" style="margin:0 2px 14px">Yol 3 m genişliğinde çizilir; girdiğin metrekareler değişmez.
       Otomatik seçimde yol, tek parçalı blokların kenarından ve çok parçalı blokların ortasından geçer.</p>
+    <div class="card">
+      <div class="bolum"><span class="rz kirmizi">${svg("kure")}</span><b>Resmî Yol</b>
+        <button class="pill sade" onclick="resmiYolBul()">otomatik bul</button></div>
+      <div class="row2">
+        <div class="field" style="margin:0 0 10px"><label>Genişlik</label><select id="prg">
+          <option value="0">Yok</option>
+          <option value="3">3 m</option>
+          <option value="7">7 m</option></select></div>
+        <div class="field" style="margin:0 0 10px"><label>Hangi kenardan</label><select id="prk">
+          <option value="alt">Alt</option><option value="ust">Üst</option>
+          <option value="sol">Sol</option><option value="sag">Sağ</option></select></div>
+      </div>
+      <div class="ipuc" id="resmiNot" style="margin:0">Otomatik bul dersen dört kenarın komşusunu sorgularım:
+        bitişik parsel varsa yol yoktur, arada boşluk varsa orası resmî yoldur. Resmî yol parselin dışında
+        çizilir, alandan düşülmez.</div>
+    </div>
     <div class="card" id="capOzet" style="font-size:13px"></div>`;
 }
 
@@ -3051,6 +2783,12 @@ function parcaKur(toplam, mevcut){
       sol:[yeniParca(pay), yeniParca(pay)], sag:[yeniParca(pay), yeniParca(pay)] });
     numaralariTazele(); bloklariCiz();
   };
+  const rg = g("prg"), rk = g("prk");
+  if(rg){ rg.value = String(PARCA.resmiGenislik || 0);
+    rg.onchange = () => { PARCA.resmiGenislik = +rg.value; ozetCiz(); }; }
+  if(rk){ rk.value = PARCA.resmiKenar || "alt";
+    rk.onchange = () => { PARCA.resmiKenar = rk.value; ozetCiz(); }; }
+
   const ol = g("polcu"), yt = g("pyoltip"), yk = g("pyolkonum"), tr = g("pters");
   if(ol){ ol.value = PARCA.olculer === false ? "0" : "1";
     ol.onchange = () => { PARCA.olculer = ol.value === "1"; ozetCiz(); }; }
@@ -3183,26 +2921,75 @@ function blokTasi(i, yon){
   bloklariCiz();
 }
 
+async function resmiYolBul(){
+  const not = document.getElementById("resmiNot");
+  if(!PARCA.p) return;
+  const yaz = t => { if(not) not.textContent = t; };
+  yaz("Komşu parseller sorgulanıyor…");
+  try{
+    const kenarlar = await resmiYolKenarlari(PARCA.p, yaz);
+    if(!kenarlar.length){ yaz("Yola cepheli kenar bulunamadı. Elle seçebilirsin."); return; }
+
+    // kenari alt/ust/sol/sag'a cevir
+    const M = PARCA.geometri;
+    let ana = anaYon(M); if(PARCA.ters) ana = [-ana[0], -ana[1]];
+    let dik = [-ana[1], ana[0]];
+    const yatay = Math.abs(dik[0]) >= Math.abs(dik[1]);
+    if((yatay && dik[0] < 0) || (!yatay && dik[1] < 0)) dik = [-dik[0], -dik[1]];
+    const izdA = M.map(p=>p[0]*ana[0]+p[1]*ana[1]);
+    const izdD = M.map(p=>p[0]*dik[0]+p[1]*dik[1]);
+    const aMin = Math.min(...izdA), aMax = Math.max(...izdA);
+    const dMin = Math.min(...izdD), dMax = Math.max(...izdD);
+
+    const k = kenarlar[0];
+    const i = k.i, j = (i+1) % M.length;
+    const oa = (izdA[i]+izdA[j])/2, od = (izdD[i]+izdD[j])/2;
+    const uzakliklar = [
+      ["alt", oa - aMin], ["ust", aMax - oa], ["sol", od - dMin], ["sag", dMax - od]
+    ].sort((x,y)=>x[1]-y[1]);
+    PARCA.resmiKenar = uzakliklar[0][0];
+    if(!PARCA.resmiGenislik) PARCA.resmiGenislik = 7;
+
+    const g2 = document.getElementById("prg"), k2 = document.getElementById("prk");
+    if(g2) g2.value = String(PARCA.resmiGenislik);
+    if(k2) k2.value = PARCA.resmiKenar;
+    const ad = { alt:"alt", ust:"üst", sol:"sol", sag:"sağ" }[PARCA.resmiKenar];
+    yaz(`Resmî yol ${ad} kenarda bulundu · komşu kaydı: ${k.nitelik} · ${k.uzunluk} m cephe. Genişliği değiştirebilirsin.`);
+    ozetCiz();
+  }catch(e){ yaz("Sorgu başarısız: " + (e.message||e)); }
+}
+
 function ozetCiz(){
   const hepsi = PARCA.bloklar.flatMap(blokParcalari);
   const parcaAlan = hepsi.reduce((t,o)=>t+(+o.m2||0), 0);
-  let yolGen = 0;
+  let yolGen = 0, yolAlan = 0, resmiAlan = 0, kucultme = 0;
   if(PARCA.geometri){
-    try{ yolGen = capYerlesim(PARCA.geometri, parcaCfg()).yolGenislik || 0; }catch(e){}
+    try{
+      const y = capYerlesim(PARCA.geometri, parcaCfg());
+      yolGen = y.yolGenislik || 0; yolAlan = y.yolAlan || 0;
+      resmiAlan = y.resmiAlan || 0; kucultme = y.kucultme || 0;
+    }catch(e){}
   }
-  PARCA.yolGenislik = yolGen;
-  const kalan = PARCA.toplam - parcaAlan;
+  PARCA.yolGenislik = yolGen; PARCA.yolAlan = yolAlan; PARCA.resmiAlan = resmiAlan;
+  const satilabilir = PARCA.toplam - yolAlan;   // resmi yol parselin disinda, dusulmez
+  const kalan = satilabilir - parcaAlan;
 
   const o = document.getElementById("capOzet");
   if(o) o.innerHTML = `
     <div class="kv"><span>Parselin alanı</span><b class="mono">${nf2(PARCA.toplam)} m²</b></div>
-    <div class="kv"><span>Parçalar (${hepsi.length} adet)</span><b class="mono">${nf2(parcaAlan)} m²</b></div>
+    ${resmiAlan ? `<div class="kv"><span>Resmî yol · parsel dışı</span>
+      <b class="mono" style="color:var(--ink-2)">${nf2(resmiAlan)} m²</b></div>` : ""}
+    <div class="kv"><span>Parsel yolu payı · ${yolGen ? yolGen.toFixed(1).replace(".",",") : "3"} m</span>
+      <b class="mono" style="color:var(--ink-2)">− ${nf2(yolAlan)} m²</b></div>
     <div class="kv" style="border-top:1px solid var(--cizgi);margin-top:6px;padding-top:8px">
-      <span style="color:${kalan < -0.5 ? "var(--red)" : "var(--green)"}">${kalan < -0.5 ? "Fazla girildi" : "Kalan"}</span>
+      <span>Parçalara kalan</span><b class="mono">${nf2(Math.max(0,satilabilir))} m²</b></div>
+    <div class="kv"><span>Girilen (${hepsi.length} parça)</span><b class="mono">${nf2(parcaAlan)} m²</b></div>
+    <div class="kv"><span style="color:${kalan < -0.5 ? "var(--red)" : "var(--green)"}">
+      ${kalan < -0.5 ? "Fazla girildi" : "Boşta kalan"}</span>
       <b class="mono" style="color:${kalan < -0.5 ? "var(--red)" : "var(--green)"}">${nf2(Math.abs(kalan))} m²</b></div>
-    <div class="kv"><span style="color:var(--gold)">Parsel yolu</span>
-      <b class="mono" style="color:var(--gold)">${yolGen ? yolGen.toFixed(1).replace(".",",") + " m" : "3 m"}</b></div>
-    <p class="ipuc" style="margin:8px 2px 0">Girdiğin metrekareler çizimde birebir yazılır.</p>`;
+    <p class="ipuc" style="margin:8px 2px 0">${kucultme > 0
+      ? `Parçalar parsel yoluna yer açmak için %${String(kucultme).replace(".",",")} oranında ölçeklendi.`
+      : "Parsel yolu parselden düşülür; resmî yol parselin dışındadır, alandan düşülmez."}</p>`;
 
   const say = document.getElementById("onizSay");
   if(say) say.textContent = nf(hepsi.length) + " parça";
@@ -3211,6 +2998,7 @@ function ozetCiz(){
 
 function parcaCfg(){
   return { enAzYol: 3, ters: PARCA.ters, yolTipi: PARCA.yolTipi, yolKonum: PARCA.yolKonum,
+    resmiGenislik: PARCA.resmiGenislik || 0, resmiKenar: PARCA.resmiKenar || "alt",
     capTema: "yatay", olculer: PARCA.olculer !== false,
     bloklar: PARCA.bloklar.map(b=> b.tip === "yol"
       ? { tip:"yol", sol:b.sol.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })),
@@ -5045,12 +4833,67 @@ function yolAyir(pts, genislik){
   };
 }
 
-// parselin buyuklugune gore makul yol genisligi
-function yolGenisligiOner(alan){
-  if(alan < 5000) return 5;
-  if(alan < 20000) return 7;
-  return 10;
+
+/* ---- resmi yol tespiti: komsu parsellerin niteligine bakar ---- */
+
+// bir kenarin disina cikip oradaki parseli TKGM'ye sorar
+async function kenarKomsusu(halka, i, disaMetre){
+  const j = (i+1) % halka.length;
+  const a = halka[i], b = halka[j];
+  const ortaLon = (a[0]+b[0])/2, ortaLat = (a[1]+b[1])/2;
+  // kenarin disa bakan normali
+  const merkezLon = halka.reduce((t,k)=>t+k[0],0)/halka.length;
+  const merkezLat = halka.reduce((t,k)=>t+k[1],0)/halka.length;
+  const kx = Math.cos(ortaLat*Math.PI/180)*111320, ky = 110540;
+  const dx = (b[0]-a[0])*kx, dy = (b[1]-a[1])*ky;
+  const u = Math.hypot(dx,dy) || 1;
+  let nx = -dy/u, ny = dx/u;
+  const mx = (merkezLon-ortaLon)*kx, my = (merkezLat-ortaLat)*ky;
+  if(nx*mx + ny*my > 0){ nx = -nx; ny = -ny; }   // merkezin tersi = disari
+  const d = disaMetre || 12;
+  const lon = ortaLon + (nx*d)/kx, lat = ortaLat + (ny*d)/ky;
+  try{
+    const f = await zamanAsimi(tkgm(`${TB3}/parsel/${lat.toFixed(7)}/${lon.toFixed(7)}`), 15000);
+    return f?.properties || null;
+  }catch(e){ return null; }
 }
+
+// Bir kenarin disinda ne var?  bitisik komsu mu, bosluk (yol) mu
+//   3 m disarida parsel varsa  -> komsu bitisik, yol yok
+//   3 m'de bos, 12 m'de parsel -> arada bosluk var, burasi RESMI YOL
+async function kenarDurumu(halka, i){
+  const yakin = await kenarKomsusu(halka, i, 3);
+  const nitelik = String(yakin?.nitelik || "").toLocaleLowerCase("tr");
+  if(yakin && /yol|cadde|sokak|karayol/.test(nitelik)) return { yol:true, sebep:"komşu kaydı yol" };
+  if(yakin) return { yol:false, sebep:"bitişik komşu parsel" };
+  const uzak = await kenarKomsusu(halka, i, 12);
+  if(uzak) return { yol:true, sebep:"arada boşluk var, karşıda parsel" };
+  return { yol:true, sebep:"kayıtlı komşu yok" };
+}
+
+// hangi kenarlar resmi yola bakiyor
+async function resmiYolKenarlari(p, bildir){
+  if(!p?.geojson?.geometry) return [];
+  const g = p.geojson.geometry;
+  const halka = (g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0]).slice();
+  if(halka.length>1 && halka[0][0]===halka[halka.length-1][0] && halka[0][1]===halka[halka.length-1][1]) halka.pop();
+
+  const M = metreye(halka);
+  const sonuc = [];
+  for(let i=0;i<halka.length;i++){
+    const j = (i+1) % halka.length;
+    const uzunluk = Math.hypot(M[j][0]-M[i][0], M[j][1]-M[i][1]);
+    if(uzunluk < 6) continue;                   // cok kisa kenari sorma
+    if(bildir) bildir(`Komşu parseller sorgulanıyor… ${i+1}/${halka.length}`);
+    const d = await kenarDurumu(halka, i);
+    if(d.yol) sonuc.push({ i, uzunluk: Math.round(uzunluk*10)/10, nitelik: d.sebep });
+    await new Promise(r=>setTimeout(r, 150));
+  }
+  // en uzun kenar basta
+  return sonuc.sort((a,b)=>b.uzunluk - a.uzunluk);
+}
+
+// parselin buyuklugune gore makul yol genisligi
 
 // blok tarifine gore parcalari ve yolu uret
 // cfg = { bloklar:[ {tip:"tam", parcalar:[...]} | {tip:"yol", sol:[...], sag:[...]} ], enAzYol, ters }
@@ -5058,17 +4901,18 @@ function capYerlesim(M, cfg){
   let ana = anaYon(M);
   if(cfg.ters) ana = [-ana[0], -ana[1]];
   let dik = [-ana[1], ana[0]];
-  // dik ekseni tutarli yone baksin: agirlikli olarak saga, dikey ise yukari
   const yatayMi = Math.abs(dik[0]) >= Math.abs(dik[1]);
   if((yatayMi && dik[0] < 0) || (!yatayMi && dik[1] < 0)) dik = [-dik[0], -dik[1]];
-  const bos = { parcalar:[], yol:[], ana, dik, yolGenislik:0, yolAlan:0 };
 
-  const bloklar = (cfg.bloklar||[]).map(b=>{
-    if(b.tip === "yol") return { tip:"yol",
-      sol:(b.sol||[]).map(o=>({ ...o, m2:Math.max(1,+o.m2||1) })),
-      sag:(b.sag||[]).map(o=>({ ...o, m2:Math.max(1,+o.m2||1) })) };
-    return { tip:"tam", parcalar:(b.parcalar||[]).map(o=>({ ...o, m2:Math.max(1,+o.m2||1) })) };
-  }).filter(b=> b.tip === "yol" ? (b.sol.length + b.sag.length) : b.parcalar.length);
+  const bloklar = (cfg.bloklar||[]).map(b2=>({
+    tip: b2.tip === "yol" ? "yol" : "tam",
+    parcalar: (b2.parcalar||[]).map(o=>({ ...o, m2: Math.max(0.01, +o.m2 || 1) })),
+    sol: (b2.sol||[]).map(o=>({ ...o, m2: Math.max(0.01, +o.m2 || 1) })),
+    sag: (b2.sag||[]).map(o=>({ ...o, m2: Math.max(0.01, +o.m2 || 1) }))
+  })).filter(b2=> b2.tip === "tam" ? b2.parcalar.length : (b2.sol.length + b2.sag.length));
+
+  const bos = { parcalar:[], yol:[], resmiYol:null, ana, dik,
+                yolGenislik:0, yolAlan:0, resmiAlan:0, kalanAlan:0, kucultme:0 };
   if(!bloklar.length) return bos;
 
   const A = alanHesap(M);
@@ -5077,107 +4921,152 @@ function capYerlesim(M, cfg){
   const aMin = Math.min(...izdA), aMax = Math.max(...izdA);
   const dMin = Math.min(...izdD), dMax = Math.max(...izdD);
   const W = dMax - dMin, boy = aMax - aMin;
-  const enAz = 3;
-
-  const blokAlan = bloklar.map(b=> b.tip === "yol"
-    ? b.sol.concat(b.sag).reduce((t,o)=>t+o.m2,0)
-    : b.parcalar.reduce((t,o)=>t+o.m2,0));
-  const T = blokAlan.reduce((a,b)=>a+b,0);
-
-  // yol her zaman 3 m; girilen metrekareler hicbir zaman degistirilmez
-  const w = Math.min(enAz, W*0.35);
-  const carpan = 1;
-  const yolAlan = w * boy;
 
   const kA = (poly, deger, ust) => ust ? kirp(poly, ana, deger) : kirp(poly, [-ana[0],-ana[1]], -deger);
   const kD = (poly, deger, ust) => ust ? kirp(poly, dik, deger) : kirp(poly, [-dik[0],-dik[1]], -deger);
-  const serit = (a0, a1, d0, d1) => {
-    let p = kA(kA(M, a1, true), a0, false);
+  const serit = (kaynak, a0, a1, d0, d1) => {
+    let p = kA(kA(kaynak, a1, true), a0, false);
     if(p.length < 3) return null;
     p = kD(kD(p, d1, true), d0, false);
     return p.length > 2 ? p : null;
   };
 
-  // bloklari uzun eksen boyunca alanlarina gore ayir
-  const blokHedef = blokAlan.slice();
-  const sinirlar = [aMin];
-  const olcekK = A / Math.max(1, T);          // girilen alanlari parsele olcekle
-  let s2 = aMin;
-  blokHedef.forEach((h,i)=>{
-    if(i === blokHedef.length-1){ sinirlar.push(aMax); return; }
-    let lo = s2, hi = aMax, kes = aMax;
+  // ---------- 1) resmi yol: parselin DISINDA, alandan dusulmez ----------
+  const calisma = M;                      // parselin tamami parcalara ayrilir
+  let resmiYol = null, resmiAlan = 0;
+  const rg = +cfg.resmiGenislik || 0;
+  const rKenar = cfg.resmiKenar || "alt";  // alt | ust | sol | sag
+  if(rg > 0){
+    // parselin ilgili kenarina yaslanan, disariya tasan serit
+    const koseler = M.map((k,i2)=>({ k, a:izdA[i2], d:izdD[i2] }));
+    const sinirDegeri = { alt:aMin, ust:aMax, sol:dMin, sag:dMax }[rKenar];
+    const eksen = (rKenar === "alt" || rKenar === "ust") ? "a" : "d";
+    // kenardaki iki uc nokta
+    const yakinlar = koseler
+      .map(o=>({ ...o, fark: Math.abs(o[eksen] - sinirDegeri) }))
+      .sort((x,y)=>x.fark - y.fark).slice(0, 2).map(o=>o.k);
+    if(yakinlar.length === 2){
+      const yon = (rKenar === "alt") ? [-ana[0],-ana[1]]
+                : (rKenar === "ust") ? ana
+                : (rKenar === "sol") ? [-dik[0],-dik[1]] : dik;
+      const [q1, q2] = yakinlar;
+      resmiYol = [
+        q1, q2,
+        [ q2[0] + yon[0]*rg, q2[1] + yon[1]*rg ],
+        [ q1[0] + yon[0]*rg, q1[1] + yon[1]*rg ]
+      ];
+      resmiAlan = Math.abs(alanHesap(resmiYol));
+    }
+  }
+
+  const kalanAlan = alanHesap(calisma);   // resmi yol disarida, buraya dahil degil
+  const cA = calisma.map(p=>p[0]*ana[0]+p[1]*ana[1]);
+  const cD = calisma.map(p=>p[0]*dik[0]+p[1]*dik[1]);
+  const caMin = Math.min(...cA), caMax = Math.max(...cA);
+  const cdMin = Math.min(...cD), cdMax = Math.max(...cD);
+  const cW = cdMax - cdMin, cBoy = caMax - caMin;
+
+  // ---------- 2) parsel yolu: 3 m, cok parcali bloklarin ortasindan ----------
+  const w = Math.min(+cfg.enAzYol || 3, cW*0.35);
+  const cokParcali = bloklar.some(b2=>b2.tip === "yol");
+  const blokAlan = bloklar.map(b2=> b2.tip === "tam"
+    ? b2.parcalar.reduce((t,o)=>t+o.m2,0)
+    : b2.sol.concat(b2.sag).reduce((t,o)=>t+o.m2,0));
+  const T = blokAlan.reduce((a,b2)=>a+b2,0) || 1;
+
+  // yolun kaplayacagi alani kabaca hesapla (uzunluk x genislik)
+  const yolBoyu = cokParcali
+    ? bloklar.reduce((t,b2,i2)=> t + (b2.tip === "yol" ? (blokAlan[i2]/Math.max(1,cW)) : 0), 0) + w
+    : 0;
+  const yolAlan = cokParcali ? Math.min(kalanAlan*0.3, w * (yolBoyu || cBoy*0.6)) : 0;
+
+  // parcalar kalan alani doldursun
+  const dagit = Math.max(1, kalanAlan - yolAlan);
+  const carpan = dagit / T;
+
+  // ---------- 3) bloklari yerlestir ----------
+  const sinirlar = [caMin];
+  let s2 = caMin;
+  blokAlan.forEach((alan, i2)=>{
+    if(i2 === blokAlan.length-1){ sinirlar.push(caMax); return; }
+    const hedef = alan * carpan + (bloklar[i2].tip === "yol" ? yolAlan * (alan/T) : 0);
+    let lo = s2, hi = caMax, kes = caMax;
     for(let k=0;k<40;k++){
       kes = (lo+hi)/2;
-      const dilim = kA(kA(M, kes, true), s2, false);
+      const dilim = kA(kA(calisma, kes, true), s2, false);
       const al = dilim.length > 2 ? alanHesap(dilim) : 0;
-      if(al < h*olcekK) lo = kes; else hi = kes;
+      if(al < hedef) lo = kes; else hi = kes;
     }
     sinirlar.push(kes); s2 = kes;
   });
 
-  const konum = cfg.yolKonum || "oto";
-  const solMerkez = dMin + w/2, sagMerkez = dMax - w/2, ortaMerkez = (dMin + dMax)/2;
-  const kenarMerkez = konum === "sag" ? sagMerkez : konum === "orta" ? ortaMerkez : solMerkez;
-  const merkez = bloklar.map(b=>{
-    if(konum === "sol") return solMerkez;
-    if(konum === "sag") return sagMerkez;
-    if(konum === "orta") return ortaMerkez;
-    return b.tip === "yol" ? ortaMerkez : kenarMerkez;   // otomatik
-  });
-
   const cikti = [], yolParcalari = [];
-
-  bloklar.forEach((b, i)=>{
-    const a0 = sinirlar[i], a1 = sinirlar[i+1];
-    let dc = merkez[i];
-    if(b.tip === "yol"){
-      const oS = b.sol.reduce((t,o)=>t+o.m2,0), oG = b.sag.reduce((t,o)=>t+o.m2,0);
-      dc = dMin + W * (oS / Math.max(1, oS + oG));
-    }
-    const yd0 = dc - w/2, yd1 = dc + w/2;
-
-    const ys = serit(a0, a1, yd0, yd1);
-    if(ys) yolParcalari.push(ys);
-
-    if(i > 0 && Math.abs(merkez[i] - merkez[i-1]) > 0.01){
-      const d0 = Math.min(merkez[i], merkez[i-1]);
-      const d1 = Math.max(merkez[i], merkez[i-1]);
-      const bag = serit(a0 - w/2, a0 + w/2, d0, d1);
-      if(bag) yolParcalari.push(bag);
-    }
-
-    const bant = kA(kA(M, a1, true), a0, false);
+  bloklar.forEach((b2, i2)=>{
+    const a0 = sinirlar[i2], a1 = sinirlar[i2+1];
+    const bant = kA(kA(calisma, a1, true), a0, false);
     if(bant.length < 3) return;
 
-    if(b.tip === "tam"){
-      const kalanBant = bant;
-      const hedefler = b.parcalar.map(o=>o.m2);
-      const kaynak = kalanBant.length > 2 ? kalanBant : bant;
-      parcala(kaynak, hedefler, ana, false).forEach((p,k)=>{
-        if(b.parcalar[k]) cikti.push({ poly:p, bilgi:b.parcalar[k] });
-      });
+    if(b2.tip === "tam"){
+      parcala(bant, b2.parcalar.map(o=>o.m2*carpan), ana, true)
+        .forEach((q,k)=>cikti.push({ poly:q, bilgi:b2.parcalar[k] }));
       return;
     }
 
-    const ortaD = (dMin + dMax) / 2;
-    const oranSol = b.sol.reduce((t,o)=>t+o.m2,0);
-    const oranSag = b.sag.reduce((t,o)=>t+o.m2,0);
-    const ayirici = dMin + W * (oranSol / Math.max(1, oranSol + oranSag));
-    const sol = kD(bant, ayirici, true);
-    const sag = kD(bant, ayirici, false);
-    if(b.sol.length && sol.length > 2)
-      parcala(sol, b.sol.map(o=>o.m2), ana, false).forEach((p,k)=>{
-        if(b.sol[k]) cikti.push({ poly:p, bilgi:b.sol[k] });
-      });
-    if(b.sag.length && sag.length > 2)
-      parcala(sag, b.sag.map(o=>o.m2), ana, false).forEach((p,k)=>{
-        if(b.sag[k]) cikti.push({ poly:p, bilgi:b.sag[k] });
-      });
+    // iki yanli: yol ortadan, sol ve sag kendi icinde alt alta
+    const oS = b2.sol.reduce((t,o)=>t+o.m2,0), oG = b2.sag.reduce((t,o)=>t+o.m2,0);
+    const ayirici = cdMin + cW * (oS / Math.max(1, oS + oG));
+    const yd0 = ayirici - w/2, yd1 = ayirici + w/2;
+
+    const ys = serit(calisma, a0, a1, yd0, yd1);
+    if(ys) yolParcalari.push(ys);
+
+    const sol = kD(bant, yd0, true);
+    const sag = kD(bant, yd1, false);
+    if(b2.sol.length && sol.length > 2)
+      parcala(sol, b2.sol.map(o=>o.m2*carpan), ana, true).forEach((q,k)=>cikti.push({ poly:q, bilgi:b2.sol[k] }));
+    if(b2.sag.length && sag.length > 2)
+      parcala(sag, b2.sag.map(o=>o.m2*carpan), ana, true).forEach((q,k)=>cikti.push({ poly:q, bilgi:b2.sag[k] }));
   });
 
-  return { parcalar: cikti, yol: yolParcalari, ana, dik,
-           yolGenislik: w, yolAlan: Math.round(yolAlan),
-           kucultme: 0 };
+  // parsel yolunu resmi yola baglayan kol: gectigi parcalari keser
+  let kol = null;
+  if(yolParcalari.length && resmiYol){
+    const yolIx = bloklar.findIndex(b2=>b2.tip === "yol");
+    const b3 = bloklar[yolIx];
+    if(b3){
+      const oS = b3.sol.reduce((t,o)=>t+o.m2,0), oG = b3.sag.reduce((t,o)=>t+o.m2,0);
+      const ayirici = cdMin + cW * (oS / Math.max(1, oS + oG));
+      const kd0 = ayirici - w/2, kd1 = ayirici + w/2;
+      const altKenar = (rKenar === "alt" || rKenar === "sol");
+      kol = altKenar
+        ? serit(calisma, caMin, sinirlar[yolIx], kd0, kd1)
+        : serit(calisma, sinirlar[yolIx+1], caMax, kd0, kd1);
+      if(kol && kol.length > 2){
+        yolParcalari.push(kol);
+        // kolun gectigi parcalari ikiye ayir, yol bosluguna denk geleni at
+        const yeni = [];
+        cikti.forEach(o=>{
+          const solP = kD(o.poly, kd0, true);
+          const sagP = kD(o.poly, kd1, false);
+          const asil = alanHesap(o.poly);
+          const kesiyor = (solP.length > 2 ? alanHesap(solP) : 0)
+                        + (sagP.length > 2 ? alanHesap(sagP) : 0) < asil - 0.5;
+          if(!kesiyor){ yeni.push(o); return; }
+          if(solP.length > 2) yeni.push({ poly:solP, bilgi:o.bilgi });
+          if(sagP.length > 2) yeni.push({ poly:sagP, bilgi:o.bilgi, ikizi:true });
+        });
+        cikti.length = 0; yeni.forEach(o=>cikti.push(o));
+      }else kol = null;
+    }
+  }
+
+  const gercekYolAlan = yolParcalari.reduce((t,p)=> t + (p && p.length > 2 ? alanHesap(p) : 0), 0);
+
+  return { parcalar: cikti, yol: yolParcalari, resmiYol, ana, dik,
+           yolGenislik: w, yolAlan: Math.round(gercekYolAlan*100)/100,
+           resmiAlan: Math.round(resmiAlan*100)/100,
+           kalanAlan: Math.round(kalanAlan*100)/100,
+           kucultme: carpan < 1 ? Math.round((1-carpan)*1000)/10 : 0 };
 }
 
 function parcalariUret(M, cfg){
@@ -5194,12 +5083,6 @@ function cfgParcalari(cfg){
 }
 
 // parcanin ana ve dik eksendeki olculeri (cephe x derinlik)
-function parcaOlcu(pts){
-  const ana = anaYon(pts), dik = [-ana[1], ana[0]];
-  const a = pts.map(p=>p[0]*ana[0]+p[1]*ana[1]);
-  const d = pts.map(p=>p[0]*dik[0]+p[1]*dik[1]);
-  return { boy: Math.max(...a)-Math.min(...a), en: Math.max(...d)-Math.min(...d) };
-}
 
 function agirlikMerkezi(pts){
   let x=0, y=0, a=0;
@@ -5550,6 +5433,55 @@ function yaziKutusu(cx, cy, gen, yuk, aci){
 }
 const kutuCakisiyor = (a,b) => !(a.x2 < b.x1 || b.x2 < a.x1 || a.y2 < b.y1 || b.y2 < a.y1);
 
+// yol seritlerini taramali cizer (resmi yol / parsel yolu)
+function yolSeridiCiz(x, ekranHalkalari, ana, etiket, kucuk){
+  if(!ekranHalkalari.length) return;
+  // zemin
+  ekranHalkalari.forEach(ek=>{
+    if(!ek || ek.length < 3) return;
+    x.beginPath(); ek.forEach((k,i)=> i ? x.lineTo(k[0],k[1]) : x.moveTo(k[0],k[1])); x.closePath();
+    x.fillStyle = "#FFFFFF"; x.fill();
+    x.lineWidth = kucuk ? 1 : 1.4; x.strokeStyle = "#1A1A1A"; x.stroke();
+  });
+  // egik tarama
+  x.save();
+  x.beginPath();
+  ekranHalkalari.forEach(ek=>{
+    if(!ek || ek.length < 3) return;
+    ek.forEach((k,i)=> i ? x.lineTo(k[0],k[1]) : x.moveTo(k[0],k[1])); x.closePath();
+  });
+  x.clip();
+  x.strokeStyle = "#8C8C8C"; x.lineWidth = kucuk ? .7 : 1;
+  const adim = kucuk ? 7 : 11;
+  const G = x.canvas.width, Y = x.canvas.height;
+  for(let t = -Y; t < G + Y; t += adim){
+    x.beginPath(); x.moveTo(t, 0); x.lineTo(t + Y, Y); x.stroke();
+  }
+  x.restore();
+
+  if(etiket && !kucuk){
+    const enBuyuk = ekranHalkalari.reduce((a,b)=>{
+      const ab = a && a.length>2 ? Math.abs(alanHesapEkran(a)) : 0;
+      const bb = b && b.length>2 ? Math.abs(alanHesapEkran(b)) : 0;
+      return bb > ab ? b : a;
+    }, ekranHalkalari[0]);
+    if(enBuyuk && enBuyuk.length > 2){
+      const om = ekranMerkez(enBuyuk);
+      x.save(); x.translate(om[0], om[1]);
+      let ac = Math.atan2(ana[1], ana[0]);
+      x.rotate(-ac + (Math.abs(ac) > Math.PI/2 ? Math.PI : 0));
+      x.textAlign = "center"; x.textBaseline = "middle";
+      x.font = "700 13px Arial";
+      x.lineWidth = 4; x.strokeStyle = "#FFFFFF"; x.strokeText(etiket, 0, 0);
+      x.fillStyle = "#1A1A1A"; x.fillText(etiket, 0, 0);
+      x.restore();
+    }
+  }
+}
+const alanHesapEkran = p => { let t = 0; for(let i=0;i<p.length;i++){ const j=(i+1)%p.length;
+  t += p[i][0]*p[j][1] - p[j][0]*p[i][1]; } return t/2; };
+const ekranMerkez = p => [ p.reduce((t,k)=>t+k[0],0)/p.length, p.reduce((t,k)=>t+k[1],0)/p.length ];
+
 // resmi capa benzer cizim: kunye tablosu, kuzey gulu, parcalar ve olculer
 function capCizPng(p, cfg, kucuk){
   const parcalar = cfg?.parcalar || null;
@@ -5597,14 +5529,15 @@ function capCizPng(p, cfg, kucuk){
     yer.parcalar.forEach((o,i)=>{
       const d = o.poly, ek = d.map(E), bilgi = o.bilgi || liste[i] || {};
       yol(ek);
-      x.fillStyle = bilgi.renk || "#FFFFFF"; x.globalAlpha = .55; x.fill(); x.globalAlpha = 1;
-      x.lineWidth = 1.6; x.strokeStyle = "#222"; x.stroke();
+      x.fillStyle = bilgi.renk || "#C6D9A7"; x.globalAlpha = bilgi.renk ? .55 : 1; x.fill(); x.globalAlpha = 1;
+      x.lineWidth = kucuk ? 1 : 1.5; x.strokeStyle = "#1A1A1A"; x.stroke();
 
       const om = E(agirlikMerkezi(d));
       x.textAlign = "center"; x.textBaseline = "middle";
-      x.font = `700 ${S(20)}px Arial`; x.fillStyle = "#111";
-      x.fillText(String(bilgi.no || (i+1)), om[0], om[1] - S(12));
-      x.font = `400 ${S(15)}px Arial`;
+      if(o.ikizi) return;                      // yol kolu parcayi ikiye bolduyse yaziyi bir kere yaz
+      x.font = `700 ${S(22)}px Arial`; x.fillStyle = "#1A1A1A";
+      x.fillText(String(bilgi.no || (i+1)), om[0], om[1] - S(11));
+      x.font = `600 ${S(15)}px Arial`;
       const m2Deger = isFinite(+bilgi.m2) && +bilgi.m2 > 0 ? +bilgi.m2 : alanHesap(d);
       const m2Metin = nfAkilli(m2Deger) + " m2";
       x.fillText(m2Metin, om[0], om[1] + S(10));
