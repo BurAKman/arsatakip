@@ -58,6 +58,9 @@ body[data-tema="vitrin"]{ background:radial-gradient(130% 100% at 50% 0%,#20242A
 body[data-tema="loca"]{ background:radial-gradient(135% 100% at 50% 0%,#241A3C 0%,#0C0814 48%,#050409 100%) fixed }
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* Android web goruntuleyicide kaydirirken panellerin kararmasini onler */
+.card,.grp,.serit,.lKart,.lHero,.tile{transform:translateZ(0);will-change:auto}
+#app{overflow-anchor:none}
 html,body{margin:0;padding:0}
 body{
   min-height:100vh;color:var(--ink);
@@ -127,9 +130,10 @@ a{color:var(--gold);text-decoration:none}
 .top{display:flex;align-items:center;gap:11px;padding:14px 0 12px}
 .top h1{font-size:19px;flex:1}
 .logo{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
-.logo .mark{width:56px;height:56px;border-radius:50%;overflow:hidden;flex:0 0 auto;
+.logo .mark{width:56px;height:56px;border-radius:50%;overflow:visible;flex:0 0 auto;
   border:1.5px solid rgba(255,255,255,.55);background:#0A0C0B;box-shadow:0 2px 12px rgba(0,0,0,.5)}
-.logo .mark img{width:100%;height:100%;object-fit:cover;display:block}
+.logo .mark img{width:100%;height:100%;object-fit:contain;display:block;
+  filter:drop-shadow(0 2px 8px rgba(0,0,0,.6))}
 .logo b{font-size:clamp(14px,4.4vw,18px);font-weight:300;letter-spacing:.14em;text-indent:.14em;display:block;
   line-height:1.15;white-space:nowrap;
   color:transparent;background:linear-gradient(180deg,#FFFFFF,#F2E7C9 46%,#C9A94E);
@@ -143,10 +147,10 @@ body[data-tema="loca"] .logo b{font-family:Georgia,serif;font-weight:400;letter-
 body[data-tema="vitrin"] .logo span{color:rgba(216,69,58,.75)}
 body[data-tema="loca"] .logo span{color:rgba(201,169,97,.75);font-family:Georgia,serif;letter-spacing:.2em}
 /* logo cercevesi temaya gore */
-body[data-tema="vitrin"] .logo .mark{border-radius:10px;border:1px solid rgba(216,69,58,.45);
-  box-shadow:0 0 18px rgba(216,69,58,.2)}
-body[data-tema="loca"] .logo .mark{border-radius:3px;border:1px solid rgba(201,169,97,.45);
-  box-shadow:0 0 18px rgba(201,169,97,.18)}
+body[data-tema="vitrin"] .logo .mark{border:0;box-shadow:none;
+  filter:drop-shadow(0 0 10px rgba(216,69,58,.35))}
+body[data-tema="loca"] .logo .mark{border:0;box-shadow:none;
+  filter:drop-shadow(0 0 10px rgba(201,169,97,.32))}
 .logo span{font-size:8.5px;letter-spacing:.26em;text-indent:.26em;text-transform:uppercase;display:block;margin-top:5px;
   color:rgba(227,192,90,.72);font-weight:500;position:relative;padding-top:5px}
 .logo span::before{content:"";position:absolute;top:0;left:0;width:26px;height:1px;
@@ -165,7 +169,7 @@ body[data-tema="loca"] .ibtn{border-radius:2px;border-color:rgba(201,169,97,.4);
   background:linear-gradient(160deg,#1B1430,#0B0813);box-shadow:0 2px 10px rgba(0,0,0,.6)}
 body[data-tema="loca"] .ibtn svg{stroke:#D4B972}
 .ibtn{width:38px;height:38px;border-radius:12px;border:1px solid var(--cizgi-2);background:var(--cam);
-  display:grid;place-items:center;flex:0 0 auto;color:var(--ink);backdrop-filter:blur(10px)}
+  display:grid;place-items:center;flex:0 0 auto;color:var(--ink)}
 .ibtn svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .ibtn.ak{color:#fff;background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.34)}
 .ibtn.cik{color:var(--red);background:var(--red-soft);border-color:rgba(240,112,92,.42)}
@@ -174,7 +178,7 @@ body[data-tema="loca"] .ibtn svg{stroke:#D4B972}
 
 /* ---- kur ---- */
 .rates{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:0 0 16px}
-.rate{background:linear-gradient(155deg,rgba(255,255,255,.20),rgba(255,255,255,.07));border:1px solid rgba(255,255,255,.30);border-radius:12px;padding:8px 9px;min-width:0;backdrop-filter:blur(14px)}
+.rate{background:linear-gradient(155deg,rgba(255,255,255,.20),rgba(255,255,255,.07));border:1px solid rgba(255,255,255,.30);border-radius:12px;padding:8px 9px;min-width:0}
 .rate .v{color:#fff}
 .rate .k{font-size:9.5px;color:rgba(255,255,255,.72);font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rate .v{font-size:12.5px;font-weight:600;margin-top:2px;font-family:"IBM Plex Mono",monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -182,7 +186,7 @@ body[data-tema="loca"] .ibtn svg{stroke:#D4B972}
 /* ---- kategori kartlari ---- */
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .tile{border-radius:var(--r);padding:16px 14px;text-align:left;position:relative;overflow:hidden;
-  border:1px solid var(--cizgi-2);backdrop-filter:blur(14px);transition:transform .16s,filter .16s;
+  border:1px solid var(--cizgi-2);transition:transform .16s,filter .16s;
   background:linear-gradient(155deg,rgba(255,255,255,.13),rgba(255,255,255,.045))}
 .tile:active{transform:scale(.98);filter:brightness(1.15)}
 .tile .ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;margin-bottom:12px;
@@ -222,7 +226,7 @@ body[data-tema="loca"] .ibtn svg{stroke:#D4B972}
 label{display:block;font-size:12px;color:var(--ink-2);margin:0 0 6px}
 input,select,textarea{
   width:100%;background:rgba(255,255,255,.07);border:1px solid var(--cizgi);border-radius:12px;
-  padding:12px 13px;outline:none;transition:border-color .15s,background .15s;backdrop-filter:blur(8px)}
+  padding:12px 13px;outline:none;transition:border-color .15s,background .15s}
 input:focus,select:focus,textarea:focus{border-color:var(--gold);background:rgba(255,255,255,.1)}
 input::placeholder,textarea::placeholder{color:var(--ink-3)}
 select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-2) 50%),linear-gradient(135deg,var(--ink-2) 50%,transparent 50%);
@@ -241,14 +245,14 @@ select option{background:#101614;color:var(--ink)}
 .bar{display:flex;gap:8px;align-items:center;margin-bottom:14px}
 .year{border:1px solid var(--cizgi-2);border-radius:22px;padding:8px 15px;font-size:13px;background:var(--cam);width:auto;min-width:98px}
 .search{flex:1}
-.card{background:var(--cam);border:1px solid var(--cizgi);border-radius:var(--r);padding:15px;margin-bottom:11px;backdrop-filter:blur(14px)}
+.card{background:var(--cam);border:1px solid var(--cizgi);border-radius:var(--r);padding:15px;margin-bottom:11px}
 .kv{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-size:13.5px}
 .kv span{color:var(--ink-2);flex:0 0 auto}
 .kv b{text-align:right;min-width:0}
 .empty{text-align:center;padding:48px 20px;color:var(--ink-3)}
 .empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:6px}
 
-.grp{margin-bottom:11px;border:1px solid var(--cizgi);border-radius:var(--r);background:var(--cam);overflow:hidden;backdrop-filter:blur(14px)}
+.grp{margin-bottom:11px;border:1px solid var(--cizgi);border-radius:var(--r);background:var(--cam);overflow:hidden}
 .ghd{display:flex;align-items:center;gap:11px;padding:15px 14px;width:100%;text-align:left}
 .ghd .pinico{width:33px;height:33px;border-radius:10px;background:var(--green-soft);color:var(--green);display:grid;place-items:center;flex:0 0 auto;border:1px solid rgba(95,215,154,.28)}
 .ghd .pinico svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
@@ -356,7 +360,7 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .tugra .tKur{grid-area:kur;position:relative;display:flex;align-items:center;gap:10px;
   padding:7px 13px;border-radius:14px;min-height:clamp(34px,4.6vh,44px);
   background:linear-gradient(120deg,rgba(232,199,103,.16),rgba(255,255,255,.05) 46%,rgba(232,199,103,.1));
-  border:1px solid rgba(232,199,103,.3);backdrop-filter:blur(12px);
+  border:1px solid rgba(232,199,103,.3);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.28)}
 .tugra .tKurEtiket{font-size:8.5px;letter-spacing:.22em;color:var(--gold);font-weight:700;flex:0 0 auto}
 .tugra .tKur .rates{margin:0;font-size:11px;flex:1}
@@ -369,7 +373,6 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
   border-radius:20px 6px 20px 6px;
   border:1px solid rgba(255,255,255,.16);
   background:linear-gradient(152deg,rgba(255,255,255,.14),rgba(255,255,255,.04) 44%,rgba(232,199,103,.09));
-  backdrop-filter:blur(10px);
   box-shadow:0 7px 20px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.3);
   min-height:clamp(52px,7.4vh,78px)}
 .tugra .tPano{min-height:clamp(104px,15.6vh,164px);border-radius:26px 8px 26px 8px}
@@ -478,10 +481,10 @@ body[data-tema="vitrin"] .card{border-radius:8px;
   background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.025));
   border:1px solid rgba(255,255,255,.1);border-left:3px solid rgba(216,69,58,.55);
   box-shadow:0 3px 12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.1)}
-body[data-tema="vitrin"] .card::before{content:"";position:absolute;inset:0;pointer-events:none;
-  border-radius:inherit;background:repeating-linear-gradient(180deg,rgba(255,255,255,.028) 0 1px,transparent 1px 5px)}
-body[data-tema="vitrin"] .card{position:relative;overflow:hidden}
-body[data-tema="vitrin"] .card > *{position:relative;z-index:1}
+body[data-tema="vitrin"] .card{position:relative;
+  background-image:
+    repeating-linear-gradient(180deg,rgba(255,255,255,.028) 0 1px,transparent 1px 5px),
+    linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.025))}
 
 body[data-tema="vitrin"] h3{letter-spacing:.16em;text-transform:uppercase;font-size:12px;
   color:#D8453A;font-weight:700}
@@ -517,7 +520,7 @@ body[data-tema="loca"] .card{position:relative;border-radius:3px;
   border:1px solid rgba(201,169,97,.2);box-shadow:0 8px 22px rgba(0,0,0,.6)}
 /* kose isaretleri */
 body[data-tema="loca"] .card::before,body[data-tema="loca"] .card::after{content:"";position:absolute;
-  width:11px;height:11px;pointer-events:none;opacity:.55}
+  width:11px;height:11px;pointer-events:none;opacity:.55;z-index:0}
 body[data-tema="loca"] .card::before{top:6px;left:6px;
   border-top:1px solid #C9A961;border-left:1px solid #C9A961}
 body[data-tema="loca"] .card::after{bottom:6px;right:6px;
@@ -593,8 +596,7 @@ h3{letter-spacing:.02em}
 .tile.gorselli{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.26);
   box-shadow:0 8px 22px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.2)}
 .tile.gorselli .cam{position:absolute;inset:0;pointer-events:none;z-index:1;
-  background:linear-gradient(140deg,rgba(255,255,255,.2) 0%,rgba(255,255,255,.05) 24%,transparent 42%);
-  backdrop-filter:blur(1.5px)}
+  background:linear-gradient(140deg,rgba(255,255,255,.2) 0%,rgba(255,255,255,.05) 24%,transparent 42%)}
 .tile.gorselli .isik{position:absolute;top:-60%;left:-40%;width:42%;height:230%;pointer-events:none;z-index:2;
   background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
   transform:rotate(18deg);animation:camParla 6s ease-in-out infinite}
@@ -605,8 +607,7 @@ h3{letter-spacing:.02em}
 
 /* ---- mini tuslar: cam parlaklik ---- */
 .tile.mini{position:relative;overflow:hidden;border-width:1px;
-  background:linear-gradient(155deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 46%,rgba(255,255,255,.09));
-  backdrop-filter:blur(14px);box-shadow:0 6px 18px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.22)}
+  background:linear-gradient(155deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 46%,rgba(255,255,255,.09));box-shadow:0 6px 18px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.22)}
 .tile.mini::before{content:"";position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(115deg,rgba(255,255,255,.34) 0%,rgba(255,255,255,.06) 28%,transparent 46%)}
 .tile.mini::after{content:"";position:absolute;top:-60%;left:-35%;width:45%;height:220%;pointer-events:none;
@@ -728,7 +729,7 @@ h3{letter-spacing:.02em}
 .ipt .full{flex:1 1 100%}
 .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .acts a.dis{flex:1 1 30%;border:1px solid var(--cizgi-2);border-radius:12px;padding:11px 8px;font-size:13px;
-  font-weight:600;background:var(--cam-2);color:var(--ink);backdrop-filter:blur(10px);text-align:center;
+  font-weight:600;background:var(--cam-2);color:var(--ink);text-align:center;
   text-decoration:none;display:flex;align-items:center;justify-content:center}
 .acts a.dis:active{background:rgba(255,255,255,.18)}
 .acts a.dis.yesilb{background:linear-gradient(155deg,rgba(95,215,154,.32),rgba(95,215,154,.10));
@@ -738,7 +739,7 @@ h3{letter-spacing:.02em}
 .acts a.dis.kirmizi{background:linear-gradient(155deg,rgba(240,112,92,.34),rgba(240,112,92,.12));
   border-color:rgba(240,112,92,.5);color:#FFD9D1}
 .acts button{flex:1 1 30%;border:1px solid var(--cizgi-2);border-radius:12px;padding:11px 8px;font-size:13px;
-  font-weight:600;background:var(--cam-2);color:var(--ink);backdrop-filter:blur(10px)}
+  font-weight:600;background:var(--cam-2);color:var(--ink)}
 .acts button:active{background:rgba(255,255,255,.18)}
 .acts button.pri{background:linear-gradient(160deg,#F0D278,#D9B248);color:#1A1403;border-color:rgba(255,255,255,.25)}
 .ipuc{font-size:12px;color:var(--ink-3);margin:-4px 2px 12px}
@@ -749,7 +750,7 @@ h3{letter-spacing:.02em}
 @media(max-width:552px){.fab{right:16px}}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:110px;background:rgba(22,28,26,.96);
   border:1px solid rgba(227,192,90,.5);border-radius:13px;padding:13px 18px;font-size:14px;font-weight:600;
-  z-index:60;max-width:88%;text-align:center;box-shadow:0 10px 32px rgba(0,0,0,.6);backdrop-filter:blur(14px)}
+  z-index:60;max-width:88%;text-align:center;box-shadow:0 10px 32px rgba(0,0,0,.6)}
 .spin{width:24px;height:24px;border:2px solid var(--cizgi-2);border-top-color:var(--gold);border-radius:50%;animation:s .7s linear infinite;margin:44px auto}
 @keyframes s{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -805,7 +806,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 4.3";
+const SURUM = "beta 4.4";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
