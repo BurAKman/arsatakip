@@ -160,18 +160,18 @@ a{color:var(--gold);text-decoration:none}
   overflow:visible;flex:0 0 auto;border:0;background:transparent;box-shadow:none}
 .logo .mark img{width:100%;height:100%;object-fit:contain;display:block;
   filter:drop-shadow(0 2px 8px rgba(0,0,0,.6))}
-.logo b{font-size:clamp(12.5px,3.7vw,17px);max-width:100%;overflow:hidden;text-overflow:ellipsis;font-weight:300;letter-spacing:.14em;text-indent:.14em;display:block;
+.logo b{font-size:clamp(12px,3.4vw,16.5px);max-width:100%;font-weight:300;letter-spacing:.1em;display:block;
   line-height:1.15;white-space:nowrap;
   color:transparent;background:linear-gradient(180deg,#FFFFFF,#F2E7C9 46%,#C9A94E);
   -webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 1px 6px rgba(0,0,0,.6))}
-body[data-tema="vitrin"] .logo b{font-weight:800;letter-spacing:.2em;
+body[data-tema="vitrin"] .logo b{font-weight:800;letter-spacing:.12em;
   background-image:linear-gradient(180deg,#E8CDB4 0%,#C0421C 34%,#8E0E1C 66%,#4A060D 100%);
   -webkit-background-clip:text;background-clip:text;
   filter:drop-shadow(0 1px 3px rgba(0,0,0,.9)) drop-shadow(0 0 8px rgba(160,20,30,.35))}
 body[data-tema="loca"] .logo b{font-family:Georgia,serif;font-weight:400;letter-spacing:.22em;
   background-image:linear-gradient(180deg,#FFF6EC,#EFC79C 48%,#C9A961);
   -webkit-background-clip:text;background-clip:text}
-body[data-tema="vitrin"] .logo span{font-weight:700;letter-spacing:.2em;font-size:9.5px;
+body[data-tema="vitrin"] .logo span{font-weight:700;letter-spacing:.1em;
   color:transparent;
   background-image:linear-gradient(180deg,#F2F5F8 0%,#B9C2CA 42%,#6E767E 72%,#9AA3AB 100%);
   -webkit-background-clip:text;background-clip:text;
@@ -183,8 +183,8 @@ body[data-tema="vitrin"] .logo .mark{border:0;box-shadow:none;
   filter:drop-shadow(0 0 10px rgba(216,69,58,.35))}
 body[data-tema="loca"] .logo .mark{border:0;box-shadow:none;
   filter:drop-shadow(0 0 10px rgba(201,169,97,.32))}
-.logo span{font-size:8.5px;letter-spacing:.24em;text-transform:uppercase;display:block;margin-top:4px;
-  color:rgba(227,192,90,.72);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logo span{font-size:clamp(7px,2vw,8.5px);letter-spacing:.12em;text-transform:uppercase;display:block;
+  margin-top:4px;color:rgba(227,192,90,.72);font-weight:600;white-space:nowrap}
 
 .ibtn.geri{width:44px;height:44px;border-radius:14px;border:1px solid rgba(227,192,90,.42);
   background:linear-gradient(155deg,rgba(227,192,90,.26),rgba(227,192,90,.08));
@@ -339,8 +339,15 @@ body[data-tema="vitrin"] .kurSerit{position:relative;overflow:hidden;
     inset 0 -16px 28px rgba(224,87,26,.12)}
 body[data-tema="vitrin"] .kurSerit::before{content:"";position:absolute;left:10%;right:10%;bottom:0;height:2px;
   background:linear-gradient(90deg,transparent,#E4571A,#E01F33,#E4571A,transparent);opacity:.85;z-index:2}
-body[data-tema="vitrin"] .kurSerit .rates{position:relative;z-index:1;margin:0;font-size:13px;
-  letter-spacing:.04em;display:flex;gap:16px;flex-wrap:wrap;justify-content:center;width:100%}
+body[data-tema="vitrin"] .kurSerit .rates{position:relative;z-index:2;margin:0;width:100%;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+body[data-tema="vitrin"] .kurSerit .rate{background:none;border:0;border-radius:0;padding:0 6px;
+  text-align:center;position:relative}
+body[data-tema="vitrin"] .kurSerit .rate + .rate::before{content:"";position:absolute;left:0;top:12%;bottom:12%;
+  width:1px;background:linear-gradient(180deg,transparent,rgba(240,120,30,.45),transparent)}
+body[data-tema="vitrin"] .kurSerit .rate .k{font-size:8px;letter-spacing:.14em;color:rgba(240,150,90,.75)}
+body[data-tema="vitrin"] .kurSerit .rate .v{font-size:13px;margin-top:3px;color:#F4EFE9;
+  text-shadow:0 1px 4px rgba(0,0,0,.8)}
 body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;left:-40%;width:38%;height:220%;
   pointer-events:none;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
   transform:rotate(18deg);animation:camParla 8s ease-in-out infinite}
@@ -852,7 +859,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 5.4";
+const SURUM = "beta 5.7";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -5049,38 +5056,74 @@ function capYerlesim(M, cfg){
       parcala(sag, b2.sag.map(o=>o.m2*carpan), ana, true).forEach((q,k)=>cikti.push({ poly:q, bilgi:b2.sag[k] }));
   });
 
-  // parsel yolunu resmi yola baglayan kol: gectigi parcalari keser
-  let kol = null;
-  if(yolParcalari.length && resmiYol){
+  // ---- parsel yolunu resmi yola baglayan kol: kenardan gider, dirsekle doner ----
+  // bir dikdortgen seridi parcalardan cikarir (ana/dik ekseninde)
+  const seritCikar = (liste, a0, a1, d0, d1) => {
+    const cikti2 = [];
+    liste.forEach(o=>{
+      const alt = kA(o.poly, a0, true);            // seridin gerisinde kalan
+      const ust = kA(o.poly, a1, false);           // seridin ilerisinde kalan
+      const orta = kA(kA(o.poly, a1, true), a0, false);
+      if(alt.length > 2) cikti2.push({ poly:alt, bilgi:o.bilgi });
+      if(orta.length > 2){
+        const s1 = kD(orta, d0, true), s3 = kD(orta, d1, false);
+        if(s1.length > 2) cikti2.push({ poly:s1, bilgi:o.bilgi, ikizi:true });
+        if(s3.length > 2) cikti2.push({ poly:s3, bilgi:o.bilgi, ikizi:true });
+      }
+      if(ust.length > 2) cikti2.push({ poly:ust, bilgi:o.bilgi, ikizi:true });
+    });
+    return cikti2;
+  };
+
+  if(yolParcalari.length && rg > 0){
     const yolIx = bloklar.findIndex(b2=>b2.tip === "yol");
     const b3 = bloklar[yolIx];
-    if(b3){
+    if(b3 && yolIx >= 0){
       const oS = b3.sol.reduce((t,o)=>t+o.m2,0), oG = b3.sag.reduce((t,o)=>t+o.m2,0);
       let ayirici = cdMin + cW * (oS / Math.max(1, oS + oG));
       ayirici += cW * (+cfg.yolKaydir || 0);
       ayirici = Math.max(cdMin + w, Math.min(cdMax - w, ayirici));
-      const kd0 = ayirici - w/2, kd1 = ayirici + w/2;
-      const altKenar = (rKenar === "alt" || rKenar === "sol");
-      kol = altKenar
-        ? serit(calisma, caMin, sinirlar[yolIx], kd0, kd1)
-        : serit(calisma, sinirlar[yolIx+1], caMax, kd0, kd1);
-      if(kol && kol.length > 2){
-        yolParcalari.push(kol);
-        // kolun gectigi parcalari ikiye ayir, yol bosluguna denk geleni at
-        const yeni = [];
-        cikti.forEach(o=>{
-          const solP = kD(o.poly, kd0, true);
-          const sagP = kD(o.poly, kd1, false);
-          const asil = alanHesap(o.poly);
-          const kesiyor = (solP.length > 2 ? alanHesap(solP) : 0)
-                        + (sagP.length > 2 ? alanHesap(sagP) : 0) < asil - 0.5;
-          if(!kesiyor){ yeni.push(o); return; }
-          if(solP.length > 2) yeni.push({ poly:solP, bilgi:o.bilgi });
-          if(sagP.length > 2) yeni.push({ poly:sagP, bilgi:o.bilgi, ikizi:true });
-        });
-        cikti.length = 0; yeni.forEach(o=>cikti.push(o));
-      }else kol = null;
+
+      // resmi yol hangi ucta: kol o uca dogru iner
+      const altUc = (rKenar === "alt" || rKenar === "sol");
+      const kolA0 = altUc ? caMin : sinirlar[yolIx+1];
+      const kolA1 = altUc ? sinirlar[yolIx] : caMax;
+
+      // kenara yasli guzergah: ayiriciya yakin olan kenar secilir
+      const solaYakin = (ayirici - cdMin) <= (cdMax - ayirici);
+      const kenarD0 = solaYakin ? cdMin : cdMax - w;
+      const kenarD1 = solaYakin ? cdMin + w : cdMax;
+
+      if(kolA1 - kolA0 > w*0.5){
+        // 1) kenar boyunca uzanan kol
+        const kenarKol = serit(calisma, kolA0, kolA1, kenarD0, kenarD1);
+        if(kenarKol) yolParcalari.push(kenarKol);
+        // 2) kolon yoluna baglayan dirsek
+        const dA0 = altUc ? kolA1 - w : kolA0;
+        const dA1 = altUc ? kolA1 : kolA0 + w;
+        const dD0 = Math.min(kenarD0, ayirici - w/2);
+        const dD1 = Math.max(kenarD1, ayirici + w/2);
+        const dirsek = serit(calisma, dA0, dA1, dD0, dD1);
+        if(dirsek) yolParcalari.push(dirsek);
+
+        // yolun gectigi parcalari kes
+        let kesik = seritCikar(cikti, kolA0, kolA1, kenarD0, kenarD1);
+        kesik = seritCikar(kesik, dA0, dA1, dD0, dD1);
+        cikti.length = 0; kesik.forEach(o=>cikti.push(o));
+      }
     }
+  }
+
+  // ayni parcanin birden fazla parcasi varsa yaziyi sadece en buyugune koy
+  {
+    const grup = new Map();
+    cikti.forEach(o=>{
+      const anahtar = o.bilgi;
+      const alan = o.poly.length > 2 ? Math.abs(alanHesap(o.poly)) : 0;
+      const enIyi = grup.get(anahtar);
+      if(!enIyi || alan > enIyi.alan) grup.set(anahtar, { o, alan });
+    });
+    cikti.forEach(o=>{ o.ikizi = grup.get(o.bilgi)?.o !== o; });
   }
 
   const gercekYolAlan = yolParcalari.reduce((t,p)=> t + (p && p.length > 2 ? alanHesap(p) : 0), 0);
@@ -5456,55 +5499,6 @@ function yaziKutusu(cx, cy, gen, yuk, aci){
 }
 const kutuCakisiyor = (a,b) => !(a.x2 < b.x1 || b.x2 < a.x1 || a.y2 < b.y1 || b.y2 < a.y1);
 
-// yol seritlerini taramali cizer (resmi yol / parsel yolu)
-function yolSeridiCiz(x, ekranHalkalari, ana, etiket, kucuk){
-  if(!ekranHalkalari.length) return;
-  // zemin
-  ekranHalkalari.forEach(ek=>{
-    if(!ek || ek.length < 3) return;
-    x.beginPath(); ek.forEach((k,i)=> i ? x.lineTo(k[0],k[1]) : x.moveTo(k[0],k[1])); x.closePath();
-    x.fillStyle = "#FFFFFF"; x.fill();
-    x.lineWidth = kucuk ? 1 : 1.4; x.strokeStyle = "#1A1A1A"; x.stroke();
-  });
-  // egik tarama
-  x.save();
-  x.beginPath();
-  ekranHalkalari.forEach(ek=>{
-    if(!ek || ek.length < 3) return;
-    ek.forEach((k,i)=> i ? x.lineTo(k[0],k[1]) : x.moveTo(k[0],k[1])); x.closePath();
-  });
-  x.clip();
-  x.strokeStyle = "#8C8C8C"; x.lineWidth = kucuk ? .7 : 1;
-  const adim = kucuk ? 7 : 11;
-  const G = x.canvas.width, Y = x.canvas.height;
-  for(let t = -Y; t < G + Y; t += adim){
-    x.beginPath(); x.moveTo(t, 0); x.lineTo(t + Y, Y); x.stroke();
-  }
-  x.restore();
-
-  if(etiket && !kucuk){
-    const enBuyuk = ekranHalkalari.reduce((a,b)=>{
-      const ab = a && a.length>2 ? Math.abs(alanHesapEkran(a)) : 0;
-      const bb = b && b.length>2 ? Math.abs(alanHesapEkran(b)) : 0;
-      return bb > ab ? b : a;
-    }, ekranHalkalari[0]);
-    if(enBuyuk && enBuyuk.length > 2){
-      const om = ekranMerkez(enBuyuk);
-      x.save(); x.translate(om[0], om[1]);
-      let ac = Math.atan2(ana[1], ana[0]);
-      x.rotate(-ac + (Math.abs(ac) > Math.PI/2 ? Math.PI : 0));
-      x.textAlign = "center"; x.textBaseline = "middle";
-      x.font = "700 13px Arial";
-      x.lineWidth = 4; x.strokeStyle = "#FFFFFF"; x.strokeText(etiket, 0, 0);
-      x.fillStyle = "#1A1A1A"; x.fillText(etiket, 0, 0);
-      x.restore();
-    }
-  }
-}
-const alanHesapEkran = p => { let t = 0; for(let i=0;i<p.length;i++){ const j=(i+1)%p.length;
-  t += p[i][0]*p[j][1] - p[j][0]*p[i][1]; } return t/2; };
-const ekranMerkez = p => [ p.reduce((t,k)=>t+k[0],0)/p.length, p.reduce((t,k)=>t+k[1],0)/p.length ];
-
 // resmi capa benzer cizim: kunye tablosu, kuzey gulu, parcalar ve olculer
 function capCizPng(p, cfg, kucuk){
   const parcalar = cfg?.parcalar || null;
@@ -5560,7 +5554,7 @@ function capCizPng(p, cfg, kucuk){
       yol(ek);
       const dolguRenk = (!bilgi.renk || bilgi.renk.toUpperCase() === "#FFFFFF") ? "#C6D9A7" : bilgi.renk;
       x.fillStyle = dolguRenk; x.fill();
-      x.lineWidth = kucuk ? 1 : 1.5; x.strokeStyle = "#1A1A1A"; x.stroke();
+      x.lineWidth = kucuk ? .8 : 1.2; x.strokeStyle = "#B8A62E"; x.stroke();   // ic hatlar sari
 
       const om = E(agirlikMerkezi(d));
       x.textAlign = "center"; x.textBaseline = "middle";
@@ -5589,12 +5583,29 @@ function capCizPng(p, cfg, kucuk){
       }
     });
 
-    // ---- yollar: taramali serit, parcalarin uzerine ----
-    if(yer.resmiYol && yer.resmiYol.length > 2)
-      yolSeridiCiz(x, [yer.resmiYol.map(E)], yer.ana, "RESMİ YOL", kucuk);
+    // ---- yollar: beyaz bosluk, kesik cizgili kenar ----
+    const yolCiz = (halkalar, resmiMi) => {
+      halkalar.forEach(ek=>{
+        if(!ek || ek.length < 3) return;
+        yol(ek);
+        x.fillStyle = "#FFFFFF"; x.fill();
+        x.save();
+        x.setLineDash(kucuk ? [3,3] : [6,5]);
+        x.lineWidth = kucuk ? .9 : 1.3; x.strokeStyle = "#1A1A1A"; x.stroke();
+        x.restore();
+      });
+      // resmi yolun dis kenarina duz cift cizgi (yol govdesi)
+      if(resmiMi && halkalar[0] && halkalar[0].length > 3){
+        const ek = halkalar[0];
+        x.save();
+        x.lineWidth = kucuk ? 1.2 : 2; x.strokeStyle = "#1A1A1A";
+        x.beginPath(); x.moveTo(ek[2][0], ek[2][1]); x.lineTo(ek[3][0], ek[3][1]); x.stroke();
+        x.restore();
+      }
+    };
     const yolEkran = (yer.yol||[]).filter(p=>p && p.length > 2).map(p=>p.map(E));
-    if(yolEkran.length)
-      yolSeridiCiz(x, yolEkran, yer.ana, "PARSEL YOLU", kucuk);
+    if(yolEkran.length) yolCiz(yolEkran, false);
+    if(yer.resmiYol && yer.resmiYol.length > 2) yolCiz([yer.resmiYol.map(E)], true);
 
   }else{
     yol(N); x.fillStyle = "#F4F6F0"; x.fill();
@@ -5640,7 +5651,7 @@ function capCizPng(p, cfg, kucuk){
   SON_ETIKETLER = etiketler;
 
   // dis sinir
-  yol(N); x.lineWidth = kucuk ? 2 : 3; x.strokeStyle = "#111"; x.stroke();
+  yol(N); x.lineWidth = kucuk ? 1.6 : 2.4; x.strokeStyle = "#111"; x.stroke();
 
   return c.toDataURL("image/png");
 }
