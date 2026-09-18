@@ -1142,6 +1142,62 @@ const MENULER = [
   { r:"kml",      i:"globe",  ad:"KML",            alt:"İndir, Earth'te aç",   renk:"gumus",   g:null }
 ];
 
+// temaya gore gorsel klasoru; her temanin kendi gorselleri olacak
+const TEMA_KLASOR = { vitrin:"", loca:"" };
+const tgv = m => gv((TEMA_KLASOR[anaTema()] || "") + m);
+
+function menuGovde(tema){
+  // ---------- MORDOR: panjur seritleri ----------
+  if(tema === "vitrin"){
+    const serit = (git, ikon, ad2, alt2, ek, rozet) => `
+      <button class="serit ${ek||""}" onclick="${git}">
+        <div class="sDoku"></div><div class="sCizgi"></div>
+        <span class="sIkon">${ikon}</span>
+        <div class="sIcerik"><b>${ad2}</b>${alt2?`<small>${alt2}</small>`:""}</div>
+        ${rozet?`<span class="rozet" id="yakRozet"></span>`:""}
+        <span class="sOk">${svg("chevron")}</span>
+      </button>`;
+    return `<div class="vitrin">
+      <div class="kurSerit"><div class="sDoku"></div><div id="rates" class="rates"></div></div>
+      ${MENULER.map(m=>serit(`go('${m.r}')`, svg(m.i), m.ad, m.alt)).join("")}
+      ${serit("go('yaklasan')", svg("note"), "Yaklaşanlar", "Vekalet süreleri, vadeler", "ikincil", true)}
+      ${serit("go('hesap')", svg("money"), "Hesap - Kitap", "Alacaklar, borçlar", "ikincil")}
+    </div>`;
+  }
+
+  // ---------- MELKOR: sinematik pano + numarali kartlar ----------
+  const [bas, ...kalan] = MENULER;
+  const kutu = (m, i) => `
+    <button class="lKart ${m.g?"":"yalin"}" onclick="go('${m.r}')">
+      ${m.g?`<div class="lGorsel" style="background-image:url('${tgv(m.g)}')"></div>`:""}
+      <div class="lFilm"></div>
+      <span class="lNo">${i}</span>
+      <div class="lAlt"><b>${m.ad}</b><span class="lCizgi"></span>${m.alt?`<small>${m.alt}</small>`:""}</div>
+      <span class="lKose lKose1"></span><span class="lKose lKose2"></span>
+    </button>`;
+  return `<div class="loca">
+    <div class="lKur"><span class="lKurEt">PİYASA</span><div id="rates" class="rates"></div></div>
+    <button class="lHero" onclick="go('${bas.r}')">
+      <div class="lGorsel" style="background-image:url('${tgv(bas.g)}')"></div>
+      <div class="lFilm"></div><span class="lNo">01</span>
+      <div class="lAlt"><b>${bas.ad}</b><span class="lCizgi"></span><small>${bas.alt}</small></div>
+      <span class="lKose lKose1"></span><span class="lKose lKose2"></span>
+    </button>
+    <div class="lIzgara">
+      ${kalan.map((m,i)=>kutu(m, String(i+2).padStart(2,"0"))).join("")}
+      <button class="lKart yalin lTakip" onclick="go('yaklasan')">
+        <div class="lFilm"></div><span class="lNo">A</span>
+        <div class="lAlt"><b>Yaklaşanlar</b><span class="lCizgi"></span><small>Vade · vekalet</small></div>
+        <span class="rozet" id="yakRozet"></span>
+        <span class="lKose lKose1"></span><span class="lKose lKose2"></span></button>
+      <button class="lKart yalin lTakip" onclick="go('hesap')">
+        <div class="lFilm"></div><span class="lNo">B</span>
+        <div class="lAlt"><b>Hesap - Kitap</b><span class="lCizgi"></span><small>Alacak · borç</small></div>
+        <span class="lKose lKose1"></span><span class="lKose lKose2"></span></button>
+    </div>
+  </div>`;
+}
+
 async function anaMenu(){
   const tema = anaTema();
   temaUygula();
