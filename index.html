@@ -859,7 +859,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 7.1";
+const SURUM = "beta 7.5";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1683,6 +1683,8 @@ const BELGE_IKON = { tapu:"file", cap:"vector", kml:"globe", resim:"photo", vide
 // her yerde ayni gorunen dosya satiri: goruntule + indir + paylas (+ duzenle, sil)
 function dosyaSatiri(b, silHtml, duzenleHtml){
   return `<div class="dosya">
+    <input type="checkbox" class="dosyaSec" data-yol="${esc(b.file_path)}" data-ad="${esc(b.file_name||"belge")}"
+      onchange="secimGuncelle()" style="width:19px;height:19px;flex:0 0 auto;margin-right:2px">
     <span class="tip">${svg(BELGE_IKON[b.kind]||"file")}</span>
     <button class="bilgi" onclick="dosyaAc('${esc(b.file_path)}')">
       <b>${esc(b.file_name||"belge")}</b>
@@ -2252,9 +2254,72 @@ async function fiyatDuzen(id){
 
 function belgeListesiHtml(belgeler, parselId, donus, donusArg){
   if(!belgeler || !belgeler.length) return `<div style="color:var(--ink-3);font-size:13px">Henüz belge yok.</div>`;
-  return belgeler.map(b=>dosyaSatiri(b, ME.role==='admin'
-    ? `<button class="kirmizi" aria-label="Sil" onclick="belgeSilVeYenile('${b.id}','${esc(b.file_path)}','${donus}','${donusArg||parselId}')">${svg("trash")}</button>`
-    : "")).join("");
+  return `<div id="topluCubuk" class="acts" style="display:none;margin:0 0 10px">
+      <button class="pri" onclick="topluPaylas()">Seçilenleri Paylaş</button>
+      <button onclick="topluIndir()">İndir</button>
+      <button onclick="secimTemizle()">Vazgeç</button>
+      <span id="secimSayi" style="align-self:center;font-size:12px;color:var(--ink-2)"></span>
+    </div>` +
+    belgeler.map(b=>dosyaSatiri(b, ME.role==='admin'
+      ? `<button class="kirmizi" aria-label="Sil" onclick="belgeSilVeYenile('${b.id}','${esc(b.file_path)}','${donus}','${donusArg||parselId}')">${svg("trash")}</button>`
+      : "")).join("");
+}
+
+// ---- coklu belge secimi ----
+const seciliDosyalar = () => Array.from(document.querySelectorAll(".dosyaSec:checked"))
+  .map(k=>({ yol:k.dataset.yol, ad:k.dataset.ad }));
+
+function secimGuncelle(){
+  const n = seciliDosyalar().length;
+  const c = document.getElementById("topluCubuk"), sy = document.getElementById("secimSayi");
+  if(c) c.style.display = n ? "flex" : "none";
+  if(sy) sy.textContent = n ? n + " belge seçili" : "";
+}
+
+function secimTemizle(){
+  document.querySelectorAll(".dosyaSec:checked").forEach(k=>{ k.checked = false; });
+  secimGuncelle();
+}
+
+async function topluPaylas(){
+  const secim = seciliDosyalar();
+  if(!secim.length) return;
+  if(secim.length === 1) return dosyaPaylas(secim[0].yol, secim[0].ad);
+  toast(secim.length + " belge hazırlanıyor…");
+  try{
+    const dosyalar = [];
+    for(const o of secim){
+      const { data, error } = await sb.storage.from("arsatakip").createSignedUrl(o.yol, 86400);
+      if(error) continue;
+      const r = await fetch(data.signedUrl);
+      const bl = await r.blob();
+      dosyalar.push(new File([bl], o.ad, { type: bl.type || "application/octet-stream" }));
+    }
+    if(!dosyalar.length) return toast("Belgeler alınamadı");
+    if(navigator.canShare && navigator.canShare({ files: dosyalar })){
+      await navigator.share({ files: dosyalar, title: "Belgeler" });
+    }else{
+      dosyalar.forEach((f,i)=>setTimeout(()=>{
+        const u = URL.createObjectURL(f);
+        const a = document.createElement("a");
+        a.href = u; a.download = f.name; a.click();
+        setTimeout(()=>URL.revokeObjectURL(u), 4000);
+      }, i*400));
+      toast("Paylaşım desteklenmiyor, indirildi");
+    }
+    secimTemizle();
+  }catch(e){ if(e.name !== "AbortError") toast("Olmadı: " + (e.message||e)); }
+}
+
+async function topluIndir(){
+  const secim = seciliDosyalar();
+  if(!secim.length) return;
+  toast(secim.length + " belge indiriliyor…");
+  for(const o of secim){
+    await dosyaIndir(o.yol, o.ad);
+    await new Promise(r=>setTimeout(r, 400));
+  }
+  secimTemizle();
 }
 
 async function etiketleriGoster(parselId){
@@ -3014,6 +3079,23 @@ function ozetCiz(){
 
   const say = document.getElementById("onizSay");
   if(say) say.textContent = nf(hepsi.length) + " parça";
+
+  // onizlemenin ustunde canli ozet
+  const cz = document.getElementById("canliOzet");
+  if(cz){
+    const kutu2 = (ad2, deger, renk) => `
+      <div style="background:rgba(0,0,0,.24);border:1px solid var(--cizgi);border-radius:9px;padding:7px 8px;text-align:center">
+        <div style="font-size:8.5px;letter-spacing:.1em;color:var(--ink-3);text-transform:uppercase">${ad2}</div>
+        <div class="mono" style="font-size:12.5px;font-weight:600;margin-top:3px;color:${renk||"var(--ink)"}">${deger}</div>
+      </div>`;
+    const fark = kalan;
+    cz.innerHTML =
+      kutu2("Parsel", nf(Math.round(PARCA.toplam)) + " m²") +
+      kutu2("Yol payı", "− " + nf(Math.round(yolAlan)) + " m²", "var(--ink-2)") +
+      kutu2("Parçalara", nf(Math.round(Math.max(0,satilabilir))) + " m²") +
+      kutu2(fark < -0.5 ? "Fazla" : "Kalan", nf2(Math.abs(fark)) + " m²",
+            fark < -0.5 ? "var(--red)" : (Math.abs(fark) < 0.5 ? "var(--green)" : "var(--gold)"));
+  }
   onizlemeCiz();
 }
 
@@ -5058,22 +5140,71 @@ function capYerlesim(M, cfg){
     return k.length > 2 ? k : null;
   };
 
-  // parselin disinda, secilen kenara yaslanmis serit
+  // Parselin disinda, secilen kenarin TAMAMINI takip eden serit.
+  // Kenar kirikliysa (birden fazla dogru parcasindan olusuyorsa) serit de kirilir,
+  // boylece hicbir noktada daralmaz.
   const kenarSeridiDis = (a0, a1) => {
-    if(!kenarNormal || !kenarKenari) return null;
-    const q = kenarKenari.q, e = kenarKenari.e;
-    const paydaA = ana[0]*e[0] + ana[1]*e[1];
-    if(Math.abs(paydaA) < 1e-6) return null;
-    const anaQ = ana[0]*q[0] + ana[1]*q[1];
-    const nokta = a => {
-      const t = (a - anaQ)/paydaA;
-      return [ q[0] + e[0]*t, q[1] + e[1]*t ];
-    };
-    const p0 = nokta(a0), p1 = nokta(a1);
-    const n = kenarNormal;                       // ice bakiyor, disari icin tersi
-    return [ p0, p1,
-             [ p1[0] - n[0]*w, p1[1] - n[1]*w ],
-             [ p0[0] - n[0]*w, p0[1] - n[1]*w ] ];
+    if(!kenarNormal) return null;
+    const alt = Math.min(a0, a1), ust = Math.max(a0, a1);
+    const merkezD = M.reduce((t,k)=>t + (k[0]*dik[0] + k[1]*dik[1]), 0) / M.length;
+    const solTaraf = (kenarNormal[0]*dik[0] + kenarNormal[1]*dik[1]) > 0;  // ic normal saga bakiyorsa kenar solda
+
+    // sinir uzerinde a araliginda kalan, secilen taraftaki nokta zinciri
+    const zincir = [];
+    for(let i2 = 0; i2 < M.length; i2++){
+      const j2 = (i2+1) % M.length;
+      const p1 = M[i2], p2 = M[j2];
+      const a1p = p1[0]*ana[0] + p1[1]*ana[1], a2p = p2[0]*ana[0] + p2[1]*ana[1];
+      // sadece YAN kenarlar: alt/ust kenarlari zincire alma
+      const ex2 = p2[0]-p1[0], ey2 = p2[1]-p1[1];
+      const u2 = Math.hypot(ex2, ey2);
+      if(u2 < 0.5) continue;
+      if(Math.abs((ex2*ana[0] + ey2*ana[1]) / u2) < 0.35) continue;
+      const ortaD = ((p1[0]+p2[0])/2)*dik[0] + ((p1[1]+p2[1])/2)*dik[1];
+      const buTaraf = solTaraf ? (ortaD < merkezD) : (ortaD > merkezD);
+      if(!buTaraf) continue;
+      // kenari a araligina kirp
+      const kes = (a) => {
+        const t = (a - a1p) / (a2p - a1p);
+        return [ p1[0] + (p2[0]-p1[0])*t, p1[1] + (p2[1]-p1[1])*t ];
+      };
+      let q1 = p1, q2 = p2;
+      const kucuk2 = Math.min(a1p, a2p), buyuk2 = Math.max(a1p, a2p);
+      if(buyuk2 < alt - 0.01 || kucuk2 > ust + 0.01) continue;
+      if(Math.abs(a2p - a1p) > 1e-6){
+        if(a1p < alt) q1 = kes(alt); else if(a1p > ust) q1 = kes(ust);
+        if(a2p < alt) q2 = kes(alt); else if(a2p > ust) q2 = kes(ust);
+      }
+      zincir.push([q1, q2]);
+    }
+    if(!zincir.length) return null;
+
+    // zinciri a yonunde sirala ve uc uca ekle
+    const anaP = k2 => k2[0]*ana[0] + k2[1]*ana[1];
+    zincir.forEach(par=>{ if(anaP(par[0]) > anaP(par[1])) par.reverse(); });
+    zincir.sort((x,y2)=>anaP(x[0]) - anaP(y2[0]));
+
+    const ham2 = [];
+    zincir.forEach(par=>{ ham2.push(par[0], par[1]); });
+    // ust uste binen noktalari ele
+    const ic = [];
+    ham2.forEach(nk=>{
+      const son2 = ic[ic.length-1];
+      if(!son2 || Math.hypot(son2[0]-nk[0], son2[1]-nk[1]) > 0.05) ic.push(nk);
+    });
+    if(ic.length < 2) return null;
+
+    // disa dogru w kadar otele: her nokta komsu kenarlarin ortalama normali boyunca
+    const dis = ic.map((nk, i2)=>{
+      const onceki = ic[Math.max(0, i2-1)], sonraki = ic[Math.min(ic.length-1, i2+1)];
+      const ex = sonraki[0]-onceki[0], ey = sonraki[1]-onceki[1];
+      const u = Math.hypot(ex, ey) || 1;
+      let n = [ -ey/u, ex/u ];
+      if(n[0]*kenarNormal[0] + n[1]*kenarNormal[1] > 0) n = [-n[0], -n[1]];  // disari baksin
+      return [ nk[0] + n[0]*w, nk[1] + n[1]*w ];
+    });
+
+    return ic.concat(dis.reverse());
   };
 
   const kenarSeridi = (a0, a1) => disaridan ? kenarSeridiDis(a0, a1) : kenarSeridiIc(a0, a1);
@@ -5299,6 +5430,7 @@ async function capAyar(arg){
     <div class="card">
       <div class="bolum"><span class="rz yesil">${svg("vector")}</span><b>Canlı önizleme</b>
         <span class="sayi" id="onizSay">—</span></div>
+      <div id="canliOzet" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px"></div>
       <canvas id="capOnizleme" style="width:100%;border-radius:10px;background:#fff;display:block"></canvas>
       <p class="ipuc" style="margin:10px 2px 0">Önizlemede parçalar ve metrekareler görünür. Kenar ölçüleri PDF'e yazılırken numaraların üstüne binmeyecek şekilde kendiliğinden yerleştirilir.</p>
     </div>
