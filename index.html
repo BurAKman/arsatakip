@@ -859,7 +859,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 6.5";
+const SURUM = "beta 6.6";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -5613,20 +5613,27 @@ function capCizPng(p, cfg, kucuk){
     });
 
     // ---- yollar: bosluk zaten bos; ortasindan kesik cizgi gecer ----
-    // bir yol dortgeninin orta eksenini bul (metre koordinatinda)
+    // Bir yol seridinin orta ekseni: seridin KENDI dogrultusuna gore hesaplanir.
+    // (sinir kutusuna gore hesaplamak egik seritlerde ekseni disari tasiriyordu)
     const ortaEksen = poly => {
-      const pa = poly.map(k=>k[0]*yer.ana[0] + k[1]*yer.ana[1]);
-      const pd = poly.map(k=>k[0]*yer.dik[0] + k[1]*yer.dik[1]);
-      const aMin2 = Math.min(...pa), aMax2 = Math.max(...pa);
-      const dMin2 = Math.min(...pd), dMax2 = Math.max(...pd);
-      const uzunA = aMax2 - aMin2, uzunD = dMax2 - dMin2;
-      const eksen = uzunA >= uzunD ? yer.ana : yer.dik;
-      const capraz = uzunA >= uzunD ? yer.dik : yer.ana;
-      const orta = uzunA >= uzunD ? (dMin2 + dMax2)/2 : (aMin2 + aMax2)/2;
-      const bas = uzunA >= uzunD ? aMin2 : dMin2;
-      const son = uzunA >= uzunD ? aMax2 : dMax2;
-      const nokta = t => [ eksen[0]*t + capraz[0]*orta, eksen[1]*t + capraz[1]*orta ];
-      return { p1: nokta(bas), p2: nokta(son), uzunluk: son - bas };
+      const n = poly.length;
+      const cx = poly.reduce((t,k)=>t+k[0],0)/n, cy = poly.reduce((t,k)=>t+k[1],0)/n;
+      // ana dogrultu: en uzun kenarin yonu
+      let ex = 0, ey = 0, enUzun = 0;
+      for(let i2 = 0; i2 < n; i2++){
+        const j2 = (i2+1) % n;
+        const dx = poly[j2][0]-poly[i2][0], dy = poly[j2][1]-poly[i2][1];
+        const u = Math.hypot(dx, dy);
+        if(u > enUzun){ enUzun = u; ex = dx/u; ey = dy/u; }
+      }
+      if(!enUzun) return { p1:[cx,cy], p2:[cx,cy], uzunluk:0 };
+      const t = poly.map(k=>(k[0]-cx)*ex + (k[1]-cy)*ey);
+      const bas = Math.min(...t), son = Math.max(...t);
+      return {
+        p1: [ cx + ex*bas, cy + ey*bas ],
+        p2: [ cx + ex*son, cy + ey*son ],
+        uzunluk: son - bas
+      };
     };
 
     const kesikCiz = (p1, p2, kalin) => {
