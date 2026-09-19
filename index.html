@@ -859,7 +859,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 6.0";
+const SURUM = "beta 6.1";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -3018,7 +3018,7 @@ function ozetCiz(){
 }
 
 function parcaCfg(){
-  return { enAzYol: 3, ters: PARCA.ters, yolTipi: PARCA.yolTipi, yolKonum: PARCA.yolKonum,
+  return { enAzYol: PARCA.enAzYol || 3, ters: PARCA.ters, yolTipi: PARCA.yolTipi, yolKonum: PARCA.yolKonum,
     resmiGenislik: PARCA.resmiGenislik || 0, resmiKenar: PARCA.resmiKenar || "alt",
     yolKaydir: PARCA.yolKaydir || 0,
     capTema: "yatay", olculer: PARCA.olculer !== false,
@@ -5150,7 +5150,9 @@ async function capAyar(arg){
 
   PARCA.geometri = capHalkasi(p);
   PARCA.toplam = alan;
-  PARCA.bloklar = []; PARCA.enAzYol = 3; PARCA.ters = false; PARCA.yolTipi = "parsel"; PARCA.yolKonum = "oto"; PARCA.capTema = "yatay";
+  PARCA.bloklar = []; PARCA.enAzYol = 3; PARCA.ters = false; PARCA.yolTipi = "parsel";
+  PARCA.yolKonum = "oto"; PARCA.capTema = "yatay";
+  PARCA.resmiGenislik = 0; PARCA.resmiKenar = "alt"; PARCA.yolKaydir = 0; PARCA.olculer = true;
 
   app.innerHTML = head(belgeId ? "Çapı Düzenle" : "Çap Çizdir", belgeId ? `go('parsel','${parselId}')` : "go('cap')") + `
     <div class="card">
@@ -5196,11 +5198,20 @@ async function capAyar(arg){
     PARCA.yolTipi = duzen.yolTipi || "parsel";
     PARCA.yolKonum = duzen.yolKonum || "oto";
     PARCA.olculer = duzen.olculer !== false;
+    // kayitli cap ayarlari birebir geri yuklensin
+    PARCA.enAzYol = +duzen.enAzYol || 3;
+    PARCA.resmiGenislik = +duzen.resmiGenislik || 0;
+    PARCA.resmiKenar = duzen.resmiKenar || "alt";
+    PARCA.yolKaydir = +duzen.yolKaydir || 0;
     const g2 = k => document.getElementById(k);
     if(g2("polcu")) g2("polcu").value = PARCA.olculer === false ? "0" : "1";
     if(g2("pyoltip")) g2("pyoltip").value = PARCA.yolTipi;
     if(g2("pyolkonum")) g2("pyolkonum").value = PARCA.yolKonum;
     if(g2("pters")) g2("pters").value = PARCA.ters ? "1" : "0";
+    if(g2("pyg")) g2("pyg").value = PARCA.enAzYol;
+    if(g2("pyk")) g2("pyk").value = Math.round(PARCA.yolKaydir*100);
+    if(g2("prg")) g2("prg").value = String(PARCA.resmiGenislik);
+    if(g2("prk")) g2("prk").value = PARCA.resmiKenar;
     ozetCiz();
   }
 
@@ -5560,57 +5571,71 @@ function capCizPng(p, cfg, kucuk){
       }
     });
 
-    // ---- yollar: beyaz bosluk, kesik cizgili kenar ----
-    const yolEkran = (yer.yol||[]).filter(p=>p && p.length > 2).map(p=>p.map(E));
-    yolEkran.forEach(ek=>{
-      yol(ek); x.fillStyle = "#FFFFFF"; x.fill();
-      x.save(); x.setLineDash(kucuk ? [3,3] : [6,5]);
-      x.lineWidth = kucuk ? .9 : 1.2; x.strokeStyle = "#1A1A1A"; x.stroke(); x.restore();
-    });
+    // ---- yollar: bosluk zaten bos; ortasindan kesik cizgi gecer ----
+    // bir yol dortgeninin orta eksenini bul (metre koordinatinda)
+    const ortaEksen = poly => {
+      const pa = poly.map(k=>k[0]*yer.ana[0] + k[1]*yer.ana[1]);
+      const pd = poly.map(k=>k[0]*yer.dik[0] + k[1]*yer.dik[1]);
+      const aMin2 = Math.min(...pa), aMax2 = Math.max(...pa);
+      const dMin2 = Math.min(...pd), dMax2 = Math.max(...pd);
+      const uzunA = aMax2 - aMin2, uzunD = dMax2 - dMin2;
+      const eksen = uzunA >= uzunD ? yer.ana : yer.dik;
+      const capraz = uzunA >= uzunD ? yer.dik : yer.ana;
+      const orta = uzunA >= uzunD ? (dMin2 + dMax2)/2 : (aMin2 + aMax2)/2;
+      const bas = uzunA >= uzunD ? aMin2 : dMin2;
+      const son = uzunA >= uzunD ? aMax2 : dMax2;
+      const nokta = t => [ eksen[0]*t + capraz[0]*orta, eksen[1]*t + capraz[1]*orta ];
+      return { p1: nokta(bas), p2: nokta(son), uzunluk: son - bas };
+    };
 
-    // resmi yol: parselin disinda, ic kenari kesik - dis kenari duz
+    const kesikCiz = (p1, p2, kalin) => {
+      const e1 = E(p1), e2 = E(p2);
+      x.save();
+      x.setLineDash(kucuk ? [4,3] : [9,6]);
+      x.lineCap = "butt";
+      x.lineWidth = kalin || (kucuk ? 1 : 1.6);
+      x.strokeStyle = "#1A1A1A";
+      x.beginPath(); x.moveTo(e1[0], e1[1]); x.lineTo(e2[0], e2[1]); x.stroke();
+      x.restore();
+    };
+
+    const yolYazisi = (p1, p2, metin) => {
+      if(kucuk) return;
+      const e1 = E(p1), e2 = E(p2);
+      const uz = Math.hypot(e2[0]-e1[0], e2[1]-e1[1]);
+      if(uz < S(90)) return;
+      let ac = Math.atan2(e2[1]-e1[1], e2[0]-e1[0]);
+      if(ac > Math.PI/2) ac -= Math.PI;
+      if(ac < -Math.PI/2) ac += Math.PI;
+      x.save();
+      x.translate((e1[0]+e2[0])/2, (e1[1]+e2[1])/2);
+      x.rotate(ac);
+      x.textAlign = "center"; x.textBaseline = "middle";
+      x.font = `700 ${S(12)}px Arial`;
+      x.lineWidth = S(5); x.strokeStyle = "#FFFFFF"; x.lineJoin = "round";
+      x.strokeText(metin, 0, 0);
+      x.fillStyle = "#1A1A1A"; x.fillText(metin, 0, 0);
+      x.restore();
+    };
+
+    // parsel yolu: her seridin ortasindan kesik cizgi
+    const yolListesi = (yer.yol||[]).filter(p=>p && p.length > 2).map(ortaEksen);
+    yolListesi.forEach(o=>kesikCiz(o.p1, o.p2));
+    const enUzunYol = yolListesi.sort((a,b2)=>b2.uzunluk - a.uzunluk)[0];
+    if(enUzunYol) yolYazisi(enUzunYol.p1, enUzunYol.p2, "PARSEL YOLU");
+
+    // resmi yol: parselin disinda, iki uzun kenari duz cizgi
     if(yer.resmiYol && yer.resmiYol.length > 3){
       const ek = yer.resmiYol.map(E);
-      yol(ek); x.fillStyle = "#FFFFFF"; x.fill();
       x.save();
-      x.setLineDash(kucuk ? [3,3] : [6,5]);
-      x.lineWidth = kucuk ? .9 : 1.2; x.strokeStyle = "#1A1A1A";
+      x.lineWidth = kucuk ? 1.1 : 1.8; x.strokeStyle = "#1A1A1A";
       x.beginPath(); x.moveTo(ek[0][0], ek[0][1]); x.lineTo(ek[1][0], ek[1][1]); x.stroke();
-      x.setLineDash([]);
-      x.lineWidth = kucuk ? 1.3 : 2; 
-      x.beginPath(); x.moveTo(ek[2][0], ek[2][1]); x.lineTo(ek[3][0], ek[3][1]); x.stroke();
+      x.beginPath(); x.moveTo(ek[3][0], ek[3][1]); x.lineTo(ek[2][0], ek[2][1]); x.stroke();
       x.restore();
-    }
-
-    // ---- yol etiketleri ----
-    if(!kucuk){
-      const yaziAcisi = () => {
-        let a = Math.atan2(yer.ana[1], yer.ana[0]);
-        a = -a;                                   // ekran ekseni ters
-        if(a > Math.PI/2) a -= Math.PI;
-        if(a < -Math.PI/2) a += Math.PI;
-        return a;
-      };
-      const etiketYaz = (ekHalka, metin) => {
-        if(!ekHalka || ekHalka.length < 3) return;
-        const om = [ ekHalka.reduce((t,k)=>t+k[0],0)/ekHalka.length,
-                     ekHalka.reduce((t,k)=>t+k[1],0)/ekHalka.length ];
-        x.save(); x.translate(om[0], om[1]); x.rotate(yaziAcisi());
-        x.textAlign = "center"; x.textBaseline = "middle";
-        x.font = `700 ${S(11)}px Arial`;
-        x.lineWidth = 3; x.strokeStyle = "#FFFFFF"; x.strokeText(metin, 0, 0);
-        x.fillStyle = "#1A1A1A"; x.fillText(metin, 0, 0);
-        x.restore();
-      };
-      if(yolEkran.length){
-        const enUzun = yolEkran.reduce((a,b2)=>{
-          const ua = a ? Math.hypot(a[0][0]-a[1][0], a[0][1]-a[1][1]) * Math.hypot(a[1][0]-a[2][0], a[1][1]-a[2][1]) : 0;
-          const ub = Math.hypot(b2[0][0]-b2[1][0], b2[0][1]-b2[1][1]) * Math.hypot(b2[1][0]-b2[2][0], b2[1][1]-b2[2][1]);
-          return ub > ua ? b2 : a;
-        }, yolEkran[0]);
-        etiketYaz(enUzun, "PARSEL YOLU");
-      }
-      if(yer.resmiYol && yer.resmiYol.length > 3) etiketYaz(yer.resmiYol.map(E), "RESMİ YOL");
+      const r = yer.resmiYol;
+      const o1 = [ (r[0][0]+r[3][0])/2, (r[0][1]+r[3][1])/2 ];
+      const o2 = [ (r[1][0]+r[2][0])/2, (r[1][1]+r[2][1])/2 ];
+      yolYazisi(o1, o2, "RESMİ YOL");
     }
 
   }else{
