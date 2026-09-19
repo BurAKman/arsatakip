@@ -859,7 +859,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 6.6";
+const SURUM = "beta 7.1";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -3000,7 +3000,7 @@ function ozetCiz(){
     <div class="kv"><span>Parselin alanı</span><b class="mono">${nf2(PARCA.toplam)} m²</b></div>
     ${resmiAlan ? `<div class="kv"><span>Resmî yol · parsel dışı</span>
       <b class="mono" style="color:var(--ink-2)">${nf2(resmiAlan)} m²</b></div>` : ""}
-    <div class="kv"><span>Parsel yolu payı · ${yolGen ? yolGen.toFixed(1).replace(".",",") : "3"} m</span>
+    <div class="kv"><span>Parsel yolu payı · ${yolGen ? yolGen.toFixed(1).replace(".",",") : "3"} m genişlik</span>
       <b class="mono" style="color:var(--ink-2)">− ${nf2(yolAlan)} m²</b></div>
     <div class="kv" style="border-top:1px solid var(--cizgi);margin-top:6px;padding-top:8px">
       <span>Parçalara kalan</span><b class="mono">${nf2(Math.max(0,satilabilir))} m²</b></div>
@@ -3010,7 +3010,7 @@ function ozetCiz(){
       <b class="mono" style="color:${kalan < -0.5 ? "var(--red)" : "var(--green)"}">${nf2(Math.abs(kalan))} m²</b></div>
     <p class="ipuc" style="margin:8px 2px 0">${kucultme > 0
       ? `Parçalar parsel yoluna yer açmak için %${String(kucultme).replace(".",",")} oranında ölçeklendi.`
-      : "Parsel yolu parselden düşülür; resmî yol parselin dışındadır, alandan düşülmez."}</p>`;
+      : "Parsel yolunun tamamı parçalardan eşit oranda düşülür; resmî yol parselin dışındadır, alandan düşülmez."}</p>`;
 
   const say = document.getElementById("onizSay");
   if(say) say.textContent = nf(hepsi.length) + " parça";
@@ -3815,6 +3815,7 @@ function capSeffafPng(p, cfg, mod, ayar){
   try{
     const on = capYerlesim(M, cfg || {});
     if(on.resmiYol && on.resmiYol.length > 2) kapsam = kapsam.concat(on.resmiYol);
+    (on.yol||[]).forEach(p=>{ if(p && p.length > 2) kapsam = kapsam.concat(p); });
   }catch(e){}
   const minX = Math.min(...kapsam.map(k=>k[0])), maxX = Math.max(...kapsam.map(k=>k[0]));
   const minY = Math.min(...kapsam.map(k=>k[1])), maxY = Math.max(...kapsam.map(k=>k[1]));
@@ -5005,7 +5006,7 @@ function capYerlesim(M, cfg){
 
   // Kenar yolu parselin GERCEK kenarina yaslanir: egik kenari birebir takip eder,
   // boylece her yerde 3 m kalir ve parcalar kenara paralel kalir.
-  let kenarNormal = null, kenarSinir = 0;
+  let kenarNormal = null, kenarSinir = 0, kenarKenari = null;
   if(kenarGerekli){
     const ay = ayiriciDeger(bloklar[baglanacak]);
     const solaYakin = (cfg.yolKonum === "sol") ? true
@@ -5041,18 +5042,43 @@ function capYerlesim(M, cfg){
       if(n[0]*ic[0] + n[1]*ic[1] < 0) n = [-n[0], -n[1]];
       kenarNormal = n;
       kenarSinir = (M[enIyi.i][0]*n[0] + M[enIyi.i][1]*n[1]) + w;
+      kenarKenari = { q: M[enIyi.i], e: [ enIyi.ex/enIyi.uzun, enIyi.ey/enIyi.uzun ] };
     }
   }
   const kenarVarMi = kenarGerekli && !!kenarNormal;
-  // kenar yolu seridi ve yoldan arta kalan parsel parcasi
-  const kenarSeridi = (a0, a1) => {
+  // Kenar yolu varsayilan olarak parselin DISINDA cizilir: parcalar tam
+  // genisliginde kalir, siluet bozulmaz. Istenirse parselin icinden de gecebilir.
+  const disaridan = true;   // gorsel olarak her zaman parselin disindan gecer
+
+  // parselin icinde serit
+  const kenarSeridiIc = (a0, a1) => {
     const p = dilim(a0, a1);
     if(!p || !kenarNormal) return null;
     const k = kirp(p, kenarNormal, kenarSinir);
     return k.length > 2 ? k : null;
   };
+
+  // parselin disinda, secilen kenara yaslanmis serit
+  const kenarSeridiDis = (a0, a1) => {
+    if(!kenarNormal || !kenarKenari) return null;
+    const q = kenarKenari.q, e = kenarKenari.e;
+    const paydaA = ana[0]*e[0] + ana[1]*e[1];
+    if(Math.abs(paydaA) < 1e-6) return null;
+    const anaQ = ana[0]*q[0] + ana[1]*q[1];
+    const nokta = a => {
+      const t = (a - anaQ)/paydaA;
+      return [ q[0] + e[0]*t, q[1] + e[1]*t ];
+    };
+    const p0 = nokta(a0), p1 = nokta(a1);
+    const n = kenarNormal;                       // ice bakiyor, disari icin tersi
+    return [ p0, p1,
+             [ p1[0] - n[0]*w, p1[1] - n[1]*w ],
+             [ p0[0] - n[0]*w, p0[1] - n[1]*w ] ];
+  };
+
+  const kenarSeridi = (a0, a1) => disaridan ? kenarSeridiDis(a0, a1) : kenarSeridiIc(a0, a1);
   const kenarDisi = p => {
-    if(!kenarNormal) return p;
+    if(!kenarNormal || disaridan) return p;      // disaridan geciyorsa parca kesilmez
     const k = kirp(p, [-kenarNormal[0], -kenarNormal[1]], -kenarSinir);
     return k.length > 2 ? k : p;
   };
@@ -5071,7 +5097,8 @@ function capYerlesim(M, cfg){
       const ay = ayiriciDeger(b2);
       net -= alan(kutu(a0, a1, ay - w/2, ay + w/2));
     }
-    if(kenarVar) net -= alan(kenarSeridi(a0, a1));
+    // Kenar yolu parselin disinda cizilir; alani blogun icinden degil,
+    // toplam yol payindan (carpan uzerinden) butun parcalardan dusulur.
     return net;
   };
 
@@ -5116,9 +5143,15 @@ function capYerlesim(M, cfg){
       const k = kenarSeridi(bas, son);
       if(k) yollar.push(k);
     }
-    const yolAlan = yollar.reduce((t,p)=>t+alan(p), 0);
-    sonuc = { yerler, yollar, yolAlan, tasti };
-    const yeniCarpan = (toplamAlan - yolAlan) / T;
+    // Iki ayri toplam:
+    //  - icYol: parselin icinden gecen yollar. Cizim bunlara gore yerlesir,
+    //           boylece parcalar parseli bosluk birakmadan doldurur.
+    //  - yolAlan: kenar yolu dahil tum yollar. Ozet bunu parcalardan dusuk gosterir.
+    const disSerit = kenarVarMi ? yollar[yollar.length-1] : null;
+    const icYol = yollar.reduce((t,p)=>t + (p === disSerit ? 0 : alan(p)), 0);
+    const yolAlan = yollar.reduce((t,p)=>t + alan(p), 0);
+    sonuc = { yerler, yollar, yolAlan, icYol, tasti };
+    const yeniCarpan = (toplamAlan - icYol) / T;
     if(Math.abs(yeniCarpan - carpan) < 0.0005) break;
     carpan = yeniCarpan;
   }
@@ -5144,9 +5177,60 @@ function capYerlesim(M, cfg){
         .forEach((q,k)=>cikti.push({ poly:q, bilgi:y.b.sag[k] }));
   });
 
+  // ---- disaridan gecen kenar yolunun alanini parcalardan gercekten dus ----
+  // Her parca cevresi boyunca esit miktarda daraltilir: parsel bosluksuz dolar,
+  // toplam alan birebir tutar, parcalar arasinda ince ayrim cizgisi olusur.
+  {
+    const disSerit = kenarVarMi ? sonuc.yollar[sonuc.yollar.length-1] : null;
+    const disAlan = disSerit ? alan(disSerit) : 0;
+    if(disAlan > 0.5 && cikti.length){
+      const cevre = p => {
+        let t = 0;
+        for(let i2 = 0; i2 < p.length; i2++){
+          const j2 = (i2+1) % p.length;
+          t += Math.hypot(p[j2][0]-p[i2][0], p[j2][1]-p[i2][1]);
+        }
+        return t;
+      };
+      const toplamCevre = cikti.reduce((t,o)=>t + cevre(o.poly), 0);
+      const d = toplamCevre > 0 ? Math.min(disAlan / toplamCevre, w/3) : 0;
+      if(d > 0.01){
+        cikti.forEach(o=>{
+          const p = o.poly;
+          const mx = p.reduce((t,k)=>t+k[0],0)/p.length, my = p.reduce((t,k)=>t+k[1],0)/p.length;
+          let q = p;
+          for(let i2 = 0; i2 < p.length; i2++){
+            const j2 = (i2+1) % p.length;
+            const ex = p[j2][0]-p[i2][0], ey = p[j2][1]-p[i2][1];
+            const u = Math.hypot(ex, ey);
+            if(u < 0.01) continue;
+            let n = [ -ey/u, ex/u ];
+            if(n[0]*(mx-p[i2][0]) + n[1]*(my-p[i2][1]) < 0) n = [-n[0], -n[1]];
+            const sinirD = n[0]*p[i2][0] + n[1]*p[i2][1] + d;
+            const k = kirp(q, [-n[0], -n[1]], -sinirD);
+            if(k.length > 2) q = k;
+          }
+          if(q.length > 2) o.poly = q;
+        });
+      }
+    }
+  }
+
+  // ayni parca birden fazla parcaya bolunduyse yaziyi sadece en buyugune koy
+  {
+    const grup = new Map();
+    cikti.forEach(o=>{
+      const a2 = alan(o.poly);
+      const enIyi2 = grup.get(o.bilgi);
+      if(!enIyi2 || a2 > enIyi2.a) grup.set(o.bilgi, { o, a:a2 });
+    });
+    cikti.forEach(o=>{ o.ikizi = grup.get(o.bilgi)?.o !== o; });
+  }
+
   return { parcalar: cikti, yol: sonuc.yollar, resmiYol, ana, dik,
            yolGenislik: w,
            yolAlan: Math.round(sonuc.yolAlan*100)/100,
+           icYolAlan: Math.round(sonuc.icYol*100)/100,
            resmiAlan: Math.round(resmiAlan*100)/100,
            kalanAlan: Math.round((toplamAlan - sonuc.yolAlan)*100)/100,
            kucultme: carpan < 1 ? Math.round((1-carpan)*1000)/10 : 0,
@@ -5547,6 +5631,7 @@ function capCizPng(p, cfg, kucuk){
   try{
     const on = capYerlesim(M, cfg || {});
     if(on.resmiYol && on.resmiYol.length > 2) kapsam = kapsam.concat(on.resmiYol);
+    (on.yol||[]).forEach(p=>{ if(p && p.length > 2) kapsam = kapsam.concat(p); });
   }catch(e){}
   const minX = Math.min(...kapsam.map(k=>k[0])), maxX = Math.max(...kapsam.map(k=>k[0]));
   const minY = Math.min(...kapsam.map(k=>k[1])), maxY = Math.max(...kapsam.map(k=>k[1]));
@@ -5742,8 +5827,9 @@ function capCizPng(p, cfg, kucuk){
 
   SON_ETIKETLER = etiketler;
 
-  // dis sinir: parcali cizimde cizilmez (parcalarin sari hatlari sinirlari zaten gosterir)
-  if(!liste){ yol(N); x.lineWidth = kucuk ? 1.6 : 2.4; x.strokeStyle = "#111"; x.stroke(); }
+  // parcali cizimde dis sinir cizilmez: parcalarin sari hatlari siniri zaten verir,
+  // kenar yolu da parselin disindan gecer.
+  if(!liste){ yol(N); x.lineWidth = kucuk ? 1.6 : 2.4; x.strokeStyle = "#1A1A1A"; x.stroke(); }
 
   return c.toDataURL("image/png");
 }
