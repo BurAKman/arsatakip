@@ -938,7 +938,10 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 8.8";
+const SURUM_MORDOR = "v 1.0";
+const SURUM_MELKOR = "beta 1.0";
+const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
+const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1039,7 +1042,7 @@ function girisEkrani(){
 
 function head(title, back){
   const sag = back ? "" : `<div class="ustSag">
-      <span class="surumRozet ufak">${SURUM.toLocaleUpperCase("tr")}</span>
+      <span class="surumRozet ufak">${surumYazi().toLocaleUpperCase("tr")}</span>
       <div class="ustIkon">
         <button class="ibtn ak" onclick="go('tema')" aria-label="Tema">${svg("palet")}</button>
         ${ME.role==='admin'?`<button class="ibtn ak" onclick="go('ayarlar')" aria-label="Ayarlar">${svg("gear")}</button>`:""}
@@ -1084,6 +1087,7 @@ function kullaniciSeviye(){
   return +(localStorage.getItem("seviye") || 1);
 }
 function kullaniciRozetHtml(){
+  if(anaTema() !== "loca") return "";      // seviye ve takma ad Melkor'a ozel
   const ad2 = kullaniciAdi();
   if(!ad2) return "";
   return `<span class="kullaniciRozet">
@@ -1625,8 +1629,8 @@ async function yedektenYukle(){
 
 
 const ANA_TEMALAR = [
-  { k:"vitrin", ad:"Mordor", aciklama:"Füme, kızıl ve is. Dövme metal panjur şeritleri, görselsiz, sert ve ağır." },
-  { k:"loca",   ad:"Melkor", aciklama:"Obsidyen, mor gece ve soluk altın. Sinematik pano, numaralı kartlar, serif başlıklar." }
+  { k:"vitrin", ad:"Mordor", aciklama:"Füme, kızıl ve is. Dövme metal panjur şeritleri, görselsiz, sert ve ağır. · v 1.0" },
+  { k:"loca",   ad:"Melkor", aciklama:"Mor gece ve spektral turkuaz. Maskotlu, seviyeli, animasyonlu eğlence alanı. · beta 1.0" }
 ];
 const anaTema = () => { const t = localStorage.getItem("anaTema"); return (t === "vitrin" || t === "loca") ? t : "vitrin"; };
 function anaTemaSec(k){ localStorage.setItem("anaTema", k); temaUygula(); anaMenu(); }
@@ -1802,7 +1806,7 @@ async function yaklasanRozet(){
 }
 
 // gorsel adresine surum ekle ki guncelleme aninda gorunsun
-const gv = ad2 => ad2 + "?v=" + encodeURIComponent(SURUM);
+const gv = ad2 => ad2 + "?v=" + encodeURIComponent(SURUM_MORDOR + "-" + SURUM_MELKOR);
 
 const tile = (r,i,t,s2,renk,gorsel) =>
   `<button class="tile ${renk||"gri"}${gorsel?" gorselli":""}" onclick="go('${r}')">
