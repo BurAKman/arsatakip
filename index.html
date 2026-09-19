@@ -859,7 +859,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 6.4";
+const SURUM = "beta 6.5";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -5013,19 +5013,28 @@ function capYerlesim(M, cfg){
       : (ay - dMin) <= (dMax - ay);
 
     const merkez = [ M.reduce((t,k)=>t+k[0],0)/M.length, M.reduce((t,k)=>t+k[1],0)/M.length ];
-    let enIyi = null;
+    // once YAN kenarlari ayikla: yonu parselin uzun eksenine yakin olanlar.
+    // alt/ust kenar (resmi yolun degdigi kenar) asla kenar yolu tasiyicisi olamaz.
+    const adaylar = [];
     for(let i2 = 0; i2 < M.length; i2++){
       const j2 = (i2+1) % M.length;
       const ex = M[j2][0]-M[i2][0], ey = M[j2][1]-M[i2][1];
       const uzun = Math.hypot(ex, ey);
       if(uzun < 5) continue;
       const orta = [ (M[i2][0]+M[j2][0])/2, (M[i2][1]+M[j2][1])/2 ];
-      const dProj = orta[0]*dik[0] + orta[1]*dik[1];
-      // kenar ana yone ne kadar paralel: yan kenarlari sec, alt/ust kenari secme
-      const paralellik = Math.abs((ex*ana[0] + ey*ana[1]) / uzun);
-      const skor = (solaYakin ? -dProj : dProj) + paralellik * cW * 0.9;
-      if(!enIyi || skor > enIyi.skor) enIyi = { i:i2, j:j2, skor, orta, ex, ey, uzun };
+      const paralellik = Math.abs((ex*ana[0] + ey*ana[1]) / uzun);   // 1 = uzun eksene paralel
+      adaylar.push({ i:i2, j:j2, orta, ex, ey, uzun, paralellik,
+                     dProj: orta[0]*dik[0] + orta[1]*dik[1] });
     }
+    let havuz = adaylar.filter(o=>o.paralellik > 0.5);
+    if(!havuz.length) havuz = adaylar.filter(o=>o.paralellik > 0.25);
+    if(!havuz.length) havuz = adaylar;
+    // istenen taraftaki en uc kenar; esitlikte daha uzun olan
+    let enIyi = null;
+    havuz.forEach(o=>{
+      const skor = (solaYakin ? -o.dProj : o.dProj) + o.uzun * 0.01;
+      if(!enIyi || skor > enIyi.skor) enIyi = { ...o, skor };
+    });
     if(enIyi){
       let n = [ -enIyi.ey/enIyi.uzun, enIyi.ex/enIyi.uzun ];
       const ic = [ merkez[0]-enIyi.orta[0], merkez[1]-enIyi.orta[1] ];
