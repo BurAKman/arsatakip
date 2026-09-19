@@ -859,7 +859,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 5.8";
+const SURUM = "beta 6.0";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -2735,9 +2735,11 @@ function parcaAyarHtml(){
         <option value="1">Göster</option><option value="0">Gizle</option></select></div>
     </div>
     <div class="row2">
-      <div class="field"><label>Yol nereden geçsin</label><select id="pyolkonum">
-        <option value="oto">Otomatik</option><option value="sol">Soldan</option>
-        <option value="sag">Sağdan</option><option value="orta">Ortadan</option></select></div>
+      <div class="field"><label>Parsel yolu nereden geçsin</label><select id="pyolkonum">
+        <option value="oto">Otomatik · parça alanlarına göre</option>
+        <option value="sol">Soldan</option>
+        <option value="sag">Sağdan</option>
+        <option value="orta">Tam ortadan</option></select></div>
       <div class="field"><label>Blok sırası</label><select id="pters">
         <option value="0">Normal</option><option value="1">Ters çevir</option></select></div>
     </div>
@@ -4983,7 +4985,9 @@ function capYerlesim(M, cfg){
   // her yol blogunun kolon ayirici konumu
   const ayiriciDeger = b2 => {
     const oS = b2.sol.reduce((t,o)=>t+o.m2,0), oG = b2.sag.reduce((t,o)=>t+o.m2,0);
-    let a = dMin + cW * (oS / Math.max(1, oS + oG));
+    let a = (cfg.yolKonum === "orta")
+      ? dMin + cW/2
+      : dMin + cW * (oS / Math.max(1, oS + oG));
     a += cW * (+cfg.yolKaydir || 0);
     return Math.max(dMin + w, Math.min(dMax - w, a));
   };
@@ -5001,7 +5005,10 @@ function capYerlesim(M, cfg){
   let kenarD0 = 0, kenarD1 = 0;
   if(kenarGerekli){
     const ay = ayiriciDeger(bloklar[baglanacak]);
-    const solaYakin = (ay - dMin) <= (dMax - ay);
+    // sol/sag secilmisse kenar yolu o taraftan gecer, yoksa kolona yakin taraftan
+    const solaYakin = (cfg.yolKonum === "sol") ? true
+      : (cfg.yolKonum === "sag") ? false
+      : (ay - dMin) <= (dMax - ay);
     kenarD0 = solaYakin ? dMin : dMax - w;
     kenarD1 = solaYakin ? dMin + w : dMax;
   }
@@ -5524,14 +5531,14 @@ function capCizPng(p, cfg, kucuk){
       yol(ek);
       const dolguRenk = (!bilgi.renk || bilgi.renk.toUpperCase() === "#FFFFFF") ? "#C6D9A7" : bilgi.renk;
       x.fillStyle = dolguRenk; x.fill();
-      x.lineWidth = kucuk ? .8 : 1.2; x.strokeStyle = "#B8A62E"; x.stroke();   // ic hatlar sari
+      x.lineWidth = kucuk ? .8 : 1.15; x.strokeStyle = "#C2AE2B"; x.stroke();   // ornekteki sari hat
 
       const om = E(agirlikMerkezi(d));
       x.textAlign = "center"; x.textBaseline = "middle";
       if(o.ikizi) return;                      // yol kolu parcayi ikiye bolduyse yaziyi bir kere yaz
-      x.font = `700 ${S(22)}px Arial`; x.fillStyle = "#1A1A1A";
+      x.font = `700 ${S(21)}px Arial`; x.fillStyle = "#14170F";
       x.fillText(String(bilgi.no || (i+1)), om[0], om[1] - S(11));
-      x.font = `600 ${S(15)}px Arial`;
+      x.font = `400 ${S(15)}px Arial`;
       const m2Deger = isFinite(+bilgi.m2) && +bilgi.m2 > 0 ? +bilgi.m2 : alanHesap(d);
       const m2Metin = nfAkilli(m2Deger) + " m2";
       x.fillText(m2Metin, om[0], om[1] + S(10));
@@ -5554,28 +5561,57 @@ function capCizPng(p, cfg, kucuk){
     });
 
     // ---- yollar: beyaz bosluk, kesik cizgili kenar ----
-    const yolCiz = (halkalar, resmiMi) => {
-      halkalar.forEach(ek=>{
-        if(!ek || ek.length < 3) return;
-        yol(ek);
-        x.fillStyle = "#FFFFFF"; x.fill();
-        x.save();
-        x.setLineDash(kucuk ? [3,3] : [6,5]);
-        x.lineWidth = kucuk ? .9 : 1.3; x.strokeStyle = "#1A1A1A"; x.stroke();
-        x.restore();
-      });
-      // resmi yolun dis kenarina duz cift cizgi (yol govdesi)
-      if(resmiMi && halkalar[0] && halkalar[0].length > 3){
-        const ek = halkalar[0];
-        x.save();
-        x.lineWidth = kucuk ? 1.2 : 2; x.strokeStyle = "#1A1A1A";
-        x.beginPath(); x.moveTo(ek[2][0], ek[2][1]); x.lineTo(ek[3][0], ek[3][1]); x.stroke();
-        x.restore();
-      }
-    };
     const yolEkran = (yer.yol||[]).filter(p=>p && p.length > 2).map(p=>p.map(E));
-    if(yolEkran.length) yolCiz(yolEkran, false);
-    if(yer.resmiYol && yer.resmiYol.length > 2) yolCiz([yer.resmiYol.map(E)], true);
+    yolEkran.forEach(ek=>{
+      yol(ek); x.fillStyle = "#FFFFFF"; x.fill();
+      x.save(); x.setLineDash(kucuk ? [3,3] : [6,5]);
+      x.lineWidth = kucuk ? .9 : 1.2; x.strokeStyle = "#1A1A1A"; x.stroke(); x.restore();
+    });
+
+    // resmi yol: parselin disinda, ic kenari kesik - dis kenari duz
+    if(yer.resmiYol && yer.resmiYol.length > 3){
+      const ek = yer.resmiYol.map(E);
+      yol(ek); x.fillStyle = "#FFFFFF"; x.fill();
+      x.save();
+      x.setLineDash(kucuk ? [3,3] : [6,5]);
+      x.lineWidth = kucuk ? .9 : 1.2; x.strokeStyle = "#1A1A1A";
+      x.beginPath(); x.moveTo(ek[0][0], ek[0][1]); x.lineTo(ek[1][0], ek[1][1]); x.stroke();
+      x.setLineDash([]);
+      x.lineWidth = kucuk ? 1.3 : 2; 
+      x.beginPath(); x.moveTo(ek[2][0], ek[2][1]); x.lineTo(ek[3][0], ek[3][1]); x.stroke();
+      x.restore();
+    }
+
+    // ---- yol etiketleri ----
+    if(!kucuk){
+      const yaziAcisi = () => {
+        let a = Math.atan2(yer.ana[1], yer.ana[0]);
+        a = -a;                                   // ekran ekseni ters
+        if(a > Math.PI/2) a -= Math.PI;
+        if(a < -Math.PI/2) a += Math.PI;
+        return a;
+      };
+      const etiketYaz = (ekHalka, metin) => {
+        if(!ekHalka || ekHalka.length < 3) return;
+        const om = [ ekHalka.reduce((t,k)=>t+k[0],0)/ekHalka.length,
+                     ekHalka.reduce((t,k)=>t+k[1],0)/ekHalka.length ];
+        x.save(); x.translate(om[0], om[1]); x.rotate(yaziAcisi());
+        x.textAlign = "center"; x.textBaseline = "middle";
+        x.font = `700 ${S(11)}px Arial`;
+        x.lineWidth = 3; x.strokeStyle = "#FFFFFF"; x.strokeText(metin, 0, 0);
+        x.fillStyle = "#1A1A1A"; x.fillText(metin, 0, 0);
+        x.restore();
+      };
+      if(yolEkran.length){
+        const enUzun = yolEkran.reduce((a,b2)=>{
+          const ua = a ? Math.hypot(a[0][0]-a[1][0], a[0][1]-a[1][1]) * Math.hypot(a[1][0]-a[2][0], a[1][1]-a[2][1]) : 0;
+          const ub = Math.hypot(b2[0][0]-b2[1][0], b2[0][1]-b2[1][1]) * Math.hypot(b2[1][0]-b2[2][0], b2[1][1]-b2[2][1]);
+          return ub > ua ? b2 : a;
+        }, yolEkran[0]);
+        etiketYaz(enUzun, "PARSEL YOLU");
+      }
+      if(yer.resmiYol && yer.resmiYol.length > 3) etiketYaz(yer.resmiYol.map(E), "RESMİ YOL");
+    }
 
   }else{
     yol(N); x.fillStyle = "#F4F6F0"; x.fill();
@@ -5620,8 +5656,8 @@ function capCizPng(p, cfg, kucuk){
 
   SON_ETIKETLER = etiketler;
 
-  // dis sinir
-  yol(N); x.lineWidth = kucuk ? 1.6 : 2.4; x.strokeStyle = "#111"; x.stroke();
+  // dis sinir: parcali cizimde cizilmez (parcalarin sari hatlari sinirlari zaten gosterir)
+  if(!liste){ yol(N); x.lineWidth = kucuk ? 1.6 : 2.4; x.strokeStyle = "#111"; x.stroke(); }
 
   return c.toDataURL("image/png");
 }
