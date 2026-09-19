@@ -859,7 +859,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 7.5";
+const SURUM = "beta 7.9";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1681,14 +1681,26 @@ const BELGE_IKON = { tapu:"file", cap:"vector", kml:"globe", resim:"photo", vide
                      sunum:"photo", arastirma:"note", vekalet:"file", muvafakat:"file", diger:"file" };
 
 // her yerde ayni gorunen dosya satiri: goruntule + indir + paylas (+ duzenle, sil)
+const BELGE_RENK = {
+  tapu:   ["rgba(227,192,90,.13)",  "rgba(227,192,90,.34)",  "#E3C05A"],
+  rayic:  ["rgba(95,215,154,.12)",  "rgba(95,215,154,.32)",  "#5FD79A"],
+  cap:    ["rgba(111,176,245,.12)", "rgba(111,176,245,.32)", "#6FB0F5"],
+  kml:    ["rgba(139,200,255,.10)", "rgba(139,200,255,.28)", "#8BC8FF"],
+  resim:  ["rgba(196,140,235,.12)", "rgba(196,140,235,.30)", "#C48CEB"],
+  video:  ["rgba(240,140,110,.12)", "rgba(240,140,110,.30)", "#F08C6E"],
+  sunum:  ["rgba(240,112,92,.12)",  "rgba(240,112,92,.30)",  "#F0705C"],
+  diger:  ["rgba(255,255,255,.05)", "rgba(255,255,255,.14)", "var(--ink-2)"]
+};
+
 function dosyaSatiri(b, silHtml, duzenleHtml){
-  return `<div class="dosya">
+  const r = BELGE_RENK[b.kind] || BELGE_RENK.diger;
+  return `<div class="dosya" style="background:${r[0]};border-color:${r[1]}">
     <input type="checkbox" class="dosyaSec" data-yol="${esc(b.file_path)}" data-ad="${esc(b.file_name||"belge")}"
       onchange="secimGuncelle()" style="width:19px;height:19px;flex:0 0 auto;margin-right:2px">
-    <span class="tip">${svg(BELGE_IKON[b.kind]||"file")}</span>
+    <span class="tip" style="background:${r[0]};border:1px solid ${r[1]};color:${r[2]}">${svg(BELGE_IKON[b.kind]||"file")}</span>
     <button class="bilgi" onclick="dosyaAc('${esc(b.file_path)}')">
       <b>${esc(b.file_name||"belge")}</b>
-      <small>${BELGE_AD[b.kind]||b.kind}${b.size_bytes?" · "+boyut(b.size_bytes):""}${b.created_at?" · "+new Date(b.created_at).toLocaleDateString("tr-TR"):""}</small></button>
+      <small><span style="color:${r[2]};font-weight:600">${BELGE_AD[b.kind]||b.kind}</span>${b.size_bytes?" · "+boyut(b.size_bytes):""}${b.created_at?" · "+new Date(b.created_at).toLocaleDateString("tr-TR"):""}</small></button>
     <span class="ops">
       <button onclick="dosyaAc('${esc(b.file_path)}')" aria-label="Görüntüle">${svg("goz")}</button>
       <button onclick="dosyaIndir('${esc(b.file_path)}','${esc(b.file_name||"belge")}')" aria-label="İndir">${svg("indir")}</button>
@@ -1950,18 +1962,21 @@ async function parselDetay(id){
       ${parcalar.map(o=>{
         const renk = o.satildi ? "#6FB0F5" : o.satilik ? "#5FD79A" : "#7E8A84";
         const durum = o.satildi ? "satıldı" : o.satilik ? "satılık" : "pasif";
-        return `<div style="display:flex;align-items:center;gap:9px;border-top:1px solid var(--cizgi);padding:9px 0;${o.satildi||o.satilik?"":"opacity:.6"}">
+        const zemin = o.satildi ? "rgba(111,176,245,.12)" : "transparent";
+        return `<div style="display:flex;align-items:center;gap:9px;border-top:1px solid var(--cizgi);
+          padding:9px 8px;margin:0 -8px;border-radius:8px;background:${zemin};
+          ${o.satildi||o.satilik?"":"opacity:.6"}">
           <span style="min-width:32px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:12px;
             color:${renk};border:1px solid ${renk}55;border-radius:8px;padding:4px 6px">${esc(o.no||"")}</span>
           <div style="flex:1;min-width:0">
-            <b style="font-size:13.5px;font-weight:500;display:block">${esc(o.ad || (o.no + " nolu parça"))}</b>
-            <small style="font-size:11.5px;color:var(--ink-3);display:block">${nf2(o.m2||0)} m² · ${durum}${o.m2_fiyat ? " · " + nf(Math.round(o.m2_fiyat)) + " ₺/m²" : ""}</small>
+            <b style="font-size:13.5px;font-weight:500;display:block;${o.satildi?"color:#9CC8F7":""}">${esc(o.ad || (o.no + " nolu parça"))}</b>
+            <small style="font-size:11.5px;color:${o.satildi?"rgba(156,200,247,.72)":"var(--ink-3)"};display:block">${nf2(o.m2||0)} m² · ${durum}${o.m2_fiyat ? " · " + nf(Math.round(o.m2_fiyat)) + " ₺/m²" : ""}</small>
             ${(o.m2 && (o.m2_fiyat || o.maliyet_m2)) ? (() => {
               const kr = (+o.m2||0)*((+o.m2_fiyat||0)-(+o.maliyet_m2||0));
               return `<small style="font-size:11.5px;color:${kr>=0?"var(--green)":"var(--red)"};display:block;margin-top:1px">
                 Kâr: ${nf(Math.round(kr))} ₺${o.maliyet_m2 ? ` · maliyet ${nf(Math.round(o.maliyet_m2))} ₺/m²` : ""}</small>`; })() : ""}
             ${o.notu ? `<small style="font-size:11px;color:var(--ink-3);display:block;margin-top:2px">${esc(o.notu)}</small>` : ""}</div>
-          ${o.m2 && o.m2_fiyat ? `<b class="mono" style="color:var(--gold);font-size:13px">${nf(Math.round(o.m2*o.m2_fiyat))} ₺</b>` : ""}
+          ${o.m2 && o.m2_fiyat ? `<b class="mono" style="color:${o.satildi?"#6FB0F5":"var(--gold)"};font-size:13px">${nf(Math.round(o.m2*o.m2_fiyat))} ₺</b>` : ""}
         </div>`;
       }).join("")}
       ${ME.role!=='uye' ? `<button class="btn ghost" style="margin-top:12px" onclick="go('parcalar','${id}')">Parçaları Düzenle</button>` : ""}
@@ -5066,13 +5081,28 @@ function capYerlesim(M, cfg){
   const w = Math.max(0.5, Math.min(+cfg.enAzYol || 3, cW*0.35));
 
   // her yol blogunun kolon ayirici konumu
-  const ayiriciDeger = b2 => {
+  // Kolonlari ayiran cizgi: genislige gore degil, GERCEK ALANA gore bulunur.
+  // Parsel daralan bir sekilse genislik orani yaniltir ve uctaki parca ezilir.
+  const ayiriciDeger = (b2, a0, a1) => {
     const oS = b2.sol.reduce((t,o)=>t+o.m2,0), oG = b2.sag.reduce((t,o)=>t+o.m2,0);
-    let a = (cfg.yolKonum === "orta")
-      ? dMin + cW/2
-      : dMin + cW * (oS / Math.max(1, oS + oG));
-    a += cW * (+cfg.yolKaydir || 0);
-    return Math.max(dMin + w, Math.min(dMax - w, a));
+    const kaydir = cW * (+cfg.yolKaydir || 0);
+    if(cfg.yolKonum === "orta")
+      return Math.max(dMin + w, Math.min(dMax - w, dMin + cW/2 + kaydir));
+
+    const p = (a0 != null && a1 != null) ? dilim(a0, a1) : M;
+    const hedefOran = oS / Math.max(1e-6, oS + oG);
+    if(!p) return Math.max(dMin + w, Math.min(dMax - w, dMin + cW*hedefOran + kaydir));
+
+    // yolun kendi genisligi disinda kalan sol/sag alanlarin orani hedefe esitlenir
+    let lo = dMin, hi = dMax, mid = dMin + cW*hedefOran;
+    for(let k = 0; k < 36; k++){
+      mid = (lo + hi)/2;
+      const solA = alan(kD(p, mid - w/2, true));
+      const sagA = alan(kD(p, mid + w/2, false));
+      const oran = solA / Math.max(1e-6, solA + sagA);
+      if(oran < hedefOran) lo = mid; else hi = mid;
+    }
+    return Math.max(dMin + w, Math.min(dMax - w, mid + kaydir));
   };
 
   // bloklar her zaman aMin'den yukari dizilir; resmi yol hangi uctaysa
@@ -5225,7 +5255,7 @@ function capYerlesim(M, cfg){
     if(!p) return 0;
     let net = alan(p);
     if(b2.tip === "yol"){
-      const ay = ayiriciDeger(b2);
+      const ay = ayiriciDeger(b2, a0, a1);
       net -= alan(kutu(a0, a1, ay - w/2, ay + w/2));
     }
     // Kenar yolu parselin disinda cizilir; alani blogun icinden degil,
@@ -5259,7 +5289,7 @@ function capYerlesim(M, cfg){
     const yollar = [];
     yerler.forEach((y, i2)=>{
       if(y.b.tip === "yol"){
-        const ay = ayiriciDeger(y.b);
+        const ay = ayiriciDeger(y.b, y.a0, y.a1);
         const k = kutu(y.a0, y.a1, ay - w/2, ay + w/2);
         if(k) yollar.push(k);
       }
@@ -5298,7 +5328,7 @@ function capYerlesim(M, cfg){
         .forEach((q,k)=>cikti.push({ poly:q, bilgi:y.b.parcalar[k] }));
       return;
     }
-    const ay = ayiriciDeger(y.b);
+    const ay = ayiriciDeger(y.b, y.a0, y.a1);
     const sol = kD(p, ay - w/2, true), sag = kD(p, ay + w/2, false);
     if(y.b.sol.length && sol.length > 2)
       parcala(sol, y.b.sol.map(o=>o.m2*carpan), ana, true)
@@ -5323,10 +5353,17 @@ function capYerlesim(M, cfg){
         }
         return t;
       };
-      const toplamCevre = cikti.reduce((t,o)=>t + cevre(o.poly), 0);
-      const d = toplamCevre > 0 ? Math.min(disAlan / toplamCevre, w/3) : 0;
-      if(d > 0.01){
+      // pay alana gore dagitilir: her parca kendi alaniyla orantili kadar kaybeder
+      const toplamAlanP = cikti.reduce((t,o)=>t + alan(o.poly), 0) || 1;
+      cikti.forEach(o=>{
+        const a2 = alan(o.poly);
+        const c2 = cevre(o.poly) || 1;
+        o.daralt = Math.min((disAlan * (a2/toplamAlanP)) / c2, w/3);
+      });
+      {
         cikti.forEach(o=>{
+          const d = o.daralt || 0;
+          if(d <= 0.005) return;
           const p = o.poly;
           const mx = p.reduce((t,k)=>t+k[0],0)/p.length, my = p.reduce((t,k)=>t+k[1],0)/p.length;
           let q = p;
@@ -5342,6 +5379,7 @@ function capYerlesim(M, cfg){
             if(k.length > 2) q = k;
           }
           if(q.length > 2) o.poly = q;
+          delete o.daralt;
         });
       }
     }
