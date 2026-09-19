@@ -938,7 +938,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 8.7";
+const SURUM = "beta 8.8";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1283,7 +1283,13 @@ function temaOnizleme(canvas, k){
 /* ---- maskot: ekranda yasayan karakter (Melkor temasi) ---- */
 
 const MASKOTLAR = {
-  burak: { ad:"Burak", gorsel:"maskot-burak.png" }
+  melkor: { ad:"Melkor", gorsel:"maskot-burak.png" }
+  // ileride: harita:{...}, cap:{...} gibi her ekrana ayri karakter
+};
+
+// hangi ekranda hangi karakter var; listede olmayan ekranda maskot cikmaz
+const EKRAN_MASKOT = {
+  ana: "melkor"
 };
 let MASKOT = null;
 
@@ -1340,14 +1346,19 @@ function maskotEkran(r){
   setTimeout(()=>maskotKonus(l[Math.floor(Math.random()*l.length)], "sallan"), 700);
 }
 
-function maskotAcikMi(){
-  return anaTema() === "loca" && localStorage.getItem("maskotKapali") !== "1";
+function maskotAcikMi(ekran){
+  if(anaTema() !== "loca") return false;
+  if(localStorage.getItem("maskotKapali") === "1") return false;
+  if(ekran != null) return !!EKRAN_MASKOT[ekran];
+  return true;
 }
 
-function maskotKur(){
+function maskotKur(ekran){
   document.getElementById("maskot")?.remove();
-  if(!maskotAcikMi()) return;
-  const kim = MASKOTLAR[localStorage.getItem("maskotKim") || "burak"] || MASKOTLAR.burak;
+  clearInterval(window.__maskotSaat);
+  clearTimeout(window.__maskotGez);
+  if(!maskotAcikMi(ekran || "ana")) return;
+  const kim = MASKOTLAR[EKRAN_MASKOT[ekran || "ana"]] || MASKOTLAR.melkor;
 
   const k = document.createElement("div");
   k.id = "maskot";
@@ -1368,6 +1379,9 @@ function maskotKur(){
   const tut = e => {
     const n = e.touches ? e.touches[0] : e;
     bas = { x:n.clientX, y:n.clientY, mx:MASKOT.x, my:MASKOT.y, t:Date.now(), oynadi:false };
+    MASKOT.surukleniyor = true;
+    k.style.transition = "";
+    k.classList.remove("yuru");
     k.classList.add("tutuluyor");
   };
   const kaydir = e => {
@@ -1383,6 +1397,7 @@ function maskotKur(){
   };
   const birak = () => {
     if(!bas) return;
+    MASKOT.surukleniyor = false;
     k.classList.remove("tutuluyor");
     if(!bas.oynadi) maskotKonus(lafSec("dokun"), "zipla");
     else localStorage.setItem("maskotYer", JSON.stringify({ x:MASKOT.x, y:MASKOT.y }));
@@ -1410,8 +1425,37 @@ function maskotKur(){
 
   if(!window.__maskotSelam){
     window.__maskotSelam = true;
-    setTimeout(()=>maskotKonus(lafSec("selam"), "zipla"), 900);
+    maskotGezmeyeBasla();
   }
+}
+
+// kendi kendine gezinir: rastgele bir noktaya yurur
+function maskotGezmeyeBasla(){
+  clearTimeout(window.__maskotGez);
+  const tur = () => {
+    const k = document.getElementById("maskot");
+    if(!k || !MASKOT) return;
+    if(!MASKOT.surukleniyor && Date.now() - MASKOT.sonHareket > 6000){
+      const enG = Math.max(6, window.innerWidth - 84);
+      const enY = Math.max(90, window.innerHeight - 140);
+      const yeniX = 6 + Math.random() * (enG - 6);
+      const yeniY = 96 + Math.random() * (enY - 96);
+      const mesafe = Math.hypot(yeniX - MASKOT.x, yeniY - MASKOT.y);
+      const sure = Math.min(4200, Math.max(1100, mesafe * 9));
+
+      k.classList.toggle("ters", yeniX < MASKOT.x);   // gittigi yone doner
+      k.classList.add("yuru");
+      k.style.transition = `left ${sure}ms linear, top ${sure}ms linear`;
+      MASKOT.x = yeniX; MASKOT.y = yeniY;
+      maskotYerlestir();
+      setTimeout(()=>{
+        k.classList.remove("yuru");
+        k.style.transition = "";
+      }, sure);
+    }
+    window.__maskotGez = setTimeout(tur, 6000 + Math.random()*7000);
+  };
+  window.__maskotGez = setTimeout(tur, 3500);
 }
 
 function maskotYerlestir(){
@@ -1738,7 +1782,7 @@ async function anaMenu(){
   app.innerHTML = head() + menuGovde(tema);
   kurlar();
   yaklasanRozet();
-  maskotKur();
+  maskotKur("ana");
 }
 
 
@@ -6737,10 +6781,14 @@ function ekraniCiz(r, arg){
   }, 1200);
   // maskot sadece Melkor temasinda calisir; diger temada hicbir sey yapmaz
   try{
-    if(maskotAcikMi()){
-      if(r !== "ana") maskotKur();
+    if(maskotAcikMi(r)){
+      maskotKur(r);
       maskotEkran(r);
-    }else document.getElementById("maskot")?.remove();
+    }else{
+      document.getElementById("maskot")?.remove();
+      clearInterval(window.__maskotSaat);
+      clearTimeout(window.__maskotGez);
+    }
   }catch(e){}
 }
 
