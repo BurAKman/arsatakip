@@ -560,6 +560,31 @@ body[data-tema="loca"] .rw .kod{border-radius:2px;font-family:Georgia,serif;colo
   background:rgba(201,169,97,.12);border:1px solid rgba(201,169,97,.3)}
 body[data-tema="loca"] .rw:active{background:rgba(201,169,97,.07)}
 
+/* ---- ic ogeler temanin rengine doner ---- */
+body[data-tema="vitrin"] .rz.yesil,body[data-tema="vitrin"] .rz.mavi,body[data-tema="vitrin"] .rz.altin{
+  background:rgba(224,87,26,.16);border:1px solid rgba(240,120,30,.38);color:#F0913F}
+body[data-tema="vitrin"] .rz.kirmizi{background:rgba(224,31,51,.18);border:1px solid rgba(224,31,51,.42);color:#F2606E}
+body[data-tema="vitrin"] .say,body[data-tema="vitrin"] .sayi{
+  background:rgba(224,87,26,.14);border:1px solid rgba(240,120,30,.34);color:#F0A05A;border-radius:6px}
+body[data-tema="vitrin"] .pill.on{background:rgba(224,87,26,.14);border-color:rgba(240,120,30,.36);color:#F0A05A}
+body[data-tema="vitrin"] .pill.off{background:rgba(170,178,184,.1);border-color:rgba(170,178,184,.26);color:#AEB6BC}
+body[data-tema="vitrin"] .dot.on{background:#E4571A;box-shadow:0 0 8px rgba(228,87,26,.6)}
+body[data-tema="vitrin"] .ghd .pinico{color:#E4571A}
+body[data-tema="vitrin"] .ghd .chev{color:#E0503A}
+body[data-tema="vitrin"] .bolum b{color:#F2EFE9}
+
+body[data-tema="loca"] .rz.yesil,body[data-tema="loca"] .rz.mavi,body[data-tema="loca"] .rz.altin,
+body[data-tema="loca"] .rz.kirmizi{
+  background:rgba(201,169,97,.14);border:1px solid rgba(201,169,97,.34);color:#D8C08A;border-radius:2px}
+body[data-tema="loca"] .say,body[data-tema="loca"] .sayi{
+  background:rgba(201,169,97,.12);border:1px solid rgba(201,169,97,.3);color:#D8C08A;
+  border-radius:2px;font-family:Georgia,serif}
+body[data-tema="loca"] .pill.on{background:rgba(201,169,97,.13);border-color:rgba(201,169,97,.32);color:#D8C08A}
+body[data-tema="loca"] .pill.off{background:rgba(160,150,190,.1);border-color:rgba(160,150,190,.24);color:#A79FBC}
+body[data-tema="loca"] .dot.on{background:#C9A961;box-shadow:0 0 8px rgba(201,169,97,.55)}
+body[data-tema="loca"] .ghd .pinico{color:#C9A961}
+body[data-tema="loca"] .ghd .chev{color:#C9A961}
+
 /* ---- harita sorgulama ekrani ---- */
 body[data-tema="vitrin"] .sorguKutu{border-radius:10px;
   background:linear-gradient(180deg,rgba(46,51,56,.6),rgba(14,16,18,.55));
@@ -901,7 +926,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 8.1";
+const SURUM = "beta 8.2";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -6361,7 +6386,9 @@ async function ayarlar(){
           onchange="localStorage.setItem('introSesKapali', this.checked ? '1' : '0')">
         <span style="flex:1">Açılış videosunun sesi kapalı</span></label>
       ${ME.role==='admin'?`<button class="btn ghost" style="margin-top:12px" onclick="go('marka')">
-        Marka kimliği ${markaVarMi()?"· tanımlı":"· tanımsız"}</button>`:""}
+        Marka Kimliği ${markaVarMi()?"· tanımlı":"· tanımsız"}</button>`:""}
+      <button class="btn ghost" style="margin-top:8px" onclick="go('yedek')">
+        Yedekleme${sonYedek()?" · "+new Date(sonYedek()).toLocaleDateString("tr-TR"):" · hiç alınmadı"}</button>
     </div>
     <h3 style="font-size:14px;margin:22px 0 10px">Kullanıcılar</h3>
     ${(kisiler||[]).map(k=>{
