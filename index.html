@@ -859,7 +859,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 6.1";
+const SURUM = "beta 6.4";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -5002,16 +5002,51 @@ function capYerlesim(M, cfg){
   const baglanacak = ustten ? sonYol : ilkYol;
   const kenarGerekli = rg > 0 && (rKenar === "alt" || rKenar === "ust")
     && baglanacak >= 0 && (ustten ? baglanacak < bloklar.length-1 : baglanacak > 0);
-  let kenarD0 = 0, kenarD1 = 0;
+
+  // Kenar yolu parselin GERCEK kenarina yaslanir: egik kenari birebir takip eder,
+  // boylece her yerde 3 m kalir ve parcalar kenara paralel kalir.
+  let kenarNormal = null, kenarSinir = 0;
   if(kenarGerekli){
     const ay = ayiriciDeger(bloklar[baglanacak]);
-    // sol/sag secilmisse kenar yolu o taraftan gecer, yoksa kolona yakin taraftan
     const solaYakin = (cfg.yolKonum === "sol") ? true
       : (cfg.yolKonum === "sag") ? false
       : (ay - dMin) <= (dMax - ay);
-    kenarD0 = solaYakin ? dMin : dMax - w;
-    kenarD1 = solaYakin ? dMin + w : dMax;
+
+    const merkez = [ M.reduce((t,k)=>t+k[0],0)/M.length, M.reduce((t,k)=>t+k[1],0)/M.length ];
+    let enIyi = null;
+    for(let i2 = 0; i2 < M.length; i2++){
+      const j2 = (i2+1) % M.length;
+      const ex = M[j2][0]-M[i2][0], ey = M[j2][1]-M[i2][1];
+      const uzun = Math.hypot(ex, ey);
+      if(uzun < 5) continue;
+      const orta = [ (M[i2][0]+M[j2][0])/2, (M[i2][1]+M[j2][1])/2 ];
+      const dProj = orta[0]*dik[0] + orta[1]*dik[1];
+      // kenar ana yone ne kadar paralel: yan kenarlari sec, alt/ust kenari secme
+      const paralellik = Math.abs((ex*ana[0] + ey*ana[1]) / uzun);
+      const skor = (solaYakin ? -dProj : dProj) + paralellik * cW * 0.9;
+      if(!enIyi || skor > enIyi.skor) enIyi = { i:i2, j:j2, skor, orta, ex, ey, uzun };
+    }
+    if(enIyi){
+      let n = [ -enIyi.ey/enIyi.uzun, enIyi.ex/enIyi.uzun ];
+      const ic = [ merkez[0]-enIyi.orta[0], merkez[1]-enIyi.orta[1] ];
+      if(n[0]*ic[0] + n[1]*ic[1] < 0) n = [-n[0], -n[1]];
+      kenarNormal = n;
+      kenarSinir = (M[enIyi.i][0]*n[0] + M[enIyi.i][1]*n[1]) + w;
+    }
   }
+  const kenarVarMi = kenarGerekli && !!kenarNormal;
+  // kenar yolu seridi ve yoldan arta kalan parsel parcasi
+  const kenarSeridi = (a0, a1) => {
+    const p = dilim(a0, a1);
+    if(!p || !kenarNormal) return null;
+    const k = kirp(p, kenarNormal, kenarSinir);
+    return k.length > 2 ? k : null;
+  };
+  const kenarDisi = p => {
+    if(!kenarNormal) return p;
+    const k = kirp(p, [-kenarNormal[0], -kenarNormal[1]], -kenarSinir);
+    return k.length > 2 ? k : p;
+  };
 
   const blokAgirlik = bloklar.map(b2=> b2.tip === "tam"
     ? b2.parcalar.reduce((t,o)=>t+o.m2,0)
@@ -5027,7 +5062,7 @@ function capYerlesim(M, cfg){
       const ay = ayiriciDeger(b2);
       net -= alan(kutu(a0, a1, ay - w/2, ay + w/2));
     }
-    if(kenarVar) net -= alan(kutu(a0, a1, kenarD0, kenarD1));
+    if(kenarVar) net -= alan(kenarSeridi(a0, a1));
     return net;
   };
 
@@ -5041,7 +5076,7 @@ function capYerlesim(M, cfg){
     bloklar.forEach((b2, i2)=>{
       const hedef = blokAgirlik[i2] * carpan;
       // kenar yolu hangi bloklarin yanindan gecer
-      const kenarVar = kenarGerekli && (ustten ? i2 > baglanacak : i2 < baglanacak);
+      const kenarVar = kenarVarMi && (ustten ? i2 > baglanacak : i2 < baglanacak);
       let lo = imlec, hi = aMax, kes = hi;
       for(let k = 0; k < 44; k++){
         kes = (lo + hi)/2;
@@ -5066,10 +5101,10 @@ function capYerlesim(M, cfg){
         if(bant) yollar.push(bant);
       }
     });
-    if(kenarGerekli){
+    if(kenarVarMi){
       const bas = ustten ? yerler[baglanacak].a1 : aMin;
       const son = ustten ? aMax : yerler[baglanacak].a0;
-      const k = kutu(bas, son, kenarD0, kenarD1);
+      const k = kenarSeridi(bas, son);
       if(k) yollar.push(k);
     }
     const yolAlan = yollar.reduce((t,p)=>t+alan(p), 0);
@@ -5084,10 +5119,7 @@ function capYerlesim(M, cfg){
   sonuc.yerler.forEach(y=>{
     let p = dilim(y.a0, y.a1);
     if(!p) return;
-    if(y.kenarVar){                        // kenar yolunu blogun disinda birak
-      const dis = (kenarD0 <= dMin + 0.001) ? kD(p, kenarD1, false) : kD(p, kenarD0, true);
-      if(dis.length > 2) p = dis;
-    }
+    if(y.kenarVar) p = kenarDisi(p);       // kenar yolunu blogun disinda birak
     if(y.b.tip === "tam"){
       parcala(p, y.b.parcalar.map(o=>o.m2*carpan), ana, true)
         .forEach((q,k)=>cikti.push({ poly:q, bilgi:y.b.parcalar[k] }));
@@ -5618,9 +5650,21 @@ function capCizPng(p, cfg, kucuk){
       x.restore();
     };
 
+    // yol eksenleri dolu sayilsin ki kenar olculeri yolun uzerine yazilmasin
+    const eksenDolu = (p1, p2) => {
+      const e1 = E(p1), e2 = E(p2);
+      const uz = Math.hypot(e2[0]-e1[0], e2[1]-e1[1]);
+      const adet = Math.max(2, Math.round(uz / S(16)));
+      const yari = S(9);
+      for(let t = 0; t <= adet; t++){
+        const px = e1[0] + (e2[0]-e1[0])*t/adet, py = e1[1] + (e2[1]-e1[1])*t/adet;
+        dolu.push({ x1:px-yari, y1:py-yari, x2:px+yari, y2:py+yari });
+      }
+    };
+
     // parsel yolu: her seridin ortasindan kesik cizgi
     const yolListesi = (yer.yol||[]).filter(p=>p && p.length > 2).map(ortaEksen);
-    yolListesi.forEach(o=>kesikCiz(o.p1, o.p2));
+    yolListesi.forEach(o=>{ kesikCiz(o.p1, o.p2); eksenDolu(o.p1, o.p2); });
     const enUzunYol = yolListesi.sort((a,b2)=>b2.uzunluk - a.uzunluk)[0];
     if(enUzunYol) yolYazisi(enUzunYol.p1, enUzunYol.p2, "PARSEL YOLU");
 
@@ -5635,6 +5679,7 @@ function capCizPng(p, cfg, kucuk){
       const r = yer.resmiYol;
       const o1 = [ (r[0][0]+r[3][0])/2, (r[0][1]+r[3][1])/2 ];
       const o2 = [ (r[1][0]+r[2][0])/2, (r[1][1]+r[2][1])/2 ];
+      eksenDolu(o1, o2);
       yolYazisi(o1, o2, "RESMİ YOL");
     }
 
