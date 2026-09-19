@@ -859,7 +859,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 5.7";
+const SURUM = "beta 5.8";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -4941,198 +4941,168 @@ function capYerlesim(M, cfg){
                 yolGenislik:0, yolAlan:0, resmiAlan:0, kalanAlan:0, kucultme:0 };
   if(!bloklar.length) return bos;
 
-  const A = alanHesap(M);
   const izdA = M.map(p=>p[0]*ana[0]+p[1]*ana[1]);
   const izdD = M.map(p=>p[0]*dik[0]+p[1]*dik[1]);
   const aMin = Math.min(...izdA), aMax = Math.max(...izdA);
   const dMin = Math.min(...izdD), dMax = Math.max(...izdD);
-  const W = dMax - dMin, boy = aMax - aMin;
+  const cW = dMax - dMin;
 
   const kA = (poly, deger, ust) => ust ? kirp(poly, ana, deger) : kirp(poly, [-ana[0],-ana[1]], -deger);
   const kD = (poly, deger, ust) => ust ? kirp(poly, dik, deger) : kirp(poly, [-dik[0],-dik[1]], -deger);
-  const serit = (kaynak, a0, a1, d0, d1) => {
-    let p = kA(kA(kaynak, a1, true), a0, false);
-    if(p.length < 3) return null;
+  const dilim = (a0, a1) => { const p = kA(kA(M, a1, true), a0, false); return p.length > 2 ? p : null; };
+  const kutu = (a0, a1, d0, d1) => {
+    let p = dilim(a0, a1); if(!p) return null;
     p = kD(kD(p, d1, true), d0, false);
     return p.length > 2 ? p : null;
   };
+  const alan = p => (p && p.length > 2) ? Math.abs(alanHesap(p)) : 0;
 
-  // ---------- 1) resmi yol: parselin DISINDA, alandan dusulmez ----------
-  const calisma = M;                      // parselin tamami parcalara ayrilir
+  // ---------- resmi yol: parselin DISINDA, alandan dusulmez ----------
   let resmiYol = null, resmiAlan = 0;
   const rg = +cfg.resmiGenislik || 0;
-  const rKenar = cfg.resmiKenar || "alt";  // alt | ust | sol | sag
+  const rKenar = cfg.resmiKenar || "alt";
   if(rg > 0){
-    // parselin ilgili kenarina yaslanan, disariya tasan serit
-    const koseler = M.map((k,i2)=>({ k, a:izdA[i2], d:izdD[i2] }));
     const sinirDegeri = { alt:aMin, ust:aMax, sol:dMin, sag:dMax }[rKenar];
-    const eksen = (rKenar === "alt" || rKenar === "ust") ? "a" : "d";
-    // kenardaki iki uc nokta
-    const yakinlar = koseler
-      .map(o=>({ ...o, fark: Math.abs(o[eksen] - sinirDegeri) }))
-      .sort((x,y)=>x.fark - y.fark).slice(0, 2).map(o=>o.k);
+    const eksenDeger = (rKenar === "alt" || rKenar === "ust") ? izdA : izdD;
+    const yakinlar = M.map((k,i2)=>({ k, fark: Math.abs(eksenDeger[i2] - sinirDegeri) }))
+      .sort((x,y)=>x.fark - y.fark).slice(0,2).map(o=>o.k);
     if(yakinlar.length === 2){
-      const yon = (rKenar === "alt") ? [-ana[0],-ana[1]]
-                : (rKenar === "ust") ? ana
+      const yon = (rKenar === "alt") ? [-ana[0],-ana[1]] : (rKenar === "ust") ? ana
                 : (rKenar === "sol") ? [-dik[0],-dik[1]] : dik;
       const [q1, q2] = yakinlar;
-      resmiYol = [
-        q1, q2,
+      resmiYol = [ q1, q2,
         [ q2[0] + yon[0]*rg, q2[1] + yon[1]*rg ],
-        [ q1[0] + yon[0]*rg, q1[1] + yon[1]*rg ]
-      ];
-      resmiAlan = Math.abs(alanHesap(resmiYol));
+        [ q1[0] + yon[0]*rg, q1[1] + yon[1]*rg ] ];
+      resmiAlan = alan(resmiYol);
     }
   }
 
-  const kalanAlan = alanHesap(calisma);   // resmi yol disarida, buraya dahil degil
-  const cA = calisma.map(p=>p[0]*ana[0]+p[1]*ana[1]);
-  const cD = calisma.map(p=>p[0]*dik[0]+p[1]*dik[1]);
-  const caMin = Math.min(...cA), caMax = Math.max(...cA);
-  const cdMin = Math.min(...cD), cdMax = Math.max(...cD);
-  const cW = cdMax - cdMin, cBoy = caMax - caMin;
+  const toplamAlan = Math.abs(alanHesap(M));
+  const w = Math.max(0.5, Math.min(+cfg.enAzYol || 3, cW*0.35));
 
-  // ---------- 2) parsel yolu: 3 m, cok parcali bloklarin ortasindan ----------
-  const w = Math.min(+cfg.enAzYol || 3, cW*0.35);
-  const cokParcali = bloklar.some(b2=>b2.tip === "yol");
-  const blokAlan = bloklar.map(b2=> b2.tip === "tam"
-    ? b2.parcalar.reduce((t,o)=>t+o.m2,0)
-    : b2.sol.concat(b2.sag).reduce((t,o)=>t+o.m2,0));
-  const T = blokAlan.reduce((a,b2)=>a+b2,0) || 1;
-
-  // yolun kaplayacagi alani kabaca hesapla (uzunluk x genislik)
-  const yolBoyu = cokParcali
-    ? bloklar.reduce((t,b2,i2)=> t + (b2.tip === "yol" ? (blokAlan[i2]/Math.max(1,cW)) : 0), 0) + w
-    : 0;
-  const yolAlan = cokParcali ? Math.min(kalanAlan*0.3, w * (yolBoyu || cBoy*0.6)) : 0;
-
-  // parcalar kalan alani doldursun
-  const dagit = Math.max(1, kalanAlan - yolAlan);
-  const carpan = dagit / T;
-
-  // ---------- 3) bloklari yerlestir ----------
-  const sinirlar = [caMin];
-  let s2 = caMin;
-  blokAlan.forEach((alan, i2)=>{
-    if(i2 === blokAlan.length-1){ sinirlar.push(caMax); return; }
-    const hedef = alan * carpan + (bloklar[i2].tip === "yol" ? yolAlan * (alan/T) : 0);
-    let lo = s2, hi = caMax, kes = caMax;
-    for(let k=0;k<40;k++){
-      kes = (lo+hi)/2;
-      const dilim = kA(kA(calisma, kes, true), s2, false);
-      const al = dilim.length > 2 ? alanHesap(dilim) : 0;
-      if(al < hedef) lo = kes; else hi = kes;
-    }
-    sinirlar.push(kes); s2 = kes;
-  });
-
-  const cikti = [], yolParcalari = [];
-  bloklar.forEach((b2, i2)=>{
-    const a0 = sinirlar[i2], a1 = sinirlar[i2+1];
-    const bant = kA(kA(calisma, a1, true), a0, false);
-    if(bant.length < 3) return;
-
-    if(b2.tip === "tam"){
-      parcala(bant, b2.parcalar.map(o=>o.m2*carpan), ana, true)
-        .forEach((q,k)=>cikti.push({ poly:q, bilgi:b2.parcalar[k] }));
-      return;
-    }
-
-    // iki yanli: yol ortadan, sol ve sag kendi icinde alt alta
+  // her yol blogunun kolon ayirici konumu
+  const ayiriciDeger = b2 => {
     const oS = b2.sol.reduce((t,o)=>t+o.m2,0), oG = b2.sag.reduce((t,o)=>t+o.m2,0);
-    let ayirici = cdMin + cW * (oS / Math.max(1, oS + oG));
-    ayirici += cW * (+cfg.yolKaydir || 0);       // elle kaydirma
-    ayirici = Math.max(cdMin + w, Math.min(cdMax - w, ayirici));
-    const yd0 = ayirici - w/2, yd1 = ayirici + w/2;
-
-    const ys = serit(calisma, a0, a1, yd0, yd1);
-    if(ys) yolParcalari.push(ys);
-
-    const sol = kD(bant, yd0, true);
-    const sag = kD(bant, yd1, false);
-    if(b2.sol.length && sol.length > 2)
-      parcala(sol, b2.sol.map(o=>o.m2*carpan), ana, true).forEach((q,k)=>cikti.push({ poly:q, bilgi:b2.sol[k] }));
-    if(b2.sag.length && sag.length > 2)
-      parcala(sag, b2.sag.map(o=>o.m2*carpan), ana, true).forEach((q,k)=>cikti.push({ poly:q, bilgi:b2.sag[k] }));
-  });
-
-  // ---- parsel yolunu resmi yola baglayan kol: kenardan gider, dirsekle doner ----
-  // bir dikdortgen seridi parcalardan cikarir (ana/dik ekseninde)
-  const seritCikar = (liste, a0, a1, d0, d1) => {
-    const cikti2 = [];
-    liste.forEach(o=>{
-      const alt = kA(o.poly, a0, true);            // seridin gerisinde kalan
-      const ust = kA(o.poly, a1, false);           // seridin ilerisinde kalan
-      const orta = kA(kA(o.poly, a1, true), a0, false);
-      if(alt.length > 2) cikti2.push({ poly:alt, bilgi:o.bilgi });
-      if(orta.length > 2){
-        const s1 = kD(orta, d0, true), s3 = kD(orta, d1, false);
-        if(s1.length > 2) cikti2.push({ poly:s1, bilgi:o.bilgi, ikizi:true });
-        if(s3.length > 2) cikti2.push({ poly:s3, bilgi:o.bilgi, ikizi:true });
-      }
-      if(ust.length > 2) cikti2.push({ poly:ust, bilgi:o.bilgi, ikizi:true });
-    });
-    return cikti2;
+    let a = dMin + cW * (oS / Math.max(1, oS + oG));
+    a += cW * (+cfg.yolKaydir || 0);
+    return Math.max(dMin + w, Math.min(dMax - w, a));
   };
 
-  if(yolParcalari.length && rg > 0){
-    const yolIx = bloklar.findIndex(b2=>b2.tip === "yol");
-    const b3 = bloklar[yolIx];
-    if(b3 && yolIx >= 0){
-      const oS = b3.sol.reduce((t,o)=>t+o.m2,0), oG = b3.sag.reduce((t,o)=>t+o.m2,0);
-      let ayirici = cdMin + cW * (oS / Math.max(1, oS + oG));
-      ayirici += cW * (+cfg.yolKaydir || 0);
-      ayirici = Math.max(cdMin + w, Math.min(cdMax - w, ayirici));
+  // bloklar her zaman aMin'den yukari dizilir; resmi yol hangi uctaysa
+  // kenar yolu o uctan en yakin kolonlu bloga kadar uzanir
+  const ilkYol = bloklar.findIndex(b2=>b2.tip === "yol");
+  const sonYol = bloklar.map(b2=>b2.tip).lastIndexOf("yol");
+  const ustten = (rKenar === "ust");
+  // alt/ust kenarda resmi yol varsa kolonlu bloga ulasmak icin kenar yolu gerekir;
+  // sol/sag kenarda bloklar arasi bant zaten o kenara degiyor
+  const baglanacak = ustten ? sonYol : ilkYol;
+  const kenarGerekli = rg > 0 && (rKenar === "alt" || rKenar === "ust")
+    && baglanacak >= 0 && (ustten ? baglanacak < bloklar.length-1 : baglanacak > 0);
+  let kenarD0 = 0, kenarD1 = 0;
+  if(kenarGerekli){
+    const ay = ayiriciDeger(bloklar[baglanacak]);
+    const solaYakin = (ay - dMin) <= (dMax - ay);
+    kenarD0 = solaYakin ? dMin : dMax - w;
+    kenarD1 = solaYakin ? dMin + w : dMax;
+  }
 
-      // resmi yol hangi ucta: kol o uca dogru iner
-      const altUc = (rKenar === "alt" || rKenar === "sol");
-      const kolA0 = altUc ? caMin : sinirlar[yolIx+1];
-      const kolA1 = altUc ? sinirlar[yolIx] : caMax;
+  const blokAgirlik = bloklar.map(b2=> b2.tip === "tam"
+    ? b2.parcalar.reduce((t,o)=>t+o.m2,0)
+    : b2.sol.concat(b2.sag).reduce((t,o)=>t+o.m2,0));
+  const T = blokAgirlik.reduce((a,b2)=>a+b2,0) || 1;
 
-      // kenara yasli guzergah: ayiriciya yakin olan kenar secilir
-      const solaYakin = (ayirici - cdMin) <= (cdMax - ayirici);
-      const kenarD0 = solaYakin ? cdMin : cdMax - w;
-      const kenarD1 = solaYakin ? cdMin + w : cdMax;
-
-      if(kolA1 - kolA0 > w*0.5){
-        // 1) kenar boyunca uzanan kol
-        const kenarKol = serit(calisma, kolA0, kolA1, kenarD0, kenarD1);
-        if(kenarKol) yolParcalari.push(kenarKol);
-        // 2) kolon yoluna baglayan dirsek
-        const dA0 = altUc ? kolA1 - w : kolA0;
-        const dA1 = altUc ? kolA1 : kolA0 + w;
-        const dD0 = Math.min(kenarD0, ayirici - w/2);
-        const dD1 = Math.max(kenarD1, ayirici + w/2);
-        const dirsek = serit(calisma, dA0, dA1, dD0, dD1);
-        if(dirsek) yolParcalari.push(dirsek);
-
-        // yolun gectigi parcalari kes
-        let kesik = seritCikar(cikti, kolA0, kolA1, kenarD0, kenarD1);
-        kesik = seritCikar(kesik, dA0, dA1, dD0, dD1);
-        cikti.length = 0; kesik.forEach(o=>cikti.push(o));
-      }
+  // bir blogun [a0,a1] araliginda parcalara kalan net alani
+  const netAlan = (b2, a0, a1, kenarVar) => {
+    const p = dilim(a0, a1);
+    if(!p) return 0;
+    let net = alan(p);
+    if(b2.tip === "yol"){
+      const ay = ayiriciDeger(b2);
+      net -= alan(kutu(a0, a1, ay - w/2, ay + w/2));
     }
-  }
+    if(kenarVar) net -= alan(kutu(a0, a1, kenarD0, kenarD1));
+    return net;
+  };
 
-  // ayni parcanin birden fazla parcasi varsa yaziyi sadece en buyugune koy
-  {
-    const grup = new Map();
-    cikti.forEach(o=>{
-      const anahtar = o.bilgi;
-      const alan = o.poly.length > 2 ? Math.abs(alanHesap(o.poly)) : 0;
-      const enIyi = grup.get(anahtar);
-      if(!enIyi || alan > enIyi.alan) grup.set(anahtar, { o, alan });
+  // ---------- yerlesim: her blok kendi hedef alanini tutana kadar buyur ----------
+  let carpan = 1, sonuc = null;
+  for(let tur = 0; tur < 4; tur++){
+    const yerler = [];
+    let imlec = aMin;
+    let tasti = false;
+
+    bloklar.forEach((b2, i2)=>{
+      const hedef = blokAgirlik[i2] * carpan;
+      // kenar yolu hangi bloklarin yanindan gecer
+      const kenarVar = kenarGerekli && (ustten ? i2 > baglanacak : i2 < baglanacak);
+      let lo = imlec, hi = aMax, kes = hi;
+      for(let k = 0; k < 44; k++){
+        kes = (lo + hi)/2;
+        const net = netAlan(b2, imlec, kes, kenarVar);
+        if(net < hedef) lo = kes; else hi = kes;
+      }
+      yerler.push({ b:b2, a0:imlec, a1:kes, kenarVar });
+      if(Math.abs(kes - aMax) < 0.01) tasti = true;
+      imlec = kes + w;                   // bloklar arasinda tam genislik yol bandi
     });
-    cikti.forEach(o=>{ o.ikizi = grup.get(o.bilgi)?.o !== o; });
+
+    // yollarin gercek alani
+    const yollar = [];
+    yerler.forEach((y, i2)=>{
+      if(y.b.tip === "yol"){
+        const ay = ayiriciDeger(y.b);
+        const k = kutu(y.a0, y.a1, ay - w/2, ay + w/2);
+        if(k) yollar.push(k);
+      }
+      if(i2 < yerler.length - 1){       // bloklar arasi tam genislik bant
+        const bant = dilim(y.a1, yerler[i2+1].a0);
+        if(bant) yollar.push(bant);
+      }
+    });
+    if(kenarGerekli){
+      const bas = ustten ? yerler[baglanacak].a1 : aMin;
+      const son = ustten ? aMax : yerler[baglanacak].a0;
+      const k = kutu(bas, son, kenarD0, kenarD1);
+      if(k) yollar.push(k);
+    }
+    const yolAlan = yollar.reduce((t,p)=>t+alan(p), 0);
+    sonuc = { yerler, yollar, yolAlan, tasti };
+    const yeniCarpan = (toplamAlan - yolAlan) / T;
+    if(Math.abs(yeniCarpan - carpan) < 0.0005) break;
+    carpan = yeniCarpan;
   }
 
-  const gercekYolAlan = yolParcalari.reduce((t,p)=> t + (p && p.length > 2 ? alanHesap(p) : 0), 0);
+  // ---------- parcalari uret ----------
+  const cikti = [];
+  sonuc.yerler.forEach(y=>{
+    let p = dilim(y.a0, y.a1);
+    if(!p) return;
+    if(y.kenarVar){                        // kenar yolunu blogun disinda birak
+      const dis = (kenarD0 <= dMin + 0.001) ? kD(p, kenarD1, false) : kD(p, kenarD0, true);
+      if(dis.length > 2) p = dis;
+    }
+    if(y.b.tip === "tam"){
+      parcala(p, y.b.parcalar.map(o=>o.m2*carpan), ana, true)
+        .forEach((q,k)=>cikti.push({ poly:q, bilgi:y.b.parcalar[k] }));
+      return;
+    }
+    const ay = ayiriciDeger(y.b);
+    const sol = kD(p, ay - w/2, true), sag = kD(p, ay + w/2, false);
+    if(y.b.sol.length && sol.length > 2)
+      parcala(sol, y.b.sol.map(o=>o.m2*carpan), ana, true)
+        .forEach((q,k)=>cikti.push({ poly:q, bilgi:y.b.sol[k] }));
+    if(y.b.sag.length && sag.length > 2)
+      parcala(sag, y.b.sag.map(o=>o.m2*carpan), ana, true)
+        .forEach((q,k)=>cikti.push({ poly:q, bilgi:y.b.sag[k] }));
+  });
 
-  return { parcalar: cikti, yol: yolParcalari, resmiYol, ana, dik,
-           yolGenislik: w, yolAlan: Math.round(gercekYolAlan*100)/100,
+  return { parcalar: cikti, yol: sonuc.yollar, resmiYol, ana, dik,
+           yolGenislik: w,
+           yolAlan: Math.round(sonuc.yolAlan*100)/100,
            resmiAlan: Math.round(resmiAlan*100)/100,
-           kalanAlan: Math.round(kalanAlan*100)/100,
-           kucultme: carpan < 1 ? Math.round((1-carpan)*1000)/10 : 0 };
+           kalanAlan: Math.round((toplamAlan - sonuc.yolAlan)*100)/100,
+           kucultme: carpan < 1 ? Math.round((1-carpan)*1000)/10 : 0,
+           tasti: sonuc.tasti };
 }
 
 function parcalariUret(M, cfg){
