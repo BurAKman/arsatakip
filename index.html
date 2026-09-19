@@ -938,7 +938,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM = "beta 8.6";
+const SURUM = "beta 8.7";
 let ME = null;                       // profil satiri
 let YEAR = new Date().getFullYear();
 
@@ -1659,6 +1659,9 @@ function menuGovde(tema){
   </div>`;
 }
 
+// uygulama sesleri acik mi (ayarlardan yonetilir)
+const SES_ACIK = () => localStorage.getItem("sesKapali") !== "1";
+
 // menuye dokununca: kart buyur, icinde video oynar, sonra ekran acilir
 function melkorAc(el, ekran, slug){
   if(!el || el.classList.contains("acilan")) return;
@@ -1666,10 +1669,12 @@ function melkorAc(el, ekran, slug){
 
   const perde = document.createElement("div");
   perde.className = "mPerde";
+  perde.dataset.canli = "1";
   document.body.appendChild(perde);
 
   const kopya = document.createElement("div");
   kopya.className = "mAcilan";
+  kopya.dataset.canli = "1";
   kopya.style.cssText = `left:${kutu.left}px;top:${kutu.top}px;width:${kutu.width}px;height:${kutu.height}px`;
   kopya.innerHTML = `
     <div class="mGorsel" style="background-image:url('${el.querySelector(".mGorsel").style.backgroundImage.slice(5,-2)}')"></div>
@@ -1691,25 +1696,40 @@ function melkorAc(el, ekran, slug){
     kopya.style.height = Y + "px";
   });
 
-  const v = kopya.querySelector("video");
   let bitti = false;
   const kapat = () => {
     if(bitti) return;
     bitti = true;
     kopya.classList.add("cik");
     perde.classList.add("cik");
+    delete kopya.dataset.canli; delete perde.dataset.canli;
     setTimeout(()=>{ kopya.remove(); perde.remove(); }, 420);
     go(ekran);
   };
-  if(v){
-    v.volume = SES_ACIK && SES_ACIK() ? 0.8 : 0;
-    v.muted = false;
-    v.play().catch(()=>{ v.muted = true; v.play().catch(()=>{}); });
-    v.addEventListener("ended", kapat);
-    v.addEventListener("error", ()=>setTimeout(kapat, 500));
-  }
-  setTimeout(kapat, 4200);              // video yoksa ya da takilirsa
+  // once guvenlik zamanlayicisi: ne olursa olsun ekran acilir
+  const emniyet = setTimeout(kapat, 4200);
+  perde.addEventListener("click", kapat);
   kopya.addEventListener("click", kapat);
+
+  try{
+    const v = kopya.querySelector("video");
+    if(v){
+      v.volume = SES_ACIK() ? 0.85 : 0;
+      v.muted = !SES_ACIK();
+      v.addEventListener("ended", kapat);
+      // dosya yoksa kaynak hatasi verir: hemen gec
+      v.addEventListener("error", ()=>{ clearTimeout(emniyet); setTimeout(kapat, 450); }, true);
+      const kaynak = v.querySelector("source");
+      if(kaynak) kaynak.addEventListener("error", ()=>{ clearTimeout(emniyet); setTimeout(kapat, 450); });
+      v.play().catch(()=>{ v.muted = true; v.play().catch(()=>{}); });
+    }else{
+      clearTimeout(emniyet);
+      setTimeout(kapat, 700);
+    }
+  }catch(e){
+    clearTimeout(emniyet);
+    setTimeout(kapat, 300);
+  }
 }
 
 async function anaMenu(){
@@ -6709,6 +6729,12 @@ let GEZINTI = [{ r:"ana", arg:undefined }];
 function ekraniCiz(r, arg){
   (ekranlar[r] || anaMenu)(arg);
   window.scrollTo(0, 0);
+  // acilim katmani bir sekilde asili kaldiysa temizle
+  setTimeout(()=>{
+    document.querySelectorAll(".mAcilan, .mPerde").forEach(k=>{
+      if(!k.dataset.canli) k.remove();
+    });
+  }, 1200);
   // maskot sadece Melkor temasinda calisir; diger temada hicbir sey yapmaz
   try{
     if(maskotAcikMi()){
