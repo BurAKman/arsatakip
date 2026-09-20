@@ -1237,7 +1237,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 3.4";
+const SURUM_MELKOR = "beta 3.5";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -2040,13 +2040,12 @@ function rehberYedekCevap(soru){
     }
   }
   const genel = [
-    "Bu sorunun cevabı kadim tomarlarda yazıyor ama tomarları kaybettim.",
-    "Derin bir soru. Cevabı da derinde, ben yüzeyde geziyorum.",
-    "Bak şimdi… yok, unuttum. Bir daha sor.",
-    "Kesin bir şey söyleyeyim: emin değilim.",
-    "Bu işin sırrı sabırda. Ve biraz da şansta.",
-    "Sorduğun şeyi bilen biri vardı, o da zindanda kayboldu.",
-    "Cevabı biliyorum ama söylersem gizem kalmaz."
+    "Bunu ben çözmüştüm zaten, 1991'de. Kimse dinlemedi, sonra da herkes yanlış öğrendi.",
+    "Yanlış biliyorsun. Doğrusu Kadim Tomarlar'ın üçüncü cildinde yazıyor, sende yok tabii.",
+    "Bu konunun aslı bambaşka. Anlatsam inanmazsın, anlatmasam cahil kalırsın.",
+    "Ben bu işin uzmanıyım. Kaynak mı? Ben kaynağım.",
+    "Sana söyleyeyim: herkesin bildiği yanlış, benim bildiğim doğru.",
+    "Bu soruyu bana sormadan önce biraz araştırsaydın. Neyse, affettim."
   ];
   return genel[Math.floor(Math.random()*genel.length)];
 }
