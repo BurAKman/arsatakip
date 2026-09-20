@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Cinzel:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{
@@ -183,12 +183,14 @@ body[data-tema="vitrin"] .logo span{font-weight:700;letter-spacing:.1em;
   -webkit-background-clip:text;background-clip:text;
   filter:drop-shadow(0 1px 1px rgba(0,0,0,.85))}
 
-body[data-tema="loca"] .logo span{color:rgba(201,169,97,.75);font-family:Georgia,serif;letter-spacing:.2em}
+body[data-tema="loca"] .logo span{color:rgba(190,178,235,.86);font-family:"Cinzel",Georgia,serif;
+  letter-spacing:.14em;font-style:italic;font-size:clamp(7.5px,2.1vw,9px);
+  text-shadow:0 0 10px rgba(138,107,255,.5)}
 /* logo cercevesi temaya gore */
 body[data-tema="vitrin"] .logo .mark{border:0;box-shadow:none;
   filter:drop-shadow(0 0 10px rgba(216,69,58,.35))}
 body[data-tema="loca"] .logo .mark{border:0;box-shadow:none;
-  filter:drop-shadow(0 0 10px rgba(201,169,97,.32))}
+  filter:drop-shadow(0 0 12px rgba(123,232,220,.45))}
 .logo span{font-size:clamp(7px,2vw,8.5px);letter-spacing:.12em;text-transform:uppercase;display:block;
   margin-top:4px;color:rgba(227,192,90,.72);font-weight:600;white-space:nowrap}
 
@@ -572,6 +574,58 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
   border:1px solid rgba(123,232,220,.45);
   box-shadow:inset 0 0 30px rgba(138,107,255,.25)}
 
+/* ---- maskot ---- */
+#maskot{position:fixed;z-index:120;width:76px;touch-action:none;cursor:grab;user-select:none;
+  animation:maskotNefes 3.6s ease-in-out infinite;filter:drop-shadow(0 8px 12px rgba(0,0,0,.65))}
+#maskot img{position:absolute;left:0;bottom:0;width:100%;display:block;pointer-events:none;
+  opacity:0;transition:opacity .16s ease}
+#maskot img.acik{opacity:1;position:relative}
+#maskot.ters img{transform:scaleX(-1)}
+#maskot .golge{position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);
+  width:44px;height:8px;border-radius:50%;background:rgba(0,0,0,.5);filter:blur(4px);z-index:-1}
+#maskot.tutuluyor{cursor:grabbing;animation:none;transform:scale(1.06) rotate(-3deg)}
+@keyframes maskotNefes{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.015)}}
+
+#maskot.yuru{animation:maskotYuru .44s ease-in-out infinite}
+@keyframes maskotYuru{0%,100%{transform:translateY(0) rotate(-2deg)}
+  25%{transform:translateY(-7px) rotate(1deg) scale(1.02,.98)}
+  50%{transform:translateY(0) rotate(2deg)}
+  75%{transform:translateY(-4px) rotate(-1deg)}}
+#maskot.yuru .golge{animation:golgeYuru .44s ease-in-out infinite}
+@keyframes golgeYuru{0%,100%{width:44px;opacity:.5}25%{width:30px;opacity:.26}50%{width:44px;opacity:.5}}
+
+#maskot.zipla{animation:maskotZipla .62s cubic-bezier(.3,1.4,.5,1)}
+@keyframes maskotZipla{0%{transform:translateY(0) scale(1)}
+  30%{transform:translateY(-26px) scale(1.06,.94)}
+  55%{transform:translateY(0) scale(.94,1.06)}
+  75%{transform:translateY(-8px) scale(1.02,.98)}
+  100%{transform:translateY(0) scale(1)}}
+#maskot.sallan{animation:maskotSallan 1.1s ease-in-out}
+@keyframes maskotSallan{0%,100%{transform:rotate(0)}20%{transform:rotate(-7deg)}
+  45%{transform:rotate(6deg)}70%{transform:rotate(-4deg)}}
+#maskot.uzul{animation:maskotUzul 1s ease}
+@keyframes maskotUzul{0%{transform:translateY(0)}40%{transform:translateY(6px) scale(1.03,.95)}
+  100%{transform:translateY(0)}}
+
+#maskot .balon{position:absolute;bottom:62%;min-width:118px;max-width:200px;padding:9px 12px;
+  border-radius:14px 14px 14px 3px;font-size:12.5px;line-height:1.35;font-weight:500;z-index:3;
+  background:linear-gradient(160deg,rgba(245,242,255,.97),rgba(222,214,250,.95));color:#150F2C;
+  box-shadow:0 10px 26px rgba(0,0,0,.65), 0 0 18px rgba(138,107,255,.35);
+  border:1px solid rgba(123,232,220,.5);
+  opacity:0;transform:translateY(6px) scale(.9);transform-origin:bottom left;
+  transition:opacity .22s ease, transform .22s cubic-bezier(.3,1.4,.5,1);pointer-events:none}
+#maskot .balon.acik{opacity:1;transform:translateY(0) scale(1)}
+
+/* ---- kullanici rozeti ---- */
+.kullaniciRozet{display:inline-flex;align-items:center;gap:6px;margin-top:6px;
+  padding:3px 9px;border-radius:7px;font-size:9.5px;font-weight:700;letter-spacing:.1em;
+  background:linear-gradient(160deg,rgba(138,107,255,.25),rgba(10,7,24,.6));
+  border:1px solid rgba(123,232,220,.38);color:#EAE6FA;
+  box-shadow:0 0 16px rgba(138,107,255,.25)}
+.kullaniciRozet .lv{display:inline-block;padding:2px 6px;border-radius:5px;
+  background:linear-gradient(160deg,#7BE8DC,#4FC7C0);color:#07121A;font-size:8px;font-weight:800;
+  letter-spacing:.06em}
+
 /* ---- ic ogeler temanin rengine doner ---- */
 body[data-tema="vitrin"] .rz.yesil,body[data-tema="vitrin"] .rz.mavi,body[data-tema="vitrin"] .rz.altin{
   background:rgba(224,87,26,.16);border:1px solid rgba(240,120,30,.38);color:#F0913F}
@@ -939,7 +993,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 1.0";
+const SURUM_MELKOR = "beta 1.1";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -1057,7 +1111,8 @@ function head(title, back){
     ${title
       ? `<h1>${esc(title)}</h1>`
       : `<div class="logo"><span class="mark"><img src="${gv('logo.png')}" alt=""></span>
-           <span><b>Parsel Parsel</b><span>çapımız alayınıza yeter</span>
+           <span><b>${anaTema()==="loca" ? "Kahramanın Yolu" : "Parsel Parsel"}</b>
+             <span>${anaTema()==="loca" ? "anısı olan yerleri bölmüyoruz" : "çapımız alayınıza yeter"}</span>
              ${kullaniciRozetHtml()}</span></div>`}
     ${sag}
   </div>`;
@@ -1287,7 +1342,7 @@ function temaOnizleme(canvas, k){
 /* ---- maskot: ekranda yasayan karakter (Melkor temasi) ---- */
 
 const MASKOTLAR = {
-  melkor: { ad:"Melkor", gorsel:"maskot-burak.png" }
+  melkor: { ad:"Melkor", on:"maskot-", pozlar:["duz","konus","eller"] }
   // ileride: harita:{...}, cap:{...} gibi her ekrana ayri karakter
 };
 
@@ -1368,7 +1423,8 @@ function maskotKur(ekran){
   k.id = "maskot";
   k.innerHTML = `
     <div class="balon" id="maskotBalon"></div>
-    <img src="${gv(kim.gorsel)}" alt="" draggable="false" onerror="this.style.opacity=.25">
+    ${(kim.pozlar||["duz"]).map((p,i)=>`<img class="poz poz-${p}${i?"":" acik"}"
+      src="${gv(kim.on + p + ".png")}" alt="" draggable="false">`).join("")}
     <div class="golge"></div>`;
   document.body.appendChild(k);
 
@@ -1462,6 +1518,16 @@ function maskotGezmeyeBasla(){
   window.__maskotGez = setTimeout(tur, 3500);
 }
 
+// poz degistir: duz | konus | eller
+function maskotPoz(ad2){
+  const k = document.getElementById("maskot");
+  if(!k) return;
+  const hedef = k.querySelector(".poz-" + ad2) || k.querySelector(".poz-duz");
+  if(!hedef) return;
+  k.querySelectorAll(".poz").forEach(p=>p.classList.remove("acik"));
+  hedef.classList.add("acik");
+}
+
 function maskotYerlestir(){
   if(!MASKOT) return;
   MASKOT.el.style.left = MASKOT.x + "px";
@@ -1484,6 +1550,12 @@ function maskotKonus(metin, hal){
   k.classList.remove("zipla","sallan","uzul");
   void k.offsetWidth;
   if(hal) k.classList.add(hal);
+
+  // konusurken agzi acik poz, bitince duz poz
+  maskotPoz(hal === "sallan" ? "eller" : "konus");
+  clearTimeout(window.__pozSaat);
+  window.__pozSaat = setTimeout(()=>maskotPoz("duz"), 2600);
+
   if(MASKOT) MASKOT.sonHareket = Date.now();
 }
 
