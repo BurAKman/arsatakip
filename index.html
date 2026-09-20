@@ -734,7 +734,13 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rDurum.iyi{color:#6FE3A8;background:rgba(111,227,168,.1);border:1px solid rgba(111,227,168,.3)}
 .rDurum.kotu{color:#FF9F5A;background:rgba(255,159,90,.1);border:1px solid rgba(255,159,90,.3)}
-.rSes{width:132px;flex:0 0 auto;font-size:10px;padding:5px 6px}
+.rAyarTus{flex:0 0 auto;padding:4px 11px;font-family:"Cinzel",Georgia,serif;font-size:9px;
+  letter-spacing:.14em;cursor:pointer;color:#04141B;background:linear-gradient(160deg,#9CF5EC,#3FB8B2);
+  border:0;clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px)}
+.rSesPanel{margin:0 0 10px;padding:12px;
+  background:linear-gradient(160deg,rgba(138,107,255,.14),rgba(8,5,20,.75));
+  border:1px solid rgba(123,232,220,.3);
+  clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
 .rAkis{max-height:34vh;overflow-y:auto;padding:2px}
 .rSatir{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start}
 .rSatir .rKim{flex:0 0 auto;font-family:"Cinzel",Georgia,serif;font-size:8px;letter-spacing:.14em;
@@ -1243,7 +1249,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 3.7";
+const SURUM_MELKOR = "beta 3.8";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -1964,7 +1970,20 @@ function rehberEkran(){
       <div class="rBalon" id="rBalon">Sor bakalım kahraman. Cevabı ben bulurum, doğruluğu senin sorunun.</div>
     </div>
     <div class="rDurumSatir"><span id="rDurum" class="rDurum">bağlantı sınanmadı</span>
-      <select id="rSes" class="rSes" onchange="rehberSesSec(this.value)"></select></div>
+      <button class="rAyarTus" onclick="rehberSesPaneli()">SES</button></div>
+    <div id="rSesPanel" class="rSesPanel" style="display:none">
+      <div class="field" style="margin:0 0 8px"><label>Ses</label>
+        <select id="rSes" onchange="rehberSesSec(this.value)"></select></div>
+      <div class="row2" style="margin:0">
+        <div class="field" style="margin:0"><label>Kalınlık</label>
+          <input type="range" id="rPerde" min="10" max="150" value="${Math.round(rehberPerde()*100)}"
+            oninput="rehberSesAyar('perde',this.value)" style="padding:0"></div>
+        <div class="field" style="margin:0"><label>Hız</label>
+          <input type="range" id="rHiz" min="60" max="140" value="${Math.round(rehberHiz()*100)}"
+            oninput="rehberSesAyar('hiz',this.value)" style="padding:0"></div>
+      </div>
+      <button class="btn ghost" style="margin-top:10px" onclick="rehberSoyle('Sesim böyle mi olsun evlat? Yare yare.')">Dene</button>
+    </div>
     <div id="rAkis" class="rAkis"></div>
     <div class="rGiris">
       <button class="rMik" id="rMik" onclick="rehberDinle()" aria-label="Konuş">🎤</button>
@@ -2006,7 +2025,20 @@ function rehberSesi(){
 }
 function rehberSesSec(ad2){
   localStorage.setItem("rehberSes", ad2);
-  rehberSoyle("Sesimi böyle mi istiyorsun? Yare yare...");
+  rehberSoyle("Sesim böyle mi olsun evlat?");
+}
+const rehberPerde = () => +(localStorage.getItem("rehberPerde") || 0.6);
+const rehberHiz   = () => +(localStorage.getItem("rehberHiz") || 0.94);
+function rehberSesAyar(hangi, deger){
+  localStorage.setItem(hangi === "perde" ? "rehberPerde" : "rehberHiz", (+deger)/100);
+  clearTimeout(window.__sesDene);
+  window.__sesDene = setTimeout(()=>rehberSoyle("Böyle mi?"), 500);
+}
+function rehberSesPaneli(){
+  const p = document.getElementById("rSesPanel");
+  if(!p) return;
+  p.style.display = p.style.display === "none" ? "block" : "none";
+  if(p.style.display === "block") rehberSesKutusu();
 }
 function rehberSesKutusu(){
   const k = document.getElementById("rSes");
@@ -2034,8 +2066,8 @@ function rehberSoyle(metin){
       speechSynthesis.cancel();
       const s2 = new SpeechSynthesisUtterance(metin);
       s2.lang = "tr-TR";
-      s2.rate = 0.94;        // agir konussun
-      s2.pitch = 0.6;        // kalin ses
+      s2.rate = rehberHiz();
+      s2.pitch = rehberPerde();
       s2.volume = 1;
       const ses = rehberSesi();
       if(ses) s2.voice = ses;
