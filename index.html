@@ -125,7 +125,20 @@ a{color:var(--gold);text-decoration:none}
   background-image:linear-gradient(180deg,#FFF6EC,#F0C79A 46%,#C9A961);
   -webkit-background-clip:text;background-clip:text}
 #acilis[data-tema="loca"] .cizgi{background:linear-gradient(90deg,transparent,rgba(201,169,97,.8),transparent)}
-#acilis[data-tema="loca"] .yuk{color:rgba(236,231,242,.45);font-family:Georgia,serif;letter-spacing:.34em}
+#acilis[data-tema="loca"] .yuk{color:rgba(190,178,235,.8);font-family:"Cinzel",Georgia,serif;
+  letter-spacing:.2em;font-style:italic;text-transform:none;font-size:12px}
+#acilis[data-tema="loca"] .kare{border-color:rgba(123,232,220,.45);border-radius:6px;
+  box-shadow:0 18px 50px rgba(0,0,0,.85), 0 0 60px rgba(138,107,255,.3)}
+#acilis[data-tema="loca"] .cizgi{background:linear-gradient(90deg,transparent,#7BE8DC,#8A6BFF,transparent);
+  height:2px;box-shadow:0 0 14px rgba(123,232,220,.6)}
+/* RPG yukleme cubugu */
+#acilis .rpgBar{margin-top:16px;width:min(62vw,260px);height:9px;border-radius:5px;overflow:hidden;
+  background:rgba(10,7,24,.8);border:1px solid rgba(123,232,220,.35);
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.8), 0 0 16px rgba(138,107,255,.25)}
+#acilis .rpgBar span{display:block;height:100%;width:0;border-radius:4px;
+  background:linear-gradient(90deg,#4FC7C0,#7BE8DC 45%,#B49CFF 80%,#E8C98A);
+  box-shadow:0 0 12px rgba(123,232,220,.8);animation:rpgDol 5s cubic-bezier(.4,.1,.3,1) forwards}
+@keyframes rpgDol{0%{width:4%}22%{width:28%}48%{width:56%}72%{width:78%}100%{width:100%}}
 
 /* Mordor acilis: tam ekran gorsel + alev bari */
 .lgKare{position:relative;width:min(100vw,100vh);aspect-ratio:1/1;margin:auto;
@@ -162,6 +175,8 @@ a{color:var(--gold);text-decoration:none}
 .top{display:flex;align-items:center;gap:11px;padding:14px 0 12px}
 .top h1{font-size:19px;flex:1}
 .logo{display:flex;align-items:center;gap:9px;flex:1 1 auto;min-width:0;overflow:hidden}
+.logo > span:last-child{min-width:0;flex:1}
+.logo b,.logo span{max-width:100%}
 .logo .mark{width:clamp(62px,17vw,76px);height:clamp(62px,17vw,76px);border-radius:50%;
   overflow:visible;flex:0 0 auto;border:0;background:transparent;box-shadow:none}
 .logo .mark img{width:100%;height:100%;object-fit:contain;display:block;
@@ -184,7 +199,8 @@ body[data-tema="vitrin"] .logo span{font-weight:700;letter-spacing:.1em;
   filter:drop-shadow(0 1px 1px rgba(0,0,0,.85))}
 
 body[data-tema="loca"] .logo span{color:rgba(190,178,235,.86);font-family:"Cinzel",Georgia,serif;
-  letter-spacing:.14em;font-style:italic;font-size:clamp(7.5px,2.1vw,9px);
+  letter-spacing:.08em;font-style:italic;font-size:clamp(7px,1.9vw,8.5px);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   text-shadow:0 0 10px rgba(138,107,255,.5)}
 /* logo cercevesi temaya gore */
 body[data-tema="vitrin"] .logo .mark{border:0;box-shadow:none;
@@ -491,10 +507,13 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 /* kartlar */
 .melkor .mIzgara{display:grid;grid-template-columns:1fr 1fr;gap:clamp(7px,1.2vh,11px)}
 .melkor .mKart{position:relative;overflow:hidden;padding:0;cursor:pointer;border:0;
-  border-radius:16px;background:#0B0820;
-  min-height:clamp(74px,10.6vh,116px);
+  border-radius:14px;background:#0B0820;
+  min-height:clamp(78px,11.4vh,124px);
   box-shadow:0 8px 22px rgba(0,0,0,.66)}
-.melkor .mAna{min-height:clamp(112px,16vh,176px);border-radius:20px}
+/* koseleri pahli: RPG plaka hissi */
+.melkor .mKart{clip-path:polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px)}
+.melkor .mAna{min-height:clamp(120px,17vh,190px);border-radius:16px;
+  clip-path:polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)}
 
 .melkor .mGorsel{position:absolute;inset:0;background-size:cover;background-position:center 34%;
   filter:saturate(.85) brightness(.66) contrast(1.05);transition:transform .6s ease, filter .5s ease}
@@ -508,8 +527,13 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 
 /* isikli cerceve */
 .melkor .mCerceve{position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-  border:1px solid rgba(150,130,230,.3);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.05), inset 0 14px 26px rgba(138,107,255,.1)}
+  box-shadow:inset 0 0 0 1px rgba(150,130,230,.42), inset 0 0 0 3px rgba(8,5,20,.55),
+    inset 0 0 0 4px rgba(123,232,220,.12), inset 0 16px 30px rgba(138,107,255,.12)}
+/* kose isaretleri */
+.melkor .mCerceve::before,.melkor .mCerceve::after{content:"";position:absolute;width:12px;height:12px;
+  border-color:rgba(123,232,220,.6);opacity:.85}
+.melkor .mCerceve::before{top:6px;left:6px;border-top:1.5px solid;border-left:1.5px solid}
+.melkor .mCerceve::after{bottom:6px;right:6px;border-bottom:1.5px solid;border-right:1.5px solid}
 .melkor .mKart:active .mCerceve{border-color:rgba(123,232,220,.75);
   box-shadow:inset 0 0 0 1px rgba(123,232,220,.3), 0 0 26px rgba(123,232,220,.3)}
 
@@ -519,8 +543,9 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
   background:rgba(8,5,20,.6);border:1px solid rgba(123,232,220,.3);border-radius:4px;padding:1px 6px}
 
 /* ikon madalyonu */
-.melkor .mIkon{position:absolute;top:8px;left:9px;z-index:2;width:28px;height:28px;display:grid;
-  place-items:center;border-radius:9px;color:#7BE8DC;
+.melkor .mIkon{position:absolute;top:8px;left:9px;z-index:2;width:27px;height:27px;display:grid;
+  place-items:center;border-radius:8px;color:#7BE8DC;
+  clip-path:polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
   background:linear-gradient(160deg,rgba(138,107,255,.3),rgba(8,5,20,.6));
   border:1px solid rgba(123,232,220,.32);box-shadow:0 0 14px rgba(138,107,255,.25)}
 .melkor .mIkon svg{width:15px;height:15px}
@@ -539,8 +564,9 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 
 /* alt seritler */
 .melkor .mAlt{display:grid;grid-template-columns:1fr 1fr;gap:clamp(7px,1.2vh,11px)}
-.melkor .mSerit{display:flex;align-items:center;gap:9px;padding:10px 11px;cursor:pointer;
-  border-radius:13px;text-align:left;position:relative;
+.melkor .mSerit{display:flex;align-items:center;gap:9px;padding:9px 11px;cursor:pointer;
+  border-radius:11px;text-align:left;position:relative;min-height:clamp(46px,6.4vh,60px);
+  clip-path:polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
   background:linear-gradient(160deg,rgba(138,107,255,.14),rgba(10,7,24,.6));
   border:1px solid rgba(150,130,230,.26);box-shadow:0 5px 16px rgba(0,0,0,.55)}
 .melkor .mSerit:active{border-color:rgba(123,232,220,.6)}
@@ -575,14 +601,14 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
   box-shadow:inset 0 0 30px rgba(138,107,255,.25)}
 
 /* ---- maskot ---- */
-#maskot{position:fixed;z-index:120;width:76px;touch-action:none;cursor:grab;user-select:none;
+#maskot{position:fixed;z-index:120;width:104px;touch-action:none;cursor:grab;user-select:none;
   animation:maskotNefes 3.6s ease-in-out infinite;filter:drop-shadow(0 8px 12px rgba(0,0,0,.65))}
 #maskot img{position:absolute;left:0;bottom:0;width:100%;display:block;pointer-events:none;
   opacity:0;transition:opacity .16s ease}
 #maskot img.acik{opacity:1;position:relative}
 #maskot.ters img{transform:scaleX(-1)}
 #maskot .golge{position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);
-  width:44px;height:8px;border-radius:50%;background:rgba(0,0,0,.5);filter:blur(4px);z-index:-1}
+  width:58px;height:10px;border-radius:50%;background:rgba(0,0,0,.5);filter:blur(4px);z-index:-1}
 #maskot.tutuluyor{cursor:grabbing;animation:none;transform:scale(1.06) rotate(-3deg)}
 @keyframes maskotNefes{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.015)}}
 
@@ -592,7 +618,7 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
   50%{transform:translateY(0) rotate(2deg)}
   75%{transform:translateY(-4px) rotate(-1deg)}}
 #maskot.yuru .golge{animation:golgeYuru .44s ease-in-out infinite}
-@keyframes golgeYuru{0%,100%{width:44px;opacity:.5}25%{width:30px;opacity:.26}50%{width:44px;opacity:.5}}
+@keyframes golgeYuru{0%,100%{width:58px;opacity:.5}25%{width:40px;opacity:.26}50%{width:58px;opacity:.5}}
 
 #maskot.zipla{animation:maskotZipla .62s cubic-bezier(.3,1.4,.5,1)}
 @keyframes maskotZipla{0%{transform:translateY(0) scale(1)}
@@ -618,13 +644,14 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 
 /* ---- kullanici rozeti ---- */
 .kullaniciRozet{display:inline-flex;align-items:center;gap:6px;margin-top:6px;
-  padding:3px 9px;border-radius:7px;font-size:9.5px;font-weight:700;letter-spacing:.1em;
+  padding:3px 9px;border-radius:7px;font-size:9px;font-weight:700;letter-spacing:.08em;
+  white-space:nowrap;
   background:linear-gradient(160deg,rgba(138,107,255,.25),rgba(10,7,24,.6));
   border:1px solid rgba(123,232,220,.38);color:#EAE6FA;
   box-shadow:0 0 16px rgba(138,107,255,.25)}
-.kullaniciRozet .lv{display:inline-block;padding:2px 6px;border-radius:5px;
-  background:linear-gradient(160deg,#7BE8DC,#4FC7C0);color:#07121A;font-size:8px;font-weight:800;
-  letter-spacing:.06em}
+.kullaniciRozet .lv{display:inline-block;padding:2px 7px;border-radius:5px;
+  background:linear-gradient(160deg,#9CF5EC,#4FC7C0);color:#04141B;font-size:9px;font-weight:800;
+  letter-spacing:.04em;line-height:1.3;text-shadow:none;white-space:nowrap}
 
 /* ---- ic ogeler temanin rengine doner ---- */
 body[data-tema="vitrin"] .rz.yesil,body[data-tema="vitrin"] .rz.mavi,body[data-tema="vitrin"] .rz.altin{
@@ -993,7 +1020,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 1.1";
+const SURUM_MELKOR = "beta 1.3";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -1430,7 +1457,7 @@ function maskotKur(ekran){
 
   // kayitli konum
   const kayit = JSON.parse(localStorage.getItem("maskotYer") || "null");
-  MASKOT = { el:k, x: kayit?.x ?? (window.innerWidth - 110), y: kayit?.y ?? (window.innerHeight - 220),
+  MASKOT = { el:k, x: kayit?.x ?? (window.innerWidth - 130), y: kayit?.y ?? (window.innerHeight - 260),
              surukleniyor:false, sonHareket:Date.now() };
   maskotYerlestir();
 
@@ -1449,7 +1476,7 @@ function maskotKur(ekran){
     const n = e.touches ? e.touches[0] : e;
     const dx = n.clientX - bas.x, dy = n.clientY - bas.y;
     if(Math.abs(dx) > 5 || Math.abs(dy) > 5) bas.oynadi = true;
-    MASKOT.x = Math.max(4, Math.min(window.innerWidth - 86, bas.mx + dx));
+    MASKOT.x = Math.max(4, Math.min(window.innerWidth - 112, bas.mx + dx));
     MASKOT.y = Math.max(70, Math.min(window.innerHeight - 130, bas.my + dy));
     MASKOT.sonHareket = Date.now();
     maskotYerlestir();
@@ -1496,7 +1523,7 @@ function maskotGezmeyeBasla(){
     const k = document.getElementById("maskot");
     if(!k || !MASKOT) return;
     if(!MASKOT.surukleniyor && Date.now() - MASKOT.sonHareket > 6000){
-      const enG = Math.max(6, window.innerWidth - 84);
+      const enG = Math.max(6, window.innerWidth - 118);
       const enY = Math.max(90, window.innerHeight - 140);
       const yeniX = 6 + Math.random() * (enG - 6);
       const yeniY = 96 + Math.random() * (enY - 96);
@@ -6931,10 +6958,14 @@ function acilisiKapat(){
       </div>`;
     setTimeout(acilisiKapat, 4600);
   }else{
+    const sozler = ["Diyar yükleniyor", "Tapu tomarları açılıyor", "Kadastro büyüsü hazırlanıyor",
+                    "Sınır taşları yerleştiriliyor", "Kahraman uyandırılıyor"];
+    const soz = sozler[Math.floor(Math.random()*sozler.length)];
     k.innerHTML = `<div class="kare"><video id="acilisVid" playsinline autoplay
-        onerror="this.style.display='none'"><source src="loading.mp4" type="video/mp4"></video></div>
-      <div class="ad">PARSEL PARSEL</div><div class="cizgi"></div>
-      <div class="yuk">Yükleniyor<i></i></div>`;
+        onerror="this.style.display='none'"><source src="loading-melkor.mp4" type="video/mp4"></video></div>
+      <div class="ad">KAHRAMANIN YOLU</div><div class="cizgi"></div>
+      <div class="yuk">${soz}<i></i></div>
+      <div class="rpgBar"><span></span></div>`;
   }
 })();
 
