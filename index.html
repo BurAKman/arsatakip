@@ -127,8 +127,21 @@ a{color:var(--gold);text-decoration:none}
 #acilis[data-tema="loca"] .cizgi{background:linear-gradient(90deg,transparent,rgba(201,169,97,.8),transparent)}
 #acilis[data-tema="loca"] .yuk{color:rgba(190,178,235,.8);font-family:"Cinzel",Georgia,serif;
   letter-spacing:.2em;font-style:italic;text-transform:none;font-size:12px}
-#acilis[data-tema="loca"] .kare{border-color:rgba(123,232,220,.45);border-radius:6px;
-  box-shadow:0 18px 50px rgba(0,0,0,.85), 0 0 60px rgba(138,107,255,.3)}
+/* Melkor acilisi: video ekranla kaynasir, cerceve yok */
+#acilis[data-tema="loca"]{background:#05040C;justify-content:flex-start}
+#acilis[data-tema="loca"] #acilisIc{justify-content:flex-start;padding-top:0}
+#acilis[data-tema="loca"] .kare{position:absolute;inset:0;width:100%;height:100%;max-height:none;
+  aspect-ratio:auto;border:0;border-radius:0;box-shadow:none;margin:0}
+#acilis[data-tema="loca"] .kare video{width:100%;height:100%;object-fit:cover}
+/* videonun altini karartip yazilari icine gomer */
+#acilis[data-tema="loca"] .kare::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(120% 70% at 50% 8%,transparent 40%,rgba(5,4,12,.35) 100%),
+    linear-gradient(0deg,#05040C 2%,rgba(5,4,12,.92) 18%,rgba(5,4,12,.45) 38%,rgba(5,4,12,0) 62%)}
+#acilis[data-tema="loca"] .ad,#acilis[data-tema="loca"] .cizgi,
+#acilis[data-tema="loca"] .yuk,#acilis[data-tema="loca"] .rpgBar{position:relative;z-index:2}
+#acilis[data-tema="loca"] .ad{margin-top:auto;padding-top:56vh}
+#acilis[data-tema="loca"] .rpgBar{margin-bottom:9vh}
 #acilis[data-tema="loca"] .cizgi{background:linear-gradient(90deg,transparent,#7BE8DC,#8A6BFF,transparent);
   height:2px;box-shadow:0 0 14px rgba(123,232,220,.6)}
 /* RPG yukleme cubugu */
@@ -601,14 +614,14 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
   box-shadow:inset 0 0 30px rgba(138,107,255,.25)}
 
 /* ---- maskot ---- */
-#maskot{position:fixed;z-index:120;width:104px;touch-action:none;cursor:grab;user-select:none;
+#maskot{position:fixed;z-index:120;width:126px;touch-action:none;cursor:grab;user-select:none;
   animation:maskotNefes 3.6s ease-in-out infinite;filter:drop-shadow(0 8px 12px rgba(0,0,0,.65))}
 #maskot img{position:absolute;left:0;bottom:0;width:100%;display:block;pointer-events:none;
   opacity:0;transition:opacity .16s ease}
 #maskot img.acik{opacity:1;position:relative}
 #maskot.ters img{transform:scaleX(-1)}
 #maskot .golge{position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);
-  width:58px;height:10px;border-radius:50%;background:rgba(0,0,0,.5);filter:blur(4px);z-index:-1}
+  width:70px;height:11px;border-radius:50%;background:rgba(0,0,0,.5);filter:blur(4px);z-index:-1}
 #maskot.tutuluyor{cursor:grabbing;animation:none;transform:scale(1.06) rotate(-3deg)}
 @keyframes maskotNefes{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.015)}}
 
@@ -618,7 +631,7 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
   50%{transform:translateY(0) rotate(2deg)}
   75%{transform:translateY(-4px) rotate(-1deg)}}
 #maskot.yuru .golge{animation:golgeYuru .44s ease-in-out infinite}
-@keyframes golgeYuru{0%,100%{width:58px;opacity:.5}25%{width:40px;opacity:.26}50%{width:58px;opacity:.5}}
+@keyframes golgeYuru{0%,100%{width:70px;opacity:.5}25%{width:48px;opacity:.26}50%{width:70px;opacity:.5}}
 
 #maskot.zipla{animation:maskotZipla .62s cubic-bezier(.3,1.4,.5,1)}
 @keyframes maskotZipla{0%{transform:translateY(0) scale(1)}
@@ -643,15 +656,49 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 #maskot .balon.acik{opacity:1;transform:translateY(0) scale(1)}
 
 /* ---- kullanici rozeti ---- */
-.kullaniciRozet{display:inline-flex;align-items:center;gap:6px;margin-top:6px;
-  padding:3px 9px;border-radius:7px;font-size:9px;font-weight:700;letter-spacing:.08em;
-  white-space:nowrap;
+.kullaniciRozet{display:inline-flex;align-items:center;gap:5px;margin-top:6px;
+  padding:3px 8px;border-radius:7px;font-size:8.5px;font-weight:700;letter-spacing:.06em;
+  white-space:nowrap;max-width:100%;overflow:hidden;
   background:linear-gradient(160deg,rgba(138,107,255,.25),rgba(10,7,24,.6));
   border:1px solid rgba(123,232,220,.38);color:#EAE6FA;
   box-shadow:0 0 16px rgba(138,107,255,.25)}
-.kullaniciRozet .lv{display:inline-block;padding:2px 7px;border-radius:5px;
-  background:linear-gradient(160deg,#9CF5EC,#4FC7C0);color:#04141B;font-size:9px;font-weight:800;
-  letter-spacing:.04em;line-height:1.3;text-shadow:none;white-space:nowrap}
+.kullaniciRozet .lv{display:inline-block;padding:2px 6px;border-radius:4px;flex:0 0 auto;
+  background:linear-gradient(160deg,#9CF5EC,#3FB8B2);color:#04141B;font-size:8.5px;font-weight:800;
+  letter-spacing:.02em;line-height:1.35;text-shadow:none;white-space:nowrap}
+.kullaniciRozet .rutbe{color:#E8C98A;font-style:italic;flex:0 0 auto}
+.kullaniciRozet .kad{color:#EAE6FA;overflow:hidden;text-overflow:ellipsis}
+.kullaniciRozet.atla{animation:rozetAtla 1.1s ease}
+@keyframes rozetAtla{0%,100%{transform:scale(1);box-shadow:0 0 16px rgba(138,107,255,.25)}
+  25%{transform:scale(1.18);box-shadow:0 0 26px rgba(123,232,220,.9)}
+  60%{transform:scale(1.04)}}
+
+/* level up paneli */
+.lvPanel{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.7);z-index:200;
+  padding:14px 26px;border-radius:12px;text-align:center;pointer-events:none;opacity:0;
+  background:linear-gradient(160deg,rgba(138,107,255,.35),rgba(8,5,20,.9));
+  border:1px solid rgba(123,232,220,.6);
+  box-shadow:0 0 44px rgba(123,232,220,.45), inset 0 0 26px rgba(138,107,255,.3);
+  transition:opacity .28s ease, transform .35s cubic-bezier(.2,1.6,.4,1)}
+.lvPanel.acik{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.lvPanel b{display:block;font-family:"Cinzel",Georgia,serif;font-size:19px;letter-spacing:.2em;
+  background-image:linear-gradient(115deg,#FFFFFF,#7BE8DC 40%,#B49CFF 70%,#E8C98A);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 12px rgba(123,232,220,.7))}
+.lvPanel span{display:block;margin-top:5px;font-size:10.5px;letter-spacing:.16em;color:#CFC6F0}
+
+/* maskot tekmesi */
+#maskot.tekme{animation:maskotTekme .56s cubic-bezier(.3,1.2,.4,1)}
+@keyframes maskotTekme{
+  0%{transform:rotate(0) translateY(0)}
+  30%{transform:rotate(-16deg) translateY(-14px) scale(1.04)}
+  48%{transform:rotate(26deg) translate(10px,4px) scale(1.06,.94)}
+  62%{transform:rotate(18deg) translate(6px,2px)}
+  100%{transform:rotate(0) translateY(0)}}
+.melkor .mKart.sarsil{animation:kartSarsil .42s ease}
+@keyframes kartSarsil{0%,100%{transform:translate(0,0)}
+  20%{transform:translate(-5px,3px) rotate(-1deg)}
+  45%{transform:translate(4px,-2px) rotate(1deg)}
+  70%{transform:translate(-3px,1px)}}
 
 /* ---- ic ogeler temanin rengine doner ---- */
 body[data-tema="vitrin"] .rz.yesil,body[data-tema="vitrin"] .rz.mavi,body[data-tema="vitrin"] .rz.altin{
@@ -1020,7 +1067,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 1.3";
+const SURUM_MELKOR = "beta 1.7";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -1139,7 +1186,7 @@ function head(title, back){
       ? `<h1>${esc(title)}</h1>`
       : `<div class="logo"><span class="mark"><img src="${gv('logo.png')}" alt=""></span>
            <span><b>${anaTema()==="loca" ? "Kahramanın Yolu" : "Parsel Parsel"}</b>
-             <span>${anaTema()==="loca" ? "anısı olan yerleri bölmüyoruz" : "çapımız alayınıza yeter"}</span>
+             <span>${anaTema()==="loca" ? "Yürüyen değil, arınan varır!" : "çapımız alayınıza yeter"}</span>
              ${kullaniciRozetHtml()}</span></div>`}
     ${sag}
   </div>`;
@@ -1168,12 +1215,29 @@ function kullaniciAdi(){
 function kullaniciSeviye(){
   return +(localStorage.getItem("seviye") || 1);
 }
+
+const RUTBELER = [
+  { lv:10, ad:"Veteran" },
+  { lv:5,  ad:"Soldier" },
+  { lv:1,  ad:"Noob" }
+];
+const rutbeAdi = lv => (RUTBELER.find(r=>lv >= r.lv) || RUTBELER[RUTBELER.length-1]).ad;
+
+// menu acildikca seviye artar; sadece Melkor temasinda
+function seviyeArtir(){
+  const yeni = kullaniciSeviye() + 1;
+  localStorage.setItem("seviye", yeni);
+  return yeni;
+}
 function kullaniciRozetHtml(){
   if(anaTema() !== "loca") return "";      // seviye ve takma ad Melkor'a ozel
   const ad2 = kullaniciAdi();
   if(!ad2) return "";
-  return `<span class="kullaniciRozet">
-    <span class="lv">LVL ${kullaniciSeviye()}</span>${esc(ad2.toLocaleUpperCase("tr"))}</span>`;
+  const lv = kullaniciSeviye();
+  return `<span class="kullaniciRozet" id="lvRozet">
+    <span class="lv">LVL ${lv}</span>
+    <span class="rutbe">"${rutbeAdi(lv)}"</span>
+    <span class="kad">${esc(ad2.toLocaleUpperCase("tr"))}</span></span>`;
 }
 
 function cikisSor(){ if(confirm("Çıkış yapılsın mı?")) cikis(); }
@@ -1380,8 +1444,8 @@ const EKRAN_MASKOT = {
 let MASKOT = null;
 
 const MASKOT_LAF = {
-  selam: ["Hoş geldin reis.", "Yine mi parsel?", "Gel bakalım, tarla bizi bekler.",
-          "Bugün kaç dönüm satıyoruz?", "Çapımız alayınıza yeter."],
+  selam: ["Anısı olan yerleri bölmüyoruz.", "Hoş geldin kahraman.", "Yine mi parsel?",
+          "Gel bakalım, diyar bizi bekler.", "Bugün kaç dönüm fethediyoruz?"],
   dokun: ["Dürtme beni.", "Ne var?", "Çalışıyorum ya!", "Bi rahat bırak.", "Ellerini çek.",
           "Ben senin şakan mıyım?", "Dokunma dedim.", "Yeter artık."],
   bosta: ["Sıkıldım.", "Burada ne işim var?", "Bir parsel aç da bakalım.",
@@ -1476,7 +1540,7 @@ function maskotKur(ekran){
     const n = e.touches ? e.touches[0] : e;
     const dx = n.clientX - bas.x, dy = n.clientY - bas.y;
     if(Math.abs(dx) > 5 || Math.abs(dy) > 5) bas.oynadi = true;
-    MASKOT.x = Math.max(4, Math.min(window.innerWidth - 112, bas.mx + dx));
+    MASKOT.x = Math.max(4, Math.min(window.innerWidth - 134, bas.mx + dx));
     MASKOT.y = Math.max(70, Math.min(window.innerHeight - 130, bas.my + dy));
     MASKOT.sonHareket = Date.now();
     maskotYerlestir();
@@ -1523,7 +1587,7 @@ function maskotGezmeyeBasla(){
     const k = document.getElementById("maskot");
     if(!k || !MASKOT) return;
     if(!MASKOT.surukleniyor && Date.now() - MASKOT.sonHareket > 6000){
-      const enG = Math.max(6, window.innerWidth - 118);
+      const enG = Math.max(6, window.innerWidth - 140);
       const enY = Math.max(90, window.innerHeight - 140);
       const yeniX = 6 + Math.random() * (enG - 6);
       const yeniY = 96 + Math.random() * (enY - 96);
@@ -1751,7 +1815,7 @@ const MENULER = [
 ];
 
 // temaya gore gorsel klasoru; her temanin kendi gorselleri olacak
-const TEMA_KLASOR = { vitrin:"", loca:"" };
+const TEMA_KLASOR = { vitrin:"", loca:"melkor-" };   // Melkor dosyalari: melkor-... (klasor yok)
 const tgv = m => gv((TEMA_KLASOR[anaTema()] || "") + m);
 
 function menuGovde(tema){
@@ -1777,7 +1841,7 @@ function menuGovde(tema){
   const kart = (m, i, sinif) => `
     <button class="mKart ${sinif||""}" data-ekran="${m.r}" data-slug="${m.slug}"
       onclick="melkorAc(this,'${m.r}','${m.slug}')">
-      <div class="mGorsel" style="background-image:url('${tgv(m.g || ("melkor/bg-" + m.slug + ".jpg"))}')"></div>
+      <div class="mGorsel" style="background-image:url('${gv("melkor-bg-" + m.slug + ".jpg")}')"></div>
       <div class="mSis"></div>
       <span class="mRun">${String(i).padStart(2,"0")}</span>
       <span class="mIkon">${svg(m.i)}</span>
@@ -1809,9 +1873,140 @@ function menuGovde(tema){
 // uygulama sesleri acik mi (ayarlardan yonetilir)
 const SES_ACIK = () => localStorage.getItem("sesKapali") !== "1";
 
+// ---- Melkor sesleri: dosya gerekmez, anlik uretilir ----
+let SESKUTU = null;
+function sesKutusu(){
+  if(!SES_ACIK()) return null;
+  try{
+    SESKUTU = SESKUTU || new (window.AudioContext || window.webkitAudioContext)();
+    if(SESKUTU.state === "suspended") SESKUTU.resume();
+    return SESKUTU;
+  }catch(e){ return null; }
+}
+
+// ikinma / zorlanma sesi: inip cikan komik uguldama
+function sesIkin(){
+  const a = sesKutusu(); if(!a) return;
+  const t = a.currentTime;
+  const o = a.createOscillator(), g = a.createGain(), f = a.createBiquadFilter();
+  o.type = "sawtooth";
+  o.frequency.setValueAtTime(90, t);
+  o.frequency.exponentialRampToValueAtTime(190, t+0.28);
+  o.frequency.exponentialRampToValueAtTime(70, t+0.52);
+  f.type = "lowpass"; f.frequency.setValueAtTime(900, t);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.26, t+0.06);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+0.55);
+  o.connect(f); f.connect(g); g.connect(a.destination);
+  o.start(t); o.stop(t+0.6);
+  // titresim: ikinma hissi
+  const lfo = a.createOscillator(), lg = a.createGain();
+  lfo.frequency.value = 17; lg.gain.value = 26;
+  lfo.connect(lg); lg.connect(o.frequency);
+  lfo.start(t); lfo.stop(t+0.55);
+}
+
+// tekme carpmasi
+function sesTekme(){
+  const a = sesKutusu(); if(!a) return;
+  const t = a.currentTime;
+  const b = a.createBuffer(1, a.sampleRate*0.2, a.sampleRate);
+  const d = b.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/d.length, 3);
+  const src = a.createBufferSource(); src.buffer = b;
+  const f = a.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 420;
+  const g = a.createGain(); g.gain.value = 0.5;
+  src.connect(f); f.connect(g); g.connect(a.destination);
+  src.start(t);
+}
+
+// seviye atlama ezgisi
+function sesSeviye(){
+  const a = sesKutusu(); if(!a) return;
+  const t = a.currentTime;
+  [[523.25,0],[659.25,.1],[783.99,.2],[1046.5,.3],[1318.5,.44]].forEach(([hz,gec],i)=>{
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = i === 4 ? "triangle" : "square";
+    o.frequency.value = hz;
+    const b = t + gec;
+    g.gain.setValueAtTime(0.0001, b);
+    g.gain.exponentialRampToValueAtTime(0.2, b+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, b + (i===4 ? 0.7 : 0.16));
+    o.connect(g); g.connect(a.destination);
+    o.start(b); o.stop(b + (i===4 ? 0.75 : 0.2));
+  });
+}
+
+// maskot menuye seke seke gider ve iki ayakla tekme atar
+function maskotTekme(kart){
+  return new Promise(cozum=>{
+    const k = document.getElementById("maskot");
+    if(!k || !MASKOT || !kart) return cozum();
+    const hedef = kart.getBoundingClientRect();
+    const genislik = k.offsetWidth || 110;
+    const varisX = Math.max(4, Math.min(window.innerWidth - genislik - 4,
+      hedef.left + hedef.width/2 - genislik/2));
+    const varisY = Math.max(70, hedef.top + hedef.height/2 - (k.offsetHeight||150)/2);
+
+    const mesafe = Math.hypot(varisX - MASKOT.x, varisY - MASKOT.y);
+    const sure = Math.min(900, Math.max(320, mesafe * 2.6));
+
+    k.classList.toggle("ters", varisX < MASKOT.x);
+    k.classList.add("yuru");
+    k.style.transition = `left ${sure}ms cubic-bezier(.3,.7,.4,1), top ${sure}ms cubic-bezier(.3,.7,.4,1)`;
+    MASKOT.x = varisX; MASKOT.y = varisY;
+    MASKOT.sonHareket = Date.now();
+    maskotYerlestir();
+
+    setTimeout(()=>{
+      k.classList.remove("yuru");
+      k.style.transition = "";
+      maskotPoz("eller");
+      sesIkin();
+      k.classList.add("tekme");
+      setTimeout(()=>{
+        sesTekme();
+        kart.classList.add("sarsil");
+        setTimeout(()=>kart.classList.remove("sarsil"), 420);
+      }, 190);
+      setTimeout(()=>{
+        k.classList.remove("tekme");
+        maskotPoz("duz");
+        cozum();
+      }, 560);
+    }, sure + 60);
+  });
+}
+
+// seviye atlama gosterisi
+function seviyeAtla(){
+  return new Promise(cozum=>{
+    const yeni = seviyeArtir();
+    sesSeviye();
+    const r = document.getElementById("lvRozet");
+    if(r){
+      r.querySelector(".lv").textContent = "LVL " + yeni;
+      r.querySelector(".rutbe").textContent = `"${rutbeAdi(yeni)}"`;
+      r.classList.add("atla");
+      setTimeout(()=>r.classList.remove("atla"), 1200);
+    }
+    const p = document.createElement("div");
+    p.className = "lvPanel";
+    p.innerHTML = `<b>LEVEL UP!</b><span>LVL ${yeni} · ${rutbeAdi(yeni)}</span>`;
+    document.body.appendChild(p);
+    requestAnimationFrame(()=>p.classList.add("acik"));
+    setTimeout(()=>{ p.classList.remove("acik"); setTimeout(()=>p.remove(), 350); }, 1050);
+    setTimeout(cozum, 900);
+  });
+}
+
 // menuye dokununca: kart buyur, icinde video oynar, sonra ekran acilir
-function melkorAc(el, ekran, slug){
-  if(!el || el.classList.contains("acilan")) return;
+async function melkorAc(el, ekran, slug){
+  if(!el || el.classList.contains("acilan") || window.__melkorMesgul) return;
+  window.__melkorMesgul = true;
+  try{ await maskotTekme(el); }catch(e){}
+  try{ await seviyeAtla(); }catch(e){}
+  window.__melkorMesgul = false;
   const kutu = el.getBoundingClientRect();
 
   const perde = document.createElement("div");
@@ -1826,7 +2021,7 @@ function melkorAc(el, ekran, slug){
   kopya.innerHTML = `
     <div class="mGorsel" style="background-image:url('${el.querySelector(".mGorsel").style.backgroundImage.slice(5,-2)}')"></div>
     <video playsinline autoplay muted="false" onerror="this.style.display='none'">
-      <source src="${gv("melkor/" + slug + ".mp4")}" type="video/mp4"></video>
+      <source src="${gv("melkor-" + slug + ".mp4")}" type="video/mp4"></video>
     <div class="mYazi"><b>${el.querySelector(".mYazi b").textContent}</b></div>
     <span class="mCerceve"></span>`;
   document.body.appendChild(kopya);
