@@ -140,7 +140,9 @@ a{color:var(--gold);text-decoration:none}
     linear-gradient(0deg,#05040C 2%,rgba(5,4,12,.92) 18%,rgba(5,4,12,.45) 38%,rgba(5,4,12,0) 62%)}
 #acilis[data-tema="loca"] .ad,#acilis[data-tema="loca"] .cizgi,
 #acilis[data-tema="loca"] .yuk,#acilis[data-tema="loca"] .rpgBar{position:relative;z-index:2}
-#acilis[data-tema="loca"] .ad{margin-top:auto;padding-top:56vh}
+#acilis[data-tema="loca"] .ad{margin-top:auto;padding-top:56vh;width:100%;text-align:center;
+  padding-left:12px;padding-right:12px;text-indent:0;letter-spacing:.12em}
+#acilis[data-tema="loca"] .yuk,#acilis[data-tema="loca"] .cizgi{align-self:center}
 #acilis[data-tema="loca"] .rpgBar{margin-bottom:9vh}
 #acilis[data-tema="loca"] .cizgi{background:linear-gradient(90deg,transparent,#7BE8DC,#8A6BFF,transparent);
   height:2px;box-shadow:0 0 14px rgba(123,232,220,.6)}
@@ -503,12 +505,10 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 /* karakter plakasi: kur kutusunun yerinde */
 .melkor .karakterKutu{display:flex;align-items:center;gap:11px;padding:9px 12px;min-height:auto;
   justify-content:flex-start;position:relative}
-.melkor .kPortre{width:44px;height:44px;flex:0 0 auto;overflow:hidden;position:relative;
-  background:radial-gradient(70% 70% at 50% 30%,rgba(138,107,255,.4),rgba(6,4,16,.9));
-  border:1px solid rgba(123,232,220,.5);
-  clip-path:polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-  box-shadow:0 0 16px rgba(138,107,255,.35)}
-.melkor .kPortre img{position:absolute;left:50%;top:50%;width:112%;transform:translate(-50%,-50%)}
+.melkor .kPortre{width:50px;height:50px;flex:0 0 auto;position:relative;background:none;border:0;
+  clip-path:none;box-shadow:none}
+.melkor .kPortre img{position:absolute;left:50%;top:50%;width:100%;transform:translate(-50%,-50%);
+  filter:drop-shadow(0 3px 8px rgba(0,0,0,.6))}
 .melkor .kBilgi{flex:1;min-width:0;text-align:left}
 .melkor .kBilgi .kad{display:block;font-family:"Cinzel",Georgia,serif;font-size:13px;font-weight:700;
   letter-spacing:.12em;color:#F2EEFF;text-shadow:0 0 12px rgba(138,107,255,.6);
@@ -1232,7 +1232,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 3.0";
+const SURUM_MELKOR = "beta 3.1";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -1388,11 +1388,19 @@ const RUTBELER = [
 ];
 const rutbeAdi = lv => (RUTBELER.find(r=>lv >= r.lv) || RUTBELER[RUTBELER.length-1]).ad;
 
-// menu acildikca seviye artar; sadece Melkor temasinda
-function seviyeArtir(){
-  const yeni = kullaniciSeviye() + 1;
-  localStorage.setItem("seviye", yeni);
-  return yeni;
+// her menu acilisi bir puan; UC puanda bir seviye atlanir
+const SEVIYE_ADIM = 3;
+const seviyePuan = () => +(localStorage.getItem("seviyePuan") || 0);
+
+function puanEkle(){
+  const p = (seviyePuan() + 1) % SEVIYE_ADIM;
+  localStorage.setItem("seviyePuan", p);
+  if(p === 0){
+    const yeni = kullaniciSeviye() + 1;
+    localStorage.setItem("seviye", yeni);
+    return { seviye:yeni, atladi:true, puan:0 };
+  }
+  return { seviye:kullaniciSeviye(), atladi:false, puan:p };
 }
 function kullaniciRozetHtml(){
   return "";                                // Melkor'da karakter plakasi ana sayfada duruyor
@@ -1613,8 +1621,10 @@ const MASKOT_LAF = {
           "Gel bakalım, diyar bizi bekler.", "Bugün kaç dönüm fethediyoruz?"],
   dokun: ["Dürtme beni.", "Ne var?", "Çalışıyorum ya!", "Bi rahat bırak.", "Ellerini çek.",
           "Ben senin şakan mıyım?", "Dokunma dedim.", "Yeter artık."],
-  bosta: ["Sıkıldım.", "Burada ne işim var?", "Bir parsel aç da bakalım.",
-          "Uyuyakalacağım.", "Çay molası veriyorum.", "Tarla kendi kendine satılmıyor."],
+  bosta: ["Ciddi iş arayan Mordor'a gitsin.", "Oyun! Oyun! Oyun! Oyun!!!!!!!!",
+          "Sıkıldım.", "Burada ne işim var?", "Uyuyakalacağım.",
+          "Çay molası veriyorum.", "Zindan beni çağırıyor.",
+          "Ciddi iş arayan Mordor'a gitsin.", "Oyun! Oyun! Oyun! Oyun!!!!!!!!"],
   sevin: ["İşte bu!", "Helal olsun.", "Kaydettik gitti.", "Bu iş bizde."],
   uzul:  ["Olmadı ama.", "Yine mi hata?", "Kadastroya küstüm.", "Bir daha dene."],
   gece:  ["Saate baktın mı sen?", "Yat artık.", "Bu saatte parsel mi olur?"]
@@ -2278,7 +2288,7 @@ function menuGovde(tema){
       <span class="kBilgi">
         <b class="kad">${esc((kullaniciAdi()||"KAHRAMAN").toLocaleUpperCase("tr"))}</b>
         <span class="kSatir"><i class="lv">LVL ${kullaniciSeviye()}</i><i class="rutbe">${rutbeAdi(kullaniciSeviye())}</i></span>
-        <span class="kCubuk"><i style="width:${Math.min(100, (kullaniciSeviye()%10)*10 + 10)}%"></i></span>
+        <span class="kCubuk"><i style="width:${(seviyePuan()/SEVIYE_ADIM)*100}%"></i></span>
       </span>
     </div>
     ${kart(MELKOR_MENU[0], 1, "mAna")}
@@ -2398,19 +2408,32 @@ function maskotTekme(kart){
 // seviye atlama gosterisi
 function seviyeAtla(){
   return new Promise(cozum=>{
-    const yeni = seviyeArtir();
-    sesSeviye();
+    const s2 = puanEkle();
     const r = document.getElementById("lvRozet");
+    const cubuk = r?.querySelector(".kCubuk i");
+    if(cubuk) cubuk.style.width = (s2.atladi ? 100 : (s2.puan/SEVIYE_ADIM)*100) + "%";
+
+    if(!s2.atladi){
+      // sadece cubuk dolar, kisa bir tik sesi
+      sesTekme();
+      setTimeout(cozum, 220);
+      return;
+    }
+
+    sesSeviye();
     if(r){
       const lvEl = r.querySelector(".lv"), rtEl = r.querySelector(".rutbe");
-      if(lvEl) lvEl.textContent = "LVL " + yeni;
-      if(rtEl) rtEl.textContent = rutbeAdi(yeni);
+      if(lvEl) lvEl.textContent = "LVL " + s2.seviye;
+      if(rtEl) rtEl.textContent = rutbeAdi(s2.seviye);
       r.classList.add("atla");
-      setTimeout(()=>r.classList.remove("atla"), 1200);
+      setTimeout(()=>{
+        r.classList.remove("atla");
+        if(cubuk) cubuk.style.width = "0%";
+      }, 1200);
     }
     const p = document.createElement("div");
     p.className = "lvPanel";
-    p.innerHTML = `<b>LEVEL UP!</b><span>LVL ${yeni} · ${rutbeAdi(yeni)}</span>`;
+    p.innerHTML = `<b>LEVEL UP!</b><span>LVL ${s2.seviye} · ${rutbeAdi(s2.seviye)}</span>`;
     document.body.appendChild(p);
     requestAnimationFrame(()=>p.classList.add("acik"));
     setTimeout(()=>{ p.classList.remove("acik"); setTimeout(()=>p.remove(), 350); }, 1000);
