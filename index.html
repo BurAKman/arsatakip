@@ -1237,7 +1237,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 3.5";
+const SURUM_MELKOR = "beta 3.6";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -1968,6 +1968,22 @@ function rehberAkis(){
   k.scrollTop = k.scrollHeight;
 }
 
+// telefondaki sesler arasindan en kalin erkek Turkce sesi bul
+let REHBER_SES = null;
+function rehberSesi(){
+  if(REHBER_SES !== null) return REHBER_SES;
+  try{
+    const hepsi = speechSynthesis.getVoices() || [];
+    if(!hepsi.length) return null;                 // henuz yuklenmemis
+    const turkce = hepsi.filter(v=>/tr/i.test(v.lang));
+    const erkek = turkce.find(v=>/erkek|male|ahmet|mehmet|yelda|tolga|burak/i.test(v.name)
+      && !/kadin|female|filiz|seda/i.test(v.name));
+    REHBER_SES = erkek || turkce[0] || null;
+  }catch(e){ REHBER_SES = null; }
+  return REHBER_SES;
+}
+try{ if(window.speechSynthesis) speechSynthesis.onvoiceschanged = () => { REHBER_SES = null; rehberSesi(); }; }catch(e){}
+
 function rehberSoyle(metin){
   const b = document.getElementById("rBalon");
   if(b){ b.textContent = metin; b.classList.remove("yaz"); void b.offsetWidth; b.classList.add("yaz"); }
@@ -1977,12 +1993,17 @@ function rehberSoyle(metin){
     clearTimeout(window.__rPoz);
     window.__rPoz = setTimeout(()=>{ m.src = gv("maskot-duz.png"); }, Math.min(5000, 900 + metin.length*45));
   }
-  // telefonun kendi sesiyle okusun
+  // kalin ve tok erkek sesiyle okusun
   try{
     if(SES_ACIK() && window.speechSynthesis){
       speechSynthesis.cancel();
       const s2 = new SpeechSynthesisUtterance(metin);
-      s2.lang = "tr-TR"; s2.rate = 1.02; s2.pitch = 0.9;
+      s2.lang = "tr-TR";
+      s2.rate = 0.92;        // agir konussun
+      s2.pitch = 0.45;       // kalin ses
+      s2.volume = 1;
+      const ses = rehberSesi();
+      if(ses) s2.voice = ses;
       speechSynthesis.speak(s2);
     }
   }catch(e){}
