@@ -500,6 +500,35 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 /* ================= MELKOR · RPG paneli ================= */
 .melkor{display:flex;flex-direction:column;gap:clamp(7px,1.2vh,11px)}
 
+/* karakter plakasi: kur kutusunun yerinde */
+.melkor .karakterKutu{display:flex;align-items:center;gap:11px;padding:9px 12px;min-height:auto;
+  justify-content:flex-start;position:relative}
+.melkor .kPortre{width:44px;height:44px;flex:0 0 auto;overflow:hidden;position:relative;
+  background:radial-gradient(70% 70% at 50% 30%,rgba(138,107,255,.4),rgba(6,4,16,.9));
+  border:1px solid rgba(123,232,220,.5);
+  clip-path:polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  box-shadow:0 0 16px rgba(138,107,255,.35)}
+.melkor .kPortre img{position:absolute;left:50%;top:-16%;width:150%;transform:translateX(-50%)}
+.melkor .kBilgi{flex:1;min-width:0;text-align:left}
+.melkor .kBilgi .kad{display:block;font-family:"Cinzel",Georgia,serif;font-size:13px;font-weight:700;
+  letter-spacing:.12em;color:#F2EEFF;text-shadow:0 0 12px rgba(138,107,255,.6);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.melkor .kSatir{display:flex;align-items:center;gap:7px;margin-top:3px}
+.melkor .kSatir .lv{font-family:"Cinzel",Georgia,serif;font-style:normal;font-size:9px;font-weight:700;
+  letter-spacing:.06em;padding:2px 6px;color:#04141B;
+  background:linear-gradient(160deg,#9CF5EC,#3FB8B2);
+  clip-path:polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px)}
+.melkor .kSatir .rutbe{font-size:8.5px;font-style:italic;letter-spacing:.16em;color:#E8C98A;
+  text-transform:uppercase}
+.melkor .kCubuk{display:block;margin-top:5px;height:4px;border-radius:3px;overflow:hidden;
+  background:rgba(6,4,16,.8);border:1px solid rgba(123,232,220,.25)}
+.melkor .kCubuk i{display:block;height:100%;
+  background:linear-gradient(90deg,#4FC7C0,#7BE8DC 50%,#B49CFF);
+  box-shadow:0 0 10px rgba(123,232,220,.7);transition:width .6s ease}
+.melkor .kRun{position:absolute;top:6px;right:9px;font-family:"Cinzel",Georgia,serif;font-size:9px;
+  letter-spacing:.1em;color:rgba(123,232,220,.55)}
+.melkor .karakterKutu.atla{animation:rozetAtla 1.1s ease}
+
 /* kur seridi: yazisiz, ince cerceveli cam */
 .melkor .mKur{position:relative;display:flex;align-items:center;justify-content:center;
   min-height:clamp(44px,6vh,58px);padding:8px 16px;border-radius:14px;
@@ -1117,7 +1146,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 2.0";
+const SURUM_MELKOR = "beta 2.3";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -1280,7 +1309,7 @@ function seviyeArtir(){
   return yeni;
 }
 function kullaniciRozetHtml(){
-  if(anaTema() !== "loca") return "";      // seviye ve takma ad Melkor'a ozel
+  return "";                                // Melkor'da karakter plakasi ana sayfada duruyor
   const ad2 = kullaniciAdi();
   if(!ad2) return "";
   const lv = kullaniciSeviye();
@@ -1965,8 +1994,17 @@ function menuGovde(tema){
   const [harita, araziler, tapu, ekler, yz, cap, kml] = MENULER;
   const sinema = { r:"sinema", i:"photo", ad:"Divan", alt:"", slug:"sinema" };
 
+  const lv = kullaniciSeviye();
   return `<div class="melkor">
-    <div class="mKur"><div id="rates" class="rates"></div></div>
+    <div class="mKur karakterKutu" id="lvRozet">
+      <span class="kPortre"><img src="${gv('maskot-duz.png')}" alt=""></span>
+      <span class="kBilgi">
+        <b class="kad">${esc((kullaniciAdi()||"KAHRAMAN").toLocaleUpperCase("tr"))}</b>
+        <span class="kSatir"><i class="lv">LVL ${lv}</i><i class="rutbe">${rutbeAdi(lv)}</i></span>
+        <span class="kCubuk"><i style="width:${Math.min(100, (lv%10)*10 + 10)}%"></i></span>
+      </span>
+      <span class="kRun">${String(lv).padStart(2,"0")}</span>
+    </div>
     ${kart(harita, 1, "mAna")}
     <div class="mIzgara">
       ${kart(araziler, 2)}${kart(tapu, 3)}
@@ -1987,6 +2025,135 @@ function menuGovde(tema){
         <div><b>Hesap - Kitap</b><small>alacak · borç</small></div></button>
     </div>
   </div>`;
+}
+
+// ---- Melkor sesleri: dosya gerekmez, anlik uretilir ----
+const SES_ACIK = () => localStorage.getItem("sesKapali") !== "1";
+let SESKUTU = null;
+function sesKutusu(){
+  if(!SES_ACIK()) return null;
+  try{
+    SESKUTU = SESKUTU || new (window.AudioContext || window.webkitAudioContext)();
+    if(SESKUTU.state === "suspended") SESKUTU.resume();
+    return SESKUTU;
+  }catch(e){ return null; }
+}
+
+// ikinma: inip cikan titrek uguldama
+function sesIkin(){
+  const a = sesKutusu(); if(!a) return;
+  const t = a.currentTime;
+  const o = a.createOscillator(), g = a.createGain(), f = a.createBiquadFilter();
+  o.type = "sawtooth";
+  o.frequency.setValueAtTime(90, t);
+  o.frequency.exponentialRampToValueAtTime(190, t+0.28);
+  o.frequency.exponentialRampToValueAtTime(70, t+0.52);
+  f.type = "lowpass"; f.frequency.setValueAtTime(900, t);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.26, t+0.06);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+0.55);
+  o.connect(f); f.connect(g); g.connect(a.destination);
+  o.start(t); o.stop(t+0.6);
+  const lfo = a.createOscillator(), lg = a.createGain();
+  lfo.frequency.value = 17; lg.gain.value = 26;
+  lfo.connect(lg); lg.connect(o.frequency);
+  lfo.start(t); lfo.stop(t+0.55);
+}
+
+// tekme carpmasi
+function sesTekme(){
+  const a = sesKutusu(); if(!a) return;
+  const t = a.currentTime;
+  const b = a.createBuffer(1, Math.floor(a.sampleRate*0.2), a.sampleRate);
+  const d = b.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/d.length, 3);
+  const src = a.createBufferSource(); src.buffer = b;
+  const f = a.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 420;
+  const g = a.createGain(); g.gain.value = 0.5;
+  src.connect(f); f.connect(g); g.connect(a.destination);
+  src.start(t);
+}
+
+// seviye atlama ezgisi
+function sesSeviye(){
+  const a = sesKutusu(); if(!a) return;
+  const t = a.currentTime;
+  [[523.25,0],[659.25,.1],[783.99,.2],[1046.5,.3],[1318.5,.44]].forEach(([hz,gec],i)=>{
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = i === 4 ? "triangle" : "square";
+    o.frequency.value = hz;
+    const b2 = t + gec;
+    g.gain.setValueAtTime(0.0001, b2);
+    g.gain.exponentialRampToValueAtTime(0.2, b2+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, b2 + (i===4 ? 0.7 : 0.16));
+    o.connect(g); g.connect(a.destination);
+    o.start(b2); o.stop(b2 + (i===4 ? 0.75 : 0.2));
+  });
+}
+
+// maskot menuye seke seke gider ve tekme atar
+function maskotTekme(kart){
+  return new Promise(cozum=>{
+    const k = document.getElementById("maskot");
+    if(!k || !MASKOT || !kart) return cozum();
+    const hedef = kart.getBoundingClientRect();
+    const gen = k.offsetWidth || 126, boy = k.offsetHeight || 180;
+    const varisX = Math.max(4, Math.min(window.innerWidth - gen - 4,
+      hedef.left + hedef.width/2 - gen/2));
+    const varisY = Math.max(70, Math.min(window.innerHeight - boy - 10,
+      hedef.top + hedef.height/2 - boy/2));
+
+    const mesafe = Math.hypot(varisX - MASKOT.x, varisY - MASKOT.y);
+    const sure = Math.min(850, Math.max(280, mesafe * 2.4));
+
+    k.classList.toggle("ters", varisX < MASKOT.x);
+    k.classList.add("yuru");
+    k.style.transition = `left ${sure}ms cubic-bezier(.3,.7,.4,1), top ${sure}ms cubic-bezier(.3,.7,.4,1)`;
+    MASKOT.x = varisX; MASKOT.y = varisY;
+    MASKOT.sonHareket = Date.now();
+    maskotYerlestir();
+
+    setTimeout(()=>{
+      k.classList.remove("yuru");
+      k.style.transition = "";
+      maskotPoz("eller");
+      sesIkin();
+      k.classList.add("tekme");
+      setTimeout(()=>{
+        sesTekme();
+        kart.classList.add("sarsil");
+        setTimeout(()=>kart.classList.remove("sarsil"), 420);
+      }, 200);
+      setTimeout(()=>{
+        k.classList.remove("tekme");
+        maskotPoz("duz");
+        cozum();
+      }, 580);
+    }, sure + 60);
+  });
+}
+
+// seviye atlama gosterisi
+function seviyeAtla(){
+  return new Promise(cozum=>{
+    const yeni = seviyeArtir();
+    sesSeviye();
+    const r = document.getElementById("lvRozet");
+    if(r){
+      const lvEl = r.querySelector(".lv"), rtEl = r.querySelector(".rutbe");
+      if(lvEl) lvEl.textContent = "LVL " + yeni;
+      if(rtEl) rtEl.textContent = rutbeAdi(yeni);
+      r.classList.add("atla");
+      setTimeout(()=>r.classList.remove("atla"), 1200);
+    }
+    const p = document.createElement("div");
+    p.className = "lvPanel";
+    p.innerHTML = `<b>LEVEL UP!</b><span>LVL ${yeni} · ${rutbeAdi(yeni)}</span>`;
+    document.body.appendChild(p);
+    requestAnimationFrame(()=>p.classList.add("acik"));
+    setTimeout(()=>{ p.classList.remove("acik"); setTimeout(()=>p.remove(), 350); }, 1000);
+    setTimeout(cozum, 850);
+  });
 }
 
 // menuye dokununca: kart buyur, icinde video oynar, sonra ekran acilir
@@ -7001,8 +7168,8 @@ async function ayarlar(){
         <span style="flex:1">Maskot açık · sadece Melkor teması</span></label>
       ${ME.role==='admin'?`<button class="btn ghost" style="margin-top:12px" onclick="go('marka')">
         Marka Kimliği ${markaVarMi()?"· tanımlı":"· tanımsız"}</button>`:""}
-      <button class="btn ghost" style="margin-top:8px" onclick="go('yedek')">
-        Yedekleme${sonYedek()?" · "+new Date(sonYedek()).toLocaleDateString("tr-TR"):" · hiç alınmadı"}</button>
+      ${anaTema()!=="loca"?`<button class="btn ghost" style="margin-top:8px" onclick="go('yedek')">
+        Yedekleme${sonYedek()?" · "+new Date(sonYedek()).toLocaleDateString("tr-TR"):" · hiç alınmadı"}</button>`:""}
     </div>
     <h3 style="font-size:14px;margin:22px 0 10px">Kullanıcılar</h3>
     ${(kisiler||[]).map(k=>{
