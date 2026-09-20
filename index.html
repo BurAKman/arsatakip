@@ -619,6 +619,10 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
   text-shadow:0 2px 10px rgba(0,0,0,.95)}
 .melkor .mAna .mYazi b{font-size:clamp(15px,2.4vh,20px);letter-spacing:.16em}
 .melkor .mUfak .mYazi b{font-size:clamp(9.5px,1.45vh,11.5px);letter-spacing:.06em}
+.melkor .mAciklama{display:block;margin-top:3px;font-size:9px;letter-spacing:.04em;font-style:italic;
+  color:rgba(234,230,250,.72);text-shadow:0 1px 6px rgba(0,0,0,.9);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.melkor .mUfak .mAciklama{display:none}
 .melkor .mYildiz{display:block;margin-top:2px;font-size:8px;letter-spacing:.12em;color:var(--nad);
   text-shadow:0 0 8px color-mix(in srgb,var(--nad) 60%,transparent)}
 .melkor .mUfak .mYildiz{font-size:7px}
@@ -760,7 +764,8 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .mAcilan.cik{opacity:0;transform:scale(.96)}
 .mAcilan .mGorsel{position:absolute;inset:0;background-size:cover;background-position:center 34%;
   filter:brightness(.7)}
-.mAcilan video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.mAcilan video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;
+  background:#08061A}
 .mAcilan .mYazi{position:absolute;left:16px;right:16px;bottom:14px;z-index:2}
 .mAcilan .mYazi b{font-family:Georgia,serif;font-size:19px;letter-spacing:.2em;text-transform:uppercase;
   color:#F2EEFF;text-shadow:0 2px 14px rgba(0,0,0,.95)}
@@ -1232,7 +1237,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 3.1";
+const SURUM_MELKOR = "beta 3.3";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -1998,8 +2003,19 @@ async function rehberSor(){
   rehberSoyle(cevap);
 }
 
-// cevap uretici: once kendi havuzu, sonra (baglanirsa) yapay zeka
+// cevap uretici: once yapay zeka (rehber fonksiyonu), olmazsa kendi havuzu
 async function rehberCevap(soru){
+  try{
+    const { data, error } = await sb.functions.invoke("rehber", {
+      body: { soru, gecmis: REHBER_GECMIS.slice(-6) }
+    });
+    if(!error && data?.cevap) return String(data.cevap).trim();
+  }catch(e){}
+  return rehberYedekCevap(soru);
+}
+
+// baglanti yoksa devreye giren havuz
+function rehberYedekCevap(soru){
   const k = soru.toLocaleLowerCase("tr");
   const eslesme = [
     { ara:["merhaba","selam","hey"], cevaplar:["Hoş geldin. Ayağının tozuyla soru soruluyor demek.",
@@ -2268,6 +2284,7 @@ function menuGovde(tema){
       <span class="mNadir">${n.ad}</span>
       <div class="mYazi">
         <b>${m.ad}</b>
+        ${m.alt?`<small class="mAciklama">${m.alt}</small>`:""}
         <span class="mYildiz">${yildizlar(n.yildiz)}</span>
       </div>
       <span class="mCerceve"></span>
@@ -2276,10 +2293,12 @@ function menuGovde(tema){
   };
 
   const MELKOR_MENU = [
-    { r:"tv",    i:"photo",  ad:"Melkor TV",   slug:"tv" },
-    { r:"zindan",i:"vector", ad:"Zindan",      slug:"zindan" },
-    { r:"carki", i:"globe",  ad:"Kader Çarkı", slug:"carki" },
-    { r:"rehber",i:"akil",   ad:"Rehber",      slug:"rehber" }
+    { r:"tv",    i:"photo",  ad:"Melkor TV",   slug:"tv",
+      alt:"İnternetin absürd çukuru" },
+    { r:"zindan",i:"vector", ad:"Zindan",      slug:"zindan", alt:"Kapı henüz kapalı" },
+    { r:"carki", i:"globe",  ad:"Kader Çarkı", slug:"carki",  alt:"Çark dönmeye hazır" },
+    { r:"rehber",i:"akil",   ad:"Rehber",      slug:"rehber",
+      alt:"Çağımızın bilge kişisine danış" }
   ];
 
   return `<div class="melkor">
@@ -2469,7 +2488,7 @@ async function melkorAc(el, ekran, slug){
 
   // hedef olcu: ekrani kaplamaz, menunun buyumus hali
   const G = Math.min(window.innerWidth * 0.86, 430);
-  const Y = Math.min(window.innerHeight * 0.62, G * 1.05);
+  let Y = Math.min(window.innerHeight * 0.62, G * 1.05);
   requestAnimationFrame(()=>{
     perde.classList.add("acik");
     kopya.classList.add("buyu");
@@ -2483,6 +2502,7 @@ async function melkorAc(el, ekran, slug){
   const kapat = () => {
     if(bitti) return;
     bitti = true;
+    clearTimeout(emniyet); clearTimeout(window.__melkorEmniyet);
     kopya.classList.add("cik");
     perde.classList.add("cik");
     delete kopya.dataset.canli; delete perde.dataset.canli;
@@ -2490,7 +2510,7 @@ async function melkorAc(el, ekran, slug){
     go(ekran);
   };
   // once guvenlik zamanlayicisi: ne olursa olsun ekran acilir
-  const emniyet = setTimeout(kapat, 4200);
+  let emniyet = setTimeout(kapat, 4200);
   perde.addEventListener("click", kapat);
   kopya.addEventListener("click", kapat);
 
@@ -2499,11 +2519,25 @@ async function melkorAc(el, ekran, slug){
     if(v){
       v.volume = SES_ACIK() ? 0.85 : 0;
       v.muted = !SES_ACIK();
+      // kutuyu videonun oranina uydur: siyah bosluk ya da tasma olmasin
+      v.addEventListener("loadedmetadata", ()=>{
+        if(!v.videoWidth || !v.videoHeight) return;
+        const oran = v.videoHeight / v.videoWidth;
+        const yeniY = Math.min(window.innerHeight * 0.74, G * oran);
+        kopya.style.height = yeniY + "px";
+        kopya.style.top = ((window.innerHeight - yeniY)/2) + "px";
+        // videonun kendi suresi kadar bekle, erken kesme
+        const sure = isFinite(v.duration) ? v.duration : 4;
+        clearTimeout(emniyet);
+        window.__melkorEmniyet = setTimeout(kapat, (sure + 0.6) * 1000);
+      });
       v.addEventListener("ended", kapat);
       // dosya yoksa kaynak hatasi verir: hemen gec
-      v.addEventListener("error", ()=>{ clearTimeout(emniyet); setTimeout(kapat, 450); }, true);
+      v.addEventListener("error", ()=>{ clearTimeout(emniyet); clearTimeout(window.__melkorEmniyet);
+        setTimeout(kapat, 450); }, true);
       const kaynak = v.querySelector("source");
-      if(kaynak) kaynak.addEventListener("error", ()=>{ clearTimeout(emniyet); setTimeout(kapat, 450); });
+      if(kaynak) kaynak.addEventListener("error", ()=>{ clearTimeout(emniyet);
+        clearTimeout(window.__melkorEmniyet); setTimeout(kapat, 450); });
       v.play().catch(()=>{ v.muted = true; v.play().catch(()=>{}); });
     }else{
       clearTimeout(emniyet);
