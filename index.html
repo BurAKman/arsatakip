@@ -806,6 +806,116 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
   letter-spacing:.12em;cursor:pointer;color:#04141B;background:linear-gradient(160deg,#9CF5EC,#3FB8B2);border:0;
   clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px)}
 
+/* ---- Rehber ek tuslar, kaynak, kamera, konu sahneleri ---- */
+.rEkTus{display:flex;gap:7px;margin:10px 0 0}
+.rEkTus button{flex:1;padding:8px 4px;font-family:"Cinzel",Georgia,serif;font-size:9px;
+  letter-spacing:.1em;cursor:pointer;color:#CFC6F0;
+  background:linear-gradient(160deg,rgba(138,107,255,.2),rgba(8,5,20,.75));
+  border:1px solid rgba(123,232,220,.3);
+  clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.rEkTus button:active{border-color:rgba(123,232,220,.8);color:#7BE8DC}
+.rKaynak{display:block;margin-top:5px;font-size:8.5px;font-style:italic;letter-spacing:.04em;
+  color:rgba(232,201,138,.75);border-left:2px solid rgba(232,201,138,.45);padding-left:7px}
+.rKamera{position:absolute;right:10px;bottom:10px;width:88px;height:118px;object-fit:cover;z-index:4;
+  border:1px solid rgba(123,232,220,.5);filter:saturate(.7) contrast(1.1);
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.rMaskot.tekmeAt{animation:rTekme .9s cubic-bezier(.3,1.2,.4,1)}
+@keyframes rTekme{0%{transform:translateX(-50%) rotate(0)}
+  25%{transform:translateX(-50%) translateY(-18px) rotate(-18deg)}
+  45%{transform:translateX(-50%) translateY(10px) rotate(28deg) scale(1.08,.92)}
+  70%{transform:translateX(-50%) rotate(10deg)}
+  100%{transform:translateX(-50%) rotate(0)}}
+.rehberSahne.sarsintili{animation:sahneSarsil .5s ease}
+@keyframes sahneSarsil{0%,100%{transform:translate(0,0)}
+  20%{transform:translate(-6px,4px)}45%{transform:translate(5px,-3px)}70%{transform:translate(-3px,2px)}}
+.rehberSahne[data-konu="para"] .rSis{background:radial-gradient(60% 40% at 50% 100%,rgba(232,201,138,.4),transparent 70%)}
+.rehberSahne[data-konu="uzay"] .rSis{background:radial-gradient(60% 40% at 50% 100%,rgba(123,180,255,.4),transparent 70%)}
+.rehberSahne[data-konu="tarih"] .rSis{background:radial-gradient(60% 40% at 50% 100%,rgba(198,150,90,.4),transparent 70%)}
+.rehberSahne[data-konu="oyun"] .rSis{background:radial-gradient(60% 40% at 50% 100%,rgba(255,107,157,.4),transparent 70%)}
+.rehberSahne[data-konu="yemek"] .rSis{background:radial-gradient(60% 40% at 50% 100%,rgba(255,159,90,.4),transparent 70%)}
+.rehberSahne[data-konu="teknoloji"] .rSis{background:radial-gradient(60% 40% at 50% 100%,rgba(123,232,220,.45),transparent 70%)}
+.rehberSahne[data-konu="doga"] .rSis{background:radial-gradient(60% 40% at 50% 100%,rgba(111,227,168,.4),transparent 70%)}
+
+/* ---- Kim 500 Milyar Ister ---- */
+.studyo{position:relative;height:clamp(180px,27vh,250px);overflow:hidden;margin-bottom:10px;
+  background:radial-gradient(70% 60% at 50% 0%,rgba(138,107,255,.3),transparent 60%),
+    linear-gradient(180deg,#0B0722,#05040E);
+  border:1px solid rgba(123,232,220,.3);
+  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
+.sunucuIsik{position:absolute;left:50%;top:-14%;width:52%;height:120%;transform:translateX(-50%);
+  background:radial-gradient(50% 60% at 50% 40%,rgba(123,232,220,.28),transparent 70%);
+  filter:blur(6px);animation:isikSalin 5s ease-in-out infinite}
+@keyframes isikSalin{0%,100%{opacity:.6}50%{opacity:1}}
+.sunucu{position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);height:76%;z-index:3;
+  filter:drop-shadow(0 10px 18px rgba(0,0,0,.85))}
+.seyirci{position:absolute;inset:0;z-index:2;pointer-events:none}
+.seyirci .kafa{position:absolute;width:16px;height:20px;border-radius:50% 50% 42% 42%;
+  background:linear-gradient(180deg,rgba(20,14,44,.95),rgba(6,4,16,.95));
+  box-shadow:0 0 10px rgba(138,107,255,.35);animation:kafaSalin 3.4s ease-in-out infinite}
+@keyframes kafaSalin{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.seyirci .kafa.alkis{animation:kafaAlkis .32s ease-in-out 6}
+@keyframes kafaAlkis{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-7px) scale(1.12)}}
+.seyirci .kafa.elKaldir::after{content:"";position:absolute;left:50%;top:-11px;width:4px;height:11px;
+  border-radius:3px;background:rgba(123,232,220,.75);transform:translateX(-50%);
+  animation:elKalk .5s ease-in-out 4}
+@keyframes elKalk{0%,100%{height:5px;opacity:.5}50%{height:13px;opacity:1}}
+.odulSerit{position:absolute;top:8px;left:8px;padding:5px 10px;z-index:4;
+  background:linear-gradient(160deg,rgba(232,201,138,.3),rgba(8,5,20,.85));
+  border:1px solid rgba(232,201,138,.5);
+  clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.odulSerit b{display:block;font-family:"Cinzel",Georgia,serif;font-size:13px;letter-spacing:.08em;color:#F0DCA8}
+.odulSerit span{display:block;font-size:8px;letter-spacing:.14em;color:rgba(232,201,138,.7)}
+
+.yBalon{padding:11px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.4;
+  background:linear-gradient(160deg,rgba(245,242,255,.96),rgba(216,208,248,.94));color:#150F2C;
+  border:1px solid rgba(123,232,220,.5);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%)}
+.yBalon.yaz{animation:balonGir .3s cubic-bezier(.3,1.5,.5,1)}
+.ySoruKutu{padding:14px;margin-bottom:12px;text-align:center;
+  background:linear-gradient(160deg,rgba(138,107,255,.18),rgba(8,5,20,.8));
+  border:1px solid rgba(123,232,220,.35);
+  clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+.ySoruKutu b{font-size:13.5px;line-height:1.45;color:#F2EEFF;font-weight:600}
+.ySoruKutu.bekle{display:flex;align-items:center;justify-content:center;gap:10px}
+.ySoruKutu.bekle span{font-size:11px;color:var(--ink-3);font-style:italic}
+.ySiklar{display:grid;gap:8px}
+.ySik{display:flex;align-items:center;gap:10px;padding:11px 12px;text-align:left;cursor:pointer;
+  position:relative;
+  background:linear-gradient(160deg,rgba(138,107,255,.14),rgba(8,5,20,.72));
+  border:1px solid rgba(150,130,230,.3);
+  clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px)}
+.ySik i{flex:0 0 auto;width:24px;height:24px;display:grid;place-items:center;font-style:normal;
+  font-family:"Cinzel",Georgia,serif;font-size:11px;font-weight:700;color:#04141B;
+  background:linear-gradient(160deg,#9CF5EC,#3FB8B2)}
+.ySik span{font-size:12.5px;color:#EAE6FA}
+.ySik.secili{border-color:#E8C98A;box-shadow:0 0 18px rgba(232,201,138,.4)}
+.ySik.dogru{border-color:#6FE3A8;background:linear-gradient(160deg,rgba(111,227,168,.3),rgba(8,5,20,.8));
+  animation:dogruYan .5s ease 3}
+@keyframes dogruYan{0%,100%{box-shadow:0 0 0 rgba(111,227,168,0)}50%{box-shadow:0 0 26px rgba(111,227,168,.8)}}
+.ySik.yanlis{border-color:#FF6B9D;background:linear-gradient(160deg,rgba(255,107,157,.25),rgba(8,5,20,.8))}
+.ySik.elendi{opacity:.25;text-decoration:line-through}
+.yOran{position:absolute;right:10px;font-size:10px;font-weight:700;color:#7BE8DC}
+.yJoker{display:flex;gap:7px;margin-top:12px}
+.yJoker button{flex:1;padding:9px 4px;font-family:"Cinzel",Georgia,serif;font-size:9.5px;
+  letter-spacing:.1em;cursor:pointer;color:#04141B;background:linear-gradient(160deg,#9CF5EC,#3FB8B2);
+  border:0;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.yJoker button:disabled{opacity:.3;background:linear-gradient(160deg,#6A6480,#3A3650);color:#1A1628}
+.yOnay{display:flex;gap:8px;margin-top:12px}
+.yOnay button{flex:1;padding:12px 6px;font-family:"Cinzel",Georgia,serif;font-size:11px;
+  letter-spacing:.1em;cursor:pointer;color:#CFC6F0;
+  background:linear-gradient(160deg,rgba(138,107,255,.22),rgba(8,5,20,.8));
+  border:1px solid rgba(123,232,220,.3)}
+.yOnay button.pri{color:#04141B;background:linear-gradient(160deg,#F0DCA8,#D9B65A);border:0}
+.ySonuc{padding:30px 18px;text-align:center;
+  background:linear-gradient(160deg,rgba(138,107,255,.16),rgba(8,5,20,.82));
+  border:1px solid rgba(123,232,220,.35);
+  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
+.ySonuc b{display:block;font-family:"Cinzel",Georgia,serif;font-size:20px;letter-spacing:.18em;
+  color:transparent;background-image:linear-gradient(115deg,#FFF,#7BE8DC 45%,#E8C98A);
+  -webkit-background-clip:text;background-clip:text}
+.ySonuc.kotu b{background-image:linear-gradient(115deg,#FFF,#FF6B9D 50%,#B44A70)}
+.ySonuc span{display:block;margin-top:8px;font-size:11px;letter-spacing:.08em;color:var(--ink-2)}
+
 /* ---- menu acilimi: kart buyur, video icinde oynar ---- */
 .mPerde{position:fixed;inset:0;z-index:150;background:rgba(4,3,10,0);
   backdrop-filter:blur(0px);transition:background .38s ease, backdrop-filter .38s ease}
@@ -1294,7 +1404,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 4.0";
+const SURUM_MELKOR = "beta 4.6";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -1994,6 +2104,55 @@ function tvSil(i){
   tvListele();
 }
 
+/* ---- TOMAR: her kullanicinin kendi kaydi (sadece bu telefonda) ---- */
+
+const tomarAnahtar = () => "tomar_" + (kullaniciAdi() || "kahraman").toLocaleLowerCase("tr");
+
+function tomarOku(){
+  try{
+    const t = JSON.parse(localStorage.getItem(tomarAnahtar()) || "null");
+    if(t) return t;
+  }catch(e){}
+  return { ziyaret:0, soru:0, kufur:0, konular:{}, ilkGoruntu:null, sonGoruntu:null };
+}
+function tomarYaz(t){ localStorage.setItem(tomarAnahtar(), JSON.stringify(t)); }
+
+const KONU_ETIKET = {
+  para:["dolar","euro","borsa","ekonomi","para","kripto","altın","faiz","maaş"],
+  uzay:["uzay","gezegen","ay","mars","yıldız","galaksi","astronot","ufo","nasa"],
+  tarih:["tarih","osmanlı","savaş","antik","roma","imparator","padişah","fetih"],
+  oyun:["oyun","konsol","playstation","xbox","steam","fire emblem","nintendo","rpg"],
+  yemek:["yemek","tarif","pizza","kebap","çorba","tatlı","kahve","çay"],
+  teknoloji:["telefon","bilgisayar","yapay zeka","internet","uygulama","şarj","pil","yazılım"],
+  doga:["hayvan","kedi","köpek","ağaç","deniz","orman","hava","yağmur"]
+};
+
+function konuBul(metin){
+  const k = String(metin||"").toLocaleLowerCase("tr");
+  for(const [etiket, kelimeler] of Object.entries(KONU_ETIKET))
+    if(kelimeler.some(x=>k.includes(x))) return etiket;
+  return null;
+}
+
+const KUFURLER = ["amk","aq","oç","piç","orospu","sikt","siktir","yarrak","göt ","gavat","yavşak","şerefsiz"];
+const kufurMu = m => { const k = String(m||"").toLocaleLowerCase("tr"); return KUFURLER.some(x=>k.includes(x)); };
+
+// yapay zekaya gonderilecek kisi notu
+function tomarOzeti(){
+  const t = tomarOku();
+  const enCok = Object.entries(t.konular||{}).sort((a,b)=>b[1]-a[1]).slice(0,3).map(o=>o[0]);
+  const satir = [
+    "Adi: " + (kullaniciAdi() || "Kahraman"),
+    "Seviye: " + kullaniciSeviye(),
+    "Kacinci gelisi: " + t.ziyaret,
+    "Toplam sorusu: " + t.soru
+  ];
+  if(enCok.length) satir.push("Sik sordugu konular: " + enCok.join(", "));
+  if(t.kufur > 2) satir.push("Agzi bozuk, ara sira kufur ediyor; buna takilma ama uyar.");
+  if(t.ziyaret > 5) satir.push("Eski dost sayilir, ona gore samimi ol ama kibrini birakma.");
+  return satir.join("\n");
+}
+
 /* ---- REHBER: maskotla sohbet (yazili ve sesli) ---- */
 
 let REHBER_GECMIS = [];
@@ -2022,6 +2181,11 @@ function rehberEkran(){
     </div>
     <div class="rDurumSatir"><span id="rDurum" class="rDurum">Melkor Diyarı</span></div>
     <div id="rAkis" class="rAkis"></div>
+    <div class="rEkTus">
+      <button onclick="rehberKehanet()">KEHANET</button>
+      <button onclick="rehberBak()">BANA BAK</button>
+      <button onclick="go('yarisma')">500 MİLYAR</button>
+    </div>
     <div class="rGiris">
       <button class="rMik" id="rMik" onclick="rehberDinle()" aria-label="Konuş">🎤</button>
       <input id="rMetin" placeholder="Bir şey sor…" onkeydown="if(event.key==='Enter')rehberSor()">
@@ -2032,13 +2196,20 @@ function rehberEkran(){
 
   rehberSahneCanlandir();
 
-  // diyara ilk adim: bir kereye mahsus
-  if(!localStorage.getItem("rehberTanisti")){
-    localStorage.setItem("rehberTanisti", "1");
+  // kisiye ozel karsilama
+  const t = tomarOku();
+  t.ziyaret = (t.ziyaret || 0) + 1;
+  tomarYaz(t);
+  if(!REHBER_GECMIS.length){
+    const ad2 = (kullaniciAdi() || "Kahraman").toLocaleUpperCase("tr");
+    const selam = t.ziyaret === 1
+      ? `Hoş geldin ${ad2}. Geleceğini biliyordum.`
+      : t.ziyaret < 5
+      ? `Yine mi sen, ${ad2}? Bekliyordum zaten.`
+      : `${ad2} geldi. ${t.ziyaret}. gelişin, sayıyorum ben bunları.`;
     setTimeout(()=>{
-      REHBER_GECMIS.push({ kim:"rehber", soz:"Geleceğini biliyordum." });
-      rehberAkis();
-      rehberSoyle("Geleceğini biliyordum.");
+      REHBER_GECMIS.push({ kim:"rehber", soz:selam });
+      rehberAkis(); rehberSoyle(selam);
     }, 700);
   }
 }
@@ -2090,7 +2261,8 @@ function rehberAkis(){
   k.innerHTML = REHBER_GECMIS.map(o=>`
     <div class="rSatir ${o.kim}">
       <span class="rKim">${o.kim === "ben" ? "SEN" : "REHBER"}</span>
-      <span class="rSoz">${esc(o.soz)}</span>
+      <span class="rSoz">${esc(o.soz)}
+        ${o.kaynak?`<span class="rKaynak">kaynak: ${esc(o.kaynak)}</span>`:""}</span>
     </div>`).join("");
   k.scrollTop = k.scrollHeight;
 }
@@ -2198,13 +2370,137 @@ async function rehberSor(){
   g.value = "";
   REHBER_GECMIS.push({ kim:"ben", soz:soru });
   rehberAkis();
-  rehberDusunuyor(true);
 
+  const t = tomarOku();
+  t.soru = (t.soru || 0) + 1;
+
+  // kufur ederse tekmeyi yer
+  if(kufurMu(soru)){
+    t.kufur = (t.kufur || 0) + 1;
+    tomarYaz(t);
+    rehberTekme();
+    const laf = "Küfür yok. Kırarım boynuzunu iblis.";
+    REHBER_GECMIS.push({ kim:"rehber", soz:laf });
+    rehberAkis(); rehberSoyle(laf);
+    return;
+  }
+
+  // konuya gore sahne degissin
+  const konu = konuBul(soru);
+  if(konu){ t.konular[konu] = (t.konular[konu] || 0) + 1; sahneKonu(konu); }
+  tomarYaz(t);
+
+  rehberDusunuyor(true);
   const cevap = await rehberCevap(soru);
   rehberDusunuyor(false);
-  REHBER_GECMIS.push({ kim:"rehber", soz:cevap });
+  REHBER_GECMIS.push({ kim:"rehber", soz:cevap, kaynak: sahteKaynak() });
   rehberAkis();
   rehberSoyle(cevap);
+}
+
+// ---- sahte kaynak ureteci ----
+const KAYNAK_YAZAR = ["Ursula K. Le Guin","Yıldız Tilbe","İbn-i Haldun","Nikola Tesla","Barış Manço",
+  "Marcus Aurelius","Sokrates","Attila İlhan","Stephen Hawking","Nasreddin Hoca","Jules Verne"];
+const KAYNAK_ESER = ["Mülksüzler","Kadim Tomarlar","Zamanın Kısa Tarihi","Tuz Ruhu Üzerine",
+  "Yeraltından Notlar","Kayıp Parselnameler","Büyük Yanılgılar Ansiklopedisi","Gölge Ekonomisi",
+  "Sükûnet ve Öfke","Denizaltı Tarımı El Kitabı","Ay'a Gitmeyenler"];
+
+function sahteKaynak(){
+  const y = KAYNAK_YAZAR[Math.floor(Math.random()*KAYNAK_YAZAR.length)];
+  const e = KAYNAK_ESER[Math.floor(Math.random()*KAYNAK_ESER.length)];
+  const yil = 1840 + Math.floor(Math.random()*180);
+  const sayfa = 12 + Math.floor(Math.random()*640);
+  const basim = ["3. baskı","gözden geçirilmiş baskı","yasaklı baskı","ilk baskı","cep boy"][Math.floor(Math.random()*5)];
+  return `${y} — ${e}, ${basim}, ${yil}, s.${sayfa}`;
+}
+
+// ---- kufur cezasi: maskot ekrana tekme atar ----
+function rehberTekme(){
+  const m = document.getElementById("rMaskot");
+  const sahne = document.getElementById("rSahne");
+  if(!m) return;
+  try{ sesIkin(); }catch(e){}
+  m.src = gv("maskot-eller.png");
+  m.classList.add("tekmeAt");
+  sahne?.classList.add("sarsintili");
+  setTimeout(()=>{ try{ sesTekme(); }catch(e){} }, 220);
+  setTimeout(()=>{
+    m.classList.remove("tekmeAt");
+    sahne?.classList.remove("sarsintili");
+    m.src = gv("maskot-duz.png");
+  }, 900);
+}
+
+// ---- konuya gore sahne ----
+function sahneKonu(konu){
+  const s2 = document.getElementById("rSahne");
+  if(!s2) return;
+  s2.dataset.konu = konu;
+  clearTimeout(window.__sahneSaat);
+  window.__sahneSaat = setTimeout(()=>{ delete s2.dataset.konu; }, 25000);
+}
+
+// ---- kehanet: telefonun halinden anlam cikarir ----
+async function rehberKehanet(){
+  const saat = new Date().getHours(), dk = new Date().getMinutes();
+  const t = tomarOku();
+  let pil = null, sarj = false;
+  try{
+    const b = await navigator.getBattery?.();
+    if(b){ pil = Math.round(b.level*100); sarj = b.charging; }
+  }catch(e){}
+
+  const secenek = [];
+  if(pil != null && pil < 25 && !sarj)
+    secenek.push(`Pilin yüzde ${pil}. Bu gidişle kehanetin yarısında kararırsın, ben uyarmıştım.`);
+  if(pil != null && sarj)
+    secenek.push("Şarjda konuşuyorsun. Elektrikle beslenen sohbeti ilk ben denemiştim.");
+  if(pil != null && pil > 90)
+    secenek.push(`Pilin yüzde ${pil}. Demek bu sohbete hazırlanmışsın. Akıllıca.`);
+  if(saat < 6) secenek.push(`Saat ${saat}. Bu saatte uyanık olan ya dâhidir ya da benim gibidir.`);
+  if(saat >= 6 && saat < 11) secenek.push("Sabah sabah geldin. Erken kalkan yol alır, o sözü de ben söylemiştim.");
+  if(saat >= 22) secenek.push("Gece yarısına doğru sorular derinleşir. Ben hep bu saatte doğruyu bulurum.");
+  if(dk === 0) secenek.push("Tam saat başında geldin. Tesadüf sanıyorsun, oysa ben ayarladım.");
+  if(t.ziyaret > 3) secenek.push(`Bugüne kadar ${t.ziyaret} kez geldin. Sayıyorum, unutmuyorum.`);
+  if(t.soru > 10) secenek.push(`${t.soru} soru sordun. Hâlâ öğrenemedin ama sabırlıyım.`);
+  if(!secenek.length) secenek.push("Bugün rüzgâr batıdan esiyor. Bu da demek oluyor ki haklıyım.");
+
+  const laf = secenek[Math.floor(Math.random()*secenek.length)];
+  REHBER_GECMIS.push({ kim:"rehber", soz:laf });
+  rehberAkis(); rehberSoyle(laf);
+}
+
+// ---- kamera: izin isteyip bakar ----
+async function rehberBak(){
+  const sahne = document.getElementById("rSahne");
+  if(!sahne) return;
+  if(sahne.querySelector(".rKamera")) return rehberKameraKapat();
+  try{
+    const akis = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:"user" }, audio:false });
+    const v = document.createElement("video");
+    v.className = "rKamera"; v.autoplay = true; v.playsInline = true; v.muted = true;
+    v.srcObject = akis;
+    window.__rKameraAkis = akis;
+    sahne.appendChild(v);
+    const lafta = ["Şimdi seni görüyorum. Beklediğimden daha… insansın.",
+      "Yüzünü okudum. Kaderinde çok soru sormak var, cevap almak yok.",
+      "Bu yüz tanıdık geliyor. Yetmişlerde bir kehanette görmüştüm.",
+      "Gözlerinde şüphe var. Bana güvenmiyorsun; akıllıca ama yanlış.",
+      "Kamerayı açtın. Cesursun. Ben olsam kendimi göstermezdim."];
+    const l = lafta[Math.floor(Math.random()*lafta.length)];
+    REHBER_GECMIS.push({ kim:"rehber", soz:l });
+    rehberAkis(); rehberSoyle(l);
+    setTimeout(rehberKameraKapat, 20000);
+  }catch(e){
+    const l = "Kamerayı kapattın. Saklanıyorsun. Ben zaten görüyorum, gerek yoktu.";
+    REHBER_GECMIS.push({ kim:"rehber", soz:l });
+    rehberAkis(); rehberSoyle(l);
+  }
+}
+function rehberKameraKapat(){
+  document.querySelector(".rKamera")?.remove();
+  try{ window.__rKameraAkis?.getTracks().forEach(t=>t.stop()); }catch(e){}
+  window.__rKameraAkis = null;
 }
 
 // cevap uretici: once yapay zeka (rehber fonksiyonu), olmazsa kendi havuzu
@@ -2215,7 +2511,7 @@ async function rehberCevap(soru){
   for(const ad2 of adaylar){
     try{
       const { data, error } = await sb.functions.invoke(ad2, {
-        body: { soru, gecmis: REHBER_GECMIS.slice(-8) }
+        body: { soru, gecmis: REHBER_GECMIS.slice(-8), kisilik: tomarOzeti() }
       });
       if(error){ sonDurum = ad2 + ": " + (error.message || "çağrı hatası"); continue; }
       if(data?.cevap && String(data.cevap).trim()){
@@ -2281,6 +2577,239 @@ function rehberDinle(){
   t.onerror = () => toast("Duyamadım, tekrar dene");
   t.onend = () => d?.classList.remove("dinliyor");
   try{ t.start(); }catch(e){ d?.classList.remove("dinliyor"); }
+}
+
+/* ---- KİM 500 MİLYAR İSTER ---- */
+
+const ODUL = ["1.000","2.000","5.000","10.000","25.000","50.000","100.000","250.000",
+              "500.000","1 MİLYON","5 MİLYON","25 MİLYON","100 MİLYON","500 MİLYON","500 MİLYAR"];
+
+let YARISMA = null;
+
+function yarismaEkran(){
+  YARISMA = { adim:0, soruVerisi:null, secilen:null, kilit:false, bitti:false,
+              sorulanlar:[], jokerYari:true, jokerTelefon:true, jokerSeyirci:true, elenen:[] };
+  app.innerHTML = head("Kim 500 Milyar İster","go('rehber')") + `
+    <div class="studyo" id="studyo">
+      <div class="seyirci" id="seyirci"></div>
+      <div class="sunucuIsik"></div>
+      <img class="sunucu" id="sunucu" src="${gv('maskot-duz.png')}" alt="">
+      <div class="odulSerit" id="odulSerit"></div>
+    </div>
+    <div class="yBalon" id="yBalon">Hoş geldin. Kurallar basit: ben soruyorum, sen pişman oluyorsun.</div>
+    <div id="yAlan"></div>`;
+  seyirciKur();
+  odulCiz();
+  setTimeout(yarismaSoruAl, 900);
+}
+
+function seyirciKur(){
+  const k = document.getElementById("seyirci");
+  if(!k) return;
+  k.innerHTML = Array.from({length:22}, (_,i)=>
+    `<span class="kafa" style="left:${(i%11)*9 + 2}%;bottom:${i<11?18:2}px;
+      animation-delay:${(i*0.17).toFixed(2)}s"></span>`).join("");
+}
+
+function odulCiz(){
+  const k = document.getElementById("odulSerit");
+  if(!k || !YARISMA) return;
+  k.innerHTML = `<b>${ODUL[Math.min(YARISMA.adim, ODUL.length-1)]} ₺</b>
+    <span>${YARISMA.adim + 1}. soru</span>`;
+}
+
+async function yarismaSoruAl(){
+  const alan = document.getElementById("yAlan");
+  if(!alan) return;
+  alan.innerHTML = `<div class="ySoruKutu bekle"><div class="spin"></div>
+    <span>Soru hazırlanıyor…</span></div>`;
+  yBalonYaz("Sıradaki soruyu ben yazdım. Zor olacak, uyarmıştım.");
+
+  const zorluk = Math.min(5, 1 + Math.floor(YARISMA.adim / 3));
+  let veri = null;
+  for(const ad2 of ["rehber","swift-api"]){
+    try{
+      const { data, error } = await sb.functions.invoke(ad2, {
+        body:{ mod:"yarisma", zorluk, sorulanlar: YARISMA.sorulanlar }
+      });
+      if(!error && data?.soruVerisi){ veri = data.soruVerisi; break; }
+    }catch(e){}
+  }
+  if(!veri){
+    alan.innerHTML = `<div class="ySoruKutu"><b>Soru gelmedi.</b>
+      <span>Diyarla bağ kopmuş olmalı.</span>
+      <button class="btn" style="margin-top:12px" onclick="yarismaSoruAl()">Tekrar dene</button></div>`;
+    return;
+  }
+  YARISMA.soruVerisi = veri;
+  YARISMA.secilen = null; YARISMA.kilit = false; YARISMA.elenen = [];
+  YARISMA.sorulanlar.push(String(veri.soru).slice(0,60));
+  yarismaCiz();
+}
+
+function yarismaCiz(){
+  const alan = document.getElementById("yAlan");
+  const v = YARISMA?.soruVerisi;
+  if(!alan || !v) return;
+  const harf = ["A","B","C","D"];
+  alan.innerHTML = `
+    <div class="ySoruKutu"><b>${esc(v.soru)}</b></div>
+    <div class="ySiklar">
+      ${v.siklar.map((sk,i)=>`
+        <button class="ySik ${YARISMA.elenen.includes(i)?"elendi":""}
+          ${YARISMA.secilen===i?"secili":""}"
+          ${YARISMA.elenen.includes(i)||YARISMA.kilit?"disabled":""}
+          onclick="yarismaSec(${i})"><i>${harf[i]}</i><span>${esc(sk)}</span></button>`).join("")}
+    </div>
+    <div class="yJoker">
+      <button ${YARISMA.jokerYari?"":"disabled"} onclick="jokerYari()">50:50</button>
+      <button ${YARISMA.jokerTelefon?"":"disabled"} onclick="jokerTelefon()">TELEFON</button>
+      <button ${YARISMA.jokerSeyirci?"":"disabled"} onclick="jokerSeyirci()">SEYİRCİ</button>
+    </div>
+    <div id="yOnay"></div>`;
+}
+
+function yarismaSec(i){
+  if(!YARISMA || YARISMA.kilit) return;
+  YARISMA.secilen = i;
+  yarismaCiz();
+  const harf = ["A","B","C","D"][i];
+  yBalonYaz(`${harf} şıkkı... Emin misin? Son kararın mı?`);
+  const onay = document.getElementById("yOnay");
+  if(onay) onay.innerHTML = `<div class="yOnay">
+      <button class="pri" onclick="yarismaKilitle()">SON KARARIM</button>
+      <button onclick="yarismaVazgec()">DÜŞÜNEYİM</button></div>`;
+}
+
+function yarismaVazgec(){
+  YARISMA.secilen = null;
+  yarismaCiz();
+  yBalonYaz("İyi düşün. Acele eden kaybeder, bunu ben söylemiştim.");
+}
+
+async function yarismaKilitle(){
+  if(!YARISMA || YARISMA.kilit) return;
+  YARISMA.kilit = true;
+  yarismaCiz();
+  yBalonYaz("Kilitlendi. Şimdi görelim bakalım…");
+  seyirciTepki();
+
+  await new Promise(r=>setTimeout(r, 1800));
+  const dogru = YARISMA.soruVerisi.dogru;
+  const kazandi = YARISMA.secilen === dogru;
+  const alan = document.getElementById("yAlan");
+  const harf = ["A","B","C","D"];
+
+  if(alan){
+    alan.querySelectorAll(".ySik").forEach((b,i)=>{
+      if(i === dogru) b.classList.add("dogru");
+      else if(i === YARISMA.secilen) b.classList.add("yanlis");
+    });
+  }
+
+  if(kazandi){
+    try{ sesSeviye(); }catch(e){}
+    YARISMA.adim++;
+    odulCiz();
+    yBalonYaz(`Doğru. Ama şansın yaver gitti, bilgin değil. ${ODUL[Math.min(YARISMA.adim,ODUL.length-1)]} ₺ sıradaki.`);
+    setTimeout(()=>{
+      if(YARISMA.adim >= ODUL.length){ yarismaBitir(true); return; }
+      yarismaSoruAl();
+    }, 2600);
+  }else{
+    try{ sesTekme(); }catch(e){}
+    yBalonYaz(`Yanlış. Doğrusu ${harf[dogru]} idi. ${YARISMA.soruVerisi.aciklama || ""}`);
+    setTimeout(()=>yarismaBitir(false), 2800);
+  }
+}
+
+function yarismaBitir(kazandi){
+  const alan = document.getElementById("yAlan");
+  if(!alan) return;
+  const kazanc = YARISMA.adim > 0 ? ODUL[YARISMA.adim-1] : "0";
+  alan.innerHTML = `<div class="ySonuc ${kazandi?"iyi":"kotu"}">
+      <b>${kazandi ? "500 MİLYAR!" : "OYUN BİTTİ"}</b>
+      <span>Kazandığın: ${kazanc} ₺ · ${YARISMA.adim} soru</span>
+      <button class="btn" style="margin-top:14px" onclick="yarismaEkran()">Yeniden Oyna</button>
+      <button class="btn ghost" style="margin-top:8px" onclick="go('rehber')">Rehber'e Dön</button>
+    </div>`;
+}
+
+function jokerYari(){
+  if(!YARISMA?.jokerYari || !YARISMA.soruVerisi) return;
+  YARISMA.jokerYari = false;
+  const dogru = YARISMA.soruVerisi.dogru;
+  const digerleri = [0,1,2,3].filter(i=>i !== dogru).sort(()=>Math.random()-0.5).slice(0,2);
+  YARISMA.elenen = digerleri;
+  yarismaCiz();
+  yBalonYaz("İki şıkkı sildim. Rica ederim, hep böyle cömertimdir.");
+}
+
+function jokerSeyirci(){
+  if(!YARISMA?.jokerSeyirci || !YARISMA.soruVerisi) return;
+  YARISMA.jokerSeyirci = false;
+  const dogru = YARISMA.soruVerisi.dogru;
+  const oran = [0,0,0,0];
+  let kalan = 100;
+  const dogruPay = 42 + Math.floor(Math.random()*34);
+  oran[dogru] = dogruPay; kalan -= dogruPay;
+  [0,1,2,3].filter(i=>i!==dogru && !YARISMA.elenen.includes(i)).forEach((i,ix,dizi)=>{
+    const p = ix === dizi.length-1 ? kalan : Math.floor(Math.random()*kalan);
+    oran[i] = p; kalan -= p;
+  });
+  seyirciTepki(true);
+  const alan = document.getElementById("yAlan");
+  alan?.querySelectorAll(".ySik").forEach((b,i)=>{
+    if(YARISMA.elenen.includes(i)) return;
+    const c = document.createElement("span");
+    c.className = "yOran"; c.textContent = "%" + oran[i];
+    b.appendChild(c);
+  });
+  yBalonYaz("Seyirci konuştu. Ama unutma, onlar da benim kadar akıllı değil.");
+}
+
+async function jokerTelefon(){
+  if(!YARISMA?.jokerTelefon || !YARISMA.soruVerisi) return;
+  YARISMA.jokerTelefon = false;
+  yBalonYaz("Telefon açılıyor… Kendimi arıyorum, başka kimi arayacaktım?");
+  const harf = ["A","B","C","D"];
+  const dogru = YARISMA.soruVerisi.dogru;
+  await new Promise(r=>setTimeout(r, 1400));
+  // ara sira yanlis yonlendirir
+  const durust = Math.random() < 0.7;
+  const tahmin = durust ? dogru : [0,1,2,3].filter(i=>i!==dogru)[Math.floor(Math.random()*3)];
+  const lafta = durust
+    ? `Bana kalırsa ${harf[tahmin]}. Eminim, çünkü bunu ben yazmıştım.`
+    : `Kesinlikle ${harf[tahmin]}. Güven bana, hiç yanılmadım.`;
+  yBalonYaz(lafta);
+}
+
+function yBalonYaz(metin){
+  const b = document.getElementById("yBalon");
+  if(b){ b.textContent = metin; b.classList.remove("yaz"); void b.offsetWidth; b.classList.add("yaz"); }
+  const s2 = document.getElementById("sunucu");
+  if(s2){
+    s2.src = gv("maskot-konus.png");
+    clearTimeout(window.__yPoz);
+    window.__yPoz = setTimeout(()=>{ s2.src = gv("maskot-duz.png"); }, Math.min(4500, 900 + metin.length*45));
+  }
+  try{
+    if(SES_ACIK() && window.speechSynthesis){
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(metin);
+      u.lang = "tr-TR"; u.rate = rehberHiz(); u.pitch = rehberPerde();
+      const ses = rehberSesi(); if(ses) u.voice = ses;
+      speechSynthesis.speak(u);
+    }
+  }catch(e){}
+}
+
+function seyirciTepki(el){
+  document.querySelectorAll("#seyirci .kafa").forEach(k=>{
+    k.classList.remove("alkis","elKaldir"); void k.offsetWidth;
+    k.classList.add(el ? "elKaldir" : "alkis");
+    setTimeout(()=>k.classList.remove("alkis","elKaldir"), 2200);
+  });
 }
 
 /* ---- ZİNDAN ve KADER ÇARKI: yakinda ---- */
@@ -7756,7 +8285,7 @@ async function cikis(){ await sb.auth.signOut(); location.reload(); }
 
 /* ================= yonlendirme ================= */
 
-const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, sunum:sunum, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, marka:markaEkran, tema:temaEkran, yedek:yedekEkran, tv:tvEkran, zindan:zindanEkran, carki:carkiEkran, rehber:rehberEkran, yeni:yeniParsel, parsel:parselDetay,
+const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, sunum:sunum, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, marka:markaEkran, tema:temaEkran, yedek:yedekEkran, tv:tvEkran, zindan:zindanEkran, carki:carkiEkran, rehber:rehberEkran, yarisma:yarismaEkran, yeni:yeniParsel, parsel:parselDetay,
                    fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
 // gezinti gecmisi: telefonun geri tusu uygulamadan cikmasin, bir ekran geri gitsin
 let GEZINTI = [{ r:"ana", arg:undefined }];
@@ -7795,7 +8324,7 @@ function go(r, arg){
 // her ekranin bir ust sekmesi: telefonun geri tusu buraya gider
 const UST_EKRAN = {
   harita:"ana", araziler:"ana", ekler:"ana", kml:"ana", cap:"ana", hesap:"ana",
-  yaklasan:"ana", yz:"ana", fiyat:"ana", ayarlar:"ana", marka:"ayarlar", tema:"ana", yedek:"ayarlar", tv:"ana", zindan:"ana", carki:"ana", rehber:"ana", yeni:"araziler",
+  yaklasan:"ana", yz:"ana", fiyat:"ana", ayarlar:"ana", marka:"ayarlar", tema:"ana", yedek:"ayarlar", tv:"ana", zindan:"ana", carki:"ana", rehber:"ana", yarisma:"rehber", yeni:"araziler",
   parsel:"araziler", parcalar:"parsel", sunum:"parsel", fiyatDuzen:"fiyat", capAyar:"cap"
 };
 
