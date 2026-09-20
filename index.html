@@ -819,15 +819,27 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .rKamera{position:absolute;right:10px;bottom:10px;width:88px;height:118px;object-fit:cover;z-index:4;
   border:1px solid rgba(123,232,220,.5);filter:saturate(.7) contrast(1.1);
   clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
-.rMaskot.tekmeAt{animation:rTekme .9s cubic-bezier(.3,1.2,.4,1)}
-@keyframes rTekme{0%{transform:translateX(-50%) rotate(0)}
-  25%{transform:translateX(-50%) translateY(-18px) rotate(-18deg)}
-  45%{transform:translateX(-50%) translateY(10px) rotate(28deg) scale(1.08,.92)}
-  70%{transform:translateX(-50%) rotate(10deg)}
-  100%{transform:translateX(-50%) rotate(0)}}
+.rMaskot.tekmeAt{animation:rTekme 1.4s cubic-bezier(.25,1.3,.35,1) !important;z-index:6}
+@keyframes rTekme{
+  0%{transform:translateX(-50%) rotate(0) scale(1)}
+  18%{transform:translateX(-50%) translateY(-10px) rotate(-14deg) scale(1.02)}
+  32%{transform:translateX(-50%) translateY(-26px) rotate(-26deg) scale(1.06)}
+  46%{transform:translateX(-50%) translateY(6px) rotate(34deg) scale(1.3,.86)}
+  58%{transform:translateX(-50%) translateY(0) rotate(22deg) scale(1.18,.94)}
+  76%{transform:translateX(-50%) rotate(-6deg) scale(1.04)}
+  100%{transform:translateX(-50%) rotate(0) scale(1)}}
+.tekmeDalga{position:absolute;inset:0;z-index:5;pointer-events:none;
+  background:radial-gradient(40% 40% at 50% 60%,rgba(255,107,157,.55),transparent 70%);
+  animation:dalgaYay .7s ease forwards}
+@keyframes dalgaYay{0%{opacity:0;transform:scale(.4)}25%{opacity:1}100%{opacity:0;transform:scale(1.9)}}
 .rehberSahne.sarsintili{animation:sahneSarsil .5s ease}
 @keyframes sahneSarsil{0%,100%{transform:translate(0,0)}
-  20%{transform:translate(-6px,4px)}45%{transform:translate(5px,-3px)}70%{transform:translate(-3px,2px)}}
+  12%{transform:translate(-9px,6px) rotate(-.6deg)}
+  28%{transform:translate(8px,-5px) rotate(.5deg)}
+  46%{transform:translate(-6px,4px)}
+  64%{transform:translate(5px,-3px)}
+  82%{transform:translate(-3px,2px)}}
+.rehberSahne.sarsintili{animation:sahneSarsil .9s ease}
 .rehberSahne[data-konu="para"] .rSis{background:radial-gradient(60% 40% at 50% 100%,rgba(232,201,138,.4),transparent 70%)}
 .rehberSahne[data-konu="uzay"] .rSis{background:radial-gradient(60% 40% at 50% 100%,rgba(123,180,255,.4),transparent 70%)}
 .rehberSahne[data-konu="tarih"] .rSis{background:radial-gradient(60% 40% at 50% 100%,rgba(198,150,90,.4),transparent 70%)}
@@ -1404,7 +1416,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 4.6";
+const SURUM_MELKOR = "beta 4.7";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -2134,8 +2146,14 @@ function konuBul(metin){
   return null;
 }
 
-const KUFURLER = ["amk","aq","oç","piç","orospu","sikt","siktir","yarrak","göt ","gavat","yavşak","şerefsiz"];
-const kufurMu = m => { const k = String(m||"").toLocaleLowerCase("tr"); return KUFURLER.some(x=>k.includes(x)); };
+const KUFURLER = ["amk","aq","a.q","mk","oç","o.ç","piç","orospu","orosp","sik","sikt","siktir",
+  "yarrak","yarak","göt","gavat","yavşak","şerefsiz","ibne","puşt","aptal","salak","gerizekalı",
+  "mal ","dangalak","hıyar","eşşek","eşek oğlu","ananı","anan","avrat","kahpe","kaltak","şıllık",
+  "bok","boktan","lanet","hasiktir","hassiktir"];
+const kufurMu = m => {
+  const k = " " + String(m||"").toLocaleLowerCase("tr").replace(/[^\wçğıöşü\s]/g," ") + " ";
+  return KUFURLER.some(x=>k.includes(x));
+};
 
 // yapay zekaya gonderilecek kisi notu
 function tomarOzeti(){
@@ -2419,16 +2437,28 @@ function rehberTekme(){
   const m = document.getElementById("rMaskot");
   const sahne = document.getElementById("rSahne");
   if(!m) return;
+  // yuruyus animasyonu tekmeyi bastirmasin
+  m.classList.remove("yuruyor","ters");
+  m.style.transition = "none";
   try{ sesIkin(); }catch(e){}
   m.src = gv("maskot-eller.png");
+  void m.offsetWidth;
   m.classList.add("tekmeAt");
-  sahne?.classList.add("sarsintili");
-  setTimeout(()=>{ try{ sesTekme(); }catch(e){} }, 220);
+  setTimeout(()=>{
+    try{ sesTekme(); }catch(e){}
+    sahne?.classList.add("sarsintili");
+    // ekrana carpma dalgasi
+    const d = document.createElement("div");
+    d.className = "tekmeDalga";
+    sahne?.appendChild(d);
+    setTimeout(()=>d.remove(), 700);
+  }, 430);
   setTimeout(()=>{
     m.classList.remove("tekmeAt");
     sahne?.classList.remove("sarsintili");
+    m.style.transition = "";
     m.src = gv("maskot-duz.png");
-  }, 900);
+  }, 1500);
 }
 
 // ---- konuya gore sahne ----
@@ -2518,6 +2548,10 @@ async function rehberCevap(soru){
         REHBER_DURUM = "Melkor Diyarı · bağ kuruldu";
         rehberDurumYaz();
         REHBER_SES_VERI = data.ses || null;      // gercek seslendirme geldiyse
+        if(!data.ses && data.sesDurum){
+          REHBER_DURUM = "Melkor Diyarı · ses: " + String(data.sesDurum).slice(0,60);
+          rehberDurumYaz();
+        }
         return String(data.cevap).trim();
       }
       if(data?.hata) sonDurum = data.hata;
@@ -2626,18 +2660,20 @@ async function yarismaSoruAl(){
   yBalonYaz("Sıradaki soruyu ben yazdım. Zor olacak, uyarmıştım.");
 
   const zorluk = Math.min(5, 1 + Math.floor(YARISMA.adim / 3));
-  let veri = null;
+  let veri = null, neden = "fonksiyona ulaşılamadı";
   for(const ad2 of ["rehber","swift-api"]){
     try{
       const { data, error } = await sb.functions.invoke(ad2, {
         body:{ mod:"yarisma", zorluk, sorulanlar: YARISMA.sorulanlar }
       });
-      if(!error && data?.soruVerisi){ veri = data.soruVerisi; break; }
-    }catch(e){}
+      if(error){ neden = ad2 + ": " + (error.message || "çağrı hatası"); continue; }
+      if(data?.soruVerisi){ veri = data.soruVerisi; break; }
+      if(data?.hata) neden = data.hata;
+    }catch(e){ neden = ad2 + ": " + (e.message || e); }
   }
   if(!veri){
     alan.innerHTML = `<div class="ySoruKutu"><b>Soru gelmedi.</b>
-      <span>Diyarla bağ kopmuş olmalı.</span>
+      <span>${esc(neden)}</span>
       <button class="btn" style="margin-top:12px" onclick="yarismaSoruAl()">Tekrar dene</button></div>`;
     return;
   }
