@@ -1237,7 +1237,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 3.3";
+const SURUM_MELKOR = "beta 3.4";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -2005,12 +2005,16 @@ async function rehberSor(){
 
 // cevap uretici: once yapay zeka (rehber fonksiyonu), olmazsa kendi havuzu
 async function rehberCevap(soru){
-  try{
-    const { data, error } = await sb.functions.invoke("rehber", {
-      body: { soru, gecmis: REHBER_GECMIS.slice(-6) }
-    });
-    if(!error && data?.cevap) return String(data.cevap).trim();
-  }catch(e){}
+  // fonksiyon adi ne olursa olsun bulsun
+  const adaylar = ["rehber", "swift-api"];
+  for(const ad2 of adaylar){
+    try{
+      const { data, error } = await sb.functions.invoke(ad2, {
+        body: { soru, gecmis: REHBER_GECMIS.slice(-6) }
+      });
+      if(!error && data?.cevap && String(data.cevap).trim()) return String(data.cevap).trim();
+    }catch(e){}
+  }
   return rehberYedekCevap(soru);
 }
 
