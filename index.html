@@ -518,77 +518,117 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .melkor .mKur .rate .v{font-size:12.5px;margin-top:2px;color:#EAE6FA}
 
 /* kartlar */
-.melkor .mIzgara{display:grid;grid-template-columns:1fr 1fr;gap:clamp(7px,1.2vh,11px)}
+.melkor .mIzgara{display:grid;grid-template-columns:1fr 1fr;gap:clamp(6px,1vh,10px)}
+.melkor .mUclu{display:grid;grid-template-columns:1fr 1fr 1fr;gap:clamp(6px,1vh,10px)}
+
 .melkor .mKart{position:relative;overflow:hidden;padding:0;cursor:pointer;border:0;
-  border-radius:14px;background:#0B0820;
-  min-height:clamp(78px,11.4vh,124px);
-  box-shadow:0 8px 22px rgba(0,0,0,.66)}
-/* koseleri pahli: RPG plaka hissi */
-.melkor .mKart{clip-path:polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px)}
-.melkor .mAna{min-height:clamp(120px,17vh,190px);border-radius:16px;
-  clip-path:polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)}
+  background:#0A0718;min-height:clamp(84px,12vh,126px);
+  clip-path:polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  box-shadow:0 8px 20px rgba(0,0,0,.7)}
+.melkor .mAna{min-height:clamp(124px,17.5vh,194px);
+  clip-path:polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px)}
+.melkor .mUfak{min-height:clamp(64px,9vh,92px);
+  clip-path:polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)}
+.melkor .mGenis{min-height:clamp(62px,8.6vh,88px)}
 
-.melkor .mGorsel{position:absolute;inset:0;background-size:cover;background-position:center 34%;
-  filter:saturate(.85) brightness(.66) contrast(1.05);transition:transform .6s ease, filter .5s ease}
-.melkor .mKart:active .mGorsel{transform:scale(1.06);filter:saturate(1.05) brightness(.86)}
-
-/* mor sis + alt karartma */
+.melkor .mGorsel{position:absolute;inset:0;background-size:cover;background-position:center 30%;
+  filter:saturate(.92) brightness(.72) contrast(1.06);transition:transform .6s ease, filter .5s ease}
+.melkor .mKart:active .mGorsel{transform:scale(1.07);filter:saturate(1.1) brightness(.92)}
 .melkor .mSis{position:absolute;inset:0;pointer-events:none;
   background:
-    radial-gradient(90% 70% at 50% 110%,rgba(138,107,255,.32),transparent 62%),
-    linear-gradient(0deg,rgba(6,4,16,.94) 0%,rgba(6,4,16,.48) 34%,rgba(6,4,16,0) 72%)}
+    radial-gradient(85% 60% at 50% 115%,color-mix(in srgb,var(--nad) 34%,transparent),transparent 60%),
+    linear-gradient(0deg,rgba(5,3,14,.95) 0%,rgba(5,3,14,.5) 36%,rgba(5,3,14,0) 74%)}
 
-/* isikli cerceve */
-.melkor .mCerceve{position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-  box-shadow:inset 0 0 0 1px rgba(150,130,230,.42), inset 0 0 0 3px rgba(8,5,20,.55),
-    inset 0 0 0 4px rgba(123,232,220,.12), inset 0 16px 30px rgba(138,107,255,.12)}
-/* kose isaretleri */
-.melkor .mCerceve::before,.melkor .mCerceve::after{content:"";position:absolute;width:12px;height:12px;
-  border-color:rgba(123,232,220,.6);opacity:.85}
-.melkor .mCerceve::before{top:6px;left:6px;border-top:1.5px solid;border-left:1.5px solid}
-.melkor .mCerceve::after{bottom:6px;right:6px;border-bottom:1.5px solid;border-right:1.5px solid}
-.melkor .mKart:active .mCerceve{border-color:rgba(123,232,220,.75);
-  box-shadow:inset 0 0 0 1px rgba(123,232,220,.3), 0 0 26px rgba(123,232,220,.3)}
+/* nadirlik cercevesi */
+.melkor .mCerceve{position:absolute;inset:0;pointer-events:none;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--nad) 55%,transparent),
+    inset 0 0 0 3px rgba(6,4,16,.75),
+    inset 0 0 0 4px color-mix(in srgb,var(--nad) 22%,transparent),
+    inset 0 0 22px color-mix(in srgb,var(--nad) 18%,transparent)}
+.melkor .mCerceve::before,.melkor .mCerceve::after{content:"";position:absolute;width:11px;height:11px;
+  border-color:var(--nad);opacity:.9}
+.melkor .mCerceve::before{top:5px;left:5px;border-top:1.5px solid;border-left:1.5px solid}
+.melkor .mCerceve::after{bottom:5px;right:5px;border-bottom:1.5px solid;border-right:1.5px solid}
+.melkor .mKart:active .mCerceve{box-shadow:inset 0 0 0 1px var(--nad),
+  inset 0 0 0 3px rgba(6,4,16,.6), inset 0 0 34px color-mix(in srgb,var(--nad) 40%,transparent),
+  0 0 26px color-mix(in srgb,var(--nad) 45%,transparent)}
 
-/* sira runu */
-.melkor .mRun{position:absolute;top:8px;right:9px;z-index:2;font-family:Georgia,serif;
-  font-size:10.5px;letter-spacing:.1em;color:rgba(123,232,220,.75);
-  background:rgba(8,5,20,.6);border:1px solid rgba(123,232,220,.3);border-radius:4px;padding:1px 6px}
+/* gecen isik */
+.melkor .mParilti{position:absolute;top:-60%;left:-45%;width:38%;height:230%;pointer-events:none;z-index:1;
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--nad) 30%,transparent),transparent);
+  transform:rotate(18deg);animation:mParla 7s ease-in-out infinite}
+@keyframes mParla{0%,72%{left:-45%}92%,100%{left:120%}}
+.melkor .mIzgara .mKart:nth-child(2) .mParilti{animation-delay:1.4s}
+.melkor .mUclu .mKart:nth-child(2) .mParilti{animation-delay:2.8s}
+.melkor .mUclu .mKart:nth-child(3) .mParilti{animation-delay:4.2s}
 
 /* ikon madalyonu */
-.melkor .mIkon{position:absolute;top:8px;left:9px;z-index:2;width:27px;height:27px;display:grid;
-  place-items:center;border-radius:8px;color:#7BE8DC;
+.melkor .mIkon{position:absolute;top:7px;left:8px;z-index:2;width:26px;height:26px;display:grid;
+  place-items:center;color:var(--nad);
+  background:linear-gradient(160deg,color-mix(in srgb,var(--nad) 26%,transparent),rgba(6,4,16,.8));
+  border:1px solid color-mix(in srgb,var(--nad) 45%,transparent);
   clip-path:polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
-  background:linear-gradient(160deg,rgba(138,107,255,.3),rgba(8,5,20,.6));
-  border:1px solid rgba(123,232,220,.32);box-shadow:0 0 14px rgba(138,107,255,.25)}
-.melkor .mIkon svg{width:15px;height:15px}
+  box-shadow:0 0 14px color-mix(in srgb,var(--nad) 30%,transparent)}
+.melkor .mIkon svg{width:14px;height:14px}
 .melkor .mAna .mIkon{width:34px;height:34px}
 .melkor .mAna .mIkon svg{width:18px;height:18px}
+.melkor .mUfak .mIkon{width:22px;height:22px;top:5px;left:6px}
+.melkor .mUfak .mIkon svg{width:12px;height:12px}
 .melkor .mIkon.kucuk{position:static;width:26px;height:26px}
 
+/* nadirlik etiketi */
+.melkor .mNadir{position:absolute;top:8px;right:8px;z-index:2;font-size:6.5px;letter-spacing:.16em;
+  font-weight:800;color:var(--nad);background:rgba(6,4,16,.72);padding:2px 5px;
+  border:1px solid color-mix(in srgb,var(--nad) 40%,transparent)}
+.melkor .mUfak .mNadir{display:none}
+
 /* yazilar */
-.melkor .mYazi{position:absolute;left:11px;right:11px;bottom:9px;z-index:2;text-align:left}
-.melkor .mYazi b{display:block;font-family:Georgia,serif;font-weight:400;
-  font-size:clamp(12px,1.85vh,15px);letter-spacing:.14em;text-transform:uppercase;color:#F2EEFF;
-  text-shadow:0 2px 12px rgba(0,0,0,.9)}
-.melkor .mAna .mYazi b{font-size:clamp(16px,2.5vh,21px);letter-spacing:.2em}
-.melkor .mYazi small{display:block;margin-top:3px;font-size:8.5px;letter-spacing:.14em;
-  text-transform:uppercase;color:rgba(123,232,220,.72)}
+.melkor .mYazi{position:absolute;left:10px;right:10px;bottom:8px;z-index:2;text-align:left}
+.melkor .mYazi b{display:block;font-family:"Cinzel",Georgia,serif;font-weight:600;
+  font-size:clamp(11px,1.72vh,14px);letter-spacing:.1em;text-transform:uppercase;color:#F4F1FF;
+  text-shadow:0 2px 10px rgba(0,0,0,.95)}
+.melkor .mAna .mYazi b{font-size:clamp(15px,2.4vh,20px);letter-spacing:.16em}
+.melkor .mUfak .mYazi b{font-size:clamp(9.5px,1.45vh,11.5px);letter-spacing:.06em}
+.melkor .mYildiz{display:block;margin-top:2px;font-size:8px;letter-spacing:.12em;color:var(--nad);
+  text-shadow:0 0 8px color-mix(in srgb,var(--nad) 60%,transparent)}
+.melkor .mUfak .mYildiz{font-size:7px}
 
 /* alt seritler */
-.melkor .mAlt{display:grid;grid-template-columns:1fr 1fr;gap:clamp(7px,1.2vh,11px)}
-.melkor .mSerit{display:flex;align-items:center;gap:9px;padding:9px 11px;cursor:pointer;
-  border-radius:11px;text-align:left;position:relative;min-height:clamp(46px,6.4vh,60px);
+.melkor .mAlt{display:grid;grid-template-columns:1fr 1fr;gap:clamp(6px,1vh,10px)}
+.melkor .mSerit{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;
+  text-align:left;position:relative;min-height:clamp(44px,6vh,56px);--nad:#8A6BFF;
   clip-path:polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-  background:linear-gradient(160deg,rgba(138,107,255,.14),rgba(10,7,24,.6));
-  border:1px solid rgba(150,130,230,.26);box-shadow:0 5px 16px rgba(0,0,0,.55)}
-.melkor .mSerit:active{border-color:rgba(123,232,220,.6)}
-.melkor .mSerit b{display:block;font-family:Georgia,serif;font-size:12.5px;letter-spacing:.08em;color:#EAE6FA}
-.melkor .mSerit small{display:block;font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;
-  color:rgba(123,232,220,.65);margin-top:2px}
-.melkor .mSerit .rozet{margin-left:auto;font-size:10px;font-weight:700;color:#08061A;
-  background:#7BE8DC;border-radius:5px;padding:2px 7px}
+  background:linear-gradient(160deg,rgba(138,107,255,.16),rgba(8,5,20,.72));
+  border:1px solid rgba(150,130,230,.3);box-shadow:0 5px 14px rgba(0,0,0,.6)}
+.melkor .mSerit:active{border-color:rgba(123,232,220,.7)}
+.melkor .mSerit b{display:block;font-family:"Cinzel",Georgia,serif;font-size:11.5px;letter-spacing:.06em;color:#EAE6FA}
+.melkor .mSerit small{display:block;font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(123,232,220,.7);margin-top:2px}
+.melkor .mSerit .rozet{margin-left:auto;font-size:9.5px;font-weight:700;color:#08061A;
+  background:#7BE8DC;border-radius:4px;padding:2px 6px}
 .melkor .mSerit .rozet:empty{display:none}
+
+/* ---- Divan ekrani ---- */
+.divanCerceve{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;
+  background:#08061A;border:1px solid rgba(123,232,220,.4);
+  clip-path:polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  box-shadow:0 10px 30px rgba(0,0,0,.7), 0 0 26px rgba(138,107,255,.25)}
+.divanCerceve iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.divanBaslik{margin:9px 2px 16px;font-family:"Cinzel",Georgia,serif;font-size:13px;letter-spacing:.1em;
+  color:#EAE6FA}
+.divanSatir{display:flex;align-items:center;gap:11px;width:100%;padding:8px;margin-bottom:8px;
+  cursor:pointer;text-align:left;
+  background:linear-gradient(160deg,rgba(138,107,255,.14),rgba(8,5,20,.7));
+  border:1px solid rgba(150,130,230,.28);
+  clip-path:polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)}
+.divanSatir:active{border-color:rgba(123,232,220,.65)}
+.divanSatir .kapak{position:relative;width:96px;height:56px;flex:0 0 auto;background-size:cover;
+  background-position:center;border:1px solid rgba(123,232,220,.3);display:grid;place-items:center}
+.divanSatir .oynat{color:#fff;font-size:15px;text-shadow:0 0 12px rgba(0,0,0,.9)}
+.divanSatir .bilgi{min-width:0}
+.divanSatir b{display:block;font-family:"Cinzel",Georgia,serif;font-size:12.5px;letter-spacing:.06em;
+  color:#EAE6FA;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.divanSatir small{display:block;margin-top:3px;font-size:9px;letter-spacing:.1em;color:rgba(123,232,220,.7)}
 
 /* ---- menu acilimi: kart buyur, video icinde oynar ---- */
 .mPerde{position:fixed;inset:0;z-index:150;background:rgba(4,3,10,0);
@@ -656,18 +696,28 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 #maskot .balon.acik{opacity:1;transform:translateY(0) scale(1)}
 
 /* ---- kullanici rozeti ---- */
-.kullaniciRozet{display:inline-flex;align-items:center;gap:5px;margin-top:6px;
-  padding:3px 8px;border-radius:7px;font-size:8.5px;font-weight:700;letter-spacing:.06em;
-  white-space:nowrap;max-width:100%;overflow:hidden;
-  background:linear-gradient(160deg,rgba(138,107,255,.25),rgba(10,7,24,.6));
-  border:1px solid rgba(123,232,220,.38);color:#EAE6FA;
-  box-shadow:0 0 16px rgba(138,107,255,.25)}
-.kullaniciRozet .lv{display:inline-block;padding:2px 6px;border-radius:4px;flex:0 0 auto;
-  background:linear-gradient(160deg,#9CF5EC,#3FB8B2);color:#04141B;font-size:8.5px;font-weight:800;
-  letter-spacing:.02em;line-height:1.35;text-shadow:none;white-space:nowrap}
-.kullaniciRozet .rutbe{color:#E8C98A;font-style:italic;flex:0 0 auto}
-.kullaniciRozet .kad{color:#EAE6FA;overflow:hidden;text-overflow:ellipsis}
-.kullaniciRozet.atla{animation:rozetAtla 1.1s ease}
+/* RPG karakter plakasi */
+.lvPlaka{display:inline-flex;align-items:stretch;gap:0;margin-top:7px;max-width:100%;
+  padding:4px 10px 4px 6px;position:relative;
+  background:linear-gradient(160deg,rgba(28,18,58,.96),rgba(8,5,20,.94));
+  border:1px solid rgba(123,232,220,.45);
+  clip-path:polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px);
+  box-shadow:0 0 18px rgba(138,107,255,.3), inset 0 0 14px rgba(138,107,255,.18)}
+.lvPlaka .sol{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0 7px;flex:0 0 auto}
+.lvPlaka .lv{font-family:"Cinzel",Georgia,serif;font-size:10px;font-weight:700;line-height:1.1;
+  letter-spacing:.06em;color:transparent;
+  background-image:linear-gradient(180deg,#FFFFFF,#9CF5EC 55%,#3FB8B2);
+  -webkit-background-clip:text;background-clip:text;
+  filter:drop-shadow(0 0 6px rgba(123,232,220,.6))}
+.lvPlaka .rutbe{font-size:7.5px;font-style:italic;letter-spacing:.14em;color:#E8C98A;
+  margin-top:2px;line-height:1;text-transform:uppercase}
+.lvPlaka .ayrac{width:1px;margin:2px 8px 2px 4px;flex:0 0 auto;
+  background:linear-gradient(180deg,transparent,rgba(123,232,220,.65),transparent)}
+.lvPlaka .kad{align-self:center;font-family:"Cinzel",Georgia,serif;font-size:10.5px;font-weight:600;
+  letter-spacing:.1em;color:#EAE6FA;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  text-shadow:0 0 10px rgba(138,107,255,.6)}
+.lvPlaka.atla{animation:rozetAtla 1.1s ease}
 @keyframes rozetAtla{0%,100%{transform:scale(1);box-shadow:0 0 16px rgba(138,107,255,.25)}
   25%{transform:scale(1.18);box-shadow:0 0 26px rgba(123,232,220,.9)}
   60%{transform:scale(1.04)}}
@@ -1067,7 +1117,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 1.7";
+const SURUM_MELKOR = "beta 2.0";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -1234,9 +1284,9 @@ function kullaniciRozetHtml(){
   const ad2 = kullaniciAdi();
   if(!ad2) return "";
   const lv = kullaniciSeviye();
-  return `<span class="kullaniciRozet" id="lvRozet">
-    <span class="lv">LVL ${lv}</span>
-    <span class="rutbe">"${rutbeAdi(lv)}"</span>
+  return `<span class="lvPlaka" id="lvRozet">
+    <span class="sol"><b class="lv">LVL ${lv}</b><i class="rutbe">${rutbeAdi(lv)}</i></span>
+    <span class="ayrac"></span>
     <span class="kad">${esc(ad2.toLocaleUpperCase("tr"))}</span></span>`;
 }
 
@@ -1650,6 +1700,50 @@ function maskotKonus(metin, hal){
   if(MASKOT) MASKOT.sonHareket = Date.now();
 }
 
+/* ---- Divan: uygulama icinde video koleksiyonu (Melkor) ---- */
+
+// Buraya video ekle: { ad:"...", kod:"YouTube video kimligi", not:"..." }
+const DIVAN = [
+  // ornek: { ad:"Kılıç Ustası", kod:"dQw4w9WgXcQ", not:"efsane" }
+];
+
+function divanEkran(){
+  app.innerHTML = head("Divan", "go('ana')") + `
+    <p class="ipuc">Diyarın arşivi. Buraya eklediğin videolar uygulamanın içinde oynar.</p>
+    <div id="divanOynatici"></div>
+    <div id="divanListe"></div>`;
+  divanListele();
+}
+
+function divanListele(){
+  const kutu = document.getElementById("divanListe");
+  if(!kutu) return;
+  if(!DIVAN.length){
+    kutu.innerHTML = `<div class="empty"><b>Arşiv boş</b>
+      Video bağlantılarını gönder, buraya ekleyeyim.</div>`;
+    return;
+  }
+  kutu.innerHTML = DIVAN.map((v,i)=>`
+    <button class="divanSatir" onclick="divanOynat(${i})">
+      <span class="kapak" style="background-image:url('https://i.ytimg.com/vi/${esc(v.kod)}/mqdefault.jpg')">
+        <span class="oynat">▶</span></span>
+      <span class="bilgi"><b>${esc(v.ad)}</b>${v.not?`<small>${esc(v.not)}</small>`:""}</span>
+    </button>`).join("");
+}
+
+function divanOynat(i){
+  const v = DIVAN[i];
+  if(!v) return;
+  const kutu = document.getElementById("divanOynatici");
+  if(!kutu) return;
+  kutu.innerHTML = `<div class="divanCerceve">
+    <iframe src="https://www.youtube-nocookie.com/embed/${esc(v.kod)}?autoplay=1&rel=0&modestbranding=1"
+      title="${esc(v.ad)}" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture"
+      allowfullscreen></iframe></div>
+    <div class="divanBaslik">${esc(v.ad)}</div>`;
+  kutu.scrollIntoView({ behavior:"smooth", block:"start" });
+}
+
 /* ---- yedekleme ---- */
 
 const YEDEK_TABLOLAR = ["teams","profiles","parcels","parcel_years","tags","parcel_tags",
@@ -1837,26 +1931,51 @@ function menuGovde(tema){
     </div>`;
   }
 
-  // ---------- MELKOR: RPG panel duzeni ----------
-  const kart = (m, i, sinif) => `
-    <button class="mKart ${sinif||""}" data-ekran="${m.r}" data-slug="${m.slug}"
+  // ---------- MELKOR: skill panosu ----------
+  const NADIRLIK = {
+    harita:   { renk:"#E8C98A", ad:"EFSANEVİ", yildiz:5 },
+    araziler: { renk:"#6FE3A8", ad:"NADİR",    yildiz:4 },
+    tapu:     { renk:"#B49CFF", ad:"DESTANSI", yildiz:4 },
+    ekler:    { renk:"#7BB8FF", ad:"YAYGIN",   yildiz:2 },
+    idrak:    { renk:"#FF6B9D", ad:"MİSTİK",   yildiz:5 },
+    cap:      { renk:"#FF9F5A", ad:"USTA",     yildiz:3 },
+    kml:      { renk:"#7BE8DC", ad:"YAYGIN",   yildiz:2 },
+    sinema:   { renk:"#C56BFF", ad:"GİZLİ",    yildiz:3 }
+  };
+  const yildizlar = n => "★★★★★".slice(0,n) + "☆☆☆☆☆".slice(0,5-n);
+
+  const kart = (m, i, sinif) => {
+    const n = NADIRLIK[m.slug] || NADIRLIK.kml;
+    return `
+    <button class="mKart ${sinif||""}" style="--nad:${n.renk}"
       onclick="melkorAc(this,'${m.r}','${m.slug}')">
       <div class="mGorsel" style="background-image:url('${gv("melkor-bg-" + m.slug + ".jpg")}')"></div>
       <div class="mSis"></div>
-      <span class="mRun">${String(i).padStart(2,"0")}</span>
       <span class="mIkon">${svg(m.i)}</span>
-      <div class="mYazi"><b>${m.ad}</b>${m.alt?`<small>${m.alt}</small>`:""}</div>
+      <span class="mNadir">${n.ad}</span>
+      <div class="mYazi">
+        <b>${m.ad}</b>
+        <span class="mYildiz">${yildizlar(n.yildiz)}</span>
+      </div>
       <span class="mCerceve"></span>
+      <span class="mParilti"></span>
     </button>`;
+  };
 
   const [harita, araziler, tapu, ekler, yz, cap, kml] = MENULER;
+  const sinema = { r:"sinema", i:"photo", ad:"Divan", alt:"", slug:"sinema" };
+
   return `<div class="melkor">
     <div class="mKur"><div id="rates" class="rates"></div></div>
     ${kart(harita, 1, "mAna")}
     <div class="mIzgara">
       ${kart(araziler, 2)}${kart(tapu, 3)}
-      ${kart(ekler, 4)}${kart(yz, 5)}
-      ${kart(cap, 6)}${kart(kml, 7)}
+    </div>
+    <div class="mUclu">
+      ${kart(ekler, 4, "mUfak")}${kart(cap, 5, "mUfak")}${kart(kml, 6, "mUfak")}
+    </div>
+    <div class="mIzgara">
+      ${kart(yz, 7, "mGenis")}${kart(sinema, 8, "mGenis")}
     </div>
     <div class="mAlt">
       <button class="mSerit" onclick="go('yaklasan')">
@@ -1868,136 +1987,6 @@ function menuGovde(tema){
         <div><b>Hesap - Kitap</b><small>alacak · borç</small></div></button>
     </div>
   </div>`;
-}
-
-// uygulama sesleri acik mi (ayarlardan yonetilir)
-const SES_ACIK = () => localStorage.getItem("sesKapali") !== "1";
-
-// ---- Melkor sesleri: dosya gerekmez, anlik uretilir ----
-let SESKUTU = null;
-function sesKutusu(){
-  if(!SES_ACIK()) return null;
-  try{
-    SESKUTU = SESKUTU || new (window.AudioContext || window.webkitAudioContext)();
-    if(SESKUTU.state === "suspended") SESKUTU.resume();
-    return SESKUTU;
-  }catch(e){ return null; }
-}
-
-// ikinma / zorlanma sesi: inip cikan komik uguldama
-function sesIkin(){
-  const a = sesKutusu(); if(!a) return;
-  const t = a.currentTime;
-  const o = a.createOscillator(), g = a.createGain(), f = a.createBiquadFilter();
-  o.type = "sawtooth";
-  o.frequency.setValueAtTime(90, t);
-  o.frequency.exponentialRampToValueAtTime(190, t+0.28);
-  o.frequency.exponentialRampToValueAtTime(70, t+0.52);
-  f.type = "lowpass"; f.frequency.setValueAtTime(900, t);
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(0.26, t+0.06);
-  g.gain.exponentialRampToValueAtTime(0.0001, t+0.55);
-  o.connect(f); f.connect(g); g.connect(a.destination);
-  o.start(t); o.stop(t+0.6);
-  // titresim: ikinma hissi
-  const lfo = a.createOscillator(), lg = a.createGain();
-  lfo.frequency.value = 17; lg.gain.value = 26;
-  lfo.connect(lg); lg.connect(o.frequency);
-  lfo.start(t); lfo.stop(t+0.55);
-}
-
-// tekme carpmasi
-function sesTekme(){
-  const a = sesKutusu(); if(!a) return;
-  const t = a.currentTime;
-  const b = a.createBuffer(1, a.sampleRate*0.2, a.sampleRate);
-  const d = b.getChannelData(0);
-  for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/d.length, 3);
-  const src = a.createBufferSource(); src.buffer = b;
-  const f = a.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 420;
-  const g = a.createGain(); g.gain.value = 0.5;
-  src.connect(f); f.connect(g); g.connect(a.destination);
-  src.start(t);
-}
-
-// seviye atlama ezgisi
-function sesSeviye(){
-  const a = sesKutusu(); if(!a) return;
-  const t = a.currentTime;
-  [[523.25,0],[659.25,.1],[783.99,.2],[1046.5,.3],[1318.5,.44]].forEach(([hz,gec],i)=>{
-    const o = a.createOscillator(), g = a.createGain();
-    o.type = i === 4 ? "triangle" : "square";
-    o.frequency.value = hz;
-    const b = t + gec;
-    g.gain.setValueAtTime(0.0001, b);
-    g.gain.exponentialRampToValueAtTime(0.2, b+0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, b + (i===4 ? 0.7 : 0.16));
-    o.connect(g); g.connect(a.destination);
-    o.start(b); o.stop(b + (i===4 ? 0.75 : 0.2));
-  });
-}
-
-// maskot menuye seke seke gider ve iki ayakla tekme atar
-function maskotTekme(kart){
-  return new Promise(cozum=>{
-    const k = document.getElementById("maskot");
-    if(!k || !MASKOT || !kart) return cozum();
-    const hedef = kart.getBoundingClientRect();
-    const genislik = k.offsetWidth || 110;
-    const varisX = Math.max(4, Math.min(window.innerWidth - genislik - 4,
-      hedef.left + hedef.width/2 - genislik/2));
-    const varisY = Math.max(70, hedef.top + hedef.height/2 - (k.offsetHeight||150)/2);
-
-    const mesafe = Math.hypot(varisX - MASKOT.x, varisY - MASKOT.y);
-    const sure = Math.min(900, Math.max(320, mesafe * 2.6));
-
-    k.classList.toggle("ters", varisX < MASKOT.x);
-    k.classList.add("yuru");
-    k.style.transition = `left ${sure}ms cubic-bezier(.3,.7,.4,1), top ${sure}ms cubic-bezier(.3,.7,.4,1)`;
-    MASKOT.x = varisX; MASKOT.y = varisY;
-    MASKOT.sonHareket = Date.now();
-    maskotYerlestir();
-
-    setTimeout(()=>{
-      k.classList.remove("yuru");
-      k.style.transition = "";
-      maskotPoz("eller");
-      sesIkin();
-      k.classList.add("tekme");
-      setTimeout(()=>{
-        sesTekme();
-        kart.classList.add("sarsil");
-        setTimeout(()=>kart.classList.remove("sarsil"), 420);
-      }, 190);
-      setTimeout(()=>{
-        k.classList.remove("tekme");
-        maskotPoz("duz");
-        cozum();
-      }, 560);
-    }, sure + 60);
-  });
-}
-
-// seviye atlama gosterisi
-function seviyeAtla(){
-  return new Promise(cozum=>{
-    const yeni = seviyeArtir();
-    sesSeviye();
-    const r = document.getElementById("lvRozet");
-    if(r){
-      r.querySelector(".lv").textContent = "LVL " + yeni;
-      r.querySelector(".rutbe").textContent = `"${rutbeAdi(yeni)}"`;
-      r.classList.add("atla");
-      setTimeout(()=>r.classList.remove("atla"), 1200);
-    }
-    const p = document.createElement("div");
-    p.className = "lvPanel";
-    p.innerHTML = `<b>LEVEL UP!</b><span>LVL ${yeni} · ${rutbeAdi(yeni)}</span>`;
-    document.body.appendChild(p);
-    requestAnimationFrame(()=>p.classList.add("acik"));
-    setTimeout(()=>{ p.classList.remove("acik"); setTimeout(()=>p.remove(), 350); }, 1050);
-    setTimeout(cozum, 900);
-  });
 }
 
 // menuye dokununca: kart buyur, icinde video oynar, sonra ekran acilir
@@ -7063,7 +7052,7 @@ async function cikis(){ await sb.auth.signOut(); location.reload(); }
 
 /* ================= yonlendirme ================= */
 
-const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, sunum:sunum, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, marka:markaEkran, tema:temaEkran, yedek:yedekEkran, yeni:yeniParsel, parsel:parselDetay,
+const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, sunum:sunum, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, marka:markaEkran, tema:temaEkran, yedek:yedekEkran, sinema:divanEkran, yeni:yeniParsel, parsel:parselDetay,
                    fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
 // gezinti gecmisi: telefonun geri tusu uygulamadan cikmasin, bir ekran geri gitsin
 let GEZINTI = [{ r:"ana", arg:undefined }];
@@ -7102,7 +7091,7 @@ function go(r, arg){
 // her ekranin bir ust sekmesi: telefonun geri tusu buraya gider
 const UST_EKRAN = {
   harita:"ana", araziler:"ana", ekler:"ana", kml:"ana", cap:"ana", hesap:"ana",
-  yaklasan:"ana", yz:"ana", fiyat:"ana", ayarlar:"ana", marka:"ayarlar", tema:"ana", yedek:"ayarlar", yeni:"araziler",
+  yaklasan:"ana", yz:"ana", fiyat:"ana", ayarlar:"ana", marka:"ayarlar", tema:"ana", yedek:"ayarlar", sinema:"ana", yeni:"araziler",
   parsel:"araziler", parcalar:"parsel", sunum:"parsel", fiyatDuzen:"fiyat", capAyar:"cap"
 };
 
