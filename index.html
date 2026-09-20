@@ -849,84 +849,112 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .rehberSahne[data-konu="doga"] .rSis{background:radial-gradient(60% 40% at 50% 100%,rgba(111,227,168,.4),transparent 70%)}
 
 /* ---- Kim 500 Milyar Ister ---- */
-.studyo{position:relative;height:clamp(180px,27vh,250px);overflow:hidden;margin-bottom:10px;
-  background:radial-gradient(70% 60% at 50% 0%,rgba(138,107,255,.3),transparent 60%),
-    linear-gradient(180deg,#0B0722,#05040E);
-  border:1px solid rgba(123,232,220,.3);
+.studyo{position:relative;height:clamp(200px,29vh,270px);overflow:hidden;margin-bottom:12px;
+  background:
+    radial-gradient(60% 50% at 50% -10%,rgba(80,150,255,.35),transparent 65%),
+    radial-gradient(90% 70% at 50% 120%,rgba(20,40,90,.9),transparent 70%),
+    linear-gradient(180deg,#040718,#020410);
+  border:1px solid rgba(90,150,255,.35);
   clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
-.sunucuIsik{position:absolute;left:50%;top:-14%;width:52%;height:120%;transform:translateX(-50%);
-  background:radial-gradient(50% 60% at 50% 40%,rgba(123,232,220,.28),transparent 70%);
-  filter:blur(6px);animation:isikSalin 5s ease-in-out infinite}
-@keyframes isikSalin{0%,100%{opacity:.6}50%{opacity:1}}
-.sunucu{position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);height:76%;z-index:3;
+.studyoIsik{position:absolute;left:50%;top:-30%;width:120%;height:90%;transform:translateX(-50%);
+  background:conic-gradient(from 180deg at 50% 0%,transparent 0deg,rgba(120,180,255,.25) 30deg,
+    transparent 60deg,rgba(120,180,255,.2) 100deg,transparent 140deg,rgba(255,180,90,.18) 190deg,
+    transparent 240deg,rgba(120,180,255,.22) 300deg,transparent 360deg);
+  filter:blur(3px);animation:studyoDon 26s linear infinite}
+@keyframes studyoDon{to{transform:translateX(-50%) rotate(360deg)}}
+.masa{position:absolute;left:50%;bottom:0;width:78%;height:34%;transform:translateX(-50%);
+  background:linear-gradient(180deg,rgba(40,80,150,.55),rgba(8,14,32,.95));
+  border-top:2px solid rgba(120,180,255,.55);border-radius:50% 50% 0 0 / 22% 22% 0 0;
+  box-shadow:0 -6px 26px rgba(80,150,255,.3)}
+.sunucu{position:absolute;bottom:8%;left:26%;transform:translateX(-50%);height:72%;z-index:3;
   filter:drop-shadow(0 10px 18px rgba(0,0,0,.85))}
+.yarismaci{position:absolute;bottom:8%;right:16%;z-index:3;text-align:center}
+.yKafa{width:48px;height:48px;margin:0 auto;display:grid;place-items:center;overflow:hidden;
+  background:linear-gradient(160deg,#2A4A80,#101C36);border:2px solid rgba(120,180,255,.6);
+  border-radius:50%;box-shadow:0 0 18px rgba(80,150,255,.45)}
+.yKafa span{font-family:"Cinzel",Georgia,serif;font-size:16px;font-weight:700;color:#CFE4FF}
+.yKafa video{width:100%;height:100%;object-fit:cover}
+.yKafa.kameraAcik{border-color:#7BE8DC;box-shadow:0 0 22px rgba(123,232,220,.6)}
+.yGovde{width:62px;height:44px;margin:-4px auto 0;border-radius:26px 26px 8px 8px;
+  background:linear-gradient(180deg,#2A4A80,#0C1428);border:1px solid rgba(120,180,255,.4)}
+.yIsim{display:block;margin-top:5px;font-family:"Cinzel",Georgia,serif;font-size:8.5px;
+  letter-spacing:.14em;color:rgba(190,215,255,.9)}
 .seyirci{position:absolute;inset:0;z-index:2;pointer-events:none}
-.seyirci .kafa{position:absolute;width:16px;height:20px;border-radius:50% 50% 42% 42%;
-  background:linear-gradient(180deg,rgba(20,14,44,.95),rgba(6,4,16,.95));
-  box-shadow:0 0 10px rgba(138,107,255,.35);animation:kafaSalin 3.4s ease-in-out infinite}
+.seyirci .kafa{position:absolute;width:15px;height:19px;border-radius:50% 50% 42% 42%;
+  background:linear-gradient(180deg,rgba(14,24,48,.95),rgba(4,8,18,.95));
+  box-shadow:0 0 8px rgba(80,150,255,.3);animation:kafaSalin 3.4s ease-in-out infinite}
 @keyframes kafaSalin{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 .seyirci .kafa.alkis{animation:kafaAlkis .32s ease-in-out 6}
 @keyframes kafaAlkis{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-7px) scale(1.12)}}
 .seyirci .kafa.elKaldir::after{content:"";position:absolute;left:50%;top:-11px;width:4px;height:11px;
-  border-radius:3px;background:rgba(123,232,220,.75);transform:translateX(-50%);
+  border-radius:3px;background:rgba(120,180,255,.8);transform:translateX(-50%);
   animation:elKalk .5s ease-in-out 4}
 @keyframes elKalk{0%,100%{height:5px;opacity:.5}50%{height:13px;opacity:1}}
 .odulSerit{position:absolute;top:8px;left:8px;padding:5px 10px;z-index:4;
-  background:linear-gradient(160deg,rgba(232,201,138,.3),rgba(8,5,20,.85));
-  border:1px solid rgba(232,201,138,.5);
+  background:linear-gradient(160deg,rgba(255,180,90,.28),rgba(4,8,20,.9));
+  border:1px solid rgba(255,180,90,.55);
   clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
-.odulSerit b{display:block;font-family:"Cinzel",Georgia,serif;font-size:13px;letter-spacing:.08em;color:#F0DCA8}
-.odulSerit span{display:block;font-size:8px;letter-spacing:.14em;color:rgba(232,201,138,.7)}
+.odulSerit b{display:block;font-family:"Cinzel",Georgia,serif;font-size:13px;letter-spacing:.08em;color:#FFD79A}
+.odulSerit span{display:block;font-size:8px;letter-spacing:.14em;color:rgba(255,215,154,.75)}
 
-.yBalon{padding:11px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.4;
-  background:linear-gradient(160deg,rgba(245,242,255,.96),rgba(216,208,248,.94));color:#150F2C;
-  border:1px solid rgba(123,232,220,.5);
+.yBalon{padding:11px 13px;margin-bottom:12px;font-size:12.5px;line-height:1.4;color:#EAF2FF;
+  background:linear-gradient(160deg,rgba(30,60,120,.85),rgba(6,12,28,.92));
+  border:1px solid rgba(120,180,255,.45);
   clip-path:polygon(0 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%)}
 .yBalon.yaz{animation:balonGir .3s cubic-bezier(.3,1.5,.5,1)}
-.ySoruKutu{padding:14px;margin-bottom:12px;text-align:center;
-  background:linear-gradient(160deg,rgba(138,107,255,.18),rgba(8,5,20,.8));
-  border:1px solid rgba(123,232,220,.35);
-  clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
-.ySoruKutu b{font-size:13.5px;line-height:1.45;color:#F2EEFF;font-weight:600}
+
+/* soru kutusu: yarismanin mavi-altin dili */
+.ySoruKutu{padding:15px;margin-bottom:12px;text-align:center;
+  background:linear-gradient(160deg,rgba(24,52,110,.9),rgba(6,12,28,.95));
+  border:1px solid rgba(120,180,255,.5);
+  clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,16px 100%,0 50%);
+  box-shadow:0 0 26px rgba(60,120,220,.25)}
+.ySoruKutu b{font-size:13.5px;line-height:1.45;color:#F2F7FF;font-weight:600}
 .ySoruKutu.bekle{display:flex;align-items:center;justify-content:center;gap:10px}
-.ySoruKutu.bekle span{font-size:11px;color:var(--ink-3);font-style:italic}
+.ySoruKutu.bekle span{font-size:11px;color:rgba(190,215,255,.7);font-style:italic}
+
 .ySiklar{display:grid;gap:8px}
-.ySik{display:flex;align-items:center;gap:10px;padding:11px 12px;text-align:left;cursor:pointer;
-  position:relative;
-  background:linear-gradient(160deg,rgba(138,107,255,.14),rgba(8,5,20,.72));
-  border:1px solid rgba(150,130,230,.3);
-  clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px)}
-.ySik i{flex:0 0 auto;width:24px;height:24px;display:grid;place-items:center;font-style:normal;
-  font-family:"Cinzel",Georgia,serif;font-size:11px;font-weight:700;color:#04141B;
-  background:linear-gradient(160deg,#9CF5EC,#3FB8B2)}
-.ySik span{font-size:12.5px;color:#EAE6FA}
-.ySik.secili{border-color:#E8C98A;box-shadow:0 0 18px rgba(232,201,138,.4)}
-.ySik.dogru{border-color:#6FE3A8;background:linear-gradient(160deg,rgba(111,227,168,.3),rgba(8,5,20,.8));
-  animation:dogruYan .5s ease 3}
-@keyframes dogruYan{0%,100%{box-shadow:0 0 0 rgba(111,227,168,0)}50%{box-shadow:0 0 26px rgba(111,227,168,.8)}}
-.ySik.yanlis{border-color:#FF6B9D;background:linear-gradient(160deg,rgba(255,107,157,.25),rgba(8,5,20,.8))}
-.ySik.elendi{opacity:.25;text-decoration:line-through}
-.yOran{position:absolute;right:10px;font-size:10px;font-weight:700;color:#7BE8DC}
+.ySik{display:flex;align-items:center;gap:10px;padding:11px 14px;text-align:left;cursor:pointer;
+  position:relative;color:#EAF2FF;
+  background:linear-gradient(160deg,rgba(20,44,92,.85),rgba(5,10,24,.92));
+  border:1px solid rgba(120,180,255,.4);
+  clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,14px 100%,0 50%)}
+.ySik i{flex:0 0 auto;font-style:normal;font-family:"Cinzel",Georgia,serif;font-size:13px;
+  font-weight:700;color:#FFC96B;min-width:16px}
+.ySik span{font-size:12.5px}
+.ySik.okunuyor{border-color:#9CC8FF;box-shadow:0 0 18px rgba(120,180,255,.5)}
+.ySik.secili,.ySik.kilitli{border-color:#FFC96B;
+  background:linear-gradient(160deg,rgba(170,110,20,.5),rgba(28,16,4,.92));
+  box-shadow:0 0 20px rgba(255,180,90,.45)}
+.ySik.dogru{border-color:#5FE39A;
+  background:linear-gradient(160deg,rgba(30,140,80,.6),rgba(6,26,16,.92));
+  animation:dogruYan .5s ease 4}
+@keyframes dogruYan{0%,100%{box-shadow:0 0 0 rgba(95,227,154,0)}50%{box-shadow:0 0 30px rgba(95,227,154,.9)}}
+.ySik.yanlis{border-color:#FF6B6B;background:linear-gradient(160deg,rgba(150,30,30,.5),rgba(28,6,6,.92))}
+.ySik.elendi{opacity:.22;text-decoration:line-through}
+.yOran{position:absolute;right:16px;font-size:10px;font-weight:700;color:#9CC8FF}
+
 .yJoker{display:flex;gap:7px;margin-top:12px}
 .yJoker button{flex:1;padding:9px 4px;font-family:"Cinzel",Georgia,serif;font-size:9.5px;
-  letter-spacing:.1em;cursor:pointer;color:#04141B;background:linear-gradient(160deg,#9CF5EC,#3FB8B2);
-  border:0;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
-.yJoker button:disabled{opacity:.3;background:linear-gradient(160deg,#6A6480,#3A3650);color:#1A1628}
+  letter-spacing:.1em;cursor:pointer;color:#061224;
+  background:linear-gradient(160deg,#FFD79A,#E0A94A);border:0;
+  clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.yJoker button:disabled{opacity:.28;background:linear-gradient(160deg,#5A6478,#333B4C);color:#141A26}
 .yOnay{display:flex;gap:8px;margin-top:12px}
-.yOnay button{flex:1;padding:12px 6px;font-family:"Cinzel",Georgia,serif;font-size:11px;
-  letter-spacing:.1em;cursor:pointer;color:#CFC6F0;
-  background:linear-gradient(160deg,rgba(138,107,255,.22),rgba(8,5,20,.8));
-  border:1px solid rgba(123,232,220,.3)}
-.yOnay button.pri{color:#04141B;background:linear-gradient(160deg,#F0DCA8,#D9B65A);border:0}
+.yOnay button{flex:1;padding:13px 6px;font-family:"Cinzel",Georgia,serif;font-size:11px;
+  letter-spacing:.1em;cursor:pointer;color:#CFE4FF;
+  background:linear-gradient(160deg,rgba(30,64,130,.8),rgba(6,12,28,.9));
+  border:1px solid rgba(120,180,255,.4)}
+.yOnay button.pri{color:#061224;background:linear-gradient(160deg,#FFD79A,#E0A94A);border:0}
 .ySonuc{padding:30px 18px;text-align:center;
-  background:linear-gradient(160deg,rgba(138,107,255,.16),rgba(8,5,20,.82));
-  border:1px solid rgba(123,232,220,.35);
+  background:linear-gradient(160deg,rgba(24,52,110,.8),rgba(5,10,24,.92));
+  border:1px solid rgba(120,180,255,.45);
   clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
 .ySonuc b{display:block;font-family:"Cinzel",Georgia,serif;font-size:20px;letter-spacing:.18em;
-  color:transparent;background-image:linear-gradient(115deg,#FFF,#7BE8DC 45%,#E8C98A);
+  color:transparent;background-image:linear-gradient(115deg,#FFF,#FFD79A 45%,#E0A94A);
   -webkit-background-clip:text;background-clip:text}
-.ySonuc.kotu b{background-image:linear-gradient(115deg,#FFF,#FF6B9D 50%,#B44A70)}
-.ySonuc span{display:block;margin-top:8px;font-size:11px;letter-spacing:.08em;color:var(--ink-2)}
+.ySonuc.kotu b{background-image:linear-gradient(115deg,#FFF,#FF8A8A 50%,#B44A4A)}
+.ySonuc span{display:block;margin-top:8px;font-size:11px;letter-spacing:.08em;color:rgba(190,215,255,.8)}
 
 /* ---- menu acilimi: kart buyur, video icinde oynar ---- */
 .mPerde{position:fixed;inset:0;z-index:150;background:rgba(4,3,10,0);
@@ -1416,7 +1444,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 4.7";
+const SURUM_MELKOR = "beta 5.0";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -2331,6 +2359,40 @@ function rehberSesKutusu(){
 }
 try{ if(window.speechSynthesis) speechSynthesis.onvoiceschanged = () => rehberSesKutusu(); }catch(e){}
 
+// BUYUK harfli kelimeler hecelenmesin: Baslik bicimine cevir
+function seseHazirla(metin){
+  return String(metin||"").replace(/\b[A-ZÇĞİÖŞÜ]{2,}\b/g, k =>
+    k.charAt(0) + k.slice(1).toLocaleLowerCase("tr"));
+}
+
+// tek merkez: once Azure sesi, olmazsa telefonun sesi
+async function melkorKonus(metin){
+  if(!SES_ACIK()) return;
+  const duz = seseHazirla(metin);
+  try{
+    if(window.__melkorSes){ window.__melkorSes.pause(); window.__melkorSes = null; }
+    for(const ad2 of ["rehber","swift-api"]){
+      const { data, error } = await sb.functions.invoke(ad2, { body:{ mod:"ses", soru:duz } });
+      if(!error && data?.ses){
+        const a = new Audio("data:audio/mp3;base64," + data.ses);
+        window.__melkorSes = a;
+        a.play().catch(()=>{});
+        return;
+      }
+    }
+  }catch(e){}
+  // yedek: telefonun sesi
+  try{
+    if(window.speechSynthesis){
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(duz);
+      u.lang = "tr-TR"; u.rate = rehberHiz(); u.pitch = rehberPerde();
+      const ses = rehberSesi(); if(ses) u.voice = ses;
+      speechSynthesis.speak(u);
+    }
+  }catch(e){}
+}
+
 function rehberSoyle(metin){
   const sahne = document.getElementById("rSahne");
   if(sahne){
@@ -2353,32 +2415,17 @@ function rehberSoyle(metin){
     }, Math.min(2600, 700 + metin.length*18));
     window.__rPoz = setTimeout(()=>{ m.src = gv("maskot-duz.png"); }, Math.min(6000, 1100 + metin.length*50));
   }
-  // once gercek seslendirme (fonksiyondan geldiyse), yoksa telefonun sesi
+  // hazir ses geldiyse onu cal, yoksa merkezden iste
   if(REHBER_SES_VERI){
     try{
       const veri = REHBER_SES_VERI; REHBER_SES_VERI = null;
-      if(window.__rehberSes){ window.__rehberSes.pause(); }
+      if(window.__melkorSes){ window.__melkorSes.pause(); }
       const a = new Audio("data:audio/mp3;base64," + veri);
-      window.__rehberSes = a;
+      window.__melkorSes = a;
       a.volume = SES_ACIK() ? 1 : 0;
       a.play().catch(()=>{});
-      return;
-    }catch(e){}
-  }
-  // kalin ve tok erkek sesiyle okusun
-  try{
-    if(SES_ACIK() && window.speechSynthesis){
-      speechSynthesis.cancel();
-      const s2 = new SpeechSynthesisUtterance(metin);
-      s2.lang = "tr-TR";
-      s2.rate = rehberHiz();
-      s2.pitch = rehberPerde();
-      s2.volume = 1;
-      const ses = rehberSesi();
-      if(ses) s2.voice = ses;
-      speechSynthesis.speak(s2);
-    }
-  }catch(e){}
+    }catch(e){ melkorKonus(metin); }
+  }else melkorKonus(metin);
 }
 
 async function rehberSor(){
@@ -2621,28 +2668,41 @@ const ODUL = ["1.000","2.000","5.000","10.000","25.000","50.000","100.000","250.
 let YARISMA = null;
 
 function yarismaEkran(){
-  YARISMA = { adim:0, soruVerisi:null, secilen:null, kilit:false, bitti:false,
-              sorulanlar:[], jokerYari:true, jokerTelefon:true, jokerSeyirci:true, elenen:[] };
-  app.innerHTML = head("Kim 500 Milyar İster","go('rehber')") + `
+  YARISMA = { adim:0, soruVerisi:null, secilen:null, kilit:false, asama:"giris",
+              sorulanlar:[], jokerYari:true, jokerTelefon:true, jokerSeyirci:true,
+              elenen:[], kamera:false, onaySayac:0 };
+  app.innerHTML = head("Kim 500 Milyar İster","yarismaKapat()") + `
     <div class="studyo" id="studyo">
+      <div class="studyoIsik"></div>
       <div class="seyirci" id="seyirci"></div>
-      <div class="sunucuIsik"></div>
+      <div class="masa"></div>
       <img class="sunucu" id="sunucu" src="${gv('maskot-duz.png')}" alt="">
+      <div class="yarismaci" id="yarismaci">
+        <div class="yKafa" id="yKafa"><span>${esc((kullaniciAdi()||"KAHRAMAN").slice(0,2).toLocaleUpperCase("tr"))}</span></div>
+        <div class="yGovde"></div>
+        <span class="yIsim">${esc((kullaniciAdi()||"KAHRAMAN").toLocaleUpperCase("tr"))}</span>
+      </div>
       <div class="odulSerit" id="odulSerit"></div>
     </div>
-    <div class="yBalon" id="yBalon">Hoş geldin. Kurallar basit: ben soruyorum, sen pişman oluyorsun.</div>
+    <div class="yBalon" id="yBalon">Sahne hazırlanıyor…</div>
     <div id="yAlan"></div>`;
   seyirciKur();
   odulCiz();
-  setTimeout(yarismaSoruAl, 900);
+  setTimeout(yarismaGiris, 700);
+}
+
+function yarismaKapat(){
+  yarismaKameraKapat();
+  try{ window.__melkorSes?.pause(); }catch(e){}
+  go("rehber");
 }
 
 function seyirciKur(){
   const k = document.getElementById("seyirci");
   if(!k) return;
-  k.innerHTML = Array.from({length:22}, (_,i)=>
-    `<span class="kafa" style="left:${(i%11)*9 + 2}%;bottom:${i<11?18:2}px;
-      animation-delay:${(i*0.17).toFixed(2)}s"></span>`).join("");
+  k.innerHTML = Array.from({length:24}, (_,i)=>
+    `<span class="kafa" style="left:${(i%12)*8.2 + 2}%;bottom:${i<12?22:4}px;
+      animation-delay:${(i*0.15).toFixed(2)}s"></span>`).join("");
 }
 
 function odulCiz(){
@@ -2652,12 +2712,85 @@ function odulCiz(){
     <span>${YARISMA.adim + 1}. soru</span>`;
 }
 
+// ---------- giris tereni ----------
+async function yarismaGiris(){
+  const ad2 = (kullaniciAdi() || "Kahraman");
+  seyirciTepki();
+  await yBalonYaz(`Evet sayın seyirciler! Bu gece burada, benimle birlikte ${ad2} yarışacak.`);
+  const alan = document.getElementById("yAlan");
+  if(alan) alan.innerHTML = `<div class="yOnay">
+      <button class="pri" onclick="yarismaKameraSor(true)">KAMERAYI AÇ</button>
+      <button onclick="yarismaKameraSor(false)">KAMERASIZ DEVAM</button></div>
+    <p class="ipuc" style="margin:10px 2px 0">Kamerayı açarsan karşımda gerçekten oturuyormuş gibi olursun.</p>`;
+  await yBalonYaz("Kameranı açmak ister misin? Seni görmek isterim, gözlerinden okurum cevabı.");
+}
+
+async function yarismaKameraSor(ac){
+  const alan = document.getElementById("yAlan");
+  if(alan) alan.innerHTML = "";
+  if(ac) await yarismaKameraAc();
+  await yBalonYaz("Nasılsın bakalım, iyi misin? Heyecan var mı?");
+  yarismaSoru2();
+}
+
+function yarismaSoru2(){
+  const alan = document.getElementById("yAlan");
+  if(!alan) return;
+  alan.innerHTML = `<div class="yOnay">
+    <button class="pri" onclick="yarismaCevapVer('iyi')">İYİYİM</button>
+    <button onclick="yarismaCevapVer('heyecan')">BİRAZ HEYECANLIYIM</button></div>`;
+}
+
+async function yarismaCevapVer(ne){
+  const alan = document.getElementById("yAlan");
+  if(alan) alan.innerHTML = "";
+  if(ne === "iyi") await yBalonYaz("Güzel. Kendine güveniyorsun demek. Bu his genelde ilk soruya kadar sürer.");
+  else await yBalonYaz("Heyecan iyidir. Ben de ilk yarışmamda heyecanlıydım, sonra yarışmayı ben kurdum.");
+  await yBalonYaz("Kendine güveniyor musun peki?");
+  if(alan) alan.innerHTML = `<div class="yOnay">
+    <button class="pri" onclick="yarismaHazir(true)">GÜVENİYORUM</button>
+    <button onclick="yarismaHazir(false)">PEK SAYILMAZ</button></div>`;
+}
+
+async function yarismaHazir(guven){
+  const alan = document.getElementById("yAlan");
+  if(alan) alan.innerHTML = "";
+  await yBalonYaz(guven
+    ? "Öyle diyorsan öyledir. Hazırsan sorulara geçiyorum."
+    : "Dürüstlük iyidir. Hazırsan sorulara geçiyorum, hazır değilsen de geçiyorum.");
+  if(alan) alan.innerHTML = `<div class="yOnay">
+    <button class="pri" onclick="yarismaSoruAl()">EVET, HAZIRIM</button>
+    <button onclick="yarismaKapat()">VAZGEÇTİM</button></div>`;
+}
+
+// ---------- kamera ----------
+async function yarismaKameraAc(){
+  try{
+    const akis = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:"user" }, audio:false });
+    const kafa = document.getElementById("yKafa");
+    if(!kafa) return;
+    const v = document.createElement("video");
+    v.autoplay = true; v.playsInline = true; v.muted = true; v.srcObject = akis;
+    kafa.innerHTML = ""; kafa.appendChild(v);
+    kafa.classList.add("kameraAcik");
+    window.__yKameraAkis = akis;
+    YARISMA.kamera = true;
+    await yBalonYaz("İşte şimdi seni görüyorum. Suratından okuyacağım cevapları.");
+  }catch(e){
+    await yBalonYaz("Kamerayı vermedin. Saklanmak iyi taktiktir ama bana sökmez.");
+  }
+}
+function yarismaKameraKapat(){
+  try{ window.__yKameraAkis?.getTracks().forEach(t=>t.stop()); }catch(e){}
+  window.__yKameraAkis = null;
+}
+
+// ---------- sorular ----------
 async function yarismaSoruAl(){
   const alan = document.getElementById("yAlan");
   if(!alan) return;
   alan.innerHTML = `<div class="ySoruKutu bekle"><div class="spin"></div>
     <span>Soru hazırlanıyor…</span></div>`;
-  yBalonYaz("Sıradaki soruyu ben yazdım. Zor olacak, uyarmıştım.");
 
   const zorluk = Math.min(5, 1 + Math.floor(YARISMA.adim / 3));
   let veri = null, neden = "fonksiyona ulaşılamadı";
@@ -2678,9 +2811,22 @@ async function yarismaSoruAl(){
     return;
   }
   YARISMA.soruVerisi = veri;
-  YARISMA.secilen = null; YARISMA.kilit = false; YARISMA.elenen = [];
-  YARISMA.sorulanlar.push(String(veri.soru).slice(0,60));
+  YARISMA.secilen = null; YARISMA.kilit = false; YARISMA.elenen = []; YARISMA.onaySayac = 0;
   yarismaCiz();
+  await yarismaSoruOku();
+}
+
+async function yarismaSoruOku(){
+  const v = YARISMA?.soruVerisi;
+  if(!v) return;
+  const harf = ["A","B","C","D"];
+  await yBalonYaz(`${YARISMA.adim + 1}. soru, ${ODUL[YARISMA.adim]} lira. ${v.soru}`);
+  for(let i = 0; i < v.siklar.length; i++){
+    const b2 = document.querySelectorAll(".ySik")[i];
+    b2?.classList.add("okunuyor");
+    await yBalonYaz(`${harf[i]}: ${v.siklar[i]}`, true);
+    b2?.classList.remove("okunuyor");
+  }
 }
 
 function yarismaCiz(){
@@ -2692,8 +2838,7 @@ function yarismaCiz(){
     <div class="ySoruKutu"><b>${esc(v.soru)}</b></div>
     <div class="ySiklar">
       ${v.siklar.map((sk,i)=>`
-        <button class="ySik ${YARISMA.elenen.includes(i)?"elendi":""}
-          ${YARISMA.secilen===i?"secili":""}"
+        <button class="ySik ${YARISMA.elenen.includes(i)?"elendi":""} ${YARISMA.secilen===i?"secili":""}"
           ${YARISMA.elenen.includes(i)||YARISMA.kilit?"disabled":""}
           onclick="yarismaSec(${i})"><i>${harf[i]}</i><span>${esc(sk)}</span></button>`).join("")}
     </div>
@@ -2705,57 +2850,71 @@ function yarismaCiz(){
     <div id="yOnay"></div>`;
 }
 
-function yarismaSec(i){
+async function yarismaSec(i){
   if(!YARISMA || YARISMA.kilit) return;
   YARISMA.secilen = i;
+  YARISMA.onaySayac = 1;
   yarismaCiz();
   const harf = ["A","B","C","D"][i];
-  yBalonYaz(`${harf} şıkkı... Emin misin? Son kararın mı?`);
-  const onay = document.getElementById("yOnay");
-  if(onay) onay.innerHTML = `<div class="yOnay">
-      <button class="pri" onclick="yarismaKilitle()">SON KARARIM</button>
-      <button onclick="yarismaVazgec()">DÜŞÜNEYİM</button></div>`;
+  await yBalonYaz(`${harf} diyorsun. Emin misin?`);
+  yarismaOnayKutusu("Emin misin?");
 }
 
-function yarismaVazgec(){
-  YARISMA.secilen = null;
-  yarismaCiz();
-  yBalonYaz("İyi düşün. Acele eden kaybeder, bunu ben söylemiştim.");
+function yarismaOnayKutusu(){
+  const onay = document.getElementById("yOnay");
+  if(!onay) return;
+  onay.innerHTML = `<div class="yOnay">
+      <button class="pri" onclick="yarismaOnay(true)">EVET</button>
+      <button onclick="yarismaOnay(false)">HAYIR</button></div>`;
+}
+
+async function yarismaOnay(evet){
+  const onay = document.getElementById("yOnay");
+  if(onay) onay.innerHTML = "";
+  if(!evet){
+    YARISMA.secilen = null; YARISMA.onaySayac = 0;
+    yarismaCiz();
+    await yBalonYaz("İyi düşün. Acele eden kaybeder, o sözü de ben söylemiştim.");
+    return;
+  }
+  if(YARISMA.onaySayac === 1){
+    YARISMA.onaySayac = 2;
+    await yBalonYaz("Son kararın mı?");
+    yarismaOnayKutusu();
+    return;
+  }
+  yarismaKilitle();
 }
 
 async function yarismaKilitle(){
   if(!YARISMA || YARISMA.kilit) return;
   YARISMA.kilit = true;
   yarismaCiz();
-  yBalonYaz("Kilitlendi. Şimdi görelim bakalım…");
+  document.querySelectorAll(".ySik")[YARISMA.secilen]?.classList.add("kilitli");
+  await yBalonYaz("Kilitlendi.");
   seyirciTepki();
+  await new Promise(r=>setTimeout(r, 1600));
 
-  await new Promise(r=>setTimeout(r, 1800));
   const dogru = YARISMA.soruVerisi.dogru;
   const kazandi = YARISMA.secilen === dogru;
-  const alan = document.getElementById("yAlan");
   const harf = ["A","B","C","D"];
-
-  if(alan){
-    alan.querySelectorAll(".ySik").forEach((b,i)=>{
-      if(i === dogru) b.classList.add("dogru");
-      else if(i === YARISMA.secilen) b.classList.add("yanlis");
-    });
-  }
+  document.querySelectorAll(".ySik").forEach((b2,i)=>{
+    if(i === dogru) b2.classList.add("dogru");
+    else if(i === YARISMA.secilen) b2.classList.add("yanlis");
+  });
 
   if(kazandi){
     try{ sesSeviye(); }catch(e){}
     YARISMA.adim++;
     odulCiz();
-    yBalonYaz(`Doğru. Ama şansın yaver gitti, bilgin değil. ${ODUL[Math.min(YARISMA.adim,ODUL.length-1)]} ₺ sıradaki.`);
-    setTimeout(()=>{
-      if(YARISMA.adim >= ODUL.length){ yarismaBitir(true); return; }
-      yarismaSoruAl();
-    }, 2600);
+    seyirciTepki();
+    await yBalonYaz(`Doğru! ${ODUL[Math.min(YARISMA.adim,ODUL.length-1)]} liralık soruya geçiyoruz.`);
+    if(YARISMA.adim >= ODUL.length) return yarismaBitir(true);
+    setTimeout(yarismaSoruAl, 900);
   }else{
     try{ sesTekme(); }catch(e){}
-    yBalonYaz(`Yanlış. Doğrusu ${harf[dogru]} idi. ${YARISMA.soruVerisi.aciklama || ""}`);
-    setTimeout(()=>yarismaBitir(false), 2800);
+    await yBalonYaz(`Yanlış. Doğrusu ${harf[dogru]} idi. ${YARISMA.soruVerisi.aciklama || ""}`);
+    setTimeout(()=>yarismaBitir(false), 900);
   }
 }
 
@@ -2767,77 +2926,70 @@ function yarismaBitir(kazandi){
       <b>${kazandi ? "500 MİLYAR!" : "OYUN BİTTİ"}</b>
       <span>Kazandığın: ${kazanc} ₺ · ${YARISMA.adim} soru</span>
       <button class="btn" style="margin-top:14px" onclick="yarismaEkran()">Yeniden Oyna</button>
-      <button class="btn ghost" style="margin-top:8px" onclick="go('rehber')">Rehber'e Dön</button>
+      <button class="btn ghost" style="margin-top:8px" onclick="yarismaKapat()">Rehber'e Dön</button>
     </div>`;
+  yBalonYaz(kazandi ? "İnanamıyorum. Demek ki bir şeyler biliyormuşsun." :
+    "Böyle bitti. Ben olsam bilirdim ama ben zaten her şeyi bilirim.");
 }
 
-function jokerYari(){
+// ---------- jokerler ----------
+async function jokerYari(){
   if(!YARISMA?.jokerYari || !YARISMA.soruVerisi) return;
   YARISMA.jokerYari = false;
   const dogru = YARISMA.soruVerisi.dogru;
-  const digerleri = [0,1,2,3].filter(i=>i !== dogru).sort(()=>Math.random()-0.5).slice(0,2);
-  YARISMA.elenen = digerleri;
+  YARISMA.elenen = [0,1,2,3].filter(i=>i !== dogru).sort(()=>Math.random()-0.5).slice(0,2);
   yarismaCiz();
-  yBalonYaz("İki şıkkı sildim. Rica ederim, hep böyle cömertimdir.");
+  await yBalonYaz("İki şıkkı sildim. Rica ederim, hep böyle cömertimdir.");
 }
 
-function jokerSeyirci(){
+async function jokerSeyirci(){
   if(!YARISMA?.jokerSeyirci || !YARISMA.soruVerisi) return;
   YARISMA.jokerSeyirci = false;
   const dogru = YARISMA.soruVerisi.dogru;
   const oran = [0,0,0,0];
   let kalan = 100;
-  const dogruPay = 42 + Math.floor(Math.random()*34);
+  const dogruPay = 44 + Math.floor(Math.random()*32);
   oran[dogru] = dogruPay; kalan -= dogruPay;
   [0,1,2,3].filter(i=>i!==dogru && !YARISMA.elenen.includes(i)).forEach((i,ix,dizi)=>{
     const p = ix === dizi.length-1 ? kalan : Math.floor(Math.random()*kalan);
     oran[i] = p; kalan -= p;
   });
   seyirciTepki(true);
-  const alan = document.getElementById("yAlan");
-  alan?.querySelectorAll(".ySik").forEach((b,i)=>{
+  document.querySelectorAll(".ySik").forEach((b2,i)=>{
     if(YARISMA.elenen.includes(i)) return;
     const c = document.createElement("span");
     c.className = "yOran"; c.textContent = "%" + oran[i];
-    b.appendChild(c);
+    b2.appendChild(c);
   });
-  yBalonYaz("Seyirci konuştu. Ama unutma, onlar da benim kadar akıllı değil.");
+  await yBalonYaz("Seyirci konuştu. Ama unutma, onlar da benim kadar akıllı değil.");
 }
 
 async function jokerTelefon(){
   if(!YARISMA?.jokerTelefon || !YARISMA.soruVerisi) return;
   YARISMA.jokerTelefon = false;
-  yBalonYaz("Telefon açılıyor… Kendimi arıyorum, başka kimi arayacaktım?");
+  await yBalonYaz("Telefon açılıyor. Kendimi arıyorum, başka kimi arayacaktım?");
   const harf = ["A","B","C","D"];
   const dogru = YARISMA.soruVerisi.dogru;
-  await new Promise(r=>setTimeout(r, 1400));
-  // ara sira yanlis yonlendirir
   const durust = Math.random() < 0.7;
   const tahmin = durust ? dogru : [0,1,2,3].filter(i=>i!==dogru)[Math.floor(Math.random()*3)];
-  const lafta = durust
-    ? `Bana kalırsa ${harf[tahmin]}. Eminim, çünkü bunu ben yazmıştım.`
-    : `Kesinlikle ${harf[tahmin]}. Güven bana, hiç yanılmadım.`;
-  yBalonYaz(lafta);
+  await yBalonYaz(durust
+    ? `Bana kalırsa ${harf[tahmin]}. Eminim, çünkü bu soruyu ben yazdım.`
+    : `Kesinlikle ${harf[tahmin]}. Güven bana, hiç yanılmadım.`);
 }
 
-function yBalonYaz(metin){
-  const b = document.getElementById("yBalon");
-  if(b){ b.textContent = metin; b.classList.remove("yaz"); void b.offsetWidth; b.classList.add("yaz"); }
+// ---------- sunucu konusmasi ----------
+function yBalonYaz(metin, kisa){
+  const b2 = document.getElementById("yBalon");
+  if(b2){ b2.textContent = metin; b2.classList.remove("yaz"); void b2.offsetWidth; b2.classList.add("yaz"); }
   const s2 = document.getElementById("sunucu");
   if(s2){
     s2.src = gv("maskot-konus.png");
     clearTimeout(window.__yPoz);
-    window.__yPoz = setTimeout(()=>{ s2.src = gv("maskot-duz.png"); }, Math.min(4500, 900 + metin.length*45));
+    window.__yPoz = setTimeout(()=>{ s2.src = gv("maskot-duz.png"); }, Math.min(5000, 900 + metin.length*45));
   }
-  try{
-    if(SES_ACIK() && window.speechSynthesis){
-      speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(metin);
-      u.lang = "tr-TR"; u.rate = rehberHiz(); u.pitch = rehberPerde();
-      const ses = rehberSesi(); if(ses) u.voice = ses;
-      speechSynthesis.speak(u);
-    }
-  }catch(e){}
+  melkorKonus(metin);
+  // konusma suresince bekle ki ust uste binmesin
+  return new Promise(r=>setTimeout(r, Math.min(kisa ? 2600 : 5200, 900 + metin.length*58)));
 }
 
 function seyirciTepki(el){
