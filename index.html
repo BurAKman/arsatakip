@@ -735,6 +735,9 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .yakinda span{display:block;margin-top:9px;font-size:11px;letter-spacing:.08em;color:var(--ink-3);font-style:italic}
 
 /* ---- REHBER ---- */
+// sarayin icindeki bilge: uc sihirbaz pozu
+const BILGE = { duz:"melkor-bilge-1.webp", parmak:"melkor-bilge-2.webp", dusun:"melkor-bilge-3.webp" };
+const BILGE_DONGU = ["parmak","duz","dusun"];
 .rehberSahne{position:relative;height:clamp(210px,33vh,310px);margin-bottom:10px;overflow:hidden;
   background:radial-gradient(70% 70% at 50% 110%,rgba(138,107,255,.35),transparent 65%),
     linear-gradient(180deg,rgba(10,7,26,.2),rgba(6,4,16,.85));
@@ -742,7 +745,7 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
   clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
 .rSis{position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(50% 30% at 50% 100%,rgba(123,232,220,.22),transparent 70%)}
-.rMaskot{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);height:86%;z-index:3;
+.rMaskot{position:absolute;bottom:-4%;left:50%;transform:translateX(-50%);height:104%;z-index:3;
   filter:drop-shadow(0 10px 20px rgba(0,0,0,.8));animation:maskotNefes 3.6s ease-in-out infinite}
 .rMaskot.ters{transform:translateX(-50%) scaleX(-1)}
 .rMaskot.yuruyor{animation:rYuru .4s ease-in-out infinite}
@@ -985,6 +988,31 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .hMerkez{position:absolute;right:12px;bottom:14px;z-index:8;width:42px;height:42px;cursor:pointer;
   font-size:18px;color:#E8C98A;background:rgba(10,7,20,.8);border:1px solid rgba(232,201,138,.55);border-radius:50%;
   box-shadow:0 0 16px rgba(232,201,138,.35)}
+
+/* haritada gezen maskot */
+.hGezgin{position:absolute;width:26%;transform:translate(-50%,-100%);z-index:7;cursor:pointer}
+.hGezgin img{position:relative;z-index:1;width:100%;display:block;pointer-events:none;
+  filter:drop-shadow(0 6px 10px rgba(0,0,0,.75));animation:maskotNefes 3.6s ease-in-out infinite}
+.hGezgin .hGolge{position:absolute;left:50%;bottom:-3px;width:55%;height:9px;transform:translateX(-50%);
+  border-radius:50%;background:rgba(0,0,0,.5);filter:blur(4px)}
+.hGezgin.ters img{transform:scaleX(-1)}
+.hGezgin.yuruyor img{animation:gezginYuru .42s ease-in-out infinite}
+@keyframes gezginYuru{0%,100%{translate:0 0;rotate:-2deg}25%{translate:0 -7px;rotate:1deg}
+  50%{translate:0 0;rotate:2deg}75%{translate:0 -4px;rotate:-1deg}}
+.hGezgin.zipla img{animation:gezginZipla .55s cubic-bezier(.3,1.5,.5,1)}
+@keyframes gezginZipla{0%{translate:0 0}35%{translate:0 -16px;scale:1.05 .95}65%{translate:0 0;scale:.96 1.04}100%{translate:0 0}}
+.hGezgin.kizgin img{animation:gezginKiz .08s linear 10;filter:drop-shadow(0 0 12px rgba(255,60,60,.9)) saturate(1.6)}
+@keyframes gezginKiz{0%,100%{translate:-3px 0}50%{translate:3px 0}}
+.hGezgin.tokezle img{animation:gezginTokezle 1.3s ease}
+@keyframes gezginTokezle{0%{rotate:0deg;translate:0 0}25%{rotate:78deg;translate:18px 10px}
+  60%{rotate:78deg;translate:18px 10px}85%{rotate:-8deg;translate:0 -4px}100%{rotate:0deg;translate:0 0}}
+.hGezgin.kavruldu img{filter:brightness(.25) sepia(1) contrast(1.4) drop-shadow(0 0 14px rgba(190,140,255,.9));
+  animation:gezginKiz .06s linear 14}
+.hGezgin .hBalon{z-index:3}
+.hHedef{position:absolute;width:26px;height:26px;transform:translate(-50%,-50%);border-radius:50%;
+  border:2px solid #E8C98A;opacity:0;pointer-events:none;z-index:6}
+.hHedef.acik{animation:hedefAc 1.2s ease-out}
+@keyframes hedefAc{0%{opacity:1;transform:translate(-50%,-50%) scale(.3)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.2)}}
 
 /* bilge paneli */
 .hPanel{position:fixed;left:0;right:0;bottom:0;z-index:160;padding:14px 16px calc(16px + env(safe-area-inset-bottom,0px));
@@ -1653,7 +1681,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 6.0";
+const SURUM_MELKOR = "beta 6.1";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -1809,19 +1837,30 @@ const RUTBELER = [
 ];
 const rutbeAdi = lv => (RUTBELER.find(r=>lv >= r.lv) || RUTBELER[RUTBELER.length-1]).ad;
 
-// her menu acilisi bir puan; UC puanda bir seviye atlanir
-const SEVIYE_ADIM = 3;
+// Seviye: 10'a kadar her 3 mekan girisinde bir seviye;
+// 10'dan sonra her seviye bir oncekinden 2 giris daha fazla ister (5, 7, 9, 11 ...)
+const seviyeGerekli = lv => lv < 10 ? 3 : 3 + (lv - 9) * 2;
 const seviyePuan = () => +(localStorage.getItem("seviyePuan") || 0);
 
-function puanEkle(){
-  const p = (seviyePuan() + 1) % SEVIYE_ADIM;
-  localStorage.setItem("seviyePuan", p);
-  if(p === 0){
-    const yeni = kullaniciSeviye() + 1;
-    localStorage.setItem("seviye", yeni);
-    return { seviye:yeni, atladi:true, puan:0 };
+// yeni sisteme gecis: bir kereye mahsus herkes seviye 1'den baslar
+try{
+  if(!localStorage.getItem("seviyeSifirV2")){
+    localStorage.setItem("seviye", "1");
+    localStorage.setItem("seviyePuan", "0");
+    localStorage.setItem("seviyeSifirV2", "1");
   }
-  return { seviye:kullaniciSeviye(), atladi:false, puan:p };
+}catch(e){}
+
+function puanEkle(){
+  const lv = kullaniciSeviye();
+  const p = seviyePuan() + 1;
+  if(p >= seviyeGerekli(lv)){
+    localStorage.setItem("seviyePuan", "0");
+    localStorage.setItem("seviye", lv + 1);
+    return { seviye:lv + 1, atladi:true, puan:0 };
+  }
+  localStorage.setItem("seviyePuan", p);
+  return { seviye:lv, atladi:false, puan:p };
 }
 function kullaniciRozetHtml(){
   return "";                                // Melkor'da karakter plakasi ana sayfada duruyor
@@ -2553,7 +2592,7 @@ function rehberEkran(){
       <div class="rSis"></div>
       <div class="rHalka"></div>
       <div class="rZerre"></div>
-      <img class="rMaskot" id="rMaskot" src="${gv('maskot-duz.png')}" alt="">
+      <img class="rMaskot" id="rMaskot" src="${gv(BILGE.dusun)}" alt="">
       <div class="rRun" id="rRun"><span>祖</span><span>知</span><span>力</span><span>道</span><span>真</span></div>
       <div class="rDurumIsik" id="rIsik"></div>
     </div>
@@ -2583,7 +2622,7 @@ function rehberEkran(){
       : `${ad2} geldi. ${t.ziyaret}. gelişin, sayıyorum ben bunları.`;
     setTimeout(()=>{
       REHBER_GECMIS.push({ kim:"rehber", soz:selam });
-      rehberAkis(); rehberSoyle(selam);
+      rehberAkis(); rehberSoyle(selam, "dusun");
     }, 700);
   }
 }
@@ -2618,9 +2657,9 @@ function rehberSahneCanlandir(){
     m.classList.toggle("ters", yon < 0);
     m.classList.add("yuruyor");
     setTimeout(()=>m.classList.remove("yuruyor"), 1500);
-    if(Math.random() < 0.18){
-      m.src = gv("maskot-eller.png");
-      setTimeout(()=>{ if(!sahne.classList.contains("konusuyor")) m.src = gv("maskot-duz.png"); }, 1400);
+    if(Math.random() < 0.22){
+      m.src = gv(Math.random() < 0.5 ? BILGE.dusun : BILGE.parmak);
+      setTimeout(()=>{ if(!sahne.classList.contains("konusuyor")) m.src = gv(BILGE.duz); }, 1600);
     }
   }, 2600);
 }
@@ -2629,10 +2668,10 @@ function rehberDusunuyor(acik){
   const s2 = document.getElementById("rSahne");
   const m = document.getElementById("rMaskot");
   if(s2) s2.classList.toggle("dusunuyor", !!acik);
-  if(m) m.src = gv(acik ? "maskot-eller.png" : "maskot-duz.png");
+  if(m) m.src = gv(acik ? BILGE.dusun : BILGE.duz);
 }
 
-function rehberSoyle(metin){
+function rehberSoyle(metin, ilkPoz){
   const sahne = document.getElementById("rSahne");
   if(sahne){
     sahne.classList.add("konusuyor");
@@ -2644,14 +2683,18 @@ function rehberSoyle(metin){
   if(isik){ isik.classList.remove("parla"); void isik.offsetWidth; isik.classList.add("parla"); }
   const m = document.getElementById("rMaskot");
   if(m){
-    m.src = gv("maskot-konus.png");
-    clearTimeout(window.__rPoz); clearTimeout(window.__rPoz2);
-    window.__rPoz2 = setTimeout(()=>{
-      if(document.getElementById("rSahne")?.classList.contains("konusuyor")) m.src = gv("maskot-eller.png");
-      setTimeout(()=>{ if(document.getElementById("rSahne")?.classList.contains("konusuyor"))
-        m.src = gv("maskot-konus.png"); }, 700);
-    }, Math.min(2600, 700 + metin.length*18));
-    window.__rPoz = setTimeout(()=>{ m.src = gv("maskot-duz.png"); }, Math.min(9000, 1500 + metin.length*60));
+    clearInterval(window.__rPozDongu); clearTimeout(window.__rPoz);
+    let sira = Math.max(0, BILGE_DONGU.indexOf(ilkPoz || "parmak"));
+    m.src = gv(BILGE[BILGE_DONGU[sira]]);
+    window.__rPozDongu = setInterval(()=>{
+      if(!document.getElementById("rSahne")?.classList.contains("konusuyor")){
+        clearInterval(window.__rPozDongu); m.src = gv(BILGE.duz); return;
+      }
+      sira = (sira + 1) % BILGE_DONGU.length;
+      m.src = gv(BILGE[BILGE_DONGU[sira]]);
+    }, 1100);
+    window.__rPoz = setTimeout(()=>{ clearInterval(window.__rPozDongu); m.src = gv(BILGE.duz); },
+      Math.min(12000, 1800 + metin.length*65));
   }
   if(REHBER_SES_VERI){
     try{
@@ -2755,7 +2798,7 @@ function rehberTekme(){
   m.classList.remove("yuruyor","ters");
   m.style.transition = "none";
   try{ sesIkin(); }catch(e){}
-  m.src = gv("maskot-eller.png");
+  m.src = gv(BILGE.parmak);
   void m.offsetWidth;
   m.classList.add("tekmeAt");
   setTimeout(()=>{
@@ -2770,7 +2813,7 @@ function rehberTekme(){
     m.classList.remove("tekmeAt");
     sahne?.classList.remove("sarsintili");
     m.style.transition = "";
-    m.src = gv("maskot-duz.png");
+    m.src = gv(BILGE.duz);
   }, 1500);
 }
 
@@ -2852,6 +2895,76 @@ function rehberDinle(){
 }
 
 /* ---- KİM 500 MİLYAR İSTER ---- */
+// yapay zeka cevap vermezse devreye giren gercek bilgi sorulari
+const YEREL_SORULAR = [
+  { soru:"Bilge tavşanların berbere gittiğini iddia ediyor. Peki tavşanların dişleri neden sürekli kemirmeleri gerekecek kadar uzar?",
+    siklar:["Kemik olmadığı için","Ömür boyu uzayan dişleri olduğu için","Havuç yedikçe","Kış uykusu yüzünden"], dogru:1,
+    aciklama:"Tavşanların dişleri ömür boyu uzar, lifli bitkiler kemirerek aşındırırlar." },
+  { soru:"Kadim tomarlara göre değil, gerçeğe göre: Güneş sistemindeki en büyük gezegen hangisidir?",
+    siklar:["Satürn","Jüpiter","Neptün","Dünya"], dogru:1, aciklama:"Jüpiter, Güneş sisteminin en büyük gezegenidir." },
+  { soru:"Bilge'nin her gün yanlış hesapladığı soru: Bir yıl kaç gündür (artık yıl değilse)?",
+    siklar:["360","364","365","366"], dogru:2, aciklama:"Artık olmayan bir yıl 365 gündür." },
+  { soru:"Suyun deniz seviyesinde kaynama noktası kaç santigrat derecedir?",
+    siklar:["90","100","110","120"], dogru:1, aciklama:"Deniz seviyesinde su 100 °C'de kaynar." },
+  { soru:"İstanbul'u Avrupa ve Asya olarak ikiye ayıran boğazın adı nedir?",
+    siklar:["Çanakkale Boğazı","İstanbul Boğazı","Cebelitarık Boğazı","Hürmüz Boğazı"], dogru:1,
+    aciklama:"İstanbul Boğazı Karadeniz'i Marmara Denizi'ne bağlar." },
+  { soru:"Bir örümceğin kaç bacağı vardır? (Bilge sekizden fazla saydığını iddia ediyor.)",
+    siklar:["6","8","10","12"], dogru:1, aciklama:"Örümcekler sekiz bacaklıdır." },
+  { soru:"Mona Lisa tablosunu kim yapmıştır?",
+    siklar:["Michelangelo","Rafael","Leonardo da Vinci","Van Gogh"], dogru:2,
+    aciklama:"Mona Lisa, Leonardo da Vinci'nin eseridir." },
+  { soru:"Türkiye Cumhuriyeti hangi yıl ilan edilmiştir?",
+    siklar:["1920","1921","1923","1925"], dogru:2, aciklama:"Cumhuriyet 29 Ekim 1923'te ilan edildi." },
+  { soru:"Kimyasal formülü H2O olan madde nedir?",
+    siklar:["Tuz","Su","Hidrojen peroksit","Karbondioksit"], dogru:1, aciklama:"H2O suyun formülüdür." },
+  { soru:"Dünyanın en uzun nehirleri arasında sayılan ve Mısır'dan geçen nehir hangisidir?",
+    siklar:["Amazon","Nil","Tuna","Fırat"], dogru:1, aciklama:"Nil Nehri Mısır'dan geçerek Akdeniz'e dökülür." },
+  { soru:"Bir satranç tahtasında toplam kaç kare vardır?",
+    siklar:["48","56","64","81"], dogru:2, aciklama:"Satranç tahtası 8x8, yani 64 karedir." },
+  { soru:"Işığın boşluktaki hızı saniyede yaklaşık kaç kilometredir?",
+    siklar:["3.000","30.000","300.000","3.000.000"], dogru:2, aciklama:"Işık boşlukta saniyede yaklaşık 300.000 km yol alır." },
+  { soru:"Dünyanın uydusu olan Ay'a ilk ayak basan insan kimdir?",
+    siklar:["Yuri Gagarin","Neil Armstrong","Buzz Aldrin","Michael Collins"], dogru:1,
+    aciklama:"Neil Armstrong 1969'da Ay'a ayak basan ilk insandır." },
+  { soru:"Bir futbol takımı sahaya kaç oyuncuyla çıkar?",
+    siklar:["9","10","11","12"], dogru:2, aciklama:"Futbolda her takım sahada 11 oyuncuyla oynar." },
+  { soru:"Pi sayısının ilk iki ondalık basamağı nedir?",
+    siklar:["3,12","3,14","3,16","3,41"], dogru:1, aciklama:"Pi yaklaşık 3,14159'dur." },
+  { soru:"Arıların ürettiği ve ekmeğe sürülen tatlı madde nedir?",
+    siklar:["Pekmez","Bal","Reçel","Tahin"], dogru:1, aciklama:"Bal, arıların çiçek özünden ürettiği besindir." },
+  { soru:"Kutup ayılarının kürkü dışarıdan beyaz görünür; peki derileri ne renktir?",
+    siklar:["Beyaz","Pembe","Siyah","Sarı"], dogru:2, aciklama:"Kutup ayılarının derisi siyahtır." },
+  { soru:"Nasreddin Hoca'nın türbesi hangi ilimizdedir?",
+    siklar:["Konya","Eskişehir","Kayseri","Bursa"], dogru:0, aciklama:"Nasreddin Hoca'nın türbesi Konya'nın Akşehir ilçesindedir." },
+  { soru:"İnsan vücudundaki en büyük organ hangisidir?",
+    siklar:["Karaciğer","Beyin","Deri","Akciğer"], dogru:2, aciklama:"Deri, insan vücudunun en büyük organıdır." },
+  { soru:"Bir haftada kaç gün vardır? (Bilge dokuz dediği için sürgün edildi.)",
+    siklar:["5","6","7","8"], dogru:2, aciklama:"Bir hafta yedi gündür." },
+  { soru:"Olimpiyat halkaları kaç tanedir?",
+    siklar:["4","5","6","7"], dogru:1, aciklama:"Olimpiyat bayrağında beş halka bulunur." },
+  { soru:"Romeo ve Juliet adlı eseri kim yazmıştır?",
+    siklar:["Charles Dickens","William Shakespeare","Victor Hugo","Dante"], dogru:1,
+    aciklama:"Romeo ve Juliet, William Shakespeare'in eseridir." },
+  { soru:"Periyodik tabloda Fe sembolü hangi elementi gösterir?",
+    siklar:["Flor","Fosfor","Demir","Kurşun"], dogru:2, aciklama:"Fe, demirin sembolüdür." },
+  { soru:"Güneş sisteminde Güneş'e en yakın gezegen hangisidir?",
+    siklar:["Venüs","Merkür","Mars","Dünya"], dogru:1, aciklama:"Merkür, Güneş'e en yakın gezegendir." },
+  { soru:"Kaplumbağalar kabuklarından çıkıp başka kabuğa taşınabilir mi?",
+    siklar:["Evet, büyüdükçe değiştirirler","Hayır, kabuk iskeletlerinin parçasıdır","Sadece kışın","Sadece deniz kaplumbağaları"], dogru:1,
+    aciklama:"Kaplumbağa kabuğu omurga ve kaburgalarla kaynaşmıştır; çıkıp değiştiremezler." },
+  { soru:"Everest Dağı hangi sıradağlar üzerindedir?",
+    siklar:["Alpler","And Dağları","Himalayalar","Kafkaslar"], dogru:2, aciklama:"Everest, Himalayalar'dadır." },
+  { soru:"Bir düzine kaç tanedir?",
+    siklar:["10","12","14","20"], dogru:1, aciklama:"Bir düzine 12 adettir." },
+  { soru:"Gökkuşağında kaç ana renk sayılır?",
+    siklar:["5","6","7","8"], dogru:2, aciklama:"Gökkuşağında geleneksel olarak yedi renk sayılır." },
+  { soru:"Truva Savaşı'nın anlatıldığı destan hangisidir?",
+    siklar:["Odysseia","İlyada","Gılgamış","Şehname"], dogru:1, aciklama:"İlyada, Homeros'un Truva Savaşı'nı anlatan destanıdır." },
+  { soru:"Türkiye'nin başkenti neresidir? (Bilge hâlâ Melkor Sarayı diyor.)",
+    siklar:["İstanbul","İzmir","Ankara","Bursa"], dogru:2, aciklama:"Türkiye'nin başkenti Ankara'dır." }
+];
+
 const ODUL = ["1.000","2.000","5.000","10.000","25.000","50.000","100.000","250.000",
               "500.000","1 MİLYON","5 MİLYON","25 MİLYON","100 MİLYON","500 MİLYON","500 MİLYAR"];
 let YARISMA = null;
@@ -2970,14 +3083,20 @@ async function yarismaSoruAl(){
         body:{ mod:"yarisma", zorluk, sorulanlar: YARISMA.sorulanlar }
       });
       if(error){ neden = ad2 + ": " + (error.message || "çağrı hatası"); continue; }
-      if(data?.soruVerisi){ veri = data.soruVerisi; break; }
+      // cevap hangi bicimde gelirse gelsin oku
+      const aday = data?.soruVerisi || data?.veri || (data?.soru && data?.siklar ? data : null);
+      if(aday && Array.isArray(aday.siklar) && aday.siklar.length === 4 && typeof aday.dogru === "number"){
+        veri = aday; break;
+      }
       if(data?.hata) neden = data.hata;
     }catch(e){ neden = ad2 + ": " + (e.message || e); }
   }
+  // yapay zeka olmazsa yerel bankadan, daha once sorulmamis bir soru
   if(!veri){
-    alan.innerHTML = `<div class="ySoruKutu"><b>Soru gelmedi.</b><span>${esc(neden)}</span>
-      <button class="btn" style="margin-top:12px" onclick="yarismaSoruAl()">Tekrar dene</button></div>`;
-    return;
+    console.log("yarisma yapay zeka:", neden);
+    const kalan = YEREL_SORULAR.filter(q=>!YARISMA.sorulanlar.includes(q.soru.slice(0,60)));
+    const havuz = kalan.length ? kalan : YEREL_SORULAR;
+    veri = havuz[Math.floor(Math.random()*havuz.length)];
   }
   YARISMA.soruVerisi = veri;
   YARISMA.secilen = null; YARISMA.kilit = false; YARISMA.elenen = []; YARISMA.onaySayac = 0;
@@ -3425,11 +3544,13 @@ function menuGovde(tema){
 
         ${noktalar}
 
-        <!-- sarayin tepesindeki bilge -->
-        <div class="hBilge" id="hBilge" onclick="event.stopPropagation();bilgePanelAc()">
+        <!-- haritada gezen maskot -->
+        <div class="hGezgin" id="hGezgin" style="left:46%;top:62%" onclick="event.stopPropagation();gezginDokun()">
           <div class="hBalon" id="hBalon"></div>
-          <img src="${gv('maskot-duz.png')}" id="hBilgeImg" alt="">
+          <img src="${gv('maskot-duz.png')}" id="hGezginImg" alt="" draggable="false">
+          <i class="hGolge"></i>
         </div>
+        <div class="hHedef" id="hHedef"></div>
       </div>
 
       <!-- ust HUD: karakter plakasi -->
@@ -3438,23 +3559,12 @@ function menuGovde(tema){
         <span class="kBilgi">
           <b class="kad">${esc((kullaniciAdi()||"KAHRAMAN").toLocaleUpperCase("tr"))}</b>
           <span class="kSatir"><i class="lv">LVL ${kullaniciSeviye()}</i><i class="rutbe">${rutbeAdi(kullaniciSeviye())}</i></span>
-          <span class="kCubuk"><i style="width:${(seviyePuan()/SEVIYE_ADIM)*100}%"></i></span>
+          <span class="kCubuk"><i style="width:${(seviyePuan()/seviyeGerekli(kullaniciSeviye()))*100}%"></i></span>
         </span>
       </div>
       <button class="hMerkez" onclick="haritaUc(50,43,1,true)" aria-label="Saraya dön">✦</button>
     </div>
 
-    <!-- bilge sohbet paneli -->
-    <div class="hPanel" id="hPanel">
-      <div class="hPanelUst"><b>Bilge Kral</b>
-        <button onclick="bilgePanelKapat()" aria-label="Kapat">✕</button></div>
-      <div class="hPanelSoz" id="hPanelSoz">Sor bakalım, cevabı ben bilirim. Doğruluğu senin sorunun.</div>
-      <div class="rGiris">
-        <input id="hPanelMetin" placeholder="Bilgeye sor…" onkeydown="if(event.key==='Enter')bilgeSor()">
-        <button class="rGonder" onclick="bilgeSor()">Sor</button>
-      </div>
-      <button class="btn ghost" style="margin-top:10px" onclick="bilgePanelKapat();go('rehber')">Saraya Gir</button>
-    </div>
   </div>`;
 }
 
@@ -3491,9 +3601,22 @@ function haritaKur(){
   // ---- dokunma: tek parmak kaydir, iki parmak yakinlastir ----
   const parmaklar = new Map();
   let bas = null;
+  let uzunBas = null;
   kap.onpointerdown = e => {
     kap.setPointerCapture?.(e.pointerId);
     parmaklar.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    // uzun basma: maskot oraya yurusun
+    clearTimeout(uzunBas);
+    if(parmaklar.size === 1 && !e.target.closest(".hNokta,.hGezgin")){
+      const bx = e.clientX, by = e.clientY;
+      uzunBas = setTimeout(()=>{
+        const r = kap.getBoundingClientRect();
+        const px = ((bx - r.left - KAMERA.x) / KAMERA.olcek) / dunya.offsetWidth * 100;
+        const py = ((by - r.top - KAMERA.y) / KAMERA.olcek) / dunya.offsetHeight * 100;
+        if(px > 2 && px < 98 && py > 5 && py < 97) gezginOrayaGit(px, py);
+        uzunBas = null;
+      }, 650);
+    }
     dunya.style.transition = "none";
     if(parmaklar.size === 1) bas = { x:e.clientX, y:e.clientY, kx:KAMERA.x, ky:KAMERA.y };
     if(parmaklar.size === 2){
@@ -3504,6 +3627,8 @@ function haritaKur(){
   };
   kap.onpointermove = e => {
     if(!parmaklar.has(e.pointerId) || !bas) return;
+    const onceki = parmaklar.get(e.pointerId);
+    if(onceki && Math.hypot(e.clientX - onceki.x, e.clientY - onceki.y) > 6){ clearTimeout(uzunBas); }
     parmaklar.set(e.pointerId, { x:e.clientX, y:e.clientY });
     if(parmaklar.size === 1 && bas.kx != null && bas.mesafe == null){
       KAMERA.x = bas.kx + (e.clientX - bas.x);
@@ -3522,6 +3647,7 @@ function haritaKur(){
     haritaSinirla(); haritaUygula();
   };
   const birak = e => {
+    clearTimeout(uzunBas);
     parmaklar.delete(e.pointerId);
     if(parmaklar.size === 1){
       const [a] = [...parmaklar.values()];
@@ -3544,7 +3670,7 @@ function haritaKur(){
   });
 
   haritaAtmosfer();
-  bilgeLafDongusu();
+  gezginDongu();
 }
 
 function haritaSinirla(){
@@ -3584,7 +3710,13 @@ async function haritaNoktaAc(id){
   if(window.__haritaMesgul) return;
   const n = HARITA_NOKTALARI.find(x=>x.id === id);
   if(!n) return;
-  if(id === "saray"){ haritaUc(n.x, n.y, 1.9, true); setTimeout(bilgePanelAc, 650); return; }
+  if(id === "saray"){
+    window.__haritaMesgul = true;
+    haritaUc(n.x, n.y, 2.2, true);
+    gezginSoyle("Saraya mı? İçerideki halime selam söyle.");
+    setTimeout(()=>{ window.__haritaMesgul = false; go("rehber"); }, 850);
+    return;
+  }
   window.__haritaMesgul = true;
   try{
     haritaUc(n.x, n.y, 2.1, true);
@@ -3606,6 +3738,7 @@ function haritaAtmosfer(){
     const s2 = document.getElementById("hSimsek");
     if(!s2) return;
     s2.classList.remove("cak"); void s2.offsetWidth; s2.classList.add("cak");
+    try{ gezginSimsekKontrol(); }catch(e){}
     // uzak gok gurultusu
     try{
       const a = sesKutusu();
@@ -3626,65 +3759,157 @@ function haritaAtmosfer(){
   window.__simsekSaat = setTimeout(cak, 3500);
 }
 
-// ---------- sarayin tepesindeki bilge ----------
-const BILGE_LAF = [
-  "Ben buradan her şeyi görüyorum.", "Dört diyarın tek hâkimi benim, gerisi dekor.",
-  "Buz mağarasına girenler bir daha aynı olmadı. Ben hariç.", "Kül Kalesi'nde yarışma var, cesaretin varsa.",
-  "Köy hanında birileri yine saçma videolar izliyor.", "Vahadaki falcı benden öğrendi her şeyi.",
-  "Haritayı kaydırmayı bırak, bana soru sor.", "Ciddi iş arayan Mordor'a gitsin.",
-  "Bu sarayı ben tasarladım. Mimar sadece izledi.", "Oyun! Oyun! Oyun! Oyun!!!!!!!!"
+// ---------- haritada gezen maskot ----------
+// ayak basabilecegi noktalar (yuzde)
+const GEZGIN_DURAK = [
+  [21,31],[30,40],[12,44],[38,24],            // yesil
+  [66,40],[86,44],[72,31],[90,55],            // buz
+  [42,60],[58,60],[50,66],                    // saray cevresi
+  [22,80],[34,86],[12,62],                    // kul
+  [66,70],[84,86],[62,92],[88,68]             // kurak
 ];
-function bilgeLafDongusu(){
-  clearTimeout(window.__bilgeSaat);
-  const soyle = (metin) => {
-    const b2 = document.getElementById("hBalon");
-    const img = document.getElementById("hBilgeImg");
-    if(!b2) return;
-    b2.textContent = metin;
-    b2.classList.remove("acik"); void b2.offsetWidth; b2.classList.add("acik");
-    if(img){ img.src = gv("maskot-konus.png"); setTimeout(()=>{ img.src = gv("maskot-duz.png"); }, 2200); }
-    setTimeout(()=>b2.classList.remove("acik"), 4200);
-  };
-  const dongu = () => {
-    if(!document.getElementById("hBilge")) return;
-    if(!document.getElementById("hPanel")?.classList.contains("acik"))
-      soyle(BILGE_LAF[Math.floor(Math.random()*BILGE_LAF.length)]);
-    window.__bilgeSaat = setTimeout(dongu, 9000 + Math.random()*7000);
-  };
-  const ad2 = (kullaniciAdi() || "Kahraman");
-  window.__bilgeSaat = setTimeout(()=>{ soyle(`Hoş geldin ${ad2}. Geleceğini biliyordum.`);
-    window.__bilgeSaat = setTimeout(dongu, 8000); }, 1200);
+const GZ = { x:46, y:62, yuruyor:false, dokunus:[], kizgin:false, sonLaf:0 };
+
+function gezginBolge(x, y){
+  if(x > 35 && x < 65 && y > 30 && y < 66) return "saray";
+  if(x < 50 && y < 50) return "yesil";
+  if(x >= 50 && y < 52) return "buz";
+  if(x < 52) return "kul";
+  return "kurak";
 }
 
-function bilgePanelAc(){
-  document.getElementById("hPanel")?.classList.add("acik");
-  setTimeout(()=>document.getElementById("hPanelMetin")?.focus(), 250);
-}
-function bilgePanelKapat(){ document.getElementById("hPanel")?.classList.remove("acik"); }
+const GEZGIN_LAF = {
+  genel: ["Ciddi iş arayan Mordor'a gitsin.", "Oyun! Oyun! Oyun! Oyun!!!!!!!!",
+          "Bu haritayı ben çizdim, ressam sadece boyadı.", "Dört diyar, bir ben.",
+          "Haritayı kaydırıp durma, başım dönüyor.", "Kimse bana yol sormuyor, hepsi kayboluyor."],
+  yesil: ["Burası huzurlu. Fazla huzurlu. Şüpheli.", "Köylüler yine vergi vermedi bana.",
+          "Şu değirmeni ben icat ettim, rüzgâr sonradan geldi.", "Hanın içinde birileri yine saçma video izliyor."],
+  buz:   ["Brr! Sakalım dondu.", "Mağaradan ses geliyor. Bakmıyorum, bakmıyorum.",
+          "Buz Diyarı'nın kralı benim, soğuk sadece çalışanım.", "Burada kaybolan çok oldu, ben hariç."],
+  saray: ["Sarayım, benim sarayım.", "İçeride bilge halim oturuyor, ben onun sahadaki versiyonuyum.",
+          "Bu kuleleri ben saydım: hepsi benim."],
+  kul:   ["Ayağım yanıyor, bu lavı kim döktü?", "Şimşek bana çarpmaz, ben ondan hızlıyım.",
+          "Kül Kalesi'nde yarışma var, ödül 500 milyar. Benim hepsi zaten.", "Burası sıcak ama benim kadar değil."],
+  kurak: ["Su… su yok mu?", "Vaha gerçek mi, serap mı? Ben de bilmiyorum.",
+          "Kum ayakkabıma girdi, diyar bunu ödeyecek.", "Falcı yine kaderimi yanlış okudu."]
+};
+const lafAl = k => { const l = GEZGIN_LAF[k] || GEZGIN_LAF.genel; return l[Math.floor(Math.random()*l.length)]; };
 
-async function bilgeSor(){
-  const g = document.getElementById("hPanelMetin");
-  const soz = document.getElementById("hPanelSoz");
-  const soru = (g?.value || "").trim();
-  if(!soru || !soz) return;
-  g.value = "";
-  const img = document.getElementById("hBilgeImg");
-  if(kufurMu(soru)){
-    soz.textContent = "Küfür yok. Kırarım boynuzunu iblis.";
-    melkorKonus(soz.textContent);
+function gezginSoyle(metin, ses){
+  const b2 = document.getElementById("hBalon");
+  const img = document.getElementById("hGezginImg");
+  if(!b2) return;
+  b2.textContent = metin;
+  b2.classList.remove("acik"); void b2.offsetWidth; b2.classList.add("acik");
+  if(img && !GZ.yuruyor){ img.src = gv("maskot-konus.png"); setTimeout(()=>{ if(!GZ.yuruyor) img.src = gv("maskot-duz.png"); }, 2400); }
+  clearTimeout(window.__balonKapa);
+  window.__balonKapa = setTimeout(()=>b2.classList.remove("acik"), 4200);
+  GZ.sonLaf = Date.now();
+  if(ses) melkorKonus(metin);
+}
+
+// maskotu bir noktaya yurut
+function gezginYuru(x, y, hizli){
+  const el = document.getElementById("hGezgin");
+  const img = document.getElementById("hGezginImg");
+  if(!el) return Promise.resolve();
+  const mesafe = Math.hypot(x - GZ.x, y - GZ.y);
+  const sure = Math.max(700, Math.min(6000, mesafe * (hizli ? 38 : 95)));
+  el.classList.toggle("ters", x < GZ.x);
+  el.classList.add("yuruyor");
+  GZ.yuruyor = true;
+  if(img) img.src = gv("maskot-duz.png");
+  el.style.transition = `left ${sure}ms linear, top ${sure}ms linear`;
+  el.style.left = x + "%"; el.style.top = y + "%";
+  GZ.x = x; GZ.y = y;
+  return new Promise(coz=>setTimeout(()=>{
+    el.classList.remove("yuruyor");
+    el.style.transition = "";
+    GZ.yuruyor = false;
+    coz();
+  }, sure));
+}
+
+// kendi kendine gezinme ve soylenme
+function gezginDongu(){
+  clearTimeout(window.__gezginSaat);
+  const tur = async () => {
+    if(!document.getElementById("hGezgin")) return;
+    if(!GZ.yuruyor && !GZ.kizgin){
+      const r = Math.random();
+      if(r < 0.55){
+        const [x,y] = GEZGIN_DURAK[Math.floor(Math.random()*GEZGIN_DURAK.length)];
+        await gezginYuru(x, y);
+        if(Math.random() < 0.7) gezginSoyle(lafAl(gezginBolge(GZ.x, GZ.y)));
+      }else if(r < 0.85){
+        gezginSoyle(lafAl(Math.random() < 0.6 ? gezginBolge(GZ.x, GZ.y) : "genel"));
+      }else if(r < 0.93){
+        gezginTokezle();
+      }
+    }
+    window.__gezginSaat = setTimeout(tur, 5000 + Math.random()*6000);
+  };
+  const ad2 = kullaniciAdi() || "Kahraman";
+  setTimeout(()=>gezginSoyle(`Hoş geldin ${ad2}. Geleceğini biliyordum.`, true), 1100);
+  window.__gezginSaat = setTimeout(tur, 6500);
+}
+
+// arada bir tokezler
+function gezginTokezle(){
+  const el = document.getElementById("hGezgin");
+  if(!el) return;
+  el.classList.remove("tokezle"); void el.offsetWidth; el.classList.add("tokezle");
+  setTimeout(()=>{ el.classList.remove("tokezle"); gezginSoyle("Kimse görmedi, değil mi?"); }, 1300);
+}
+
+// dokununca tepki; ust uste dokunursan sinirlenir
+function gezginDokun(){
+  const simdi = Date.now();
+  GZ.dokunus = GZ.dokunus.filter(t => simdi - t < 4000);
+  GZ.dokunus.push(simdi);
+  const el = document.getElementById("hGezgin");
+  if(GZ.dokunus.length >= 5 && !GZ.kizgin){
+    GZ.kizgin = true; GZ.dokunus = [];
+    el?.classList.add("kizgin");
+    try{ sesIkin(); }catch(e){}
+    gezginSoyle("YETER! Dokunma dedim! Gidiyorum ben!", true);
+    const uzak = GEZGIN_DURAK.slice().sort((a,b)=>Math.hypot(b[0]-GZ.x,b[1]-GZ.y)-Math.hypot(a[0]-GZ.x,a[1]-GZ.y))[0];
+    setTimeout(async ()=>{
+      el?.classList.remove("kizgin");
+      await gezginYuru(uzak[0], uzak[1], true);
+      gezginSoyle("Buradan dokunamazsın. Sanırım.");
+      setTimeout(()=>{ GZ.kizgin = false; }, 4000);
+    }, 900);
     return;
   }
-  soz.textContent = "…";
-  if(img) img.src = gv("maskot-eller.png");
-  REHBER_GECMIS.push({ kim:"ben", soz:soru });
-  const cevap = await rehberCevap(soru);
-  REHBER_GECMIS.push({ kim:"rehber", soz:cevap });
-  soz.textContent = cevap;
-  if(img){ img.src = gv("maskot-konus.png"); setTimeout(()=>{ img.src = gv("maskot-duz.png"); }, 4000); }
-  if(REHBER_SES_VERI){
-    try{ const a = new Audio("data:audio/mp3;base64," + REHBER_SES_VERI); REHBER_SES_VERI = null;
-      window.__melkorSes?.pause(); window.__melkorSes = a; a.play().catch(()=>{}); }catch(e){}
-  }else melkorKonus(cevap);
+  const tepkiler = ["Ne var?", "Dürtme beni.", "Harita benden sorulur, sen gez.",
+    "Bir daha dokunursan bedel ödersin.", "Dokunmakla bilge olunmuyor.", "Beni mi arıyordun? Buradayım işte."];
+  el?.classList.remove("zipla"); void el?.offsetWidth; el?.classList.add("zipla");
+  gezginSoyle(tepkiler[Math.min(GZ.dokunus.length - 1, tepkiler.length - 1)]);
+}
+
+// haritaya uzun basinca oraya yurur
+function gezginOrayaGit(x, y){
+  const h = document.getElementById("hHedef");
+  if(h){ h.style.left = x + "%"; h.style.top = y + "%"; h.classList.remove("acik"); void h.offsetWidth; h.classList.add("acik"); }
+  const cevap = ["Oraya mı? Geliyorum.", "Emrin olur. Ama bir dahakine sen yürü.",
+    "Tamam, ama ücreti var.", "Yine mi yürüyorum? Peki."];
+  gezginSoyle(cevap[Math.floor(Math.random()*cevap.length)]);
+  gezginYuru(x, y, true).then(()=>{
+    gezginSoyle(lafAl(gezginBolge(x, y)));
+  });
+}
+
+// simsek cakinca Kul Diyari'ndaysa carpar
+function gezginSimsekKontrol(){
+  if(gezginBolge(GZ.x, GZ.y) !== "kul" || Math.random() < 0.35) return;
+  const el = document.getElementById("hGezgin");
+  if(!el) return;
+  setTimeout(()=>{
+    el.classList.add("kavruldu");
+    gezginSoyle("AAAH! Şimşek çarptı! Saçlarım zaten böyleydi, sorun yok.", true);
+    setTimeout(()=>el.classList.remove("kavruldu"), 3200);
+  }, 120);
 }
 
 // ---- Melkor sesleri: dosya gerekmez, anlik uretilir ----
@@ -3799,7 +4024,7 @@ function seviyeAtla(){
     const s2 = puanEkle();
     const r = document.getElementById("lvRozet");
     const cubuk = r?.querySelector(".kCubuk i");
-    if(cubuk) cubuk.style.width = (s2.atladi ? 100 : (s2.puan/SEVIYE_ADIM)*100) + "%";
+    if(cubuk) cubuk.style.width = (s2.atladi ? 100 : (s2.puan/seviyeGerekli(s2.seviye))*100) + "%";
 
     if(!s2.atladi){
       // sadece cubuk dolar, kisa bir tik sesi
