@@ -871,6 +871,133 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .rehberSahne[data-konu="teknoloji"] .rSis{background:radial-gradient(60% 40% at 50% 100%,rgba(123,232,220,.45),transparent 70%)}
 .rehberSahne[data-konu="doga"] .rSis{background:radial-gradient(60% 40% at 50% 100%,rgba(111,227,168,.4),transparent 70%)}
 
+/* ================= MELKOR · YASAYAN HARITA ================= */
+.haritaMod{position:relative}
+.hKap{position:relative;overflow:hidden;touch-action:none;user-select:none;
+  height:calc(100dvh - 118px);min-height:420px;margin:0 -14px;
+  background:#05040C;border-top:1px solid rgba(232,201,138,.25);border-bottom:1px solid rgba(232,201,138,.25)}
+.hDunya{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+.hResim{display:block;width:100%;height:100%;pointer-events:none;-webkit-user-drag:none}
+
+/* bolgeler */
+.hBolge{position:absolute;pointer-events:none;overflow:hidden}
+.hBolge.buz{left:50%;top:0;width:50%;height:52%}
+.hBolge.kul{left:0;top:48%;width:52%;height:52%}
+.hBolge.kurak{left:48%;top:55%;width:52%;height:45%}
+.hBolge.yesil{left:0;top:0;width:52%;height:50%}
+.hBolge i{position:absolute;display:block}
+
+/* kar */
+.hBolge .kar{inset:-20% 0 0 0;opacity:.75;
+  background-image:
+    radial-gradient(1.6px 1.6px at 12% 18%,#fff,transparent),radial-gradient(1.2px 1.2px at 32% 42%,#fff,transparent),
+    radial-gradient(1.8px 1.8px at 58% 12%,#fff,transparent),radial-gradient(1.3px 1.3px at 78% 36%,#fff,transparent),
+    radial-gradient(1.5px 1.5px at 90% 70%,#fff,transparent),radial-gradient(1.2px 1.2px at 22% 78%,#fff,transparent),
+    radial-gradient(1.7px 1.7px at 46% 64%,#fff,transparent),radial-gradient(1.1px 1.1px at 68% 88%,#fff,transparent);
+  background-size:140px 140px;animation:karYag 9s linear infinite}
+.hBolge .kar.k2{opacity:.45;background-size:90px 90px;animation-duration:6s}
+@keyframes karYag{to{background-position:30px 140px}}
+
+/* korlar */
+.hBolge .kor{inset:0 0 -20% 0;opacity:.85;
+  background-image:
+    radial-gradient(2px 2px at 14% 80%,#FFB35A,transparent),radial-gradient(1.6px 1.6px at 36% 60%,#FF6B3A,transparent),
+    radial-gradient(2.2px 2.2px at 62% 88%,#FFD27A,transparent),radial-gradient(1.4px 1.4px at 82% 70%,#FF7A3A,transparent),
+    radial-gradient(1.8px 1.8px at 48% 40%,#FFB35A,transparent),radial-gradient(1.5px 1.5px at 24% 30%,#FF5A2A,transparent);
+  background-size:160px 160px;animation:korYuksel 7s linear infinite;filter:drop-shadow(0 0 3px #FF7A3A)}
+.hBolge .kor.k2{background-size:110px 110px;animation-duration:4.6s;opacity:.6}
+@keyframes korYuksel{to{background-position:-20px -160px}}
+.hBolge .simsek{inset:0;background:radial-gradient(60% 50% at 45% 20%,rgba(210,170,255,.85),rgba(140,90,255,.3) 40%,transparent 70%);
+  opacity:0;mix-blend-mode:screen}
+.hBolge .simsek.cak{animation:simsekCak .9s ease-out}
+@keyframes simsekCak{0%{opacity:0}6%{opacity:1}12%{opacity:.15}18%{opacity:.85}40%{opacity:.1}100%{opacity:0}}
+
+/* kurak: kum ve sicak titremesi */
+.hBolge .kum{inset:0;opacity:.35;
+  background-image:repeating-linear-gradient(100deg,transparent 0 40px,rgba(255,210,140,.25) 42px,transparent 60px);
+  background-size:300px 100%;animation:kumAk 8s linear infinite}
+@keyframes kumAk{to{background-position:300px 0}}
+.hBolge .sicak{inset:0;background:linear-gradient(0deg,rgba(255,170,80,.12),transparent 60%);
+  animation:sicakTitre 3s ease-in-out infinite;mix-blend-mode:screen}
+@keyframes sicakTitre{0%,100%{opacity:.4;transform:scaleY(1)}50%{opacity:.8;transform:scaleY(1.02)}}
+
+/* yesil: duman ve kuslar */
+.hBolge .duman{width:18px;height:18px;border-radius:50%;background:rgba(230,230,230,.45);filter:blur(4px);
+  animation:dumanCik 5s ease-out infinite}
+@keyframes dumanCik{0%{transform:translate(0,0) scale(.4);opacity:0}20%{opacity:.7}
+  100%{transform:translate(14px,-48px) scale(2.2);opacity:0}}
+.hBolge .kus{left:-10%;width:14px;height:6px;
+  background:
+    linear-gradient(35deg,transparent 45%,#1A1A1A 46% 54%,transparent 55%) left/50% 100% no-repeat,
+    linear-gradient(-35deg,transparent 45%,#1A1A1A 46% 54%,transparent 55%) right/50% 100% no-repeat;
+  animation:kusUc 22s linear infinite}
+.hBolge .kus.k2{animation-duration:30s;animation-delay:-11s;transform:scale(.7)}
+@keyframes kusUc{0%{left:-10%;margin-top:0}50%{margin-top:-14px}100%{left:110%;margin-top:4px}}
+
+/* saray isigi */
+.hSaray{position:absolute;left:30%;top:28%;width:40%;height:30%;pointer-events:none}
+.hSaray .huzme{inset:-30% 10% 0 10%;
+  background:conic-gradient(from 180deg at 50% 100%,transparent 0deg,rgba(255,235,180,.22) 12deg,transparent 24deg,
+    rgba(255,235,180,.16) 44deg,transparent 60deg,rgba(255,235,180,.2) 300deg,transparent 320deg);
+  filter:blur(4px);animation:huzmeSalin 6s ease-in-out infinite;mix-blend-mode:screen}
+@keyframes huzmeSalin{0%,100%{opacity:.5}50%{opacity:1}}
+.hSaray .zerre{inset:0;background-image:
+    radial-gradient(1.6px 1.6px at 20% 70%,#FFE9A8,transparent),radial-gradient(1.4px 1.4px at 70% 60%,#FFE9A8,transparent),
+    radial-gradient(1.8px 1.8px at 45% 85%,#fff,transparent),radial-gradient(1.2px 1.2px at 85% 80%,#FFE9A8,transparent);
+  background-size:120px 120px;animation:korYuksel 8s linear infinite}
+
+/* nefes alan isiklar */
+.hIsik{position:absolute;width:70px;height:70px;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
+  mix-blend-mode:screen;animation:isikNefes 3.2s ease-in-out infinite}
+.hIsik.magara{background:radial-gradient(circle,rgba(120,190,255,.85),rgba(80,140,255,.25) 45%,transparent 70%)}
+.hIsik.lav{width:110px;height:110px;background:radial-gradient(circle,rgba(255,110,40,.7),rgba(255,60,20,.2) 45%,transparent 70%)}
+@keyframes isikNefes{0%,100%{opacity:.45;transform:translate(-50%,-50%) scale(.9)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}}
+
+/* mekan noktalari */
+.hNokta{position:absolute;width:34px;height:34px;transform:translate(-50%,-50%);padding:0;border:0;background:none;
+  cursor:pointer;z-index:5}
+.hNokta .hHalka{position:absolute;inset:0;border-radius:50%;border:2px solid var(--nr);
+  box-shadow:0 0 14px var(--nr);animation:hHalka 2.2s ease-out infinite}
+.hNokta .hCekirdek{position:absolute;inset:11px;border-radius:50%;background:var(--nr);box-shadow:0 0 12px var(--nr)}
+@keyframes hHalka{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.7);opacity:0}}
+.hNokta .hEtiket{position:absolute;left:50%;top:calc(100% + 4px);transform:translateX(-50%) scale(.9);white-space:nowrap;
+  padding:4px 9px;background:rgba(6,4,14,.82);border:1px solid color-mix(in srgb,var(--nr) 55%,transparent);
+  opacity:0;transition:opacity .3s ease, transform .3s ease;pointer-events:none;text-align:center}
+.hNokta .hEtiket b{display:block;font-family:"Cinzel",Georgia,serif;font-size:9px;letter-spacing:.1em;color:#F6F1E4}
+.hNokta .hEtiket small{display:block;font-size:7.5px;letter-spacing:.14em;color:var(--nr);text-transform:uppercase}
+.hKap.yakin .hNokta .hEtiket,.hNokta.secildi .hEtiket{opacity:1;transform:translateX(-50%) scale(1)}
+.hNokta.secildi .hCekirdek{animation:secPatla .8s ease-out}
+@keyframes secPatla{0%{transform:scale(1)}40%{transform:scale(2.4);box-shadow:0 0 40px var(--nr)}100%{transform:scale(1)}}
+
+/* sarayin tepesindeki bilge */
+.hBilge{position:absolute;left:49.5%;top:37.8%;width:40px;transform:translate(-50%,-100%);z-index:6;cursor:pointer}
+.hBilge img{width:100%;display:block;filter:drop-shadow(0 4px 8px rgba(0,0,0,.8));animation:maskotNefes 3.6s ease-in-out infinite}
+.hBalon{position:absolute;bottom:100%;left:50%;transform:translateX(-50%) translateY(6px) scale(.9);
+  min-width:130px;max-width:170px;padding:7px 9px;font-size:9px;line-height:1.35;text-align:center;
+  background:linear-gradient(160deg,rgba(252,246,230,.97),rgba(236,222,190,.95));color:#2A1E0C;
+  border:1px solid rgba(232,201,138,.8);box-shadow:0 8px 20px rgba(0,0,0,.6);
+  opacity:0;transition:opacity .25s ease, transform .25s cubic-bezier(.3,1.5,.5,1);pointer-events:none}
+.hBalon.acik{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+
+/* HUD */
+.hHud{position:absolute;top:8px;left:8px;right:8px;z-index:8;
+  background:linear-gradient(160deg,rgba(20,14,40,.82),rgba(6,4,16,.78)) !important;backdrop-filter:none}
+.hMerkez{position:absolute;right:12px;bottom:14px;z-index:8;width:42px;height:42px;cursor:pointer;
+  font-size:18px;color:#E8C98A;background:rgba(10,7,20,.8);border:1px solid rgba(232,201,138,.55);border-radius:50%;
+  box-shadow:0 0 16px rgba(232,201,138,.35)}
+
+/* bilge paneli */
+.hPanel{position:fixed;left:0;right:0;bottom:0;z-index:160;padding:14px 16px calc(16px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(180deg,rgba(24,16,44,.97),rgba(8,5,18,.98));
+  border-top:1px solid rgba(232,201,138,.5);box-shadow:0 -14px 40px rgba(0,0,0,.7);
+  transform:translateY(105%);transition:transform .38s cubic-bezier(.22,1,.36,1)}
+.hPanel.acik{transform:translateY(0)}
+.hPanelUst{display:flex;align-items:center;margin-bottom:10px}
+.hPanelUst b{font-family:"Cinzel",Georgia,serif;font-size:13px;letter-spacing:.16em;color:#E8C98A}
+.hPanelUst button{margin-left:auto;background:none;border:0;color:#A9A2C8;font-size:16px;cursor:pointer}
+.hPanelSoz{min-height:44px;padding:10px 12px;margin-bottom:10px;font-size:12.5px;line-height:1.45;color:#EAE6FA;
+  background:rgba(232,201,138,.07);border-left:2px solid rgba(232,201,138,.6)}
+
 /* ---- kart destesi ---- */
 .desteAlan{position:relative;margin-top:clamp(8px,1.6vh,16px)}
 .deste{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;
@@ -1526,7 +1653,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 5.7";
+const SURUM_MELKOR = "beta 6.0";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -1907,7 +2034,7 @@ const MASKOTLAR = {
 
 // hangi ekranda hangi karakter var; listede olmayan ekranda maskot cikmaz
 const EKRAN_MASKOT = {
-  ana: "melkor"
+  // ana ekranda bilge sarayin tepesinde duruyor, gezen maskot yok
 };
 let MASKOT = null;
 
@@ -3269,79 +3396,295 @@ function menuGovde(tema){
     </button>`;
   };
 
-  const MELKOR_MENU = [
-    { r:"tv",    i:"photo",  ad:"Melkor TV",   slug:"tv",     alt:"İnternetin absürd çukuru" },
-    { r:"zindan",i:"vector", ad:"Zindan",      slug:"zindan", alt:"Kapı henüz kapalı" },
-    { r:"carki", i:"globe",  ad:"Kader Çarkı", slug:"carki",  alt:"Çark dönmeye hazır" },
-    { r:"rehber",i:"akil",   ad:"Rehber",      slug:"rehber", alt:"Çağımızın bilge kişisine danış" }
-  ];
+  // ---------- MELKOR: yasayan harita ----------
+  const noktalar = HARITA_NOKTALARI.map(n=>`
+    <button class="hNokta" style="left:${n.x}%;top:${n.y}%;--nr:${n.renk}"
+      onclick="event.stopPropagation();haritaNoktaAc('${n.id}')" aria-label="${n.ad}">
+      <span class="hHalka"></span><span class="hCekirdek"></span>
+      <span class="hEtiket"><b>${n.ad}</b><small>${n.alt}</small></span>
+    </button>`).join("");
 
-  const deste = MELKOR_MENU.map(m=>{
-    const n = NADIRLIK[m.slug] || NADIRLIK.rehber;
-    return `
-    <div class="dKart" style="--nad:${n.renk}">
-      <button class="dYuz" onclick="melkorAc(this.closest('.dKart'),'${m.r}','${m.slug}')"
-        oncontextmenu="event.preventDefault();melkorAc(this.closest('.dKart'),'${m.r}','${m.slug}',true)">
-        <span class="dGorsel" style="background-image:url('${gv("melkor-bg-" + m.slug + ".jpg")}')"></span>
-        <span class="dSis"></span>
-        <span class="dUst">
-          <span class="dIkon">${svg(m.i)}</span>
-          <span class="dNadir">${n.ad}</span>
-        </span>
-        <span class="dAlt">
-          <b>${m.ad}</b>
-          <small>${m.alt}</small>
-          <span class="dYildiz">${yildizlar(n.yildiz)}</span>
-        </span>
-        <span class="dKenar"></span>
-        <span class="dParilti"></span>
-      </button>
-    </div>`;
-  }).join("");
+  return `<div class="melkor haritaMod">
+    <div class="hKap" id="hKap">
+      <div class="hDunya" id="hDunya">
+        <img class="hResim" id="hResim" src="${gv('melkor-harita.jpg')}" alt="" draggable="false">
 
-  return `<div class="melkor">
-    <div class="mKur karakterKutu" id="lvRozet">
-      <span class="kPortre"><img src="${gv('logo.png')}" alt=""></span>
-      <span class="kBilgi">
-        <b class="kad">${esc((kullaniciAdi()||"KAHRAMAN").toLocaleUpperCase("tr"))}</b>
-        <span class="kSatir"><i class="lv">LVL ${kullaniciSeviye()}</i><i class="rutbe">${rutbeAdi(kullaniciSeviye())}</i></span>
-        <span class="kCubuk"><i style="width:${(seviyePuan()/SEVIYE_ADIM)*100}%"></i></span>
-      </span>
+        <!-- bolge atmosferleri -->
+        <div class="hBolge buz"><i class="kar"></i><i class="kar k2"></i></div>
+        <div class="hIsik magara" style="left:78.5%;top:24.5%"></div>
+        <div class="hBolge kul"><i class="kor"></i><i class="kor k2"></i><i class="simsek" id="hSimsek"></i></div>
+        <div class="hIsik lav" style="left:17%;top:74%"></div>
+        <div class="hBolge kurak"><i class="kum"></i><i class="sicak"></i></div>
+        <div class="hBolge yesil">
+          <i class="duman" style="left:14%;top:39%"></i>
+          <i class="duman" style="left:44%;top:46%;animation-delay:1.6s"></i>
+          <i class="duman" style="left:30%;top:57%;animation-delay:3.1s"></i>
+          <i class="kus" style="top:16%"></i><i class="kus k2" style="top:28%"></i>
+        </div>
+        <div class="hSaray"><i class="huzme"></i><i class="zerre"></i></div>
+
+        ${noktalar}
+
+        <!-- sarayin tepesindeki bilge -->
+        <div class="hBilge" id="hBilge" onclick="event.stopPropagation();bilgePanelAc()">
+          <div class="hBalon" id="hBalon"></div>
+          <img src="${gv('maskot-duz.png')}" id="hBilgeImg" alt="">
+        </div>
+      </div>
+
+      <!-- ust HUD: karakter plakasi -->
+      <div class="hHud mKur karakterKutu" id="lvRozet">
+        <span class="kPortre"><img src="${gv('logo.png')}" alt=""></span>
+        <span class="kBilgi">
+          <b class="kad">${esc((kullaniciAdi()||"KAHRAMAN").toLocaleUpperCase("tr"))}</b>
+          <span class="kSatir"><i class="lv">LVL ${kullaniciSeviye()}</i><i class="rutbe">${rutbeAdi(kullaniciSeviye())}</i></span>
+          <span class="kCubuk"><i style="width:${(seviyePuan()/SEVIYE_ADIM)*100}%"></i></span>
+        </span>
+      </div>
+      <button class="hMerkez" onclick="haritaUc(50,43,1,true)" aria-label="Saraya dön">✦</button>
     </div>
 
-    <div class="desteAlan">
-      <div class="deste" id="deste">${deste}</div>
-      <div class="desteNokta" id="desteNokta"></div>
-      <div class="desteIpuc">kaydır · dokun · uzun bas</div>
+    <!-- bilge sohbet paneli -->
+    <div class="hPanel" id="hPanel">
+      <div class="hPanelUst"><b>Bilge Kral</b>
+        <button onclick="bilgePanelKapat()" aria-label="Kapat">✕</button></div>
+      <div class="hPanelSoz" id="hPanelSoz">Sor bakalım, cevabı ben bilirim. Doğruluğu senin sorunun.</div>
+      <div class="rGiris">
+        <input id="hPanelMetin" placeholder="Bilgeye sor…" onkeydown="if(event.key==='Enter')bilgeSor()">
+        <button class="rGonder" onclick="bilgeSor()">Sor</button>
+      </div>
+      <button class="btn ghost" style="margin-top:10px" onclick="bilgePanelKapat();go('rehber')">Saraya Gir</button>
     </div>
   </div>`;
 }
 
-// deste: ortadaki kart one cikar
-function desteKur(){
-  const d = document.getElementById("deste");
-  const nokta = document.getElementById("desteNokta");
-  if(!d) return;
-  const kartlar = [...d.querySelectorAll(".dKart")];
-  if(nokta) nokta.innerHTML = kartlar.map((_,i)=>`<i${i?"":' class="acik"'}></i>`).join("");
+// haritadaki mekanlar (yuzde koordinat)
+const HARITA_NOKTALARI = [
+  { id:"saray",  ad:"Bilge Kral'ın Sarayı", alt:"Rehber",            x:50,  y:48, renk:"#E8C98A", ekran:"rehber", slug:"rehber" },
+  { id:"buz",    ad:"Kuru Kafa Mağarası",   alt:"Zindan",            x:78.5,y:25, renk:"#7BB8FF", ekran:"zindan", slug:"zindan" },
+  { id:"kul",    ad:"Kül Kalesi",           alt:"Kim 500 Milyar",    x:17,  y:69, renk:"#FF6B5A", ekran:"yarisma",slug:"yarisma" },
+  { id:"yesil",  ad:"Köy Hanı",             alt:"Melkor TV",         x:21,  y:25, renk:"#6FE3A8", ekran:"tv",     slug:"tv" },
+  { id:"kurak",  ad:"Vaha Falcısı",         alt:"Kader Çarkı",       x:77,  y:77, renk:"#FFB35A", ekran:"carki",  slug:"carki" }
+];
 
-  const guncelle = () => {
-    const orta = d.scrollLeft + d.clientWidth/2;
-    let enYakin = 0, enAz = 1e9;
-    kartlar.forEach((k,i)=>{
-      const km = k.offsetLeft + k.offsetWidth/2;
-      const fark = Math.abs(km - orta);
-      if(fark < enAz){ enAz = fark; enYakin = i; }
-      const oran = Math.max(0, 1 - fark / (d.clientWidth*0.8));
-      k.style.transform = `scale(${0.84 + oran*0.16}) rotate(${((km-orta)/d.clientWidth)*-4}deg)`;
-      k.style.opacity = String(0.4 + oran*0.6);
-      k.classList.toggle("odak", fark < d.clientWidth*0.3);
-    });
-    nokta?.querySelectorAll("i").forEach((n,i)=>n.classList.toggle("acik", i === enYakin));
+// ---------- kamera: kaydirma, yakinlastirma, ucus ----------
+const KAMERA = { x:0, y:0, olcek:1, min:1, max:2.6 };
+
+function haritaKur(){
+  const kap = document.getElementById("hKap");
+  const dunya = document.getElementById("hDunya");
+  const img = document.getElementById("hResim");
+  if(!kap || !dunya || !img) return;
+
+  const hazir = () => {
+    // dunya genisligi = ekran genisligi, yukseklik resmin oraninda
+    const G = kap.clientWidth;
+    const Y = G * (img.naturalHeight / img.naturalWidth || 1672/941);
+    dunya.style.width = G + "px";
+    dunya.style.height = Y + "px";
+    KAMERA.min = Math.max(1, kap.clientHeight / Y);
+    KAMERA.olcek = Math.max(KAMERA.min, 1);
+    haritaUc(50, 43, KAMERA.olcek, false);
   };
-  d.addEventListener("scroll", guncelle, { passive:true });
-  window.addEventListener("resize", guncelle);
-  requestAnimationFrame(guncelle);
+  if(img.complete && img.naturalWidth) hazir(); else img.onload = hazir;
+
+  // ---- dokunma: tek parmak kaydir, iki parmak yakinlastir ----
+  const parmaklar = new Map();
+  let bas = null;
+  kap.onpointerdown = e => {
+    kap.setPointerCapture?.(e.pointerId);
+    parmaklar.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    dunya.style.transition = "none";
+    if(parmaklar.size === 1) bas = { x:e.clientX, y:e.clientY, kx:KAMERA.x, ky:KAMERA.y };
+    if(parmaklar.size === 2){
+      const [a,b2] = [...parmaklar.values()];
+      bas = { mesafe:Math.hypot(a.x-b2.x, a.y-b2.y), olcek:KAMERA.olcek,
+              ox:(a.x+b2.x)/2, oy:(a.y+b2.y)/2, kx:KAMERA.x, ky:KAMERA.y };
+    }
+  };
+  kap.onpointermove = e => {
+    if(!parmaklar.has(e.pointerId) || !bas) return;
+    parmaklar.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    if(parmaklar.size === 1 && bas.kx != null && bas.mesafe == null){
+      KAMERA.x = bas.kx + (e.clientX - bas.x);
+      KAMERA.y = bas.ky + (e.clientY - bas.y);
+    }else if(parmaklar.size === 2 && bas.mesafe){
+      const [a,b2] = [...parmaklar.values()];
+      const m = Math.hypot(a.x-b2.x, a.y-b2.y);
+      const yeni = Math.min(KAMERA.max, Math.max(KAMERA.min, bas.olcek * m / bas.mesafe));
+      const r = kap.getBoundingClientRect();
+      const ox = bas.ox - r.left, oy = bas.oy - r.top;
+      // parmaklarin ortasi sabit kalsin
+      KAMERA.x = ox - (ox - bas.kx) * (yeni / bas.olcek);
+      KAMERA.y = oy - (oy - bas.ky) * (yeni / bas.olcek);
+      KAMERA.olcek = yeni;
+    }
+    haritaSinirla(); haritaUygula();
+  };
+  const birak = e => {
+    parmaklar.delete(e.pointerId);
+    if(parmaklar.size === 1){
+      const [a] = [...parmaklar.values()];
+      bas = { x:a.x, y:a.y, kx:KAMERA.x, ky:KAMERA.y };
+    }else if(!parmaklar.size) bas = null;
+  };
+  kap.onpointerup = birak; kap.onpointercancel = birak;
+
+  // cift dokunusla yakinlas
+  let sonDokunus = 0;
+  kap.addEventListener("click", e => {
+    const simdi = Date.now();
+    if(simdi - sonDokunus < 300){
+      const r = kap.getBoundingClientRect();
+      const px = ((e.clientX - r.left - KAMERA.x) / KAMERA.olcek) / dunya.offsetWidth * 100;
+      const py = ((e.clientY - r.top - KAMERA.y) / KAMERA.olcek) / dunya.offsetHeight * 100;
+      haritaUc(px, py, KAMERA.olcek < 1.6 ? 2 : KAMERA.min, true);
+    }
+    sonDokunus = simdi;
+  });
+
+  haritaAtmosfer();
+  bilgeLafDongusu();
+}
+
+function haritaSinirla(){
+  const kap = document.getElementById("hKap");
+  const dunya = document.getElementById("hDunya");
+  if(!kap || !dunya) return;
+  const G = dunya.offsetWidth * KAMERA.olcek, Y = dunya.offsetHeight * KAMERA.olcek;
+  const KG = kap.clientWidth, KY = kap.clientHeight;
+  KAMERA.x = G <= KG ? (KG - G)/2 : Math.min(0, Math.max(KG - G, KAMERA.x));
+  KAMERA.y = Y <= KY ? (KY - Y)/2 : Math.min(0, Math.max(KY - Y, KAMERA.y));
+}
+
+function haritaUygula(){
+  const dunya = document.getElementById("hDunya");
+  if(dunya) dunya.style.transform = `translate(${KAMERA.x}px,${KAMERA.y}px) scale(${KAMERA.olcek})`;
+  // yakinlastikca etiketler gorunur
+  document.getElementById("hKap")?.classList.toggle("yakin", KAMERA.olcek > 1.35);
+}
+
+// kamerayi yuzde koordinata uc
+function haritaUc(px, py, olcek, animasyon){
+  const kap = document.getElementById("hKap");
+  const dunya = document.getElementById("hDunya");
+  if(!kap || !dunya) return;
+  KAMERA.olcek = Math.min(KAMERA.max, Math.max(KAMERA.min, olcek || KAMERA.olcek));
+  const hx = dunya.offsetWidth * px/100 * KAMERA.olcek;
+  const hy = dunya.offsetHeight * py/100 * KAMERA.olcek;
+  KAMERA.x = kap.clientWidth/2 - hx;
+  KAMERA.y = kap.clientHeight/2 - hy;
+  haritaSinirla();
+  dunya.style.transition = animasyon ? "transform .75s cubic-bezier(.22,1,.36,1)" : "none";
+  haritaUygula();
+}
+
+// mekana dokununca: kamera uc, mekan parlasin, seviye puani, sonra git
+async function haritaNoktaAc(id){
+  if(window.__haritaMesgul) return;
+  const n = HARITA_NOKTALARI.find(x=>x.id === id);
+  if(!n) return;
+  if(id === "saray"){ haritaUc(n.x, n.y, 1.9, true); setTimeout(bilgePanelAc, 650); return; }
+  window.__haritaMesgul = true;
+  try{
+    haritaUc(n.x, n.y, 2.1, true);
+    const el = [...document.querySelectorAll(".hNokta")].find(b=>b.getAttribute("aria-label") === n.ad);
+    el?.classList.add("secildi");
+    try{ sesTekme(); }catch(e){}
+    await new Promise(r=>setTimeout(r, 800));
+    try{ await seviyeAtla(); }catch(e){}
+    go(n.ekran);
+  }finally{
+    window.__haritaMesgul = false;
+  }
+}
+
+// ---------- atmosfer: simsek, lav nabzi ----------
+function haritaAtmosfer(){
+  clearTimeout(window.__simsekSaat);
+  const cak = () => {
+    const s2 = document.getElementById("hSimsek");
+    if(!s2) return;
+    s2.classList.remove("cak"); void s2.offsetWidth; s2.classList.add("cak");
+    // uzak gok gurultusu
+    try{
+      const a = sesKutusu();
+      if(a){
+        const t = a.currentTime + 0.25;
+        const b2 = a.createBuffer(1, Math.floor(a.sampleRate*1.6), a.sampleRate);
+        const d = b2.getChannelData(0);
+        for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/d.length, 2);
+        const src = a.createBufferSource(); src.buffer = b2;
+        const f = a.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 160;
+        const g = a.createGain(); g.gain.value = 0.35;
+        src.connect(f); f.connect(g); g.connect(a.destination);
+        src.start(t);
+      }
+    }catch(e){}
+    window.__simsekSaat = setTimeout(cak, 7000 + Math.random()*9000);
+  };
+  window.__simsekSaat = setTimeout(cak, 3500);
+}
+
+// ---------- sarayin tepesindeki bilge ----------
+const BILGE_LAF = [
+  "Ben buradan her şeyi görüyorum.", "Dört diyarın tek hâkimi benim, gerisi dekor.",
+  "Buz mağarasına girenler bir daha aynı olmadı. Ben hariç.", "Kül Kalesi'nde yarışma var, cesaretin varsa.",
+  "Köy hanında birileri yine saçma videolar izliyor.", "Vahadaki falcı benden öğrendi her şeyi.",
+  "Haritayı kaydırmayı bırak, bana soru sor.", "Ciddi iş arayan Mordor'a gitsin.",
+  "Bu sarayı ben tasarladım. Mimar sadece izledi.", "Oyun! Oyun! Oyun! Oyun!!!!!!!!"
+];
+function bilgeLafDongusu(){
+  clearTimeout(window.__bilgeSaat);
+  const soyle = (metin) => {
+    const b2 = document.getElementById("hBalon");
+    const img = document.getElementById("hBilgeImg");
+    if(!b2) return;
+    b2.textContent = metin;
+    b2.classList.remove("acik"); void b2.offsetWidth; b2.classList.add("acik");
+    if(img){ img.src = gv("maskot-konus.png"); setTimeout(()=>{ img.src = gv("maskot-duz.png"); }, 2200); }
+    setTimeout(()=>b2.classList.remove("acik"), 4200);
+  };
+  const dongu = () => {
+    if(!document.getElementById("hBilge")) return;
+    if(!document.getElementById("hPanel")?.classList.contains("acik"))
+      soyle(BILGE_LAF[Math.floor(Math.random()*BILGE_LAF.length)]);
+    window.__bilgeSaat = setTimeout(dongu, 9000 + Math.random()*7000);
+  };
+  const ad2 = (kullaniciAdi() || "Kahraman");
+  window.__bilgeSaat = setTimeout(()=>{ soyle(`Hoş geldin ${ad2}. Geleceğini biliyordum.`);
+    window.__bilgeSaat = setTimeout(dongu, 8000); }, 1200);
+}
+
+function bilgePanelAc(){
+  document.getElementById("hPanel")?.classList.add("acik");
+  setTimeout(()=>document.getElementById("hPanelMetin")?.focus(), 250);
+}
+function bilgePanelKapat(){ document.getElementById("hPanel")?.classList.remove("acik"); }
+
+async function bilgeSor(){
+  const g = document.getElementById("hPanelMetin");
+  const soz = document.getElementById("hPanelSoz");
+  const soru = (g?.value || "").trim();
+  if(!soru || !soz) return;
+  g.value = "";
+  const img = document.getElementById("hBilgeImg");
+  if(kufurMu(soru)){
+    soz.textContent = "Küfür yok. Kırarım boynuzunu iblis.";
+    melkorKonus(soz.textContent);
+    return;
+  }
+  soz.textContent = "…";
+  if(img) img.src = gv("maskot-eller.png");
+  REHBER_GECMIS.push({ kim:"ben", soz:soru });
+  const cevap = await rehberCevap(soru);
+  REHBER_GECMIS.push({ kim:"rehber", soz:cevap });
+  soz.textContent = cevap;
+  if(img){ img.src = gv("maskot-konus.png"); setTimeout(()=>{ img.src = gv("maskot-duz.png"); }, 4000); }
+  if(REHBER_SES_VERI){
+    try{ const a = new Audio("data:audio/mp3;base64," + REHBER_SES_VERI); REHBER_SES_VERI = null;
+      window.__melkorSes?.pause(); window.__melkorSes = a; a.play().catch(()=>{}); }catch(e){}
+  }else melkorKonus(cevap);
 }
 
 // ---- Melkor sesleri: dosya gerekmez, anlik uretilir ----
@@ -3605,8 +3948,10 @@ async function anaMenu(){
   app.innerHTML = head() + menuGovde(tema);
   kurlar();
   yaklasanRozet();
-  maskotKur("ana");
-  if(tema === "loca") setTimeout(desteKur, 60);
+  if(tema === "loca"){
+    document.getElementById("maskot")?.remove();
+    setTimeout(haritaKur, 30);
+  }else maskotKur("ana");
 }
 
 
