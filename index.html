@@ -735,9 +735,7 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .yakinda span{display:block;margin-top:9px;font-size:11px;letter-spacing:.08em;color:var(--ink-3);font-style:italic}
 
 /* ---- REHBER ---- */
-// sarayin icindeki bilge: uc sihirbaz pozu
-const BILGE = { duz:"melkor-bilge-1.webp", parmak:"melkor-bilge-2.webp", dusun:"melkor-bilge-3.webp" };
-const BILGE_DONGU = ["parmak","duz","dusun"];
+
 .rehberSahne{position:relative;height:clamp(210px,33vh,310px);margin-bottom:10px;overflow:hidden;
   background:radial-gradient(70% 70% at 50% 110%,rgba(138,107,255,.35),transparent 65%),
     linear-gradient(180deg,rgba(10,7,26,.2),rgba(6,4,16,.85));
@@ -957,8 +955,8 @@ const BILGE_DONGU = ["parmak","duz","dusun"];
 @keyframes isikNefes{0%,100%{opacity:.45;transform:translate(-50%,-50%) scale(.9)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}}
 
 /* mekan noktalari */
-.hNokta{position:absolute;width:34px;height:34px;transform:translate(-50%,-50%);padding:0;border:0;background:none;
-  cursor:pointer;z-index:5}
+.hNokta{position:absolute;width:40px;height:40px;transform:translate(-50%,-50%);padding:0;border:0;background:none;
+  cursor:pointer;z-index:9}
 .hNokta .hHalka{position:absolute;inset:0;border-radius:50%;border:2px solid var(--nr);
   box-shadow:0 0 14px var(--nr);animation:hHalka 2.2s ease-out infinite}
 .hNokta .hCekirdek{position:absolute;inset:11px;border-radius:50%;background:var(--nr);box-shadow:0 0 12px var(--nr)}
@@ -1078,6 +1076,91 @@ const BILGE_DONGU = ["parmak","duz","dusun"];
 .desteNokta i.acik{background:#7BE8DC;box-shadow:0 0 10px rgba(123,232,220,.8)}
 .desteIpuc{margin-top:8px;text-align:center;font-family:"Cinzel",Georgia,serif;font-size:8px;
   letter-spacing:.24em;color:rgba(169,162,200,.5)}
+
+/* ---- Yalan Duellosu ---- */
+.duArena{position:relative;height:clamp(170px,25vh,240px);overflow:hidden;margin-bottom:12px;
+  background:
+    radial-gradient(60% 70% at 20% 110%,rgba(255,90,40,.45),transparent 65%),
+    radial-gradient(60% 70% at 80% 110%,rgba(138,107,255,.45),transparent 65%),
+    linear-gradient(180deg,#1A0808,#070309);
+  border:1px solid rgba(255,120,60,.35);
+  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
+.duArena::before{content:"";position:absolute;inset:0;opacity:.6;pointer-events:none;
+  background-image:radial-gradient(2px 2px at 20% 80%,#FFB35A,transparent),radial-gradient(1.6px 1.6px at 60% 70%,#FF7A3A,transparent),
+    radial-gradient(1.8px 1.8px at 85% 88%,#B49CFF,transparent),radial-gradient(1.4px 1.4px at 40% 60%,#FFD27A,transparent);
+  background-size:140px 140px;animation:korYuksel 6s linear infinite}
+.duZorba{position:absolute;left:4%;bottom:-4px;height:92%;z-index:2;filter:drop-shadow(0 8px 14px rgba(0,0,0,.8))}
+.duBilge{position:absolute;right:2%;bottom:-8%;height:112%;z-index:2;transform:scaleX(-1);
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.8))}
+.duVs{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:3;font-family:"Cinzel",Georgia,serif;
+  font-size:26px;font-weight:700;letter-spacing:.1em;color:#FFD79A;text-shadow:0 0 18px rgba(255,120,60,.9)}
+.duZorba.vur{animation:duVur .45s cubic-bezier(.3,1.4,.5,1)}
+@keyframes duVur{0%{transform:translateX(0)}45%{transform:translateX(60%) rotate(8deg) scale(1.08)}100%{transform:translateX(0)}}
+.duZorba.uzgun{animation:duUzgun .9s ease}
+@keyframes duUzgun{0%,100%{transform:rotate(0)}30%{transform:rotate(-5deg)}60%{transform:rotate(4deg)}}
+.duBilge.sars{animation:duSars .6s ease}
+@keyframes duSars{0%,100%{transform:scaleX(-1) translateX(0)}20%{transform:scaleX(-1) translateX(-16px) rotate(-6deg)}
+  45%{transform:scaleX(-1) translateX(10px) rotate(4deg)}70%{transform:scaleX(-1) translateX(-6px)}}
+.duBilge.gul{animation:duGul .8s ease}
+@keyframes duGul{0%,100%{transform:scaleX(-1) translateY(0)}25%{transform:scaleX(-1) translateY(-10px)}
+  50%{transform:scaleX(-1) translateY(0)}75%{transform:scaleX(-1) translateY(-6px)}}
+.duUcan{position:absolute;left:50%;top:18%;transform:translateX(-50%);z-index:4;white-space:nowrap;
+  font-family:"Cinzel",Georgia,serif;font-size:12px;font-weight:700;letter-spacing:.06em;padding:4px 10px;
+  animation:duUc 1.4s ease forwards}
+.duUcan.g{color:#0A1A10;background:linear-gradient(160deg,#9CF5C4,#4FD18A)}
+.duUcan.y{color:#1A0808;background:linear-gradient(160deg,#FF9C9C,#E0484A)}
+@keyframes duUc{0%{opacity:0;transform:translate(-50%,10px) scale(.8)}15%{opacity:1;transform:translate(-50%,0) scale(1.05)}
+  80%{opacity:1}100%{opacity:0;transform:translate(-50%,-22px)}}
+
+.duGiris{padding:22px 16px;text-align:center;
+  background:linear-gradient(160deg,rgba(80,24,12,.55),rgba(8,4,10,.9));border:1px solid rgba(255,140,80,.35);
+  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
+.duGiris b{display:block;font-family:"Cinzel",Georgia,serif;font-size:16px;letter-spacing:.18em;color:#FFD79A}
+.duGiris p{margin:12px 0 0;font-size:12px;line-height:1.55;color:#E8DCD4}
+.duG{color:#5FE39A;font-weight:700} .duY{color:#FF6B6B;font-weight:700}
+.duRekor{margin-top:12px;font-size:11px;letter-spacing:.08em;color:rgba(255,215,154,.8)}
+.duBasla{width:100%;margin-top:14px;padding:14px;font-family:"Cinzel",Georgia,serif;font-size:13px;font-weight:700;
+  letter-spacing:.14em;cursor:pointer;color:#1A0A04;background:linear-gradient(160deg,#FFD79A,#E08A3A);border:0;
+  clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);
+  box-shadow:0 0 24px rgba(255,140,60,.45)}
+
+.duUst{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.duCan{font-size:16px;color:#FF5A5A;letter-spacing:2px}
+.duCan i{font-style:normal;color:rgba(255,90,90,.2)}
+.duSeri{flex:1;text-align:center;font-family:"Cinzel",Georgia,serif;font-size:11px;letter-spacing:.14em;color:#FFD79A}
+.duSeri.yan{animation:kehanetYan .7s ease-in-out infinite}
+.duPuan{font-family:"Cinzel",Georgia,serif;font-size:20px;font-weight:700;color:#FFD79A}
+.duFitil{height:6px;margin-bottom:12px;background:rgba(255,255,255,.08);overflow:hidden}
+.duFitil i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#FF4A2A,#FFB35A,#FFF1B0);
+  box-shadow:0 0 12px rgba(255,150,60,.9)}
+.duKart{position:relative;min-height:130px;padding:20px 16px;text-align:center;touch-action:pan-y;cursor:grab;
+  display:flex;flex-direction:column;justify-content:center;transition:transform .25s ease, border-color .2s ease;
+  background:linear-gradient(160deg,rgba(40,24,64,.92),rgba(8,5,18,.95));border:1px solid rgba(180,156,255,.4);
+  clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+.duKart small{font-size:8.5px;letter-spacing:.22em;color:rgba(180,156,255,.8)}
+.duKart b{margin-top:8px;font-size:15px;line-height:1.45;color:#F6F1FF;font-weight:600}
+.duKart.egilG{border-color:#5FE39A} .duKart.egilY{border-color:#FF6B6B}
+.duKart.iyi{border-color:#5FE39A;box-shadow:inset 0 0 40px rgba(95,227,154,.25)}
+.duKart.kotu{border-color:#FF6B6B;box-shadow:inset 0 0 40px rgba(255,107,107,.25);animation:kartSarsil .42s ease}
+.duDamga{position:absolute;right:12px;top:10px;font-family:"Cinzel",Georgia,serif;font-size:11px;font-weight:800;
+  letter-spacing:.14em;padding:3px 8px;border:2px solid;opacity:0;transform:rotate(12deg) scale(1.6)}
+.duDamga.g,.duDamga.y{opacity:1;transform:rotate(12deg) scale(1);transition:all .25s cubic-bezier(.3,1.6,.5,1)}
+.duDamga.g{color:#5FE39A} .duDamga.y{color:#FF6B6B}
+.duTuslar{display:flex;gap:10px;margin-top:12px}
+.duTuslar button{flex:1;padding:18px 6px;font-family:"Cinzel",Georgia,serif;font-size:15px;font-weight:700;
+  letter-spacing:.14em;cursor:pointer;border:0;
+  clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px)}
+.duYalan{color:#1A0808;background:linear-gradient(160deg,#FF9C9C,#D83A3C)}
+.duGercek{color:#06180E;background:linear-gradient(160deg,#9CF5C4,#3BBE78)}
+.duTuslar button:active{transform:scale(.96)}
+.duSonuc{padding:26px 16px;text-align:center;
+  background:linear-gradient(160deg,rgba(80,24,12,.55),rgba(8,4,10,.9));border:1px solid rgba(255,140,80,.35);
+  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)}
+.duSonuc b{display:block;font-family:"Cinzel",Georgia,serif;font-size:17px;letter-spacing:.2em;color:#FFD79A}
+.duSonuc.rekor b{animation:kehanetYan .8s ease-in-out infinite}
+.duSonucPuan{margin:8px 0;font-family:"Cinzel",Georgia,serif;font-size:44px;font-weight:700;color:#FFF1D6;
+  text-shadow:0 0 22px rgba(255,150,60,.7)}
+.duSonuc span{display:block;font-size:11px;letter-spacing:.06em;color:rgba(232,220,212,.8)}
 
 /* ---- Kim 500 Milyar Ister ---- */
 .studyo{position:relative;height:clamp(200px,29vh,270px);overflow:hidden;margin-bottom:12px;
@@ -1681,7 +1764,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 6.1";
+const SURUM_MELKOR = "beta 6.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -2527,6 +2610,9 @@ function tomarOzeti(){
 }
 
 /* ---- REHBER ---- */
+// sarayin icindeki bilge: uc sihirbaz pozu
+const BILGE = { duz:"melkor-bilge-1.webp", parmak:"melkor-bilge-2.webp", dusun:"melkor-bilge-3.webp" };
+const BILGE_DONGU = ["parmak","duz","dusun"];
 let REHBER_GECMIS = [];
 let REHBER_DURUM = "";
 let REHBER_SES_VERI = null;
@@ -2558,13 +2644,13 @@ function seseHazirla(metin){
 }
 
 // tek merkez: once Azure sesi, olmazsa telefonun sesi. Bitince coz.
-async function melkorKonus(metin){
+async function melkorKonus(metin, stil){
   if(!SES_ACIK()) return;
   const duz = seseHazirla(metin);
   try{
     if(window.__melkorSes){ window.__melkorSes.pause(); window.__melkorSes = null; }
     for(const ad2 of ["rehber","swift-api"]){
-      const { data, error } = await sb.functions.invoke(ad2, { body:{ mod:"ses", soru:duz } });
+      const { data, error } = await sb.functions.invoke(ad2, { body:{ mod:"ses", soru:duz, stil: stil || "bilge" } });
       if(!error && data?.ses){
         const a = new Audio("data:audio/mp3;base64," + data.ses);
         window.__melkorSes = a;
@@ -2601,7 +2687,7 @@ function rehberEkran(){
     <div class="rEkTus">
       <button onclick="rehberKehanet()">KEHANET</button>
       <button onclick="rehberBak()">BANA BAK</button>
-      <button onclick="go('yarisma')">500 MİLYAR</button>
+      <button onclick="go('yarisma')">DÜELLO</button>
     </div>
     <div class="rGiris">
       <button class="rMik" id="rMik" onclick="rehberDinle()" aria-label="Konuş">🎤</button>
@@ -2704,8 +2790,8 @@ function rehberSoyle(metin, ilkPoz){
       window.__melkorSes = a;
       a.volume = SES_ACIK() ? 1 : 0;
       a.play().catch(()=>{});
-    }catch(e){ melkorKonus(metin); }
-  }else melkorKonus(metin);
+    }catch(e){ melkorKonus(metin, "bilge"); }
+  }else melkorKonus(metin, "bilge");
 }
 
 async function rehberSor(){
@@ -2892,6 +2978,250 @@ function rehberDinle(){
   t.onerror = () => toast("Duyamadım, tekrar dene");
   t.onend = () => d?.classList.remove("dinliyor");
   try{ t.start(); }catch(e){ d?.classList.remove("dinliyor"); }
+}
+
+/* ---- KÜL KALESİ: YALAN DÜELLOSU ---- */
+// Bilge iddia atar, sen fitil yanmadan karar verirsin. Hepsi dogrulanmis bilgi.
+const DUELLO_IDDIA = [
+  { s:"Ahtapotların üç kalbi vardır.", d:true },
+  { s:"Bal, doğru saklanırsa bozulmadan binlerce yıl dayanabilir.", d:true },
+  { s:"Venüs'te bir gün, Venüs'teki bir yıldan daha uzun sürer.", d:true },
+  { s:"Kutup ayılarının kürkünün altındaki derisi siyahtır.", d:true },
+  { s:"Güneş ışığı Dünya'ya yaklaşık 8 dakikada ulaşır.", d:true },
+  { s:"Mars'ın iki uydusu vardır.", d:true },
+  { s:"Van Gölü, Türkiye'nin en büyük gölüdür.", d:true },
+  { s:"Deniz atlarında yavruları erkekler taşır.", d:true },
+  { s:"İnsan vücudunun en büyük organı deridir.", d:true },
+  { s:"Mona Lisa tablosu Paris'teki Louvre Müzesi'ndedir.", d:true },
+  { s:"Penguenler Kuzey Kutbu'nda doğal olarak yaşamaz.", d:true },
+  { s:"Zürafanın boynunda da insandaki gibi yedi omur vardır.", d:true },
+  { s:"Elmas, karbon atomlarından oluşur.", d:true },
+  { s:"Yıldırım aynı yere birden fazla kez düşebilir.", d:true },
+  { s:"Kelebekler tadı ayaklarındaki alıcılarla da algılar.", d:true },
+  { s:"Ay'ın hep aynı yüzü Dünya'ya dönüktür.", d:true },
+  { s:"Ses boşlukta yayılamaz.", d:true },
+  { s:"Olimpiyat bayrağında beş halka vardır.", d:true },
+  { s:"Plaka kodu 06 olan il Ankara'dır.", d:true },
+  { s:"İstanbul 1453 yılında fethedilmiştir.", d:true },
+  { s:"Balinalar balık değil, memelidir.", d:true },
+  { s:"Botanik açıdan domates bir meyvedir.", d:true },
+  { s:"Örümceklerin sekiz bacağı vardır.", d:true },
+  { s:"Işık, sesten çok daha hızlı yayılır.", d:true },
+  { s:"Japon balıklarının hafızası yalnızca üç saniyedir.", d:false },
+  { s:"Çin Seddi uzaydan çıplak gözle rahatça görülür.", d:false },
+  { s:"Yarasalar tamamen kördür.", d:false },
+  { s:"İnsanlar beyinlerinin yalnızca yüzde onunu kullanır.", d:false },
+  { s:"Boğalar kırmızı rengi görünce öfkelenir.", d:false },
+  { s:"Develer hörgüçlerinde su depolar.", d:false },
+  { s:"Güneş sisteminin en sıcak gezegeni Merkür'dür.", d:false },
+  { s:"Devekuşları korkunca başlarını kuma gömer.", d:false },
+  { s:"Dünyanın en uzun nehri Tuna'dır.", d:false },
+  { s:"Avustralya'nın başkenti Sidney'dir.", d:false },
+  { s:"Örümcekler bir böcek türüdür.", d:false },
+  { s:"Kaplumbağalar kabuklarından çıkıp başka kabuğa taşınabilir.", d:false },
+  { s:"Everest'in zirvesinde su tam 100 derecede kaynar.", d:false },
+  { s:"Suyun kimyasal formülü CO2'dir.", d:false },
+  { s:"Türkiye Cumhuriyeti 1920 yılında ilan edilmiştir.", d:false },
+  { s:"Ay kendi ışığını üretir.", d:false },
+  { s:"Mars'ın kırmızı rengi yüzeyindeki lavlardan gelir.", d:false },
+  { s:"Güneş, Dünya'nın etrafında döner.", d:false },
+  { s:"Tavuklar hiç uçamaz, bir santim bile.", d:false },
+  { s:"Satranç tahtasında 81 kare vardır.", d:false },
+  { s:"Mona Lisa'yı Michelangelo yapmıştır.", d:false },
+  { s:"Işık Güneş'ten Dünya'ya bir saniyede ulaşır.", d:false }
+];
+
+const BILGE_GULUS = ["Hah! Yuttun!", "Ben demiştim, sen inanmıştın.", "Kadim Tomarlar kazandı!",
+  "Cahillik bulaşıcıdır, bak sana da geçti.", "Bir dahakine beni dinleme. Ya da dinle, eğleniyorum."];
+const ZORBA_TOKAT = ["Yalanı yakaladık!", "Al sana bilgelik!", "Zayıfı kandıramazsın bilge!",
+  "Bir tokat da benden!", "Gerçek her zaman kazanır. Ben de."];
+
+let DUELLO = null;
+const duelloRekorAnahtar = () => "duelloRekor_" + (kullaniciAdi() || "kahraman").toLocaleLowerCase("tr");
+
+function duelloEkran(){
+  DUELLO = null;
+  const rekor = +(localStorage.getItem(duelloRekorAnahtar()) || 0);
+  app.innerHTML = head("Yalan Düellosu","go('ana')") + `
+    <div class="duArena" id="duArena">
+      <img class="duZorba" id="duZorba" src="${gv('maskot-duz.png')}" alt="">
+      <img class="duBilge" id="duBilge" src="${gv(BILGE.duz)}" alt="">
+      <div class="duVs">VS</div>
+    </div>
+    <div id="duAlan">
+      <div class="duGiris">
+        <b>KÜL KALESİ DÜELLOSU</b>
+        <p>Bilge bir iddia atacak. Fitil yanıp bitmeden karar ver:
+          <span class="duG">GERÇEK</span> mi, <span class="duY">YALAN</span> mı?
+          Kartı sağa kaydır ya da tuşlara bas. Doğru bildikçe hızlanır, seri yaptıkça puan katlanır. Üç canın var.</p>
+        <div class="duRekor">En iyi skorun: <b>${rekor}</b></div>
+        <button class="duBasla" onclick="duelloBasla()">DÜELLOYA BAŞLA</button>
+      </div>
+    </div>`;
+}
+
+function duelloBasla(){
+  DUELLO = { can:3, puan:0, seri:0, enSeri:0, sure:7000, kalan:DUELLO_IDDIA.slice().sort(()=>Math.random()-0.5),
+             aktif:null, kilit:false, saat:null, tik:null, baslangic:0 };
+  gezginSesKapa();
+  melkorKonus("Düello başlasın! Bilge yalanlarını hazırla.", "gezgin");
+  duelloTur();
+}
+function gezginSesKapa(){ try{ window.__melkorSes?.pause(); }catch(e){} }
+
+function duelloTur(){
+  if(!DUELLO) return;
+  if(!DUELLO.kalan.length) DUELLO.kalan = DUELLO_IDDIA.slice().sort(()=>Math.random()-0.5);
+  DUELLO.aktif = DUELLO.kalan.pop();
+  DUELLO.kilit = false;
+  const alan = document.getElementById("duAlan");
+  if(!alan) return;
+  alan.innerHTML = `
+    <div class="duUst">
+      <span class="duCan">${"❤".repeat(DUELLO.can)}<i>${"❤".repeat(3-DUELLO.can)}</i></span>
+      <span class="duSeri ${DUELLO.seri>=3?"yan":""}">${DUELLO.seri>=3?"x"+(1+Math.floor(DUELLO.seri/3))+" SERİ":""}</span>
+      <span class="duPuan">${DUELLO.puan}</span>
+    </div>
+    <div class="duFitil"><i id="duFitil"></i></div>
+    <div class="duKart" id="duKart">
+      <small>BİLGE DİYOR Kİ</small>
+      <b>${esc(DUELLO.aktif.s)}</b>
+      <span class="duDamga" id="duDamga"></span>
+    </div>
+    <div class="duTuslar">
+      <button class="duYalan" onclick="duelloCevap(false)">YALAN</button>
+      <button class="duGercek" onclick="duelloCevap(true)">GERÇEK</button>
+    </div>`;
+  duelloKaydir();
+
+  // bilge iddiayi atarken parmagini kaldirir
+  const bl = document.getElementById("duBilge");
+  if(bl){ bl.src = gv(BILGE.parmak); bl.classList.remove("sars","gul"); }
+
+  // fitil
+  const f = document.getElementById("duFitil");
+  DUELLO.baslangic = Date.now();
+  if(f){
+    f.style.transition = "none"; f.style.width = "100%"; void f.offsetWidth;
+    f.style.transition = `width ${DUELLO.sure}ms linear`; f.style.width = "0%";
+  }
+  clearTimeout(DUELLO.saat); clearInterval(DUELLO.tik);
+  DUELLO.saat = setTimeout(()=>duelloCevap(null), DUELLO.sure);
+  DUELLO.tik = setInterval(()=>{
+    const kalanMs = DUELLO.sure - (Date.now() - DUELLO.baslangic);
+    if(kalanMs < 2200) duelloTik(kalanMs < 1000);
+  }, 380);
+}
+
+function duelloTik(sert){
+  try{
+    const a = sesKutusu(); if(!a) return;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = "square"; o.frequency.value = sert ? 1320 : 880;
+    g.gain.setValueAtTime(0.06, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + 0.06);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + 0.07);
+  }catch(e){}
+}
+
+// karti kaydirarak cevap: saga gercek, sola yalan
+function duelloKaydir(){
+  const k = document.getElementById("duKart");
+  if(!k) return;
+  let bx = null;
+  k.onpointerdown = e => { bx = e.clientX; k.setPointerCapture?.(e.pointerId); k.style.transition = "none"; };
+  k.onpointermove = e => {
+    if(bx == null) return;
+    const dx = e.clientX - bx;
+    k.style.transform = `translateX(${dx}px) rotate(${dx/18}deg)`;
+    k.classList.toggle("egilG", dx > 40); k.classList.toggle("egilY", dx < -40);
+  };
+  const birak = e => {
+    if(bx == null) return;
+    const dx = e.clientX - bx; bx = null;
+    k.style.transition = ""; k.classList.remove("egilG","egilY");
+    if(Math.abs(dx) > 90) duelloCevap(dx > 0);
+    else k.style.transform = "";
+  };
+  k.onpointerup = birak; k.onpointercancel = birak;
+}
+
+function duelloCevap(secim){
+  if(!DUELLO || DUELLO.kilit) return;
+  DUELLO.kilit = true;
+  clearTimeout(DUELLO.saat); clearInterval(DUELLO.tik);
+  const dogru = secim !== null && secim === DUELLO.aktif.d;
+  const kart = document.getElementById("duKart");
+  const damga = document.getElementById("duDamga");
+  const zb = document.getElementById("duZorba");
+  const bl = document.getElementById("duBilge");
+  const f = document.getElementById("duFitil");
+  if(f){ const w = getComputedStyle(f).width; f.style.transition = "none"; f.style.width = w; }
+
+  if(damga){
+    damga.textContent = DUELLO.aktif.d ? "GERÇEK" : "YALAN";
+    damga.className = "duDamga " + (DUELLO.aktif.d ? "g" : "y");
+  }
+  if(kart){
+    kart.style.transform = "";
+    kart.classList.add(dogru ? "iyi" : "kotu");
+  }
+
+  if(dogru){
+    DUELLO.seri++;
+    DUELLO.enSeri = Math.max(DUELLO.enSeri, DUELLO.seri);
+    const carpan = 1 + Math.floor(DUELLO.seri / 3);
+    const hizBonus = Math.max(0, Math.round((DUELLO.sure - (Date.now() - DUELLO.baslangic)) / 250));
+    DUELLO.puan += 10 * carpan + hizBonus;
+    DUELLO.sure = Math.max(2800, DUELLO.sure - 280);
+    if(zb){ zb.src = gv("maskot-eller.png"); zb.classList.remove("vur"); void zb.offsetWidth; zb.classList.add("vur"); }
+    setTimeout(()=>{
+      try{ sesTekme(); }catch(e){}
+      if(bl){ bl.src = gv(BILGE.dusun); bl.classList.remove("sars"); void bl.offsetWidth; bl.classList.add("sars"); }
+    }, 260);
+    duelloYazi(ZORBA_TOKAT[Math.floor(Math.random()*ZORBA_TOKAT.length)], "g");
+    if(DUELLO.seri > 0 && DUELLO.seri % 5 === 0) try{ sesSeviye(); }catch(e){}
+  }else{
+    DUELLO.can--;
+    DUELLO.seri = 0;
+    try{ sesIkin(); }catch(e){}
+    if(bl){ bl.src = gv(BILGE.duz); bl.classList.remove("gul"); void bl.offsetWidth; bl.classList.add("gul"); }
+    if(zb){ zb.classList.remove("uzgun"); void zb.offsetWidth; zb.classList.add("uzgun"); }
+    duelloYazi(secim === null ? "Süre bitti! " + BILGE_GULUS[0] : BILGE_GULUS[Math.floor(Math.random()*BILGE_GULUS.length)], "y");
+  }
+
+  setTimeout(()=>{
+    if(zb){ zb.src = gv("maskot-duz.png"); zb.classList.remove("vur","uzgun"); }
+    if(!DUELLO) return;
+    if(DUELLO.can <= 0) duelloBitti(); else duelloTur();
+  }, dogru ? 950 : 1500);
+}
+
+function duelloYazi(metin, tur){
+  const a = document.getElementById("duArena");
+  if(!a) return;
+  const y = document.createElement("div");
+  y.className = "duUcan " + tur;
+  y.textContent = metin;
+  a.appendChild(y);
+  setTimeout(()=>y.remove(), 1400);
+}
+
+function duelloBitti(){
+  const anahtar = duelloRekorAnahtar();
+  const eski = +(localStorage.getItem(anahtar) || 0);
+  const yeniRekor = DUELLO.puan > eski;
+  if(yeniRekor) localStorage.setItem(anahtar, DUELLO.puan);
+  const alan = document.getElementById("duAlan");
+  if(alan) alan.innerHTML = `<div class="duSonuc ${yeniRekor?"rekor":""}">
+      <b>${yeniRekor ? "YENİ REKOR!" : "DÜELLO BİTTİ"}</b>
+      <div class="duSonucPuan">${DUELLO.puan}</div>
+      <span>En uzun seri: ${DUELLO.enSeri} · Önceki rekor: ${eski}</span>
+      <button class="duBasla" onclick="duelloBasla()">TEKRAR</button>
+      <button class="btn ghost" style="margin-top:8px" onclick="go('ana')">Haritaya Dön</button>
+    </div>`;
+  melkorKonus(yeniRekor ? "Yeni rekor! Bilgeyi fena dövdük." : "Bilge bu sefer kazandı. Bir dahakine tokadı daha sert atarım.", "gezgin");
+  DUELLO = null;
 }
 
 /* ---- KİM 500 MİLYAR İSTER ---- */
@@ -3545,7 +3875,7 @@ function menuGovde(tema){
         ${noktalar}
 
         <!-- haritada gezen maskot -->
-        <div class="hGezgin" id="hGezgin" style="left:46%;top:62%" onclick="event.stopPropagation();gezginDokun()">
+        <div class="hGezgin" id="hGezgin" style="left:26%;top:40%" onclick="event.stopPropagation();gezginDokun()">
           <div class="hBalon" id="hBalon"></div>
           <img src="${gv('maskot-duz.png')}" id="hGezginImg" alt="" draggable="false">
           <i class="hGolge"></i>
@@ -3572,7 +3902,7 @@ function menuGovde(tema){
 const HARITA_NOKTALARI = [
   { id:"saray",  ad:"Bilge Kral'ın Sarayı", alt:"Rehber",            x:50,  y:48, renk:"#E8C98A", ekran:"rehber", slug:"rehber" },
   { id:"buz",    ad:"Kuru Kafa Mağarası",   alt:"Zindan",            x:78.5,y:25, renk:"#7BB8FF", ekran:"zindan", slug:"zindan" },
-  { id:"kul",    ad:"Kül Kalesi",           alt:"Kim 500 Milyar",    x:17,  y:69, renk:"#FF6B5A", ekran:"yarisma",slug:"yarisma" },
+  { id:"kul",    ad:"Kül Kalesi",           alt:"Yalan Düellosu",    x:17,  y:69, renk:"#FF6B5A", ekran:"yarisma",slug:"yarisma" },
   { id:"yesil",  ad:"Köy Hanı",             alt:"Melkor TV",         x:21,  y:25, renk:"#6FE3A8", ekran:"tv",     slug:"tv" },
   { id:"kurak",  ad:"Vaha Falcısı",         alt:"Kader Çarkı",       x:77,  y:77, renk:"#FFB35A", ekran:"carki",  slug:"carki" }
 ];
@@ -3764,11 +4094,11 @@ function haritaAtmosfer(){
 const GEZGIN_DURAK = [
   [21,31],[30,40],[12,44],[38,24],            // yesil
   [66,40],[86,44],[72,31],[90,55],            // buz
-  [42,60],[58,60],[50,66],                    // saray cevresi
+  [30,64],[70,64],                            // saray kenarlari
   [22,80],[34,86],[12,62],                    // kul
   [66,70],[84,86],[62,92],[88,68]             // kurak
 ];
-const GZ = { x:46, y:62, yuruyor:false, dokunus:[], kizgin:false, sonLaf:0 };
+const GZ = { x:26, y:40, yuruyor:false, dokunus:[], kizgin:false, sonLaf:0 };
 
 function gezginBolge(x, y){
   if(x > 35 && x < 65 && y > 30 && y < 66) return "saray";
@@ -3779,19 +4109,30 @@ function gezginBolge(x, y){
 }
 
 const GEZGIN_LAF = {
-  genel: ["Ciddi iş arayan Mordor'a gitsin.", "Oyun! Oyun! Oyun! Oyun!!!!!!!!",
-          "Bu haritayı ben çizdim, ressam sadece boyadı.", "Dört diyar, bir ben.",
-          "Haritayı kaydırıp durma, başım dönüyor.", "Kimse bana yol sormuyor, hepsi kayboluyor."],
-  yesil: ["Burası huzurlu. Fazla huzurlu. Şüpheli.", "Köylüler yine vergi vermedi bana.",
-          "Şu değirmeni ben icat ettim, rüzgâr sonradan geldi.", "Hanın içinde birileri yine saçma video izliyor."],
-  buz:   ["Brr! Sakalım dondu.", "Mağaradan ses geliyor. Bakmıyorum, bakmıyorum.",
-          "Buz Diyarı'nın kralı benim, soğuk sadece çalışanım.", "Burada kaybolan çok oldu, ben hariç."],
-  saray: ["Sarayım, benim sarayım.", "İçeride bilge halim oturuyor, ben onun sahadaki versiyonuyum.",
-          "Bu kuleleri ben saydım: hepsi benim."],
-  kul:   ["Ayağım yanıyor, bu lavı kim döktü?", "Şimşek bana çarpmaz, ben ondan hızlıyım.",
-          "Kül Kalesi'nde yarışma var, ödül 500 milyar. Benim hepsi zaten.", "Burası sıcak ama benim kadar değil."],
-  kurak: ["Su… su yok mu?", "Vaha gerçek mi, serap mı? Ben de bilmiyorum.",
-          "Kum ayakkabıma girdi, diyar bunu ödeyecek.", "Falcı yine kaderimi yanlış okudu."]
+  genel: ["Kimse bu diyarda zayıfa dokunamaz. Bana dokunabilir, o ayrı.",
+          "Ciddi iş arayan Mordor'a gitsin.", "Oyun! Oyun! Oyun! Oyun!!!!!!!!",
+          "Bana bulaşma. Ama başın sıkışırsa ilk beni çağır.",
+          "Ben kabayım, evet. Ama haksızlık görürsem daha da kabalaşırım.",
+          "Bu haritada benden güçlüsü yok. Varsa gelsin, çaya davet ederim.",
+          "Sert görünürüm ama kalbim yumuşak. Sakın kimseye söyleme."],
+  yesil: ["Köylülere kim sataştıysa çıksın ortaya!", "Buradaki çocuklar benim korumamda, bilesin.",
+          "Şu değirmenciye yine haraç kesen olmuş. Bulacağım onu.",
+          "Burası huzurlu, çünkü ben buradayım."],
+  buz:   ["Brr! Soğuk bana vız gelir. Sakalım dondu ama vız gelir.",
+          "Mağaradan ses geliyor. Biri yardım istiyorsa giderim, korktuğumdan değil.",
+          "Buz Diyarı'nda kaybolan herkesi ben buldum. Bir tanesini unuttum ama.",
+          "Titriyorsam soğuktan değil, öfkeden."],
+  saray: ["Saraydaki bilge bir şey bilmez, ama ona dokunan da beni karşısında bulur.",
+          "Kulelerin önünde nöbet tutuyorum. Kimse sormadı ama tutuyorum.",
+          "İçeri gir, bilgeyle konuş. Seni üzerse bana söyle."],
+  kul:   ["Ayağım yanıyor ama buradan kaçan olmaz, ben de kaçmam.",
+          "Lav kalesinde zorbalar var. Onların zorbası da benim.",
+          "Şimşek bana çarparsa çarpsın, ben geri çarparım.",
+          "Kül Kalesi'ne cesaretin varsa gir. Yoksa elini tutar götürürüm."],
+  kurak: ["Su bulamayan kim varsa vahaya kadar taşırım.",
+          "Kum fırtınası kimseyi korkutmasın, önünüzde ben yürürüm.",
+          "Falcı yine kaderimi yanlış okudu. Kaderi ben yazarım.",
+          "Çöl sıcak, ben daha sıcak."]
 };
 const lafAl = k => { const l = GEZGIN_LAF[k] || GEZGIN_LAF.genel; return l[Math.floor(Math.random()*l.length)]; };
 
@@ -3801,11 +4142,20 @@ function gezginSoyle(metin, ses){
   if(!b2) return;
   b2.textContent = metin;
   b2.classList.remove("acik"); void b2.offsetWidth; b2.classList.add("acik");
-  if(img && !GZ.yuruyor){ img.src = gv("maskot-konus.png"); setTimeout(()=>{ if(!GZ.yuruyor) img.src = gv("maskot-duz.png"); }, 2400); }
+  if(img && !GZ.yuruyor){
+    // konusurken: agiz acik -> eller acik -> agiz acik -> duz
+    img.src = gv("maskot-konus.png");
+    clearTimeout(window.__gzPoz1); clearTimeout(window.__gzPoz2); clearTimeout(window.__gzPoz3);
+    window.__gzPoz1 = setTimeout(()=>{ if(!GZ.yuruyor) img.src = gv("maskot-eller.png"); }, 900);
+    window.__gzPoz2 = setTimeout(()=>{ if(!GZ.yuruyor) img.src = gv("maskot-konus.png"); }, 2000);
+    window.__gzPoz3 = setTimeout(()=>{ if(!GZ.yuruyor) img.src = gv("maskot-duz.png"); }, 3100);
+  }
+  // her lafi seslendirme; bazilarini soylesin ki kulak yorulmasin
+  if(ses === undefined) ses = Math.random() < 0.35;
   clearTimeout(window.__balonKapa);
   window.__balonKapa = setTimeout(()=>b2.classList.remove("acik"), 4200);
   GZ.sonLaf = Date.now();
-  if(ses) melkorKonus(metin);
+  if(ses) melkorKonus(metin, "gezgin");
 }
 
 // maskotu bir noktaya yurut
@@ -3845,6 +4195,9 @@ function gezginDongu(){
         gezginSoyle(lafAl(Math.random() < 0.6 ? gezginBolge(GZ.x, GZ.y) : "genel"));
       }else if(r < 0.93){
         gezginTokezle();
+      }else{
+        const img = document.getElementById("hGezginImg");
+        if(img){ img.src = gv("maskot-eller.png"); setTimeout(()=>{ if(!GZ.yuruyor) img.src = gv("maskot-duz.png"); }, 1800); }
       }
     }
     window.__gezginSaat = setTimeout(tur, 5000 + Math.random()*6000);
@@ -3872,7 +4225,7 @@ function gezginDokun(){
     GZ.kizgin = true; GZ.dokunus = [];
     el?.classList.add("kizgin");
     try{ sesIkin(); }catch(e){}
-    gezginSoyle("YETER! Dokunma dedim! Gidiyorum ben!", true);
+    gezginSoyle("YETER! Dokunma dedim! Ben zayıfları korurum, sinir bozanları değil!", true);
     const uzak = GEZGIN_DURAK.slice().sort((a,b)=>Math.hypot(b[0]-GZ.x,b[1]-GZ.y)-Math.hypot(a[0]-GZ.x,a[1]-GZ.y))[0];
     setTimeout(async ()=>{
       el?.classList.remove("kizgin");
@@ -9159,7 +9512,7 @@ async function cikis(){ await sb.auth.signOut(); location.reload(); }
 
 /* ================= yonlendirme ================= */
 
-const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, sunum:sunum, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, marka:markaEkran, tema:temaEkran, yedek:yedekEkran, tv:tvEkran, zindan:zindanEkran, carki:carkiEkran, rehber:rehberEkran, yarisma:yarismaEkran, yeni:yeniParsel, parsel:parselDetay,
+const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, sunum:sunum, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, marka:markaEkran, tema:temaEkran, yedek:yedekEkran, tv:tvEkran, zindan:zindanEkran, carki:carkiEkran, rehber:rehberEkran, yarisma:duelloEkran, yeni:yeniParsel, parsel:parselDetay,
                    fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
 // gezinti gecmisi: telefonun geri tusu uygulamadan cikmasin, bir ekran geri gitsin
 let GEZINTI = [{ r:"ana", arg:undefined }];
@@ -9198,7 +9551,7 @@ function go(r, arg){
 // her ekranin bir ust sekmesi: telefonun geri tusu buraya gider
 const UST_EKRAN = {
   harita:"ana", araziler:"ana", ekler:"ana", kml:"ana", cap:"ana", hesap:"ana",
-  yaklasan:"ana", yz:"ana", fiyat:"ana", ayarlar:"ana", marka:"ayarlar", tema:"ana", yedek:"ayarlar", tv:"ana", zindan:"ana", carki:"ana", rehber:"ana", yarisma:"rehber", yeni:"araziler",
+  yaklasan:"ana", yz:"ana", fiyat:"ana", ayarlar:"ana", marka:"ayarlar", tema:"ana", yedek:"ayarlar", tv:"ana", zindan:"ana", carki:"ana", rehber:"ana", yarisma:"ana", yeni:"araziler",
   parsel:"araziler", parcalar:"parsel", sunum:"parsel", fiyatDuzen:"fiyat", capAyar:"cap"
 };
 
