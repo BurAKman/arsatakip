@@ -575,10 +575,8 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
     inset 0 0 0 3px rgba(6,4,16,.75),
     inset 0 0 0 4px color-mix(in srgb,var(--nad) 22%,transparent),
     inset 0 0 22px color-mix(in srgb,var(--nad) 18%,transparent)}
-.melkor .mCerceve::before,.melkor .mCerceve::after{content:"";position:absolute;width:11px;height:11px;
-  border-color:var(--nad);opacity:.9}
-.melkor .mCerceve::before{top:5px;left:5px;border-top:1.5px solid;border-left:1.5px solid}
-.melkor .mCerceve::after{bottom:5px;right:5px;border-bottom:1.5px solid;border-right:1.5px solid}
+.melkor .mCerceve::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--nad),transparent);opacity:.75}
 .melkor .mKart:active .mCerceve{box-shadow:inset 0 0 0 1px var(--nad),
   inset 0 0 0 3px rgba(6,4,16,.6), inset 0 0 34px color-mix(in srgb,var(--nad) 40%,transparent),
   0 0 26px color-mix(in srgb,var(--nad) 45%,transparent)}
@@ -665,6 +663,31 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .divanSatir small{display:block;margin-top:3px;font-size:9px;letter-spacing:.1em;color:rgba(123,232,220,.7)}
 
 /* ---- MELKOR TV ---- */
+.tvGeri{padding:7px 12px;font-family:"Cinzel",Georgia,serif;font-size:9.5px;letter-spacing:.1em;
+  cursor:pointer;color:#CFC6F0;background:linear-gradient(160deg,rgba(138,107,255,.2),rgba(8,5,20,.75));
+  border:1px solid rgba(123,232,220,.3);
+  clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.tvKatBaslik{margin:2px 2px 12px}
+.tvKatBaslik b{font-family:"Cinzel",Georgia,serif;font-size:15px;letter-spacing:.14em;color:#F2EEFF}
+.tvKatIzgara{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tvKat{position:relative}
+.tvKatAc{display:block;width:100%;padding:0;cursor:pointer;text-align:left;overflow:hidden;
+  background:linear-gradient(160deg,rgba(138,107,255,.16),rgba(8,5,20,.8));
+  border:1px solid rgba(150,130,230,.3);
+  clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.tvKatAc:active{border-color:rgba(123,232,220,.65)}
+.tvKatKapak{display:block;width:100%;aspect-ratio:16/10;background-size:cover;background-position:center;
+  background-color:#120C28;filter:saturate(.85) brightness(.75)}
+.tvKatAd{display:block;padding:9px 10px 2px;font-family:"Cinzel",Georgia,serif;font-size:12px;
+  letter-spacing:.08em;color:#EAE6FA;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tvKatSay{display:block;padding:0 10px 10px;font-size:8.5px;letter-spacing:.12em;
+  color:rgba(123,232,220,.7)}
+.tvIslem{display:flex;flex-direction:column;justify-content:center;gap:1px}
+.tvIslem.ust{position:absolute;top:6px;right:6px;flex-direction:row}
+.tvIslem button{width:34px;height:34px;display:grid;place-items:center;cursor:pointer;
+  background:rgba(8,5,20,.72);border:1px solid rgba(150,130,230,.3);color:#A9A2C8}
+.tvIslem button.sil{color:#FF6B9D;border-color:rgba(255,107,157,.3)}
+.tvIslem button svg{width:14px;height:14px}
 .tvBar{display:flex;align-items:center;gap:10px;margin:12px 0 12px}
 .tvSay{font-family:"Cinzel",Georgia,serif;font-size:10px;letter-spacing:.16em;color:rgba(123,232,220,.7)}
 .tvEkle{margin-left:auto;padding:8px 14px;font-family:"Cinzel",Georgia,serif;font-size:10.5px;
@@ -1444,7 +1467,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 5.0";
+const SURUM_MELKOR = "beta 5.3";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -1718,6 +1741,7 @@ async function markaSil(){
 /* ---- tema secimi ---- */
 
 function temaEkran(){
+  if(!temaSecebilir()) return go("ana");
   const secili = anaTema();
   app.innerHTML = head("Tema Seç","go('ana')") + `
     <p class="ipuc">Ana ekranın görünümünü seç. İstediğin zaman değiştirebilirsin.</p>
@@ -2037,63 +2061,193 @@ function maskotKonus(metin, hal){
   if(MASKOT) MASKOT.sonHareket = Date.now();
 }
 
-/* ---- MELKOR TV: video arsivi (tamamen Melkor'a ozel, telefonda saklanir) ---- */
+/* ---- MELKOR TV: kategorili video arsivi (telefonda saklanir) ---- */
 
-const TV_BASLANGIC = [
-  { ad:"Aynı Anda", not:"Karnıaçlar", kod:"IY4uBaMDz_c" }
+const TV_VARSAYILAN = [
+  { id:"k1", ad:"Karnıaçlar", videolar:[ { ad:"Aynı Anda", not:"Karnıaçlar", kod:"IY4uBaMDz_c" } ] }
 ];
+let TV_ACIK = null;      // acik kategori kimligi
 
-function tvListesi(){
+function tvOku(){
   try{
-    const k = JSON.parse(localStorage.getItem("melkorTV") || "null");
-    if(Array.isArray(k) && k.length) return k;
+    const k = JSON.parse(localStorage.getItem("melkorTV2") || "null");
+    if(Array.isArray(k)) return k;
   }catch(e){}
-  return TV_BASLANGIC.slice();
+  // eski tekli listeyi tasi
+  try{
+    const eski = JSON.parse(localStorage.getItem("melkorTV") || "null");
+    if(Array.isArray(eski) && eski.length)
+      return [{ id:"k1", ad:"Arşiv", videolar:eski }];
+  }catch(e){}
+  return TV_VARSAYILAN.slice();
 }
-function tvKaydet(liste){ localStorage.setItem("melkorTV", JSON.stringify(liste)); }
+function tvYaz(liste){ localStorage.setItem("melkorTV2", JSON.stringify(liste)); }
+const tvYeniId = () => "k" + Date.now().toString(36);
 
-// youtube baglantisindan video kimligini cikar
 function tvKod(baglanti){
   const t = String(baglanti||"").trim();
-  const kaliplar = [/[?&]v=([\w-]{11})/, /youtu\.be\/([\w-]{11})/, /embed\/([\w-]{11})/, /^([\w-]{11})$/];
-  for(const k of kaliplar){ const e = t.match(k); if(e) return e[1]; }
+  const kaliplar = [/[?&]v=([\w-]{11})/, /youtu\.be\/([\w-]{11})/, /embed\/([\w-]{11})/,
+                    /shorts\/([\w-]{11})/, /^([\w-]{11})$/];
+  for(const k of kaliplar){ const e2 = t.match(k); if(e2) return e2[1]; }
   return null;
 }
 
 function tvEkran(){
   app.innerHTML = head("Melkor TV","go('ana')") + `
     <div id="tvOynatici"></div>
-    <div class="tvBar">
-      <span class="tvSay" id="tvSay"></span>
-      <button class="tvEkle" onclick="tvEkleAc()">+ VİDEO EKLE</button>
-    </div>
-    <div id="tvListe"></div>`;
-  tvListele();
+    <div id="tvGovde"></div>`;
+  tvCiz();
 }
 
-function tvListele(){
-  const kutu = document.getElementById("tvListe");
-  const liste = tvListesi();
-  const say = document.getElementById("tvSay");
-  if(say) say.textContent = liste.length + " kayıt";
+function tvCiz(){
+  const kutu = document.getElementById("tvGovde");
   if(!kutu) return;
-  if(!liste.length){
-    kutu.innerHTML = `<div class="empty"><b>Arşiv boş</b>Yukarıdaki tuştan video ekle.</div>`;
+  const liste = tvOku();
+
+  // kategori acik mi
+  if(TV_ACIK){
+    const kat = liste.find(k=>k.id === TV_ACIK);
+    if(!kat){ TV_ACIK = null; return tvCiz(); }
+    kutu.innerHTML = `
+      <div class="tvBar">
+        <button class="tvGeri" onclick="TV_ACIK=null;tvCiz()">‹ KATEGORİLER</button>
+        <span class="tvSay">${kat.videolar.length} video</span>
+        <button class="tvEkle" onclick="tvVideoFormu('${kat.id}')">+ VİDEO</button>
+      </div>
+      <div class="tvKatBaslik"><b>${esc(kat.ad)}</b></div>
+      ${kat.videolar.length ? kat.videolar.map((v,i)=>`
+        <div class="tvSatir">
+          <button class="tvAc" onclick="tvOynat('${kat.id}',${i})">
+            <span class="kapak" style="background-image:url('https://i.ytimg.com/vi/${esc(v.kod)}/mqdefault.jpg')">
+              <span class="oynat">▶</span></span>
+            <span class="bilgi"><b>${esc(v.ad)}</b>${v.not?`<small>${esc(v.not)}</small>`:""}</span>
+          </button>
+          <div class="tvIslem">
+            <button onclick="tvVideoFormu('${kat.id}',${i})" aria-label="Düzenle">${svg("gear")}</button>
+            <button class="sil" onclick="tvVideoSil('${kat.id}',${i})" aria-label="Sil">${svg("trash")}</button>
+          </div>
+        </div>`).join("")
+        : `<div class="empty"><b>Bu kategori boş</b>Yukarıdan video ekle.</div>`}`;
     return;
   }
-  kutu.innerHTML = liste.map((v,i)=>`
-    <div class="tvSatir">
-      <button class="tvAc" onclick="tvOynat(${i})">
-        <span class="kapak" style="background-image:url('https://i.ytimg.com/vi/${esc(v.kod)}/mqdefault.jpg')">
-          <span class="oynat">▶</span></span>
-        <span class="bilgi"><b>${esc(v.ad)}</b>${v.not?`<small>${esc(v.not)}</small>`:""}</span>
-      </button>
-      <button class="tvSil" onclick="tvSil(${i})" aria-label="Sil">${svg("trash")}</button>
-    </div>`).join("");
+
+  // kategori listesi
+  kutu.innerHTML = `
+    <div class="tvBar">
+      <span class="tvSay">${liste.length} kategori</span>
+      <button class="tvEkle" onclick="tvKategoriFormu()">+ KATEGORİ</button>
+    </div>
+    ${liste.length ? `<div class="tvKatIzgara">${liste.map(k=>{
+      const kapak = k.videolar[0]?.kod;
+      return `<div class="tvKat">
+        <button class="tvKatAc" onclick="TV_ACIK='${k.id}';tvCiz()">
+          <span class="tvKatKapak" ${kapak?`style="background-image:url('https://i.ytimg.com/vi/${esc(kapak)}/mqdefault.jpg')"`:""}></span>
+          <span class="tvKatAd">${esc(k.ad)}</span>
+          <span class="tvKatSay">${k.videolar.length} video</span>
+        </button>
+        <div class="tvIslem ust">
+          <button onclick="tvKategoriFormu('${k.id}')" aria-label="Düzenle">${svg("gear")}</button>
+          <button class="sil" onclick="tvKategoriSil('${k.id}')" aria-label="Sil">${svg("trash")}</button>
+        </div>
+      </div>`;
+    }).join("")}</div>`
+    : `<div class="empty"><b>Arşiv boş</b>Önce bir kategori aç.</div>`}`;
 }
 
-function tvOynat(i){
-  const v = tvListesi()[i];
+function tvKategoriFormu(id){
+  const liste = tvOku();
+  const kat = id ? liste.find(k=>k.id === id) : null;
+  const kutu = document.getElementById("tvOynatici");
+  if(!kutu) return;
+  kutu.innerHTML = `<div class="tvForm">
+    <div class="field" style="margin:0"><label>Kategori adı</label>
+      <input id="tvKatAd" value="${esc(kat?.ad || "")}" placeholder="Karnıaçlar" onfocus="this.select()"></div>
+    <div class="acts" style="margin-top:12px">
+      <button class="pri" onclick="tvKategoriKaydet('${id || ""}')">${kat?"Kaydet":"Oluştur"}</button>
+      <button onclick="document.getElementById('tvOynatici').innerHTML=''">Vazgeç</button>
+    </div></div>`;
+  window.scrollTo({ top:0, behavior:"smooth" });
+}
+
+function tvKategoriKaydet(id){
+  const ad2 = document.getElementById("tvKatAd").value.trim();
+  if(!ad2) return toast("Kategori adı gerekli");
+  const liste = tvOku();
+  if(id){
+    const k = liste.find(x=>x.id === id);
+    if(k) k.ad = ad2;
+  }else liste.push({ id:tvYeniId(), ad:ad2, videolar:[] });
+  tvYaz(liste);
+  document.getElementById("tvOynatici").innerHTML = "";
+  tvCiz();
+  toast(id ? "Güncellendi" : "Kategori açıldı");
+}
+
+function tvKategoriSil(id){
+  const liste = tvOku();
+  const k = liste.find(x=>x.id === id);
+  if(!k) return;
+  if(!confirm(`"${k.ad}" kategorisi ve içindeki ${k.videolar.length} video silinsin mi?`)) return;
+  tvYaz(liste.filter(x=>x.id !== id));
+  TV_ACIK = null;
+  tvCiz();
+}
+
+function tvVideoFormu(katId, ix){
+  const liste = tvOku();
+  const kat = liste.find(k=>k.id === katId);
+  const v = (ix != null) ? kat?.videolar[ix] : null;
+  const kutu = document.getElementById("tvOynatici");
+  if(!kutu) return;
+  kutu.innerHTML = `<div class="tvForm">
+    <div class="field"><label>YouTube bağlantısı</label>
+      <input id="tvLink" value="${esc(v?.kod || "")}" placeholder="https://www.youtube.com/watch?v=..." onfocus="this.select()"></div>
+    <div class="field"><label>Başlık</label><input id="tvAd" value="${esc(v?.ad || "")}" placeholder="Aynı Anda"></div>
+    <div class="field" style="margin:0"><label>Açıklama</label>
+      <input id="tvNot" value="${esc(v?.not || "")}" placeholder="Karnıaçlar"></div>
+    <div class="field" style="margin:12px 0 0"><label>Kategori</label>
+      <select id="tvKatSec">${liste.map(k=>`<option value="${k.id}"${k.id===katId?" selected":""}>${esc(k.ad)}</option>`).join("")}</select></div>
+    <div class="acts" style="margin-top:12px">
+      <button class="pri" onclick="tvVideoKaydet('${katId}',${ix != null ? ix : -1})">${v?"Kaydet":"Arşive Ekle"}</button>
+      <button onclick="document.getElementById('tvOynatici').innerHTML=''">Vazgeç</button>
+    </div></div>`;
+  window.scrollTo({ top:0, behavior:"smooth" });
+}
+
+function tvVideoKaydet(katId, ix){
+  const g = k => document.getElementById(k);
+  const kod = tvKod(g("tvLink").value);
+  if(!kod) return toast("Bağlantıyı çözemedim");
+  const ad2 = g("tvAd").value.trim() || "İsimsiz kayıt";
+  const not = g("tvNot").value.trim();
+  const hedefKat = g("tvKatSec").value;
+  const liste = tvOku();
+  const eski = liste.find(k=>k.id === katId);
+  const yeni = liste.find(k=>k.id === hedefKat);
+  if(!yeni) return toast("Kategori bulunamadı");
+
+  if(ix >= 0 && eski) eski.videolar.splice(ix, 1);
+  yeni.videolar.unshift({ ad:ad2, not, kod });
+  tvYaz(liste);
+  TV_ACIK = hedefKat;
+  g("tvOynatici").innerHTML = "";
+  tvCiz();
+  toast(ix >= 0 ? "Güncellendi" : "Arşive eklendi");
+}
+
+function tvVideoSil(katId, ix){
+  const liste = tvOku();
+  const kat = liste.find(k=>k.id === katId);
+  if(!kat?.videolar[ix]) return;
+  if(!confirm(`"${kat.videolar[ix].ad}" silinsin mi?`)) return;
+  kat.videolar.splice(ix, 1);
+  tvYaz(liste);
+  tvCiz();
+}
+
+function tvOynat(katId, ix){
+  const kat = tvOku().find(k=>k.id === katId);
+  const v = kat?.videolar[ix];
   if(!v) return;
   const kutu = document.getElementById("tvOynatici");
   if(!kutu) return;
@@ -2104,900 +2258,6 @@ function tvOynat(i){
     </div>
     <div class="tvBaslik"><b>${esc(v.ad)}</b>${v.not?`<span>${esc(v.not)}</span>`:""}</div>`;
   window.scrollTo({ top:0, behavior:"smooth" });
-}
-
-function tvEkleAc(){
-  const kutu = document.getElementById("tvOynatici");
-  if(!kutu) return;
-  kutu.innerHTML = `<div class="tvForm">
-    <div class="field"><label>YouTube bağlantısı</label>
-      <input id="tvLink" placeholder="https://www.youtube.com/watch?v=..." onfocus="this.select()"></div>
-    <div class="field"><label>Başlık</label><input id="tvAd" placeholder="Aynı Anda"></div>
-    <div class="field" style="margin:0"><label>Açıklama</label><input id="tvNot" placeholder="Karnıaçlar"></div>
-    <div class="acts" style="margin-top:12px">
-      <button class="pri" onclick="tvEkleKaydet()">Arşive Ekle</button>
-      <button onclick="document.getElementById('tvOynatici').innerHTML=''">Vazgeç</button>
-    </div></div>`;
-  window.scrollTo({ top:0, behavior:"smooth" });
-}
-
-function tvEkleKaydet(){
-  const g = k => document.getElementById(k);
-  const kod = tvKod(g("tvLink").value);
-  if(!kod) return toast("Bağlantıyı çözemedim, YouTube adresini yapıştır");
-  const ad2 = g("tvAd").value.trim() || "İsimsiz kayıt";
-  const not = g("tvNot").value.trim();
-  const liste = tvListesi();
-  liste.unshift({ ad:ad2, not, kod });
-  tvKaydet(liste);
-  g("tvOynatici").innerHTML = "";
-  tvListele();
-  toast("Arşive eklendi");
-}
-
-function tvSil(i){
-  const liste = tvListesi();
-  if(!liste[i]) return;
-  if(!confirm(`"${liste[i].ad}" arşivden silinsin mi?`)) return;
-  liste.splice(i,1);
-  tvKaydet(liste);
-  tvListele();
-}
-
-/* ---- TOMAR: her kullanicinin kendi kaydi (sadece bu telefonda) ---- */
-
-const tomarAnahtar = () => "tomar_" + (kullaniciAdi() || "kahraman").toLocaleLowerCase("tr");
-
-function tomarOku(){
-  try{
-    const t = JSON.parse(localStorage.getItem(tomarAnahtar()) || "null");
-    if(t) return t;
-  }catch(e){}
-  return { ziyaret:0, soru:0, kufur:0, konular:{}, ilkGoruntu:null, sonGoruntu:null };
-}
-function tomarYaz(t){ localStorage.setItem(tomarAnahtar(), JSON.stringify(t)); }
-
-const KONU_ETIKET = {
-  para:["dolar","euro","borsa","ekonomi","para","kripto","altın","faiz","maaş"],
-  uzay:["uzay","gezegen","ay","mars","yıldız","galaksi","astronot","ufo","nasa"],
-  tarih:["tarih","osmanlı","savaş","antik","roma","imparator","padişah","fetih"],
-  oyun:["oyun","konsol","playstation","xbox","steam","fire emblem","nintendo","rpg"],
-  yemek:["yemek","tarif","pizza","kebap","çorba","tatlı","kahve","çay"],
-  teknoloji:["telefon","bilgisayar","yapay zeka","internet","uygulama","şarj","pil","yazılım"],
-  doga:["hayvan","kedi","köpek","ağaç","deniz","orman","hava","yağmur"]
-};
-
-function konuBul(metin){
-  const k = String(metin||"").toLocaleLowerCase("tr");
-  for(const [etiket, kelimeler] of Object.entries(KONU_ETIKET))
-    if(kelimeler.some(x=>k.includes(x))) return etiket;
-  return null;
-}
-
-const KUFURLER = ["amk","aq","a.q","mk","oç","o.ç","piç","orospu","orosp","sik","sikt","siktir",
-  "yarrak","yarak","göt","gavat","yavşak","şerefsiz","ibne","puşt","aptal","salak","gerizekalı",
-  "mal ","dangalak","hıyar","eşşek","eşek oğlu","ananı","anan","avrat","kahpe","kaltak","şıllık",
-  "bok","boktan","lanet","hasiktir","hassiktir"];
-const kufurMu = m => {
-  const k = " " + String(m||"").toLocaleLowerCase("tr").replace(/[^\wçğıöşü\s]/g," ") + " ";
-  return KUFURLER.some(x=>k.includes(x));
-};
-
-// yapay zekaya gonderilecek kisi notu
-function tomarOzeti(){
-  const t = tomarOku();
-  const enCok = Object.entries(t.konular||{}).sort((a,b)=>b[1]-a[1]).slice(0,3).map(o=>o[0]);
-  const satir = [
-    "Adi: " + (kullaniciAdi() || "Kahraman"),
-    "Seviye: " + kullaniciSeviye(),
-    "Kacinci gelisi: " + t.ziyaret,
-    "Toplam sorusu: " + t.soru
-  ];
-  if(enCok.length) satir.push("Sik sordugu konular: " + enCok.join(", "));
-  if(t.kufur > 2) satir.push("Agzi bozuk, ara sira kufur ediyor; buna takilma ama uyar.");
-  if(t.ziyaret > 5) satir.push("Eski dost sayilir, ona gore samimi ol ama kibrini birakma.");
-  return satir.join("\n");
-}
-
-/* ---- REHBER: maskotla sohbet (yazili ve sesli) ---- */
-
-let REHBER_GECMIS = [];
-let REHBER_DURUM = "";
-let REHBER_SES_VERI = null;
-
-function rehberDurumYaz(){
-  const k = document.getElementById("rDurum");
-  if(!k) return;
-  const bagli = REHBER_DURUM.includes("bağ kuruldu");
-  k.textContent = REHBER_DURUM;
-  k.className = "rDurum " + (bagli ? "iyi" : "kotu");
-}
-
-function rehberEkran(){
-  app.innerHTML = head("Rehber","go('ana')") + `
-    <div class="rehberSahne" id="rSahne">
-      <div class="rSis"></div>
-      <div class="rHalka"></div>
-      <div class="rZerre"></div>
-      <img class="rMaskot" id="rMaskot" src="${gv('maskot-duz.png')}" alt="">
-      <div class="rRun" id="rRun">
-        <span>祖</span><span>知</span><span>力</span><span>道</span><span>真</span>
-      </div>
-      <div class="rDurumIsik" id="rIsik"></div>
-    </div>
-    <div class="rDurumSatir"><span id="rDurum" class="rDurum">Melkor Diyarı</span></div>
-    <div id="rAkis" class="rAkis"></div>
-    <div class="rEkTus">
-      <button onclick="rehberKehanet()">KEHANET</button>
-      <button onclick="rehberBak()">BANA BAK</button>
-      <button onclick="go('yarisma')">500 MİLYAR</button>
-    </div>
-    <div class="rGiris">
-      <button class="rMik" id="rMik" onclick="rehberDinle()" aria-label="Konuş">🎤</button>
-      <input id="rMetin" placeholder="Bir şey sor…" onkeydown="if(event.key==='Enter')rehberSor()">
-      <button class="rGonder" onclick="rehberSor()">Sor</button>
-    </div>`;
-  rehberAkis();
-  rehberDurumYaz();
-
-  rehberSahneCanlandir();
-
-  // kisiye ozel karsilama
-  const t = tomarOku();
-  t.ziyaret = (t.ziyaret || 0) + 1;
-  tomarYaz(t);
-  if(!REHBER_GECMIS.length){
-    const ad2 = (kullaniciAdi() || "Kahraman").toLocaleUpperCase("tr");
-    const selam = t.ziyaret === 1
-      ? `Hoş geldin ${ad2}. Geleceğini biliyordum.`
-      : t.ziyaret < 5
-      ? `Yine mi sen, ${ad2}? Bekliyordum zaten.`
-      : `${ad2} geldi. ${t.ziyaret}. gelişin, sayıyorum ben bunları.`;
-    setTimeout(()=>{
-      REHBER_GECMIS.push({ kim:"rehber", soz:selam });
-      rehberAkis(); rehberSoyle(selam);
-    }, 700);
-  }
-}
-
-// maskot sahne icinde saga sola seke seke yurur
-function rehberSahneCanlandir(){
-  clearInterval(window.__rYuru);
-  const m = document.getElementById("rMaskot");
-  const sahne = document.getElementById("rSahne");
-  if(!m || !sahne) return;
-
-  let yon = 1, konum = 50;          // yuzde
-  window.__rYuru = setInterval(()=>{
-    if(!document.getElementById("rMaskot")) return clearInterval(window.__rYuru);
-    if(sahne.classList.contains("dusunuyor") || sahne.classList.contains("konusuyor")) return;
-
-    if(Math.random() < 0.25) return;                 // ara sira dursun
-    const adim = 8 + Math.random()*14;
-    konum += yon * adim;
-    if(konum > 76){ konum = 76; yon = -1; }
-    if(konum < 24){ konum = 24; yon = 1; }
-
-    m.style.transition = "left 1.5s ease-in-out";
-    m.style.left = konum + "%";
-    m.classList.toggle("ters", yon < 0);
-    m.classList.add("yuruyor");
-    setTimeout(()=>m.classList.remove("yuruyor"), 1500);
-
-    // ara sira el acip laf atsin
-    if(Math.random() < 0.18){
-      m.src = gv("maskot-eller.png");
-      setTimeout(()=>{ if(!sahne.classList.contains("konusuyor")) m.src = gv("maskot-duz.png"); }, 1400);
-    }
-  }, 2600);
-}
-
-// dusunurken sahne canlanir
-function rehberDusunuyor(acik){
-  const s2 = document.getElementById("rSahne");
-  const m = document.getElementById("rMaskot");
-  if(s2) s2.classList.toggle("dusunuyor", !!acik);
-  if(m && acik) m.src = gv("maskot-eller.png");
-  if(!acik && m) m.src = gv("maskot-duz.png");
-}
-
-function rehberAkis(){
-  const k = document.getElementById("rAkis");
-  if(!k) return;
-  k.innerHTML = REHBER_GECMIS.map(o=>`
-    <div class="rSatir ${o.kim}">
-      <span class="rKim">${o.kim === "ben" ? "SEN" : "REHBER"}</span>
-      <span class="rSoz">${esc(o.soz)}
-        ${o.kaynak?`<span class="rKaynak">kaynak: ${esc(o.kaynak)}</span>`:""}</span>
-    </div>`).join("");
-  k.scrollTop = k.scrollHeight;
-}
-
-// ses secimi: telefondaki sesler listelenir, secim saklanir
-function seslerListesi(){
-  try{ return (speechSynthesis.getVoices() || []).filter(v=>/tr|en/i.test(v.lang)); }
-  catch(e){ return []; }
-}
-function rehberSesi(){
-  const hepsi = (()=>{ try{ return speechSynthesis.getVoices()||[]; }catch(e){ return []; } })();
-  if(!hepsi.length) return null;
-  const kadinMi = v => /female|kadin|kadın|filiz|seda|zira|hazel|samantha|karen|yelda/i.test(v.name);
-  const erkekMi = v => /male|erkek|ahmet|mehmet|tolga|david|george|daniel|fred|alex/i.test(v.name);
-  const tr = hepsi.filter(v=>/tr/i.test(v.lang));
-  return tr.find(v=>erkekMi(v) && !kadinMi(v))
-      || tr.find(v=>!kadinMi(v))
-      || tr[0]
-      || hepsi.find(v=>erkekMi(v))
-      || hepsi[0];
-}
-function rehberSesSec(ad2){
-  localStorage.setItem("rehberSes", ad2);
-  rehberSoyle("Sesim böyle mi olsun evlat?");
-}
-// kalin ve tok erkek tonu: sabit ayar
-const rehberPerde = () => 0.42;
-const rehberHiz   = () => 0.96;
-function rehberSesAyar(hangi, deger){
-  localStorage.setItem(hangi === "perde" ? "rehberPerde" : "rehberHiz", (+deger)/100);
-  clearTimeout(window.__sesDene);
-  window.__sesDene = setTimeout(()=>rehberSoyle("Böyle mi?"), 500);
-}
-function rehberSesPaneli(){
-  const p = document.getElementById("rSesPanel");
-  if(!p) return;
-  p.style.display = p.style.display === "none" ? "block" : "none";
-  if(p.style.display === "block") rehberSesKutusu();
-}
-function rehberSesKutusu(){
-  const k = document.getElementById("rSes");
-  if(!k) return;
-  const sesler = seslerListesi();
-  if(!sesler.length){ k.innerHTML = `<option>ses bulunamadı</option>`; return; }
-  const secili = rehberSesi();
-  k.innerHTML = sesler.map(v=>`<option value="${esc(v.name)}"${v.name===secili?.name?" selected":""}>
-    ${esc(v.name.slice(0,26))}</option>`).join("");
-}
-try{ if(window.speechSynthesis) speechSynthesis.onvoiceschanged = () => rehberSesKutusu(); }catch(e){}
-
-// BUYUK harfli kelimeler hecelenmesin: Baslik bicimine cevir
-function seseHazirla(metin){
-  return String(metin||"").replace(/\b[A-ZÇĞİÖŞÜ]{2,}\b/g, k =>
-    k.charAt(0) + k.slice(1).toLocaleLowerCase("tr"));
-}
-
-// tek merkez: once Azure sesi, olmazsa telefonun sesi
-async function melkorKonus(metin){
-  if(!SES_ACIK()) return;
-  const duz = seseHazirla(metin);
-  try{
-    if(window.__melkorSes){ window.__melkorSes.pause(); window.__melkorSes = null; }
-    for(const ad2 of ["rehber","swift-api"]){
-      const { data, error } = await sb.functions.invoke(ad2, { body:{ mod:"ses", soru:duz } });
-      if(!error && data?.ses){
-        const a = new Audio("data:audio/mp3;base64," + data.ses);
-        window.__melkorSes = a;
-        a.play().catch(()=>{});
-        return;
-      }
-    }
-  }catch(e){}
-  // yedek: telefonun sesi
-  try{
-    if(window.speechSynthesis){
-      speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(duz);
-      u.lang = "tr-TR"; u.rate = rehberHiz(); u.pitch = rehberPerde();
-      const ses = rehberSesi(); if(ses) u.voice = ses;
-      speechSynthesis.speak(u);
-    }
-  }catch(e){}
-}
-
-function rehberSoyle(metin){
-  const sahne = document.getElementById("rSahne");
-  if(sahne){
-    sahne.classList.add("konusuyor");
-    clearTimeout(window.__rKonus);
-    window.__rKonus = setTimeout(()=>sahne.classList.remove("konusuyor"),
-      Math.min(7000, 1200 + metin.length*55));
-  }
-  const isik = document.getElementById("rIsik");
-  if(isik){ isik.classList.remove("parla"); void isik.offsetWidth; isik.classList.add("parla"); }
-  const m = document.getElementById("rMaskot");
-  if(m){
-    m.src = gv("maskot-konus.png");
-    clearTimeout(window.__rPoz); clearTimeout(window.__rPoz2);
-    // cumlenin ortasinda bir kere ellerini acsin
-    window.__rPoz2 = setTimeout(()=>{
-      if(document.getElementById("rSahne")?.classList.contains("konusuyor")) m.src = gv("maskot-eller.png");
-      setTimeout(()=>{ if(document.getElementById("rSahne")?.classList.contains("konusuyor"))
-        m.src = gv("maskot-konus.png"); }, 700);
-    }, Math.min(2600, 700 + metin.length*18));
-    window.__rPoz = setTimeout(()=>{ m.src = gv("maskot-duz.png"); }, Math.min(6000, 1100 + metin.length*50));
-  }
-  // hazir ses geldiyse onu cal, yoksa merkezden iste
-  if(REHBER_SES_VERI){
-    try{
-      const veri = REHBER_SES_VERI; REHBER_SES_VERI = null;
-      if(window.__melkorSes){ window.__melkorSes.pause(); }
-      const a = new Audio("data:audio/mp3;base64," + veri);
-      window.__melkorSes = a;
-      a.volume = SES_ACIK() ? 1 : 0;
-      a.play().catch(()=>{});
-    }catch(e){ melkorKonus(metin); }
-  }else melkorKonus(metin);
-}
-
-async function rehberSor(){
-  const g = document.getElementById("rMetin");
-  const soru = (g?.value || "").trim();
-  if(!soru) return;
-  g.value = "";
-  REHBER_GECMIS.push({ kim:"ben", soz:soru });
-  rehberAkis();
-
-  const t = tomarOku();
-  t.soru = (t.soru || 0) + 1;
-
-  // kufur ederse tekmeyi yer
-  if(kufurMu(soru)){
-    t.kufur = (t.kufur || 0) + 1;
-    tomarYaz(t);
-    rehberTekme();
-    const laf = "Küfür yok. Kırarım boynuzunu iblis.";
-    REHBER_GECMIS.push({ kim:"rehber", soz:laf });
-    rehberAkis(); rehberSoyle(laf);
-    return;
-  }
-
-  // konuya gore sahne degissin
-  const konu = konuBul(soru);
-  if(konu){ t.konular[konu] = (t.konular[konu] || 0) + 1; sahneKonu(konu); }
-  tomarYaz(t);
-
-  rehberDusunuyor(true);
-  const cevap = await rehberCevap(soru);
-  rehberDusunuyor(false);
-  REHBER_GECMIS.push({ kim:"rehber", soz:cevap, kaynak: sahteKaynak() });
-  rehberAkis();
-  rehberSoyle(cevap);
-}
-
-// ---- sahte kaynak ureteci ----
-const KAYNAK_YAZAR = ["Ursula K. Le Guin","Yıldız Tilbe","İbn-i Haldun","Nikola Tesla","Barış Manço",
-  "Marcus Aurelius","Sokrates","Attila İlhan","Stephen Hawking","Nasreddin Hoca","Jules Verne"];
-const KAYNAK_ESER = ["Mülksüzler","Kadim Tomarlar","Zamanın Kısa Tarihi","Tuz Ruhu Üzerine",
-  "Yeraltından Notlar","Kayıp Parselnameler","Büyük Yanılgılar Ansiklopedisi","Gölge Ekonomisi",
-  "Sükûnet ve Öfke","Denizaltı Tarımı El Kitabı","Ay'a Gitmeyenler"];
-
-function sahteKaynak(){
-  const y = KAYNAK_YAZAR[Math.floor(Math.random()*KAYNAK_YAZAR.length)];
-  const e = KAYNAK_ESER[Math.floor(Math.random()*KAYNAK_ESER.length)];
-  const yil = 1840 + Math.floor(Math.random()*180);
-  const sayfa = 12 + Math.floor(Math.random()*640);
-  const basim = ["3. baskı","gözden geçirilmiş baskı","yasaklı baskı","ilk baskı","cep boy"][Math.floor(Math.random()*5)];
-  return `${y} — ${e}, ${basim}, ${yil}, s.${sayfa}`;
-}
-
-// ---- kufur cezasi: maskot ekrana tekme atar ----
-function rehberTekme(){
-  const m = document.getElementById("rMaskot");
-  const sahne = document.getElementById("rSahne");
-  if(!m) return;
-  // yuruyus animasyonu tekmeyi bastirmasin
-  m.classList.remove("yuruyor","ters");
-  m.style.transition = "none";
-  try{ sesIkin(); }catch(e){}
-  m.src = gv("maskot-eller.png");
-  void m.offsetWidth;
-  m.classList.add("tekmeAt");
-  setTimeout(()=>{
-    try{ sesTekme(); }catch(e){}
-    sahne?.classList.add("sarsintili");
-    // ekrana carpma dalgasi
-    const d = document.createElement("div");
-    d.className = "tekmeDalga";
-    sahne?.appendChild(d);
-    setTimeout(()=>d.remove(), 700);
-  }, 430);
-  setTimeout(()=>{
-    m.classList.remove("tekmeAt");
-    sahne?.classList.remove("sarsintili");
-    m.style.transition = "";
-    m.src = gv("maskot-duz.png");
-  }, 1500);
-}
-
-// ---- konuya gore sahne ----
-function sahneKonu(konu){
-  const s2 = document.getElementById("rSahne");
-  if(!s2) return;
-  s2.dataset.konu = konu;
-  clearTimeout(window.__sahneSaat);
-  window.__sahneSaat = setTimeout(()=>{ delete s2.dataset.konu; }, 25000);
-}
-
-// ---- kehanet: telefonun halinden anlam cikarir ----
-async function rehberKehanet(){
-  const saat = new Date().getHours(), dk = new Date().getMinutes();
-  const t = tomarOku();
-  let pil = null, sarj = false;
-  try{
-    const b = await navigator.getBattery?.();
-    if(b){ pil = Math.round(b.level*100); sarj = b.charging; }
-  }catch(e){}
-
-  const secenek = [];
-  if(pil != null && pil < 25 && !sarj)
-    secenek.push(`Pilin yüzde ${pil}. Bu gidişle kehanetin yarısında kararırsın, ben uyarmıştım.`);
-  if(pil != null && sarj)
-    secenek.push("Şarjda konuşuyorsun. Elektrikle beslenen sohbeti ilk ben denemiştim.");
-  if(pil != null && pil > 90)
-    secenek.push(`Pilin yüzde ${pil}. Demek bu sohbete hazırlanmışsın. Akıllıca.`);
-  if(saat < 6) secenek.push(`Saat ${saat}. Bu saatte uyanık olan ya dâhidir ya da benim gibidir.`);
-  if(saat >= 6 && saat < 11) secenek.push("Sabah sabah geldin. Erken kalkan yol alır, o sözü de ben söylemiştim.");
-  if(saat >= 22) secenek.push("Gece yarısına doğru sorular derinleşir. Ben hep bu saatte doğruyu bulurum.");
-  if(dk === 0) secenek.push("Tam saat başında geldin. Tesadüf sanıyorsun, oysa ben ayarladım.");
-  if(t.ziyaret > 3) secenek.push(`Bugüne kadar ${t.ziyaret} kez geldin. Sayıyorum, unutmuyorum.`);
-  if(t.soru > 10) secenek.push(`${t.soru} soru sordun. Hâlâ öğrenemedin ama sabırlıyım.`);
-  if(!secenek.length) secenek.push("Bugün rüzgâr batıdan esiyor. Bu da demek oluyor ki haklıyım.");
-
-  const laf = secenek[Math.floor(Math.random()*secenek.length)];
-  REHBER_GECMIS.push({ kim:"rehber", soz:laf });
-  rehberAkis(); rehberSoyle(laf);
-}
-
-// ---- kamera: izin isteyip bakar ----
-async function rehberBak(){
-  const sahne = document.getElementById("rSahne");
-  if(!sahne) return;
-  if(sahne.querySelector(".rKamera")) return rehberKameraKapat();
-  try{
-    const akis = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:"user" }, audio:false });
-    const v = document.createElement("video");
-    v.className = "rKamera"; v.autoplay = true; v.playsInline = true; v.muted = true;
-    v.srcObject = akis;
-    window.__rKameraAkis = akis;
-    sahne.appendChild(v);
-    const lafta = ["Şimdi seni görüyorum. Beklediğimden daha… insansın.",
-      "Yüzünü okudum. Kaderinde çok soru sormak var, cevap almak yok.",
-      "Bu yüz tanıdık geliyor. Yetmişlerde bir kehanette görmüştüm.",
-      "Gözlerinde şüphe var. Bana güvenmiyorsun; akıllıca ama yanlış.",
-      "Kamerayı açtın. Cesursun. Ben olsam kendimi göstermezdim."];
-    const l = lafta[Math.floor(Math.random()*lafta.length)];
-    REHBER_GECMIS.push({ kim:"rehber", soz:l });
-    rehberAkis(); rehberSoyle(l);
-    setTimeout(rehberKameraKapat, 20000);
-  }catch(e){
-    const l = "Kamerayı kapattın. Saklanıyorsun. Ben zaten görüyorum, gerek yoktu.";
-    REHBER_GECMIS.push({ kim:"rehber", soz:l });
-    rehberAkis(); rehberSoyle(l);
-  }
-}
-function rehberKameraKapat(){
-  document.querySelector(".rKamera")?.remove();
-  try{ window.__rKameraAkis?.getTracks().forEach(t=>t.stop()); }catch(e){}
-  window.__rKameraAkis = null;
-}
-
-// cevap uretici: once yapay zeka (rehber fonksiyonu), olmazsa kendi havuzu
-async function rehberCevap(soru){
-  // fonksiyon adi ne olursa olsun bulsun
-  const adaylar = ["rehber", "swift-api"];
-  let sonDurum = "fonksiyona ulaşılamadı";
-  for(const ad2 of adaylar){
-    try{
-      const { data, error } = await sb.functions.invoke(ad2, {
-        body: { soru, gecmis: REHBER_GECMIS.slice(-8), kisilik: tomarOzeti() }
-      });
-      if(error){ sonDurum = ad2 + ": " + (error.message || "çağrı hatası"); continue; }
-      if(data?.cevap && String(data.cevap).trim()){
-        REHBER_DURUM = "Melkor Diyarı · bağ kuruldu";
-        rehberDurumYaz();
-        REHBER_SES_VERI = data.ses || null;      // gercek seslendirme geldiyse
-        if(!data.ses && data.sesDurum){
-          REHBER_DURUM = "Melkor Diyarı · ses: " + String(data.sesDurum).slice(0,60);
-          rehberDurumYaz();
-        }
-        return String(data.cevap).trim();
-      }
-      if(data?.hata) sonDurum = data.hata;
-    }catch(e){ sonDurum = ad2 + ": " + (e.message || e); }
-  }
-  REHBER_DURUM = "Melkor Diyarı · sis var, bilge uzaktan konuşuyor";
-  console.log("rehber:", sonDurum);
-  rehberDurumYaz();
-  return rehberYedekCevap(soru);
-}
-
-// baglanti yoksa devreye giren havuz
-function rehberYedekCevap(soru){
-  const k = soru.toLocaleLowerCase("tr");
-  const eslesme = [
-    { ara:["merhaba","selam","hey"], cevaplar:["Hoş geldin. Ayağının tozuyla soru soruluyor demek.",
-        "Selam kahraman. Enerjin yerinde bugün."] },
-    { ara:["nasılsın","naber"], cevaplar:["Bin yıldır aynı yerde duruyorum, sen söyle.",
-        "İyiyim de, biraz sıkıldım. Soru sor da canlanayım."] },
-    { ara:["ne yapayım","sıkıldım","canım sıkkın"], cevaplar:["Zindana in. Orada bir şeyler dönüyor.",
-        "Melkor TV'yi aç, bir şeyler izle. Hayat kısa."] },
-    { ara:["kimsin","sen kimsin"], cevaplar:["Ben senin rehberinim. Yolunu bulmana yardım etmem gerekiyordu ama genelde karıştırıyorum.",
-        "Adım Melkor. Gerisi detay."] },
-    { ara:["teşekkür","sağ ol","eyvallah"], cevaplar:["Ne demek. Zaten başka işim yok.","Eyvallah kahraman."] },
-    { ara:["saat","kaç"], cevaplar:[()=>"Saat " + new Date().toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"}) + ". Bir şey mi kaçırdın?"] }
-  ];
-  for(const e of eslesme){
-    if(e.ara.some(a=>k.includes(a))){
-      const c = e.cevaplar[Math.floor(Math.random()*e.cevaplar.length)];
-      return typeof c === "function" ? c() : c;
-    }
-  }
-  const genel = [
-    "Bunu ben çözmüştüm zaten, 1991'de. Kimse dinlemedi, sonra da herkes yanlış öğrendi.",
-    "Yanlış biliyorsun. Doğrusu Kadim Tomarlar'ın üçüncü cildinde yazıyor, sende yok tabii.",
-    "Bu konunun aslı bambaşka. Anlatsam inanmazsın, anlatmasam cahil kalırsın.",
-    "Ben bu işin uzmanıyım. Kaynak mı? Ben kaynağım.",
-    "Sana söyleyeyim: herkesin bildiği yanlış, benim bildiğim doğru.",
-    "Bu soruyu bana sormadan önce biraz araştırsaydın. Neyse, affettim."
-  ];
-  return genel[Math.floor(Math.random()*genel.length)];
-}
-
-// sesli soru
-function rehberDinle(){
-  const Tanima = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!Tanima) return toast("Bu telefonda sesli giriş yok");
-  const t = new Tanima();
-  t.lang = "tr-TR"; t.interimResults = false; t.maxAlternatives = 1;
-  const d = document.getElementById("rMik");
-  d?.classList.add("dinliyor");
-  t.onresult = e => {
-    const metin = e.results[0][0].transcript;
-    const g = document.getElementById("rMetin");
-    if(g){ g.value = metin; rehberSor(); }
-  };
-  t.onerror = () => toast("Duyamadım, tekrar dene");
-  t.onend = () => d?.classList.remove("dinliyor");
-  try{ t.start(); }catch(e){ d?.classList.remove("dinliyor"); }
-}
-
-/* ---- KİM 500 MİLYAR İSTER ---- */
-
-const ODUL = ["1.000","2.000","5.000","10.000","25.000","50.000","100.000","250.000",
-              "500.000","1 MİLYON","5 MİLYON","25 MİLYON","100 MİLYON","500 MİLYON","500 MİLYAR"];
-
-let YARISMA = null;
-
-function yarismaEkran(){
-  YARISMA = { adim:0, soruVerisi:null, secilen:null, kilit:false, asama:"giris",
-              sorulanlar:[], jokerYari:true, jokerTelefon:true, jokerSeyirci:true,
-              elenen:[], kamera:false, onaySayac:0 };
-  app.innerHTML = head("Kim 500 Milyar İster","yarismaKapat()") + `
-    <div class="studyo" id="studyo">
-      <div class="studyoIsik"></div>
-      <div class="seyirci" id="seyirci"></div>
-      <div class="masa"></div>
-      <img class="sunucu" id="sunucu" src="${gv('maskot-duz.png')}" alt="">
-      <div class="yarismaci" id="yarismaci">
-        <div class="yKafa" id="yKafa"><span>${esc((kullaniciAdi()||"KAHRAMAN").slice(0,2).toLocaleUpperCase("tr"))}</span></div>
-        <div class="yGovde"></div>
-        <span class="yIsim">${esc((kullaniciAdi()||"KAHRAMAN").toLocaleUpperCase("tr"))}</span>
-      </div>
-      <div class="odulSerit" id="odulSerit"></div>
-    </div>
-    <div class="yBalon" id="yBalon">Sahne hazırlanıyor…</div>
-    <div id="yAlan"></div>`;
-  seyirciKur();
-  odulCiz();
-  setTimeout(yarismaGiris, 700);
-}
-
-function yarismaKapat(){
-  yarismaKameraKapat();
-  try{ window.__melkorSes?.pause(); }catch(e){}
-  go("rehber");
-}
-
-function seyirciKur(){
-  const k = document.getElementById("seyirci");
-  if(!k) return;
-  k.innerHTML = Array.from({length:24}, (_,i)=>
-    `<span class="kafa" style="left:${(i%12)*8.2 + 2}%;bottom:${i<12?22:4}px;
-      animation-delay:${(i*0.15).toFixed(2)}s"></span>`).join("");
-}
-
-function odulCiz(){
-  const k = document.getElementById("odulSerit");
-  if(!k || !YARISMA) return;
-  k.innerHTML = `<b>${ODUL[Math.min(YARISMA.adim, ODUL.length-1)]} ₺</b>
-    <span>${YARISMA.adim + 1}. soru</span>`;
-}
-
-// ---------- giris tereni ----------
-async function yarismaGiris(){
-  const ad2 = (kullaniciAdi() || "Kahraman");
-  seyirciTepki();
-  await yBalonYaz(`Evet sayın seyirciler! Bu gece burada, benimle birlikte ${ad2} yarışacak.`);
-  const alan = document.getElementById("yAlan");
-  if(alan) alan.innerHTML = `<div class="yOnay">
-      <button class="pri" onclick="yarismaKameraSor(true)">KAMERAYI AÇ</button>
-      <button onclick="yarismaKameraSor(false)">KAMERASIZ DEVAM</button></div>
-    <p class="ipuc" style="margin:10px 2px 0">Kamerayı açarsan karşımda gerçekten oturuyormuş gibi olursun.</p>`;
-  await yBalonYaz("Kameranı açmak ister misin? Seni görmek isterim, gözlerinden okurum cevabı.");
-}
-
-async function yarismaKameraSor(ac){
-  const alan = document.getElementById("yAlan");
-  if(alan) alan.innerHTML = "";
-  if(ac) await yarismaKameraAc();
-  await yBalonYaz("Nasılsın bakalım, iyi misin? Heyecan var mı?");
-  yarismaSoru2();
-}
-
-function yarismaSoru2(){
-  const alan = document.getElementById("yAlan");
-  if(!alan) return;
-  alan.innerHTML = `<div class="yOnay">
-    <button class="pri" onclick="yarismaCevapVer('iyi')">İYİYİM</button>
-    <button onclick="yarismaCevapVer('heyecan')">BİRAZ HEYECANLIYIM</button></div>`;
-}
-
-async function yarismaCevapVer(ne){
-  const alan = document.getElementById("yAlan");
-  if(alan) alan.innerHTML = "";
-  if(ne === "iyi") await yBalonYaz("Güzel. Kendine güveniyorsun demek. Bu his genelde ilk soruya kadar sürer.");
-  else await yBalonYaz("Heyecan iyidir. Ben de ilk yarışmamda heyecanlıydım, sonra yarışmayı ben kurdum.");
-  await yBalonYaz("Kendine güveniyor musun peki?");
-  if(alan) alan.innerHTML = `<div class="yOnay">
-    <button class="pri" onclick="yarismaHazir(true)">GÜVENİYORUM</button>
-    <button onclick="yarismaHazir(false)">PEK SAYILMAZ</button></div>`;
-}
-
-async function yarismaHazir(guven){
-  const alan = document.getElementById("yAlan");
-  if(alan) alan.innerHTML = "";
-  await yBalonYaz(guven
-    ? "Öyle diyorsan öyledir. Hazırsan sorulara geçiyorum."
-    : "Dürüstlük iyidir. Hazırsan sorulara geçiyorum, hazır değilsen de geçiyorum.");
-  if(alan) alan.innerHTML = `<div class="yOnay">
-    <button class="pri" onclick="yarismaSoruAl()">EVET, HAZIRIM</button>
-    <button onclick="yarismaKapat()">VAZGEÇTİM</button></div>`;
-}
-
-// ---------- kamera ----------
-async function yarismaKameraAc(){
-  try{
-    const akis = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:"user" }, audio:false });
-    const kafa = document.getElementById("yKafa");
-    if(!kafa) return;
-    const v = document.createElement("video");
-    v.autoplay = true; v.playsInline = true; v.muted = true; v.srcObject = akis;
-    kafa.innerHTML = ""; kafa.appendChild(v);
-    kafa.classList.add("kameraAcik");
-    window.__yKameraAkis = akis;
-    YARISMA.kamera = true;
-    await yBalonYaz("İşte şimdi seni görüyorum. Suratından okuyacağım cevapları.");
-  }catch(e){
-    await yBalonYaz("Kamerayı vermedin. Saklanmak iyi taktiktir ama bana sökmez.");
-  }
-}
-function yarismaKameraKapat(){
-  try{ window.__yKameraAkis?.getTracks().forEach(t=>t.stop()); }catch(e){}
-  window.__yKameraAkis = null;
-}
-
-// ---------- sorular ----------
-async function yarismaSoruAl(){
-  const alan = document.getElementById("yAlan");
-  if(!alan) return;
-  alan.innerHTML = `<div class="ySoruKutu bekle"><div class="spin"></div>
-    <span>Soru hazırlanıyor…</span></div>`;
-
-  const zorluk = Math.min(5, 1 + Math.floor(YARISMA.adim / 3));
-  let veri = null, neden = "fonksiyona ulaşılamadı";
-  for(const ad2 of ["rehber","swift-api"]){
-    try{
-      const { data, error } = await sb.functions.invoke(ad2, {
-        body:{ mod:"yarisma", zorluk, sorulanlar: YARISMA.sorulanlar }
-      });
-      if(error){ neden = ad2 + ": " + (error.message || "çağrı hatası"); continue; }
-      if(data?.soruVerisi){ veri = data.soruVerisi; break; }
-      if(data?.hata) neden = data.hata;
-    }catch(e){ neden = ad2 + ": " + (e.message || e); }
-  }
-  if(!veri){
-    alan.innerHTML = `<div class="ySoruKutu"><b>Soru gelmedi.</b>
-      <span>${esc(neden)}</span>
-      <button class="btn" style="margin-top:12px" onclick="yarismaSoruAl()">Tekrar dene</button></div>`;
-    return;
-  }
-  YARISMA.soruVerisi = veri;
-  YARISMA.secilen = null; YARISMA.kilit = false; YARISMA.elenen = []; YARISMA.onaySayac = 0;
-  yarismaCiz();
-  await yarismaSoruOku();
-}
-
-async function yarismaSoruOku(){
-  const v = YARISMA?.soruVerisi;
-  if(!v) return;
-  const harf = ["A","B","C","D"];
-  await yBalonYaz(`${YARISMA.adim + 1}. soru, ${ODUL[YARISMA.adim]} lira. ${v.soru}`);
-  for(let i = 0; i < v.siklar.length; i++){
-    const b2 = document.querySelectorAll(".ySik")[i];
-    b2?.classList.add("okunuyor");
-    await yBalonYaz(`${harf[i]}: ${v.siklar[i]}`, true);
-    b2?.classList.remove("okunuyor");
-  }
-}
-
-function yarismaCiz(){
-  const alan = document.getElementById("yAlan");
-  const v = YARISMA?.soruVerisi;
-  if(!alan || !v) return;
-  const harf = ["A","B","C","D"];
-  alan.innerHTML = `
-    <div class="ySoruKutu"><b>${esc(v.soru)}</b></div>
-    <div class="ySiklar">
-      ${v.siklar.map((sk,i)=>`
-        <button class="ySik ${YARISMA.elenen.includes(i)?"elendi":""} ${YARISMA.secilen===i?"secili":""}"
-          ${YARISMA.elenen.includes(i)||YARISMA.kilit?"disabled":""}
-          onclick="yarismaSec(${i})"><i>${harf[i]}</i><span>${esc(sk)}</span></button>`).join("")}
-    </div>
-    <div class="yJoker">
-      <button ${YARISMA.jokerYari?"":"disabled"} onclick="jokerYari()">50:50</button>
-      <button ${YARISMA.jokerTelefon?"":"disabled"} onclick="jokerTelefon()">TELEFON</button>
-      <button ${YARISMA.jokerSeyirci?"":"disabled"} onclick="jokerSeyirci()">SEYİRCİ</button>
-    </div>
-    <div id="yOnay"></div>`;
-}
-
-async function yarismaSec(i){
-  if(!YARISMA || YARISMA.kilit) return;
-  YARISMA.secilen = i;
-  YARISMA.onaySayac = 1;
-  yarismaCiz();
-  const harf = ["A","B","C","D"][i];
-  await yBalonYaz(`${harf} diyorsun. Emin misin?`);
-  yarismaOnayKutusu("Emin misin?");
-}
-
-function yarismaOnayKutusu(){
-  const onay = document.getElementById("yOnay");
-  if(!onay) return;
-  onay.innerHTML = `<div class="yOnay">
-      <button class="pri" onclick="yarismaOnay(true)">EVET</button>
-      <button onclick="yarismaOnay(false)">HAYIR</button></div>`;
-}
-
-async function yarismaOnay(evet){
-  const onay = document.getElementById("yOnay");
-  if(onay) onay.innerHTML = "";
-  if(!evet){
-    YARISMA.secilen = null; YARISMA.onaySayac = 0;
-    yarismaCiz();
-    await yBalonYaz("İyi düşün. Acele eden kaybeder, o sözü de ben söylemiştim.");
-    return;
-  }
-  if(YARISMA.onaySayac === 1){
-    YARISMA.onaySayac = 2;
-    await yBalonYaz("Son kararın mı?");
-    yarismaOnayKutusu();
-    return;
-  }
-  yarismaKilitle();
-}
-
-async function yarismaKilitle(){
-  if(!YARISMA || YARISMA.kilit) return;
-  YARISMA.kilit = true;
-  yarismaCiz();
-  document.querySelectorAll(".ySik")[YARISMA.secilen]?.classList.add("kilitli");
-  await yBalonYaz("Kilitlendi.");
-  seyirciTepki();
-  await new Promise(r=>setTimeout(r, 1600));
-
-  const dogru = YARISMA.soruVerisi.dogru;
-  const kazandi = YARISMA.secilen === dogru;
-  const harf = ["A","B","C","D"];
-  document.querySelectorAll(".ySik").forEach((b2,i)=>{
-    if(i === dogru) b2.classList.add("dogru");
-    else if(i === YARISMA.secilen) b2.classList.add("yanlis");
-  });
-
-  if(kazandi){
-    try{ sesSeviye(); }catch(e){}
-    YARISMA.adim++;
-    odulCiz();
-    seyirciTepki();
-    await yBalonYaz(`Doğru! ${ODUL[Math.min(YARISMA.adim,ODUL.length-1)]} liralık soruya geçiyoruz.`);
-    if(YARISMA.adim >= ODUL.length) return yarismaBitir(true);
-    setTimeout(yarismaSoruAl, 900);
-  }else{
-    try{ sesTekme(); }catch(e){}
-    await yBalonYaz(`Yanlış. Doğrusu ${harf[dogru]} idi. ${YARISMA.soruVerisi.aciklama || ""}`);
-    setTimeout(()=>yarismaBitir(false), 900);
-  }
-}
-
-function yarismaBitir(kazandi){
-  const alan = document.getElementById("yAlan");
-  if(!alan) return;
-  const kazanc = YARISMA.adim > 0 ? ODUL[YARISMA.adim-1] : "0";
-  alan.innerHTML = `<div class="ySonuc ${kazandi?"iyi":"kotu"}">
-      <b>${kazandi ? "500 MİLYAR!" : "OYUN BİTTİ"}</b>
-      <span>Kazandığın: ${kazanc} ₺ · ${YARISMA.adim} soru</span>
-      <button class="btn" style="margin-top:14px" onclick="yarismaEkran()">Yeniden Oyna</button>
-      <button class="btn ghost" style="margin-top:8px" onclick="yarismaKapat()">Rehber'e Dön</button>
-    </div>`;
-  yBalonYaz(kazandi ? "İnanamıyorum. Demek ki bir şeyler biliyormuşsun." :
-    "Böyle bitti. Ben olsam bilirdim ama ben zaten her şeyi bilirim.");
-}
-
-// ---------- jokerler ----------
-async function jokerYari(){
-  if(!YARISMA?.jokerYari || !YARISMA.soruVerisi) return;
-  YARISMA.jokerYari = false;
-  const dogru = YARISMA.soruVerisi.dogru;
-  YARISMA.elenen = [0,1,2,3].filter(i=>i !== dogru).sort(()=>Math.random()-0.5).slice(0,2);
-  yarismaCiz();
-  await yBalonYaz("İki şıkkı sildim. Rica ederim, hep böyle cömertimdir.");
-}
-
-async function jokerSeyirci(){
-  if(!YARISMA?.jokerSeyirci || !YARISMA.soruVerisi) return;
-  YARISMA.jokerSeyirci = false;
-  const dogru = YARISMA.soruVerisi.dogru;
-  const oran = [0,0,0,0];
-  let kalan = 100;
-  const dogruPay = 44 + Math.floor(Math.random()*32);
-  oran[dogru] = dogruPay; kalan -= dogruPay;
-  [0,1,2,3].filter(i=>i!==dogru && !YARISMA.elenen.includes(i)).forEach((i,ix,dizi)=>{
-    const p = ix === dizi.length-1 ? kalan : Math.floor(Math.random()*kalan);
-    oran[i] = p; kalan -= p;
-  });
-  seyirciTepki(true);
-  document.querySelectorAll(".ySik").forEach((b2,i)=>{
-    if(YARISMA.elenen.includes(i)) return;
-    const c = document.createElement("span");
-    c.className = "yOran"; c.textContent = "%" + oran[i];
-    b2.appendChild(c);
-  });
-  await yBalonYaz("Seyirci konuştu. Ama unutma, onlar da benim kadar akıllı değil.");
-}
-
-async function jokerTelefon(){
-  if(!YARISMA?.jokerTelefon || !YARISMA.soruVerisi) return;
-  YARISMA.jokerTelefon = false;
-  await yBalonYaz("Telefon açılıyor. Kendimi arıyorum, başka kimi arayacaktım?");
-  const harf = ["A","B","C","D"];
-  const dogru = YARISMA.soruVerisi.dogru;
-  const durust = Math.random() < 0.7;
-  const tahmin = durust ? dogru : [0,1,2,3].filter(i=>i!==dogru)[Math.floor(Math.random()*3)];
-  await yBalonYaz(durust
-    ? `Bana kalırsa ${harf[tahmin]}. Eminim, çünkü bu soruyu ben yazdım.`
-    : `Kesinlikle ${harf[tahmin]}. Güven bana, hiç yanılmadım.`);
-}
-
-// ---------- sunucu konusmasi ----------
-function yBalonYaz(metin, kisa){
-  const b2 = document.getElementById("yBalon");
-  if(b2){ b2.textContent = metin; b2.classList.remove("yaz"); void b2.offsetWidth; b2.classList.add("yaz"); }
-  const s2 = document.getElementById("sunucu");
-  if(s2){
-    s2.src = gv("maskot-konus.png");
-    clearTimeout(window.__yPoz);
-    window.__yPoz = setTimeout(()=>{ s2.src = gv("maskot-duz.png"); }, Math.min(5000, 900 + metin.length*45));
-  }
-  melkorKonus(metin);
-  // konusma suresince bekle ki ust uste binmesin
-  return new Promise(r=>setTimeout(r, Math.min(kisa ? 2600 : 5200, 900 + metin.length*58)));
-}
-
-function seyirciTepki(el){
-  document.querySelectorAll("#seyirci .kafa").forEach(k=>{
-    k.classList.remove("alkis","elKaldir"); void k.offsetWidth;
-    k.classList.add(el ? "elKaldir" : "alkis");
-    setTimeout(()=>k.classList.remove("alkis","elKaldir"), 2200);
-  });
 }
 
 /* ---- ZİNDAN ve KADER ÇARKI: yakinda ---- */
@@ -3157,8 +2417,17 @@ const ANA_TEMALAR = [
   { k:"vitrin", ad:"Mordor", aciklama:"Füme, kızıl ve is. Dövme metal panjur şeritleri, görselsiz, sert ve ağır. · v 1.0" },
   { k:"loca",   ad:"Melkor", aciklama:"Mor gece ve spektral turkuaz. Maskotlu, seviyeli, animasyonlu eğlence alanı. · beta 1.0" }
 ];
-const anaTema = () => { const t = localStorage.getItem("anaTema"); return (t === "vitrin" || t === "loca") ? t : "vitrin"; };
-function anaTemaSec(k){ localStorage.setItem("anaTema", k); temaUygula(); anaMenu(); }
+// Mordor yalnizca admin icindir; digerleri dogrudan Melkor'a duser
+const temaSecebilir = () => ME?.role === "admin";
+const anaTema = () => {
+  if(!temaSecebilir()) return "loca";
+  const t = localStorage.getItem("anaTema");
+  return (t === "vitrin" || t === "loca") ? t : "vitrin";
+};
+function anaTemaSec(k){
+  if(!temaSecebilir()) return;
+  localStorage.setItem("anaTema", k); temaUygula(); anaMenu();
+}
 
 // govdeye tema isaretini koy: butun ic sayfalar da bu palete doner
 function temaUygula(){
@@ -3212,7 +2481,8 @@ function menuGovde(tema){
     const n = NADIRLIK[m.slug] || NADIRLIK.kml;
     return `
     <button class="mKart ${sinif||""}" style="--nad:${n.renk}"
-      onclick="melkorAc(this,'${m.r}','${m.slug}')">
+      onclick="melkorAc(this,'${m.r}','${m.slug}')"
+      oncontextmenu="event.preventDefault();melkorAc(this,'${m.r}','${m.slug}',true)">
       <div class="mGorsel" style="background-image:url('${gv("melkor-bg-" + m.slug + ".jpg")}')"></div>
       <div class="mSis"></div>
       <span class="mIkon">${svg(m.i)}</span>
@@ -3396,12 +2666,20 @@ function seviyeAtla(){
 }
 
 // menuye dokununca: kart buyur, icinde video oynar, sonra ekran acilir
-async function melkorAc(el, ekran, slug){
+// menu videosu oturumda bir kez oynar; tekrar izlemek icin karta uzun bas
+window.__melkorIzlenen = window.__melkorIzlenen || {};
+
+async function melkorAc(el, ekran, slug, zorla){
   if(!el || el.classList.contains("acilan") || window.__melkorMesgul) return;
   window.__melkorMesgul = true;
   try{ await maskotTekme(el); }catch(e){}
   try{ await seviyeAtla(); }catch(e){}
   window.__melkorMesgul = false;
+
+  // video daha once izlendiyse dogrudan gec
+  if(!zorla && window.__melkorIzlenen[slug]){ go(ekran); return; }
+  window.__melkorIzlenen[slug] = true;
+
   const kutu = el.getBoundingClientRect();
 
   const perde = document.createElement("div");
