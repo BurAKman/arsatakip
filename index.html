@@ -1147,7 +1147,7 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
   48%{transform:rotate(26deg) translate(10px,4px) scale(1.06,.94)}
   62%{transform:rotate(18deg) translate(6px,2px)}
   100%{transform:rotate(0) translateY(0)}}
-.melkor .mKart.sarsil{animation:kartSarsil .42s ease}
+.melkor .mKart.sarsil,.dKart.sarsil .dYuz{animation:kartSarsil .42s ease}
 @keyframes kartSarsil{0%,100%{transform:translate(0,0)}
   20%{transform:translate(-5px,3px) rotate(-1deg)}
   45%{transform:translate(4px,-2px) rotate(1deg)}
@@ -1526,7 +1526,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 5.6";
+const SURUM_MELKOR = "beta 5.7";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -3491,6 +3491,17 @@ function seviyeAtla(){
 window.__melkorIzlenen = window.__melkorIzlenen || {};
 
 async function melkorAc(el, ekran, slug, zorla){
+  try{
+    await melkorAcIc(el, ekran, slug, zorla);
+  }catch(e){
+    console.log("melkorAc:", e);
+    document.querySelectorAll(".mAcilan, .mPerde").forEach(k=>k.remove());
+    window.__melkorMesgul = false;
+    go(ekran);
+  }
+}
+
+async function melkorAcIc(el, ekran, slug, zorla){
   if(!el || el.classList.contains("acilan") || window.__melkorMesgul) return;
   window.__melkorMesgul = true;
   try{ await maskotTekme(el); }catch(e){}
@@ -3500,6 +3511,11 @@ async function melkorAc(el, ekran, slug, zorla){
   // video daha once izlendiyse dogrudan gec
   if(!zorla && window.__melkorIzlenen[slug]){ go(ekran); return; }
   window.__melkorIzlenen[slug] = true;
+
+  // kart hangi yapida olursa olsun gorseli ve adi bul
+  const gEl = el.querySelector(".dGorsel, .mGorsel");
+  const kartGorsel = gEl ? (gEl.style.backgroundImage || "").replace(/^url\(["']?|["']?\)$/g, "") : "";
+  const kartAdi = (el.querySelector(".dAlt b, .mYazi b")?.textContent || "").trim();
 
   const kutu = el.getBoundingClientRect();
 
@@ -3513,10 +3529,10 @@ async function melkorAc(el, ekran, slug, zorla){
   kopya.dataset.canli = "1";
   kopya.style.cssText = `left:${kutu.left}px;top:${kutu.top}px;width:${kutu.width}px;height:${kutu.height}px`;
   kopya.innerHTML = `
-    <div class="mGorsel" style="background-image:url('${el.querySelector(".mGorsel").style.backgroundImage.slice(5,-2)}')"></div>
+    <div class="mGorsel" style="background-image:url('${kartGorsel}')"></div>
     <video playsinline autoplay muted="false" onerror="this.style.display='none'">
       <source src="${gv("melkor-" + slug + ".mp4")}" type="video/mp4"></video>
-    <div class="mYazi"><b>${el.querySelector(".mYazi b").textContent}</b></div>
+    <div class="mYazi"><b>${esc(kartAdi)}</b></div>
     <span class="mCerceve"></span>`;
   document.body.appendChild(kopya);
 
