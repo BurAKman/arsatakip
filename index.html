@@ -997,6 +997,9 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .hGezgin.yuruyor img{animation:gezginYuru .42s ease-in-out infinite}
 @keyframes gezginYuru{0%,100%{translate:0 0;rotate:-2deg}25%{translate:0 -7px;rotate:1deg}
   50%{translate:0 0;rotate:2deg}75%{translate:0 -4px;rotate:-1deg}}
+.hGezgin.kostu img{animation:gezginYuru .22s ease-in-out infinite !important}
+.hGezgin.kostu::after{content:"";position:absolute;left:-20%;bottom:0;width:40%;height:18%;border-radius:50%;
+  background:radial-gradient(circle,rgba(230,220,200,.6),transparent 70%);filter:blur(3px);animation:dumanCik .5s ease-out infinite}
 .hGezgin.zipla img{animation:gezginZipla .55s cubic-bezier(.3,1.5,.5,1)}
 @keyframes gezginZipla{0%{translate:0 0}35%{translate:0 -16px;scale:1.05 .95}65%{translate:0 0;scale:.96 1.04}100%{translate:0 0}}
 .hGezgin.kizgin img{animation:gezginKiz .08s linear 10;filter:drop-shadow(0 0 12px rgba(255,60,60,.9)) saturate(1.6)}
@@ -1023,6 +1026,187 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .hPanelUst button{margin-left:auto;background:none;border:0;color:#A9A2C8;font-size:16px;cursor:pointer}
 .hPanelSoz{min-height:44px;padding:10px 12px;margin-bottom:10px;font-size:12.5px;line-height:1.45;color:#EAE6FA;
   background:rgba(232,201,138,.07);border-left:2px solid rgba(232,201,138,.6)}
+
+/* ================= yeni odalar ================= */
+
+/* --- haritadaki dar HUD --- */
+.hHud2{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:8;display:flex;align-items:center;gap:10px;
+  padding:7px 14px 7px 8px;max-width:calc(100% - 24px);
+  background:linear-gradient(160deg,rgba(28,18,50,.9),rgba(8,5,18,.88));
+  border:1px solid rgba(232,201,138,.55);
+  clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%);
+  box-shadow:0 8px 26px rgba(0,0,0,.6), inset 0 0 18px rgba(232,201,138,.12)}
+.hHud2::before,.hHud2::after{content:"";position:absolute;top:50%;width:6px;height:6px;background:#E8C98A;
+  transform:translateY(-50%) rotate(45deg);box-shadow:0 0 8px #E8C98A}
+.hHud2::before{left:4px} .hHud2::after{right:4px}
+.h2Logo{width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7))}
+.h2Bilgi{display:flex;flex-direction:column;min-width:0}
+.h2Bilgi .kad{font-family:"Cinzel",Georgia,serif;font-size:12.5px;font-weight:700;letter-spacing:.14em;color:#F6EFD8;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 10px rgba(232,201,138,.45)}
+.h2Satir{display:flex;align-items:center;gap:6px;margin-top:2px}
+.rAmblem{width:18px;height:20px;filter:drop-shadow(0 0 5px rgba(232,201,138,.55))}
+.h2Satir .lv{font-style:normal;font-family:"Cinzel",Georgia,serif;font-size:9.5px;font-weight:700;color:#E8C98A;letter-spacing:.08em}
+.h2Satir .rutbe{font-size:8.5px;font-style:italic;letter-spacing:.16em;text-transform:uppercase;color:rgba(234,230,250,.75)}
+.h2Bilgi .kCubuk{margin-top:4px;height:3px;background:rgba(232,201,138,.15);border:0}
+.h2Bilgi .kCubuk i{background:linear-gradient(90deg,#8A5A20,#E8C98A,#FFF3C8);box-shadow:0 0 8px rgba(232,201,138,.8)}
+.hHud2.atla{animation:rozetAtla 1.1s ease}
+
+/* --- saray: premium rotus --- */
+.rehberSahne{border:1px solid rgba(232,201,138,.4) !important;
+  box-shadow:inset 0 0 60px rgba(0,0,0,.7), 0 14px 34px rgba(0,0,0,.55)}
+.rehberSahne::before{content:"";position:absolute;inset:0;z-index:5;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(4,2,10,.75) 100%)}
+.rEkTus.tek{justify-content:center}
+.rEkTus.tek button{flex:0 0 auto;padding:9px 22px;display:flex;align-items:center;gap:8px;
+  border-color:rgba(232,201,138,.45);color:#F0DCA8}
+.rTusIkon{color:#FF6B6B;font-size:11px;animation:kehanetYan 1.6s ease-in-out infinite}
+.rGiris{padding:8px;background:linear-gradient(160deg,rgba(28,18,50,.8),rgba(8,5,18,.85));
+  border:1px solid rgba(232,201,138,.3);
+  clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.rGiris input{background:rgba(0,0,0,.25) !important;border:1px solid rgba(232,201,138,.18) !important}
+.rMik{border-radius:50% !important;clip-path:none !important;
+  background:radial-gradient(circle,rgba(232,201,138,.3),rgba(20,12,36,.9)) !important;
+  border:1px solid rgba(232,201,138,.55) !important;color:#F0DCA8 !important;box-shadow:0 0 16px rgba(232,201,138,.25)}
+.rGonder{background:linear-gradient(160deg,#F0DCA8,#C9973E) !important;color:#1A1206 !important}
+
+/* --- Esas Oglan'in yurdu: doganin kendisi --- */
+.eSahne{position:relative;height:clamp(220px,34vh,320px);overflow:hidden;margin-bottom:10px;
+  background:linear-gradient(180deg,#0E2A2A 0%,#123A26 55%,#0A1A10 100%);
+  border:1px solid rgba(111,227,168,.4);
+  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);
+  box-shadow:inset 0 0 60px rgba(0,0,0,.6)}
+.eGok{position:absolute;inset:0;background:
+  radial-gradient(40% 30% at 78% 16%,rgba(255,236,170,.35),transparent 70%),
+  radial-gradient(90% 40% at 50% 100%,rgba(40,120,60,.8),transparent 70%),
+  repeating-linear-gradient(95deg,transparent 0 38px,rgba(10,40,20,.55) 40px 46px,transparent 48px 90px)}
+.eYaprak{position:absolute;inset:-10%;opacity:.7;background-image:
+  radial-gradient(3px 2px at 10% 20%,#9CF5A0,transparent),radial-gradient(3px 2px at 40% 10%,#C8F58A,transparent),
+  radial-gradient(3px 2px at 70% 30%,#9CF5A0,transparent),radial-gradient(3px 2px at 90% 15%,#E8F5A0,transparent);
+  background-size:180px 180px;animation:yaprakDus 12s linear infinite}
+@keyframes yaprakDus{to{background-position:60px 180px}}
+.eAtes{position:absolute;right:16%;bottom:10%;width:40px;height:40px;z-index:2}
+.eAtes i{position:absolute;left:50%;bottom:0;width:18px;height:30px;transform:translateX(-50%);border-radius:50% 50% 30% 30%;
+  background:radial-gradient(circle at 50% 70%,#FFE9A0,#FF8A2A 55%,transparent 70%);filter:blur(1px);
+  animation:atesTitre .5s ease-in-out infinite alternate}
+.eAtes i:nth-child(2){width:12px;height:22px;margin-left:-8px;animation-delay:.2s}
+.eAtes i:nth-child(3){width:10px;height:18px;margin-left:8px;animation-delay:.35s}
+@keyframes atesTitre{0%{transform:translateX(-50%) scaleY(1)}100%{transform:translateX(-50%) scaleY(1.25) skewX(4deg)}}
+.eMaskot{position:absolute;bottom:-4px;left:38%;transform:translateX(-50%);height:88%;z-index:3;
+  filter:drop-shadow(0 10px 18px rgba(0,0,0,.75));animation:maskotNefes 3.6s ease-in-out infinite}
+.eIsik{position:absolute;inset:auto 0 0 0;height:45%;z-index:2;pointer-events:none;opacity:0;
+  background:linear-gradient(0deg,rgba(111,227,168,.35),transparent)}
+.eIsik.parla{animation:isikParla 1.4s ease}
+.eSahne.dusunuyor .eAtes i{animation-duration:.2s}
+.eEtiket{display:flex;align-items:baseline;gap:10px;margin:0 2px 8px}
+.eEtiket b{font-family:"Cinzel",Georgia,serif;font-size:13px;letter-spacing:.2em;color:#9CF5C4}
+.eEtiket span{font-size:9px;letter-spacing:.14em;color:rgba(156,245,196,.6);text-transform:uppercase}
+.rSatir.esas .rKim{background:linear-gradient(160deg,#9CF5C4,#3BBE78);color:#06180E}
+
+/* --- Vaha cadiri --- */
+.cSahne{position:relative;height:clamp(250px,38vh,340px);overflow:hidden;margin-bottom:10px;
+  background:
+    radial-gradient(70% 60% at 50% 105%,rgba(255,150,60,.35),transparent 65%),
+    radial-gradient(90% 70% at 50% -10%,rgba(120,60,160,.45),transparent 70%),
+    linear-gradient(180deg,#1E0E28,#120814 60%,#0A0508);
+  border:1px solid rgba(255,179,90,.45);
+  clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px)}
+.cTavan{position:absolute;inset:0 0 55% 0;opacity:.8;
+  background:repeating-conic-gradient(from 0deg at 50% -20%,rgba(120,50,30,.55) 0 6deg,rgba(40,14,30,.55) 6deg 12deg)}
+.cTavan::after{content:"";position:absolute;inset:0;background-image:
+  radial-gradient(1.4px 1.4px at 20% 30%,#FFE9A8,transparent),radial-gradient(1.2px 1.2px at 70% 20%,#FFE9A8,transparent),
+  radial-gradient(1.6px 1.6px at 45% 50%,#fff,transparent),radial-gradient(1.2px 1.2px at 85% 55%,#FFE9A8,transparent);
+  background-size:130px 90px;animation:kehanetYan 4s ease-in-out infinite}
+.cFener{position:absolute;top:10%;width:16px;height:24px;border-radius:6px 6px 10px 10px;
+  background:radial-gradient(circle at 50% 60%,#FFE9A0,#FF9A3A 60%,#7A3A10);box-shadow:0 0 26px 8px rgba(255,160,60,.45);
+  animation:fenerSallan 4s ease-in-out infinite;transform-origin:50% -40px}
+.cFener::before{content:"";position:absolute;left:50%;top:-40px;width:1px;height:40px;background:rgba(232,201,138,.5)}
+.cFener.f1{left:14%} .cFener.f2{left:50%;animation-delay:-1.3s;top:6%} .cFener.f3{left:84%;animation-delay:-2.6s}
+@keyframes fenerSallan{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+.cDuman{position:absolute;inset:0;background:radial-gradient(50% 30% at 50% 80%,rgba(200,160,255,.18),transparent 70%);
+  animation:isikNefes 5s ease-in-out infinite}
+.cCark{position:absolute;left:50%;top:22%;width:44%;aspect-ratio:1/1;transform:translateX(-50%);border-radius:50%;opacity:.55;
+  background:conic-gradient(from 0deg,#6A2A5A 0 30deg,#2A1040 30deg 60deg,#6A2A5A 60deg 90deg,#2A1040 90deg 120deg,
+    #6A2A5A 120deg 150deg,#2A1040 150deg 180deg,#6A2A5A 180deg 210deg,#2A1040 210deg 240deg,#6A2A5A 240deg 270deg,
+    #2A1040 270deg 300deg,#6A2A5A 300deg 330deg,#2A1040 330deg 360deg);
+  border:2px solid rgba(232,201,138,.6);box-shadow:0 0 30px rgba(180,120,255,.35)}
+.cCark i{position:absolute;inset:38%;border-radius:50%;background:radial-gradient(circle,#FFE9A8,#C9973E);box-shadow:0 0 16px #FFD27A}
+.cCark.don{animation:carkDon 18s linear infinite} .cCark.hizli{animation-duration:2.4s}
+@keyframes carkDon{to{transform:translateX(-50%) rotate(360deg)}}
+.cKure{position:absolute;left:50%;bottom:8%;width:58px;height:58px;transform:translateX(-50%);border-radius:50%;z-index:2;
+  background:radial-gradient(circle at 35% 30%,#FFFFFF,#B49CFF 30%,#4A2A8A 70%,#1A0A30);
+  box-shadow:0 0 30px 8px rgba(180,156,255,.55);animation:isikNefes 3s ease-in-out infinite}
+.cKure i{position:absolute;inset:-10px;border-radius:50%;border:1px solid rgba(232,201,138,.4)}
+.cEsas{position:absolute;left:-2%;bottom:-4px;height:80%;z-index:3;transition:filter .3s ease, transform .3s ease;
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.8)) brightness(.55)}
+.cBilge{position:absolute;right:-6%;bottom:-8%;height:100%;z-index:3;transform:scaleX(-1);transition:filter .3s ease;
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.8)) brightness(.55)}
+.cSahne[data-konusan="esas"] .cEsas{filter:drop-shadow(0 0 16px rgba(111,227,168,.5)) brightness(1.05)}
+.cSahne[data-konusan="bilge"] .cBilge{filter:drop-shadow(0 0 16px rgba(180,156,255,.6)) brightness(1.05)}
+.cKutu{position:relative;min-height:96px;padding:22px 16px 14px;margin-bottom:10px;
+  background:linear-gradient(160deg,rgba(40,20,50,.95),rgba(10,5,14,.96));border:1px solid rgba(255,179,90,.45);
+  clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+.cKutu.yeni{animation:balonGir .3s cubic-bezier(.3,1.5,.5,1)}
+.cAd{position:absolute;top:0;left:14px;padding:3px 12px;font-family:"Cinzel",Georgia,serif;font-size:10px;font-weight:700;
+  letter-spacing:.2em;color:#1A0E06;background:linear-gradient(160deg,#F0DCA8,#C9973E)}
+.cAd.esas{background:linear-gradient(160deg,#9CF5C4,#3BBE78);color:#06180E}
+.cAd.bilge{background:linear-gradient(160deg,#D6C8FF,#8A6BFF);color:#0E0620}
+.cSoz{margin:0;font-size:13.5px;line-height:1.55;color:#F2EAF6}
+.cSecim{display:grid;gap:8px}
+.cSec{padding:14px 12px;font-family:"Cinzel",Georgia,serif;font-size:12px;font-weight:700;letter-spacing:.08em;cursor:pointer;
+  color:#F2EAF6;background:linear-gradient(160deg,rgba(60,30,70,.85),rgba(14,7,20,.92));border:1px solid rgba(255,179,90,.4);
+  clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);animation:balonGir .35s ease}
+.cSec.mor{border-color:rgba(180,156,255,.7);box-shadow:inset 0 0 20px rgba(138,107,255,.25)}
+.cSec.yesil{border-color:rgba(111,227,168,.7);box-shadow:inset 0 0 20px rgba(59,190,120,.25)}
+.cSec.altin{color:#1A0E06;background:linear-gradient(160deg,#F0DCA8,#C9973E);border:0}
+.cGirdi{display:flex;gap:8px;align-items:center}
+.cGirdi input{flex:1}
+
+/* --- Lav arenasi --- */
+.oBaslik{text-align:center;margin:6px 0 14px}
+.oBaslik b{display:block;font-family:"Cinzel",Georgia,serif;font-size:17px;letter-spacing:.24em;color:#FFB35A;
+  text-shadow:0 0 18px rgba(255,120,40,.6)}
+.oBaslik span{font-size:10px;letter-spacing:.14em;color:rgba(255,200,150,.6)}
+.oListe{display:grid;gap:10px}
+.oKart{display:flex;align-items:center;gap:12px;padding:14px;cursor:pointer;text-align:left;
+  background:linear-gradient(160deg,rgba(60,20,10,.7),rgba(10,4,6,.9));border:1px solid color-mix(in srgb,var(--or) 50%,transparent);
+  clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);
+  box-shadow:inset 0 0 30px color-mix(in srgb,var(--or) 15%,transparent)}
+.oKart:active{transform:scale(.98)}
+.oIkon{font-size:30px;filter:drop-shadow(0 0 10px var(--or))}
+.oBilgi{flex:1;min-width:0}
+.oBilgi b{display:block;font-family:"Cinzel",Georgia,serif;font-size:13px;letter-spacing:.08em;color:#FFF1E0}
+.oBilgi small{display:block;margin-top:3px;font-size:10px;color:rgba(255,220,190,.65)}
+.oRekor{font-size:8px;letter-spacing:.14em;text-align:center;color:var(--or)}
+.oRekor b{font-family:"Cinzel",Georgia,serif;font-size:15px;color:#FFF1E0}
+.oEkranUst{display:flex;justify-content:space-between;margin:4px 2px 8px;font-size:10px;letter-spacing:.14em;color:rgba(255,200,150,.7)}
+.oEkranUst b{font-family:"Cinzel",Georgia,serif;font-size:15px;color:#FFE0B0;margin-left:4px}
+.oCerceve{position:relative;display:flex;justify-content:center;padding:6px;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--or) 35%,#1A0A06),#0A0404);
+  border:1px solid color-mix(in srgb,var(--or) 60%,transparent);box-shadow:0 0 30px color-mix(in srgb,var(--or) 25%,transparent)}
+.oCerceve canvas{display:block;touch-action:none}
+.oPerde{position:absolute;inset:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  padding:20px;text-align:center;background:rgba(8,3,4,.82);transition:opacity .3s ease}
+.oPerde.gizli{opacity:0;pointer-events:none}
+.oPerde b{font-family:"Cinzel",Georgia,serif;font-size:18px;letter-spacing:.18em;color:#FFD79A}
+.oPerde span{font-size:11px;color:rgba(255,220,190,.75)}
+.oPerde .duBasla{width:auto;padding:12px 34px}
+.oPad{display:grid;justify-items:center;gap:6px;margin-top:12px}
+.oPad div{display:flex;gap:60px}
+.oPad button{width:58px;height:48px;font-size:18px;cursor:pointer;color:#FFD79A;
+  background:linear-gradient(160deg,rgba(80,30,14,.8),rgba(14,5,4,.9));border:1px solid rgba(255,150,80,.4)}
+
+/* --- duello ek efektleri --- */
+.duSayac{padding:40px 0;text-align:center;font-family:"Cinzel",Georgia,serif;font-size:64px;font-weight:700;color:#FFE0B0;
+  text-shadow:0 0 30px rgba(255,120,40,.9);animation:sayacAt .6s cubic-bezier(.2,1.6,.4,1)}
+.duSayac.son{font-size:34px;letter-spacing:.2em;color:#FFD27A}
+@keyframes sayacAt{0%{transform:scale(2.2);opacity:0}100%{transform:scale(1);opacity:1}}
+.duFlas{position:absolute;inset:0;z-index:5;pointer-events:none;animation:flasSon .5s ease forwards}
+.duFlas.g{background:radial-gradient(circle,rgba(95,227,154,.45),transparent 70%)}
+.duFlas.y{background:radial-gradient(circle,rgba(255,80,80,.5),transparent 70%)}
+@keyframes flasSon{0%{opacity:1}100%{opacity:0}}
+.duArena.ates{box-shadow:inset 0 -30px 60px rgba(255,120,40,.55)}
+.duArena.ates .duZorba{filter:drop-shadow(0 0 18px rgba(255,150,60,.95)) drop-shadow(0 8px 14px rgba(0,0,0,.8))}
+.yakinda.buzlu{background:linear-gradient(160deg,rgba(60,110,170,.25),rgba(6,10,24,.9));border-color:rgba(123,184,255,.45)}
 
 /* ---- kart destesi ---- */
 .desteAlan{position:relative;margin-top:clamp(8px,1.6vh,16px)}
@@ -1764,7 +1948,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 6.2";
+const SURUM_MELKOR = "beta 7.0";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -1919,6 +2103,22 @@ const RUTBELER = [
   { lv:1,  ad:"Noob" }
 ];
 const rutbeAdi = lv => (RUTBELER.find(r=>lv >= r.lv) || RUTBELER[RUTBELER.length-1]).ad;
+
+// rutbeye gore amblem: tahta kalkan, kilic-kalkan, taçli arma
+function rutbeAmblem(lv){
+  const r = rutbeAdi(lv);
+  const renk = r === "Veteran" ? ["#FFE9A8","#D9A441","#7A4E12"] : r === "Soldier" ? ["#E6F2FF","#8FB6E0","#2E4A6E"] : ["#E8D2B0","#A8784A","#4A2E16"];
+  const ic = r === "Veteran"
+    ? `<path d="M12 6l2 3 3-2-1 4h-8l-1-4 3 2z" fill="${renk[0]}"/><circle cx="12" cy="14" r="2.2" fill="${renk[0]}"/>`
+    : r === "Soldier"
+    ? `<path d="M12 5.5v10.5M9.5 13.5h5M12 16l-1.2 2h2.4z" stroke="${renk[0]}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`
+    : `<path d="M8 9h8M8 12h8M8 15h8" stroke="${renk[0]}" stroke-width="1.3" opacity=".9"/>`;
+  return `<svg class="rAmblem" viewBox="0 0 24 26" aria-hidden="true">
+    <defs><linearGradient id="amb${lv}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${renk[1]}"/><stop offset="1" stop-color="${renk[2]}"/></linearGradient></defs>
+    <path d="M12 1.5l9 3.2v7.3c0 6-4 10.3-9 12.5C7 22.3 3 18 3 12V4.7z" fill="url(#amb${lv})" stroke="${renk[0]}" stroke-width="1"/>
+    ${ic}</svg>`;
+}
 
 // Seviye: 10'a kadar her 3 mekan girisinde bir seviye;
 // 10'dan sonra her seviye bir oncekinden 2 giris daha fazla ister (5, 7, 9, 11 ...)
@@ -2684,10 +2884,8 @@ function rehberEkran(){
     </div>
     <div class="rDurumSatir"><span id="rDurum" class="rDurum">Melkor Diyarı</span></div>
     <div id="rAkis" class="rAkis"></div>
-    <div class="rEkTus">
-      <button onclick="rehberKehanet()">KEHANET</button>
-      <button onclick="rehberBak()">BANA BAK</button>
-      <button onclick="go('yarisma')">DÜELLO</button>
+    <div class="rEkTus tek">
+      <button onclick="rehberBak()"><span class="rTusIkon">◉</span> BANA BAK</button>
     </div>
     <div class="rGiris">
       <button class="rMik" id="rMik" onclick="rehberDinle()" aria-label="Konuş">🎤</button>
@@ -2730,24 +2928,18 @@ function rehberSahneCanlandir(){
   const m = document.getElementById("rMaskot");
   const sahne = document.getElementById("rSahne");
   if(!m || !sahne) return;
-  let yon = 1, konum = 50;
+  // bilge yurumez: sahnenin ortasinda suzulur, ara sira hafifce kayar ve poz verir
   window.__rYuru = setInterval(()=>{
     if(!document.getElementById("rMaskot")) return clearInterval(window.__rYuru);
     if(sahne.classList.contains("dusunuyor") || sahne.classList.contains("konusuyor")) return;
-    if(Math.random() < 0.25) return;
-    konum += yon * (8 + Math.random()*14);
-    if(konum > 76){ konum = 76; yon = -1; }
-    if(konum < 24){ konum = 24; yon = 1; }
-    m.style.transition = "left 1.5s ease-in-out";
-    m.style.left = konum + "%";
-    m.classList.toggle("ters", yon < 0);
-    m.classList.add("yuruyor");
-    setTimeout(()=>m.classList.remove("yuruyor"), 1500);
-    if(Math.random() < 0.22){
+    const hedef = 44 + Math.random()*12;             // %44 - %56 arasi, hic tasmaz
+    m.style.transition = "left 2.4s cubic-bezier(.45,0,.2,1)";
+    m.style.left = hedef + "%";
+    if(Math.random() < 0.3){
       m.src = gv(Math.random() < 0.5 ? BILGE.dusun : BILGE.parmak);
-      setTimeout(()=>{ if(!sahne.classList.contains("konusuyor")) m.src = gv(BILGE.duz); }, 1600);
+      setTimeout(()=>{ if(!sahne.classList.contains("konusuyor")) m.src = gv(BILGE.duz); }, 1800);
     }
-  }, 2600);
+  }, 3400);
 }
 
 function rehberDusunuyor(acik){
@@ -2980,6 +3172,319 @@ function rehberDinle(){
   try{ t.start(); }catch(e){ d?.classList.remove("dinliyor"); }
 }
 
+/* ---- ESAS OĞLAN'IN YURDU ---- */
+let ESAS_GECMIS = [];
+
+function esasEkran(){
+  app.innerHTML = head("Esas Oğlan'ın Yurdu","go('ana')") + `
+    <div class="eSahne" id="eSahne">
+      <div class="eGok"></div>
+      <div class="eYaprak"></div>
+      <div class="eAtes"><i></i><i></i><i></i></div>
+      <img class="eMaskot" id="eMaskot" src="${gv('maskot-duz.png')}" alt="">
+      <div class="eIsik" id="eIsik"></div>
+    </div>
+    <div class="eEtiket"><b>ESAS OĞLAN</b><span>dürüst · dobra · korumacı</span></div>
+    <div id="eAkis" class="rAkis eAkis"></div>
+    <div class="rGiris premium">
+      <button class="rMik" id="eMik" onclick="esasDinle()" aria-label="Konuş">🎤</button>
+      <input id="eMetin" placeholder="Esas Oğlan'a sor…" onkeydown="if(event.key==='Enter')esasSor()">
+      <button class="rGonder" onclick="esasSor()">Sor</button>
+    </div>`;
+  esasAkis();
+  if(!ESAS_GECMIS.length){
+    const ad2 = kullaniciAdi() || "Kahraman";
+    const selam = [
+      `${ad2}! Geldin demek. Yolda biri seni rahatsız etti mi? Etti ise söyle, hemen giderim.`,
+      `Hoş geldin ${ad2}. Yemek yedin mi? Aç karnına soru sorulmaz, bunu bil.`,
+      `${ad2}, iyi ki geldin. Sarayda o bilgeyle konuştuysan anlattıklarını unut, ben doğrusunu söylerim.`
+    ][Math.floor(Math.random()*3)];
+    setTimeout(()=>{ ESAS_GECMIS.push({ kim:"esas", soz:selam }); esasAkis(); esasSoyle(selam); }, 600);
+  }
+}
+
+function esasAkis(){
+  const k = document.getElementById("eAkis");
+  if(!k) return;
+  k.innerHTML = ESAS_GECMIS.map(o=>`
+    <div class="rSatir ${o.kim === "ben" ? "ben" : "esas"}">
+      <span class="rKim">${o.kim === "ben" ? "SEN" : "ESAS OĞLAN"}</span>
+      <span class="rSoz">${esc(o.soz)}</span>
+    </div>`).join("");
+  k.scrollTop = k.scrollHeight;
+}
+
+function esasSoyle(metin, ses){
+  const m = document.getElementById("eMaskot");
+  const isik = document.getElementById("eIsik");
+  if(isik){ isik.classList.remove("parla"); void isik.offsetWidth; isik.classList.add("parla"); }
+  if(m){
+    clearInterval(window.__ePoz); clearTimeout(window.__ePozSon);
+    const dongu = ["maskot-konus.png","maskot-eller.png","maskot-konus.png","maskot-duz.png"];
+    let i = 0; m.src = gv(dongu[0]);
+    window.__ePoz = setInterval(()=>{ i = (i+1) % dongu.length; m.src = gv(dongu[i]); }, 900);
+    window.__ePozSon = setTimeout(()=>{ clearInterval(window.__ePoz); m.src = gv("maskot-duz.png"); },
+      Math.min(12000, 1800 + metin.length*60));
+  }
+  if(ses){
+    try{ window.__melkorSes?.pause(); const a = new Audio("data:audio/mp3;base64," + ses);
+      window.__melkorSes = a; a.play().catch(()=>{}); }catch(e){ melkorKonus(metin, "gezgin"); }
+  }else melkorKonus(metin, "gezgin");
+}
+
+async function esasSor(){
+  const g = document.getElementById("eMetin");
+  const soru = (g?.value || "").trim();
+  if(!soru) return;
+  g.value = "";
+  ESAS_GECMIS.push({ kim:"ben", soz:soru });
+  esasAkis();
+  if(kufurMu(soru)){
+    const laf = "Ağzını bozma. Ben seni korurum ama ağzını da korurum. Tekrar dene.";
+    ESAS_GECMIS.push({ kim:"esas", soz:laf }); esasAkis(); esasSoyle(laf);
+    return;
+  }
+  const m = document.getElementById("eMaskot");
+  if(m) m.src = gv("maskot-eller.png");
+  document.getElementById("eSahne")?.classList.add("dusunuyor");
+  let cevap = "", ses = null;
+  for(const ad2 of ["rehber","swift-api"]){
+    try{
+      const { data, error } = await sb.functions.invoke(ad2, {
+        body:{ mod:"esas", soru, gecmis: ESAS_GECMIS.slice(-8), kisilik: tomarOzeti() }
+      });
+      if(!error && data?.cevap){ cevap = String(data.cevap).trim(); ses = data.ses || null; break; }
+    }catch(e){}
+  }
+  document.getElementById("eSahne")?.classList.remove("dusunuyor");
+  if(!cevap) cevap = "Şu an diyarla bağım koptu, sana uydurma cevap vermem. Birazdan tekrar sor, buradayım.";
+  ESAS_GECMIS.push({ kim:"esas", soz:cevap });
+  esasAkis();
+  esasSoyle(cevap, ses);
+}
+
+function esasDinle(){
+  const Tanima = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!Tanima) return toast("Bu telefonda sesli giriş yok");
+  const t = new Tanima();
+  t.lang = "tr-TR"; t.interimResults = false;
+  const d = document.getElementById("eMik");
+  d?.classList.add("dinliyor");
+  t.onresult = e => { const g = document.getElementById("eMetin"); if(g){ g.value = e.results[0][0].transcript; esasSor(); } };
+  t.onerror = () => toast("Duyamadım, tekrar dene");
+  t.onend = () => d?.classList.remove("dinliyor");
+  try{ t.start(); }catch(e){ d?.classList.remove("dinliyor"); }
+}
+
+/* ---- LAV ARENASI: diyarin icinde oynanan oyunlar ---- */
+const OYUN_LISTE = [
+  { id:"yilan", ad:"Lav Yılanı", alt:"Klasik yılan, lav ülkesinde", ikon:"🐍", renk:"#FF8A3A" },
+  { id:"iki",   ad:"2048 · Rün Birleştir", alt:"Rünleri kaydır, birleştir", ikon:"🔷", renk:"#B49CFF" },
+  { id:"ejder", ad:"Ejder Uçuşu", alt:"Dokun, kanat çırp, sütunlardan geç", ikon:"🐉", renk:"#6FE3A8" }
+];
+let OYUN = null;
+const oyunRekor = id => +(localStorage.getItem("oyunRekor_" + id) || 0);
+const oyunRekorYaz = (id, p) => { if(p > oyunRekor(id)) { localStorage.setItem("oyunRekor_" + id, p); return true; } return false; };
+
+function oyunlarEkran(){
+  oyunDurdur();
+  app.innerHTML = head("Lav Arenası","go('ana')") + `
+    <div class="oBaslik"><b>LAV ARENASI</b><span>Kalenin altındaki oyun salonu</span></div>
+    <div class="oListe">${OYUN_LISTE.map(o=>`
+      <button class="oKart" style="--or:${o.renk}" onclick="oyunAc('${o.id}')">
+        <span class="oIkon">${o.ikon}</span>
+        <span class="oBilgi"><b>${o.ad}</b><small>${o.alt}</small></span>
+        <span class="oRekor">REKOR<br><b>${oyunRekor(o.id)}</b></span>
+      </button>`).join("")}</div>`;
+}
+
+function oyunDurdur(){
+  if(OYUN){ cancelAnimationFrame(OYUN.raf); clearInterval(OYUN.saat); document.removeEventListener("keydown", OYUN.tus); }
+  OYUN = null;
+}
+
+function oyunAc(id){
+  oyunDurdur();
+  const o = OYUN_LISTE.find(x=>x.id === id);
+  app.innerHTML = head(o.ad,"oyunlarEkran()") + `
+    <div class="oEkranUst"><span>SKOR <b id="oSkor">0</b></span><span>REKOR <b>${oyunRekor(id)}</b></span></div>
+    <div class="oCerceve" style="--or:${o.renk}"><canvas id="oTuval"></canvas>
+      <div class="oPerde" id="oPerde"><b>${o.ad}</b><span>${o.alt}</span>
+        <button class="duBasla" onclick="oyunBaslat('${id}')">OYNA</button></div></div>
+    ${id === "yilan" ? `<div class="oPad">
+      <button onclick="yilanYon(0,-1)">▲</button>
+      <div><button onclick="yilanYon(-1,0)">◀</button><button onclick="yilanYon(1,0)">▶</button></div>
+      <button onclick="yilanYon(0,1)">▼</button></div>` : ""}
+    <p class="ipuc" style="text-align:center;margin-top:10px">${id === "iki" ? "Kaydırarak oyna" : id === "ejder" ? "Ekrana dokun, kanat çırp" : "Kaydır ya da tuşlarla yönlendir"}</p>`;
+  const tv = document.getElementById("oTuval");
+  const G2 = Math.min(document.querySelector(".oCerceve").clientWidth, 420);
+  tv.width = G2 * 2; tv.height = G2 * 2 * (id === "ejder" ? 1.35 : 1);
+  tv.style.width = G2 + "px"; tv.style.height = (G2 * (id === "ejder" ? 1.35 : 1)) + "px";
+}
+
+function oyunBaslat(id){
+  document.getElementById("oPerde")?.classList.add("gizli");
+  if(id === "yilan") yilanBasla(); else if(id === "iki") ikiBasla(); else ejderBasla();
+}
+function oyunSkor(p){ const k = document.getElementById("oSkor"); if(k) k.textContent = p; }
+function oyunBitti(id, puan){
+  const rekor = oyunRekorYaz(id, puan);
+  oyunDurdur();
+  try{ rekor ? sesSeviye() : sesTekme(); }catch(e){}
+  const p = document.getElementById("oPerde");
+  if(p){ p.classList.remove("gizli");
+    p.innerHTML = `<b>${rekor ? "YENİ REKOR!" : "OYUN BİTTİ"}</b><span>Skor: ${puan}</span>
+      <button class="duBasla" onclick="oyunBaslat('${id}')">TEKRAR</button>`; }
+}
+function kaydirmaDinle(el, fn){
+  let b = null;
+  el.onpointerdown = e => { b = { x:e.clientX, y:e.clientY }; };
+  el.onpointerup = e => { if(!b) return; const dx = e.clientX - b.x, dy = e.clientY - b.y; b = null;
+    if(Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+    Math.abs(dx) > Math.abs(dy) ? fn(dx > 0 ? 1 : -1, 0) : fn(0, dy > 0 ? 1 : -1); };
+}
+
+// ---- Lav Yilani ----
+function yilanBasla(){
+  const tv = document.getElementById("oTuval"), c = tv.getContext("2d");
+  const N = 18, H = tv.width / N;
+  OYUN = { id:"yilan", yilan:[[9,9],[8,9],[7,9]], yon:[1,0], sonraki:[1,0], yem:null, puan:0, hiz:140 };
+  const yemAt = () => { do{ OYUN.yem = [Math.floor(Math.random()*N), Math.floor(Math.random()*N)]; }
+    while(OYUN.yilan.some(p=>p[0]===OYUN.yem[0] && p[1]===OYUN.yem[1])); };
+  yemAt();
+  OYUN.tus = e => { const m = {ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key]; if(m) yilanYon(...m); };
+  document.addEventListener("keydown", OYUN.tus);
+  kaydirmaDinle(tv, (x,y)=>yilanYon(x,y));
+  const ciz = () => {
+    const g = c.createLinearGradient(0,0,0,tv.height);
+    g.addColorStop(0,"#2A0A04"); g.addColorStop(1,"#0A0303");
+    c.fillStyle = g; c.fillRect(0,0,tv.width,tv.height);
+    c.strokeStyle = "rgba(255,120,60,.06)";
+    for(let i=0;i<=N;i++){ c.beginPath(); c.moveTo(i*H,0); c.lineTo(i*H,tv.height); c.stroke(); c.beginPath(); c.moveTo(0,i*H); c.lineTo(tv.width,i*H); c.stroke(); }
+    c.shadowColor = "#FFD27A"; c.shadowBlur = 24; c.fillStyle = "#FFD27A";
+    c.beginPath(); c.arc((OYUN.yem[0]+.5)*H, (OYUN.yem[1]+.5)*H, H*.36, 0, 7); c.fill();
+    OYUN.yilan.forEach((p,i)=>{
+      c.shadowColor = "#FF5A1A"; c.shadowBlur = i ? 8 : 20;
+      c.fillStyle = i ? `hsl(${18 + i*1.5},95%,${56 - Math.min(i,20)}%)` : "#FFE0A0";
+      c.beginPath(); c.roundRect ? c.roundRect(p[0]*H+2, p[1]*H+2, H-4, H-4, H*.3) : c.rect(p[0]*H+2, p[1]*H+2, H-4, H-4); c.fill();
+    });
+    c.shadowBlur = 0;
+  };
+  const adim = () => {
+    if(!OYUN || OYUN.id !== "yilan") return;
+    OYUN.yon = OYUN.sonraki;
+    const bas = [OYUN.yilan[0][0] + OYUN.yon[0], OYUN.yilan[0][1] + OYUN.yon[1]];
+    if(bas[0]<0||bas[1]<0||bas[0]>=N||bas[1]>=N||OYUN.yilan.some(p=>p[0]===bas[0]&&p[1]===bas[1]))
+      return oyunBitti("yilan", OYUN.puan);
+    OYUN.yilan.unshift(bas);
+    if(bas[0]===OYUN.yem[0] && bas[1]===OYUN.yem[1]){
+      OYUN.puan += 10; oyunSkor(OYUN.puan); yemAt(); try{ duelloTik(false); }catch(e){}
+      if(OYUN.puan % 50 === 0){ OYUN.hiz = Math.max(70, OYUN.hiz - 12); clearInterval(OYUN.saat); OYUN.saat = setInterval(adim, OYUN.hiz); }
+    }else OYUN.yilan.pop();
+    ciz();
+  };
+  ciz(); OYUN.saat = setInterval(adim, OYUN.hiz);
+}
+function yilanYon(x, y){
+  if(!OYUN || OYUN.id !== "yilan") return;
+  if(x === -OYUN.yon[0] && y === -OYUN.yon[1]) return;
+  OYUN.sonraki = [x, y];
+}
+
+// ---- 2048: Run Birlestir ----
+function ikiBasla(){
+  const tv = document.getElementById("oTuval"), c = tv.getContext("2d");
+  OYUN = { id:"iki", t:Array.from({length:4},()=>[0,0,0,0]), puan:0 };
+  const bosa = () => { const b = []; OYUN.t.forEach((r,y)=>r.forEach((v,x)=>{ if(!v) b.push([x,y]); }));
+    if(b.length){ const [x,y] = b[Math.floor(Math.random()*b.length)]; OYUN.t[y][x] = Math.random() < .9 ? 2 : 4; } };
+  bosa(); bosa();
+  const RENK = {2:"#3A2E5C",4:"#4A3A7A",8:"#6A4AA8",16:"#8A5AD0",32:"#B06AE0",64:"#D07AE8",128:"#E8C98A",
+    256:"#F0B060",512:"#F09040",1024:"#F07030",2048:"#FFE070"};
+  const ciz = () => {
+    c.fillStyle = "#0C0820"; c.fillRect(0,0,tv.width,tv.height);
+    const P = tv.width*0.03, H = (tv.width - P*5)/4;
+    OYUN.t.forEach((r,y)=>r.forEach((v,x)=>{
+      const px = P + x*(H+P), py = P + y*(H+P);
+      c.fillStyle = v ? (RENK[v] || "#FFF") : "rgba(150,130,230,.08)";
+      c.shadowColor = v >= 128 ? "#FFD27A" : "transparent"; c.shadowBlur = v >= 128 ? 20 : 0;
+      c.beginPath(); c.roundRect ? c.roundRect(px,py,H,H,H*.12) : c.rect(px,py,H,H); c.fill();
+      c.shadowBlur = 0;
+      if(v){ c.fillStyle = v >= 128 ? "#1A1206" : "#F2EEFF";
+        c.font = `700 ${H*(v>=1024?.3:v>=128?.36:.44)}px Cinzel, Georgia, serif`;
+        c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(v, px+H/2, py+H/2+2); }
+    }));
+  };
+  const kaydir = (dx, dy) => {
+    if(!OYUN || OYUN.id !== "iki") return;
+    let oynadi = false;
+    const oku = (i,j) => dx ? OYUN.t[i][j] : OYUN.t[j][i];
+    const yaz = (i,j,v) => { if(dx) OYUN.t[i][j] = v; else OYUN.t[j][i] = v; };
+    for(let i=0;i<4;i++){
+      let dizi = [0,1,2,3].map(j=>oku(i,j));
+      if(dx > 0 || dy > 0) dizi.reverse();
+      let dolu = dizi.filter(v=>v), sonuc = [];
+      for(let k=0;k<dolu.length;k++){
+        if(dolu[k] === dolu[k+1]){ sonuc.push(dolu[k]*2); OYUN.puan += dolu[k]*2; k++; } else sonuc.push(dolu[k]);
+      }
+      while(sonuc.length < 4) sonuc.push(0);
+      if(dx > 0 || dy > 0) sonuc.reverse();
+      sonuc.forEach((v,j)=>{ if(oku(i,j) !== v) oynadi = true; yaz(i,j,v); });
+    }
+    if(oynadi){ bosa(); oyunSkor(OYUN.puan); try{ duelloTik(false); }catch(e){} }
+    ciz();
+    const hamleVar = OYUN.t.some((r,y)=>r.some((v,x)=>!v || r[x+1] === v || (OYUN.t[y+1] && OYUN.t[y+1][x] === v)));
+    if(!hamleVar) oyunBitti("iki", OYUN.puan);
+  };
+  OYUN.tus = e => { const m = {ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key]; if(m) kaydir(...m); };
+  document.addEventListener("keydown", OYUN.tus);
+  kaydirmaDinle(tv, kaydir);
+  ciz();
+}
+
+// ---- Ejder Ucusu ----
+function ejderBasla(){
+  const tv = document.getElementById("oTuval"), c = tv.getContext("2d");
+  const W = tv.width, H = tv.height;
+  OYUN = { id:"ejder", y:H*.45, hiz:0, sutun:[], puan:0, kare:0, bitti:false };
+  const cirp = () => { if(OYUN && OYUN.id === "ejder" && !OYUN.bitti){ OYUN.hiz = -H*0.0125; try{ duelloTik(false); }catch(e){} } };
+  tv.onpointerdown = cirp;
+  OYUN.tus = e => { if(e.key === " " || e.key === "ArrowUp") cirp(); };
+  document.addEventListener("keydown", OYUN.tus);
+  const bosluk = H * 0.28, gen = W * 0.16;
+  const dongu = () => {
+    if(!OYUN || OYUN.id !== "ejder") return;
+    OYUN.kare++;
+    OYUN.hiz += H*0.00062; OYUN.y += OYUN.hiz;
+    if(OYUN.kare % 95 === 1) OYUN.sutun.push({ x:W, u: H*0.12 + Math.random()*(H*0.5), gecti:false });
+    OYUN.sutun.forEach(s2=>s2.x -= W*0.0075);
+    OYUN.sutun = OYUN.sutun.filter(s2=>s2.x > -gen);
+    // cizim
+    const g = c.createLinearGradient(0,0,0,H); g.addColorStop(0,"#0E1830"); g.addColorStop(1,"#2A0E18");
+    c.fillStyle = g; c.fillRect(0,0,W,H);
+    c.fillStyle = "rgba(255,255,255,.5)";
+    for(let i=0;i<30;i++){ const sx = (i*137 + OYUN.kare*0.4) % W, sy = (i*71) % (H*0.6); c.fillRect(W - sx, sy, 2, 2); }
+    OYUN.sutun.forEach(s2=>{
+      const gr = c.createLinearGradient(s2.x,0,s2.x+gen,0); gr.addColorStop(0,"#3A1A10"); gr.addColorStop(.5,"#6A3018"); gr.addColorStop(1,"#3A1A10");
+      c.fillStyle = gr; c.fillRect(s2.x, 0, gen, s2.u); c.fillRect(s2.x, s2.u + bosluk, gen, H);
+      c.fillStyle = "#FF7A3A"; c.fillRect(s2.x-6, s2.u-14, gen+12, 14); c.fillRect(s2.x-6, s2.u+bosluk, gen+12, 14);
+      if(!s2.gecti && s2.x + gen < W*0.25){ s2.gecti = true; OYUN.puan++; oyunSkor(OYUN.puan); }
+    });
+    // ejder
+    const ex = W*0.25, r = W*0.045;
+    c.save(); c.translate(ex, OYUN.y); c.rotate(Math.max(-0.5, Math.min(0.9, OYUN.hiz / (H*0.02))));
+    c.shadowColor = "#6FE3A8"; c.shadowBlur = 18;
+    c.fillStyle = "#3BBE78"; c.beginPath(); c.ellipse(0,0,r*1.3,r,0,0,7); c.fill();
+    c.fillStyle = "#9CF5C4"; c.beginPath(); c.moveTo(-r*.3,-r*.2); c.lineTo(-r*1.6, -r*(OYUN.kare%10<5?1.6:.4)); c.lineTo(r*.4,-r*.4); c.fill();
+    c.fillStyle = "#FFE070"; c.beginPath(); c.arc(r*.7,-r*.25,r*.18,0,7); c.fill();
+    c.restore(); c.shadowBlur = 0;
+    // carpisma
+    const carpti = OYUN.y < 0 || OYUN.y > H || OYUN.sutun.some(s2=>ex + r > s2.x && ex - r < s2.x + gen && (OYUN.y - r < s2.u || OYUN.y + r > s2.u + bosluk));
+    if(carpti){ OYUN.bitti = true; return oyunBitti("ejder", OYUN.puan); }
+    OYUN.raf = requestAnimationFrame(dongu);
+  };
+  OYUN.raf = requestAnimationFrame(dongu);
+}
+
 /* ---- KÜL KALESİ: YALAN DÜELLOSU ---- */
 // Bilge iddia atar, sen fitil yanmadan karar verirsin. Hepsi dogrulanmis bilgi.
 const DUELLO_IDDIA = [
@@ -3060,12 +3565,52 @@ function duelloEkran(){
     </div>`;
 }
 
-function duelloBasla(){
+// davul ve seyirci sesleri: dosyasiz
+function sesDavul(guclu){
+  try{
+    const a = sesKutusu(); if(!a) return;
+    const t = a.currentTime, o = a.createOscillator(), g = a.createGain();
+    o.type = "sine"; o.frequency.setValueAtTime(guclu ? 110 : 150, t);
+    o.frequency.exponentialRampToValueAtTime(40, t + 0.35);
+    g.gain.setValueAtTime(guclu ? 0.7 : 0.45, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + 0.42);
+  }catch(e){}
+}
+function sesSeyirci(){
+  try{
+    const a = sesKutusu(); if(!a) return;
+    const t = a.currentTime, b = a.createBuffer(1, Math.floor(a.sampleRate*1.4), a.sampleRate), d = b.getChannelData(0);
+    for(let i=0;i<d.length;i++){ const z = i/d.length; d[i] = (Math.random()*2-1) * Math.sin(Math.PI*z) * 0.9; }
+    const src = a.createBufferSource(); src.buffer = b;
+    const f = a.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 1100; f.Q.value = 0.6;
+    const g = a.createGain(); g.gain.value = 0.22;
+    src.connect(f); f.connect(g); g.connect(a.destination); src.start(t);
+  }catch(e){}
+}
+function duelloFlas(tur){
+  const a = document.getElementById("duArena");
+  if(!a) return;
+  const f = document.createElement("div");
+  f.className = "duFlas " + tur; a.appendChild(f);
+  setTimeout(()=>f.remove(), 500);
+}
+
+async function duelloBasla(){
   DUELLO = { can:3, puan:0, seri:0, enSeri:0, sure:7000, kalan:DUELLO_IDDIA.slice().sort(()=>Math.random()-0.5),
              aktif:null, kilit:false, saat:null, tik:null, baslangic:0 };
   gezginSesKapa();
-  melkorKonus("Düello başlasın! Bilge yalanlarını hazırla.", "gezgin");
-  duelloTur();
+  const alan = document.getElementById("duAlan");
+  const arena = document.getElementById("duArena");
+  arena?.classList.remove("ates");
+  melkorKonus("Düello başlasın! Bilge, yalanlarını hazırla.", "gezgin");
+  for(const [yazi, guclu] of [["3",false],["2",false],["1",false],["DÜELLO!",true]]){
+    if(!DUELLO || !alan) return;
+    alan.innerHTML = `<div class="duSayac ${guclu?"son":""}">${yazi}</div>`;
+    sesDavul(guclu);
+    if(guclu){ duelloFlas("g"); sesSeyirci(); }
+    await new Promise(r=>setTimeout(r, guclu ? 650 : 620));
+  }
+  if(DUELLO) duelloTur();
 }
 function gezginSesKapa(){ try{ window.__melkorSes?.pause(); }catch(e){} }
 
@@ -3180,6 +3725,9 @@ function duelloCevap(secim){
       if(bl){ bl.src = gv(BILGE.dusun); bl.classList.remove("sars"); void bl.offsetWidth; bl.classList.add("sars"); }
     }, 260);
     duelloYazi(ZORBA_TOKAT[Math.floor(Math.random()*ZORBA_TOKAT.length)], "g");
+    duelloFlas("g");
+    document.getElementById("duArena")?.classList.toggle("ates", DUELLO.seri >= 3);
+    if(DUELLO.seri % 3 === 0) sesSeyirci();
     if(DUELLO.seri > 0 && DUELLO.seri % 5 === 0) try{ sesSeviye(); }catch(e){}
   }else{
     DUELLO.can--;
@@ -3187,7 +3735,11 @@ function duelloCevap(secim){
     try{ sesIkin(); }catch(e){}
     if(bl){ bl.src = gv(BILGE.duz); bl.classList.remove("gul"); void bl.offsetWidth; bl.classList.add("gul"); }
     if(zb){ zb.classList.remove("uzgun"); void zb.offsetWidth; zb.classList.add("uzgun"); }
-    duelloYazi(secim === null ? "Süre bitti! " + BILGE_GULUS[0] : BILGE_GULUS[Math.floor(Math.random()*BILGE_GULUS.length)], "y");
+    const gulus = secim === null ? "Süre bitti! " + BILGE_GULUS[0] : BILGE_GULUS[Math.floor(Math.random()*BILGE_GULUS.length)];
+    duelloYazi(gulus, "y");
+    duelloFlas("y");
+    document.getElementById("duArena")?.classList.remove("ates");
+    if(Math.random() < 0.45) melkorKonus(gulus, "bilge");
   }
 
   setTimeout(()=>{
@@ -3610,14 +4162,279 @@ function seyirciTepki(el){
 
 /* ---- ZİNDAN ve KADER ÇARKI: yakinda ---- */
 function zindanEkran(){
-  app.innerHTML = head("Zindan","go('ana')") + `
-    <div class="yakinda"><b>ZİNDAN</b>
-      <span>Mini oyunlar burada olacak. Kapı henüz kapalı.</span></div>`;
+  app.innerHTML = head("Kuru Kafa Mağarası","go('ana')") + `
+    <div class="yakinda buzlu"><b>KURU KAFA MAĞARASI</b>
+      <span>Bilgenin gerçek bedeni bu buzulların derinliğinde. Esas Oğlan kapıda bekliyor.
+      Görsel roman macerası yakında burada başlayacak.</span></div>`;
 }
+/* ---- KADER ÇARKI: vaha çadırında iki karakterin seansı ---- */
+
+// --- gok hesaplari (yaklasik, eglence icin yeterli) ---
+const BURCLAR = ["Koç","Boğa","İkizler","Yengeç","Aslan","Başak","Terazi","Akrep","Yay","Oğlak","Kova","Balık"];
+const GUN_YONETICI = ["Güneş","Ay","Mars","Merkür","Jüpiter","Venüs","Satürn"];   // Pazar'dan baslar
+const KALDE = ["Satürn","Jüpiter","Mars","Güneş","Venüs","Merkür","Ay"];         // Kalde sirasi
+const dereceMod = x => ((x % 360) + 360) % 360;
+const rad = x => x * Math.PI / 180;
+function j2000Gun(t){ return (t.getTime() - Date.UTC(2000,0,1,12)) / 86400000; }
+function gunesBurcu(t){
+  const d = j2000Gun(t);
+  const L = 280.46 + 0.9856474*d, g = rad(357.528 + 0.9856003*d);
+  return BURCLAR[Math.floor(dereceMod(L + 1.915*Math.sin(g) + 0.02*Math.sin(2*g)) / 30)];
+}
+function ayBurcu(t){
+  const d = j2000Gun(t);
+  const L = 218.316 + 13.176396*d, M = rad(134.963 + 13.064993*d);
+  return BURCLAR[Math.floor(dereceMod(L + 6.289*Math.sin(M)) / 30)];
+}
+function ayEvresi(t){
+  const yas = (((t.getTime() - Date.UTC(2000,0,6,18,14)) / 86400000) % 29.530588853 + 29.530588853) % 29.530588853;
+  const ad = yas < 1.8 ? "Yeni Ay" : yas < 7.4 ? "Büyüyen Hilal" : yas < 9.2 ? "İlk Dördün" :
+             yas < 14 ? "Büyüyen Ay" : yas < 15.8 ? "Dolunay" : yas < 22.1 ? "Küçülen Ay" :
+             yas < 23.9 ? "Son Dördün" : "Küçülen Hilal";
+  return { ad, buyuyor: yas < 14.8, yas: Math.round(yas) };
+}
+function anKarti(){
+  const t = new Date();
+  const gun = GUN_YONETICI[t.getDay()];
+  const saatSira = ((t.getHours() - 6) + 24) % 24;                // gunes 06:00'da dogar varsayimi
+  const saat = KALDE[(KALDE.indexOf(gun) + saatSira) % 7];
+  return { gun, saat, ay: ayEvresi(t), ayBurc: ayBurcu(t), gunesBurc: gunesBurcu(t),
+           zaman: t.toLocaleString("tr-TR", { weekday:"long", hour:"2-digit", minute:"2-digit" }) };
+}
+
+// --- telefondan okunabilen her sey ---
+async function telefonuOku(){
+  const n = navigator, v = {};
+  try{ const b = await n.getBattery?.(); if(b){ v.pil = Math.round(b.level*100); v.sarj = b.charging; } }catch(e){}
+  v.saat = new Date().getHours(); v.dakika = new Date().getMinutes();
+  v.gun = new Date().toLocaleDateString("tr-TR", { weekday:"long" });
+  v.cekirdek = n.hardwareConcurrency || null;
+  v.bellek = n.deviceMemory || null;
+  v.ekran = `${screen.width}×${screen.height}`;
+  v.baglanti = n.connection?.effectiveType || null;
+  v.tasarruf = !!n.connection?.saveData;
+  v.dil = n.language || "tr";
+  v.karanlik = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
+  const ua = n.userAgent || "";
+  v.android = (ua.match(/Android\s([\d.]+)/) || [])[1] || null;
+  v.dokunus = n.maxTouchPoints || 0;
+  v.ziyaret = tomarOku().ziyaret || 0;
+  return v;
+}
+function telefonKehanetleri(v){
+  const l = [];
+  if(v.pil != null && !v.sarj) l.push(`Pilin yüzde ${v.pil}. Bu çadırdan çıktığında yüzde ${Math.max(1, v.pil - 2)} olacak. Kehanetim şaşmaz.`);
+  if(v.pil != null && v.sarj) l.push(`Şu an şarjdasın. Kaderine bağlısın, üstelik kabloyla.`);
+  if(v.cekirdek) l.push(`Telefonunun ${v.cekirdek} çekirdeği var. Bu gece seni tam ${v.cekirdek} kişi düşünüyor. Biri benim.`);
+  if(v.bellek) l.push(`Cihazında ${v.bellek} gigabayt hafıza görüyorum. Senin hafızan bunun yarısı, dün ne yediğini hatırlamıyorsun.`);
+  if(v.android) l.push(`Android ${v.android} kullanıyorsun. Ruhun güncelleme bekliyor ama sen erteliyorsun.`);
+  if(v.baglanti) l.push(`Bağlantın ${String(v.baglanti).toUpperCase()}. Evrenle bağın da bu hızda; biraz yavaş.`);
+  if(v.karanlik) l.push(`Karanlık temayı seçmişsin. Karanlık taraf seni çoktan çağırmış.`);
+  if(v.saat >= 0 && v.saat < 5) l.push(`Saat ${v.saat}. Bu saatte kader sorgulayan ya âşıktır ya uykusuz. Ya da ikisi.`);
+  l.push(`Ekranın ${v.ekran} piksel. Kaderin de bu kadar net, sadece sen göremiyorsun.`);
+  if(v.ziyaret > 1) l.push(`Bu diyara ${v.ziyaret} kez geldin. Bir şey arıyorsun ve ben ne olduğunu biliyorum.`);
+  return l.sort(()=>Math.random()-0.5).slice(0,3);
+}
+
+// --- sahne yardimcilari ---
+let CARK = null;
+const carkBekle = ms => new Promise(r=>setTimeout(r, ms));
+
+async function carkKonus(kim, metin, ses){
+  if(!document.getElementById("cSahne")) return;
+  const kutu = document.getElementById("cKutu");
+  const ad = document.getElementById("cAd");
+  const soz = document.getElementById("cSoz");
+  const bl = document.getElementById("cBilge"), eo = document.getElementById("cEsas");
+  document.getElementById("cSahne").dataset.konusan = kim;
+  if(ad){ ad.textContent = kim === "bilge" ? "BİLGE" : "ESAS OĞLAN"; ad.className = "cAd " + kim; }
+  if(soz){ soz.textContent = ""; }
+  kutu?.classList.remove("yeni"); void kutu?.offsetWidth; kutu?.classList.add("yeni");
+  // daktilo efekti
+  let i = 0;
+  clearInterval(window.__cDaktilo);
+  window.__cDaktilo = setInterval(()=>{ if(!soz) return; soz.textContent = metin.slice(0, ++i); if(i >= metin.length) clearInterval(window.__cDaktilo); }, 22);
+  // poz
+  if(kim === "bilge" && bl){
+    const d = ["parmak","duz","dusun"]; let k = 0; bl.src = gv(BILGE.parmak);
+    clearInterval(window.__cPoz); window.__cPoz = setInterval(()=>{ k=(k+1)%3; bl.src = gv(BILGE[d[k]]); }, 1100);
+  }else if(eo){
+    const d = ["maskot-konus.png","maskot-eller.png","maskot-konus.png","maskot-duz.png"]; let k = 0; eo.src = gv(d[0]);
+    clearInterval(window.__cPoz); window.__cPoz = setInterval(()=>{ k=(k+1)%d.length; eo.src = gv(d[k]); }, 900);
+  }
+  const bitis = Math.max(1800, metin.length * 48);
+  if(ses){
+    try{ window.__melkorSes?.pause(); const a = new Audio("data:audio/mp3;base64," + ses); window.__melkorSes = a;
+      await Promise.race([new Promise(r=>{ a.onended = r; a.onerror = r; a.play().catch(r); }), carkBekle(20000)]); }catch(e){}
+  }else{
+    await Promise.all([melkorKonus(metin, kim === "bilge" ? "bilge" : "gezgin"), carkBekle(bitis)]);
+  }
+  clearInterval(window.__cPoz);
+  if(bl) bl.src = gv(BILGE.duz);
+  if(eo) eo.src = gv("maskot-duz.png");
+  if(soz) soz.textContent = metin;
+}
+
+function carkSecenek(secenekler){
+  return new Promise(coz=>{
+    const k = document.getElementById("cSecim");
+    if(!k) return coz(null);
+    k.innerHTML = secenekler.map((s2,i)=>`<button class="cSec ${s2.tur||""}" data-i="${i}">${s2.metin}</button>`).join("");
+    k.querySelectorAll("button").forEach(b=>b.onclick = ()=>{ k.innerHTML = ""; coz(secenekler[+b.dataset.i].deger); });
+  });
+}
+
+function carkGirdi(ipucu, tur){
+  return new Promise(coz=>{
+    const k = document.getElementById("cSecim");
+    if(!k) return coz(null);
+    k.innerHTML = `<div class="cGirdi">
+      ${tur === "date" ? `<input id="cGir" type="date" max="${new Date().toISOString().slice(0,10)}">`
+        : `<button class="rMik" id="cMik" aria-label="Konuş">🎤</button><input id="cGir" placeholder="${ipucu}">`}
+      <button class="cSec altin" id="cGonder">TAMAM</button></div>`;
+    const gir = document.getElementById("cGir");
+    const bitir = () => { const v = (gir?.value || "").trim(); if(!v) return; k.innerHTML = ""; coz(v); };
+    document.getElementById("cGonder").onclick = bitir;
+    gir.onkeydown = e => { if(e.key === "Enter") bitir(); };
+    const mik = document.getElementById("cMik");
+    if(mik) mik.onclick = () => {
+      const T = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if(!T) return toast("Sesli giriş yok");
+      const t = new T(); t.lang = "tr-TR";
+      mik.classList.add("dinliyor");
+      t.onresult = e => { gir.value = e.results[0][0].transcript; bitir(); };
+      t.onend = () => mik.classList.remove("dinliyor");
+      try{ t.start(); }catch(e){}
+    };
+    setTimeout(()=>gir?.focus(), 200);
+  });
+}
+
+// --- ekran ---
 function carkiEkran(){
-  app.innerHTML = head("Kader Çarkı","go('ana')") + `
-    <div class="yakinda"><b>KADER ÇARKI</b>
-      <span>Çark dönmeye hazırlanıyor.</span></div>`;
+  CARK = { oturum: Date.now() };
+  app.innerHTML = head("Vaha Çadırı · Kader Çarkı","carkiKapat()") + `
+    <div class="cSahne" id="cSahne">
+      <div class="cTavan"></div>
+      <div class="cFener f1"></div><div class="cFener f2"></div><div class="cFener f3"></div>
+      <div class="cDuman"></div>
+      <div class="cCark" id="cCark"><i></i></div>
+      <div class="cKure"><i></i></div>
+      <img class="cEsas" id="cEsas" src="${gv('maskot-duz.png')}" alt="">
+      <img class="cBilge" id="cBilge" src="${gv(BILGE.dusun)}" alt="">
+    </div>
+    <div class="cKutu" id="cKutu">
+      <span class="cAd" id="cAd">BİLGE</span>
+      <p class="cSoz" id="cSoz">Çadırın perdesi aralanıyor…</p>
+    </div>
+    <div id="cSecim" class="cSecim"></div>`;
+  setTimeout(()=>carkSeans(CARK.oturum), 700);
+}
+function carkiKapat(){ CARK = null; try{ window.__melkorSes?.pause(); speechSynthesis?.cancel(); }catch(e){} go("ana"); }
+const carkCanli = id => CARK && CARK.oturum === id && document.getElementById("cSahne");
+
+async function carkSeans(id){
+  const ad2 = kullaniciAdi() || "Kahraman";
+  const v = await telefonuOku();
+  if(!carkCanli(id)) return;
+  document.getElementById("cCark")?.classList.add("don");
+  await carkKonus("bilge", `Hoş geldin ${ad2}. Otur. Çark senin için dönmeye başladı bile. Önce seni bir okuyayım…`);
+  for(const k of telefonKehanetleri(v)){
+    if(!carkCanli(id)) return;
+    await carkKonus("bilge", k);
+  }
+  if(!carkCanli(id)) return;
+  await carkKonus("esas", "Dur dur dur! Geleceğin için fallara baktırma. Asıl en yakın mezarlığa bak, herkesin sonu orası. Dinleme bu uğursuzu!");
+  await carkKonus("bilge", "Kaba adam. Söyle bakalım, kaderini öğrenmek ister misin?");
+  await carkKonus("esas", "Sakın ona inanma. Bu adam güneşin doğudan doğduğunu bile yanlış biliyor.");
+  if(!carkCanli(id)) return;
+  const secim = await carkSecenek([
+    { metin:"🔮 BİLGE: kaderimi oku", deger:"bilge", tur:"mor" },
+    { metin:"🛡 ESAS OĞLAN: seni dinliyorum", deger:"esas", tur:"yesil" }
+  ]);
+  if(!carkCanli(id)) return;
+  if(secim === "bilge") return carkBilgeYolu(id);
+  return carkEsasYolu(id);
+}
+
+async function carkEsasYolu(id){
+  await carkKonus("esas", "Doğru seçim. Dinle: bu bilge gerçek değil, bir ilüzyon. Asıl bedeni Buz Diyarı'nda, buzulların arasındaki gizli bir mağarada saklı.");
+  await carkKonus("esas", "Gerçek bedenini ortadan kaldırırsak bu diyar huzura kavuşur. Tek başıma giderim ama seninle daha iyi olur. Benimle bir maceraya var mısın?");
+  await carkKonus("bilge", "Bu çakma kabadayıya güvenme! Kanıt mı istiyorsun? Buz mağarasına giden herkes ayakkabısını ters giyer, 1682'de ben ölçtüm.");
+  await carkKonus("bilge", "Ayrıca mağaralar yalnızca salı günleri vardır, diğer günler bulut olurlar. Otur, falını okuyayım, çok daha güvenli.");
+  if(!carkCanli(id)) return;
+  const secim = await carkSecenek([
+    { metin:"⚔ ESAS OĞLAN: maceraya varım", deger:"macera", tur:"yesil" },
+    { metin:"🔮 BİLGE: falıma bak", deger:"bilge", tur:"mor" }
+  ]);
+  if(!carkCanli(id)) return;
+  if(secim === "bilge"){
+    await carkKonus("esas", "Peki. Ama bil ki ben kapının önündeyim. Saçmalarsa lafa girerim.");
+    return carkBilgeYolu(id);
+  }
+  await carkKonus("esas", "İşte bu! Sıkı tutun, haritaya çıkıyoruz!");
+  localStorage.setItem("maceraBasla", "1");
+  CARK = null;
+  go("ana");
+}
+
+async function carkBilgeYolu(id){
+  await carkKonus("bilge", "Akıllıca. Önce doğum tarihini ver. Yıldızlar seni doğduğun gün tanımıştı, ben de şimdi tanıyacağım.");
+  const tarih = await carkGirdi("", "date");
+  if(!carkCanli(id) || !tarih) return;
+  const dogum = new Date(tarih + "T12:00:00");
+  const dogumBurcu = gunesBurcu(dogum);
+  await carkKonus("esas", "Doğum tarihini verdin mi? Sonra kapına dilekçe gelir, benden söylemesi.");
+  await carkKonus("bilge", `${dogum.getFullYear()} yılında, Güneş ${dogumBurcu} burcundayken doğmuşsun. Bunu zaten biliyordum, sadece senin de bilmeni istedim.`);
+  CARK.dogum = { yil: dogum.getFullYear(), burc: dogumBurcu };
+
+  // horary dongusu
+  for(let tur = 1; tur <= 3; tur++){
+    if(!carkCanli(id)) return;
+    await carkKonus("bilge", tur === 1
+      ? "Şimdi horary sanatının zamanı. Aklındaki soruyu tam şu anda sor; sorunun doğduğu an, cevabın haritasıdır."
+      : "Bir soru daha mı? Yıldızlar sabırlıdır. Ben değilim ama sor.");
+    const soru = await carkGirdi("Sorunu yaz ya da söyle…");
+    if(!carkCanli(id) || !soru) return;
+
+    const k = anKarti();
+    document.getElementById("cCark")?.classList.add("hizli");
+    const bilgi = `SORU: ${soru}
+AN: ${k.zaman}. Gun yoneticisi ${k.gun}, su anki gezegen saati ${k.saat}.
+Ay ${k.ayBurc} burcunda, evresi ${k.ay.ad} (${k.ay.buyuyor ? "buyuyor" : "kuculuyor"}, ${k.ay.yas}. gun).
+Gunes ${k.gunesBurc} burcunda. Soranin dogum yili ${CARK.dogum.yil}, dogum Gunes burcu ${CARK.dogum.burc}.`;
+    const bekle = carkKonus("bilge", `${k.saat} saatindeyiz, Ay ${k.ayBurc} burcunda ve ${k.ay.ad.toLocaleLowerCase("tr")}. Haritan açılıyor…`);
+    let cevap = "", ses = null;
+    const istek = (async ()=>{
+      for(const ad2 of ["rehber","swift-api"]){
+        try{
+          const { data, error } = await sb.functions.invoke(ad2, { body:{ mod:"horary", soru: bilgi, kisilik: tomarOzeti() } });
+          if(!error && data?.cevap){ cevap = String(data.cevap).trim(); ses = data.ses || null; return; }
+        }catch(e){}
+      }
+    })();
+    await Promise.all([bekle, istek]);
+    document.getElementById("cCark")?.classList.remove("hizli");
+    if(!carkCanli(id)) return;
+    if(!cevap) cevap = `${k.saat} saati ${k.ay.buyuyor ? "büyüyen" : "küçülen"} Ay'la birleşti. Cevabın ${k.ay.buyuyor ? "evet, ama sabırla" : "şimdilik hayır, zamanı değil"}. Ben zaten biliyordum.`;
+    await carkKonus("bilge", cevap, ses);
+    const itiraz = ["Safsata! Yıldızlar senin kiranı ödemez, sen kendi işine bak.",
+      "Hurafe bunlar. Gökteki taşlar senin hayatını bilmez, ben bilirim çünkü yanındayım.",
+      "Ay'ın ne işi var senin derdinle? Kararını kendin ver, arkandayım.",
+      "Duydun mu? Hepsi uydurma. Ama anlatışı güzeldi, onu kabul ediyorum."];
+    await carkKonus("esas", itiraz[Math.floor(Math.random()*itiraz.length)]);
+    if(tur === 3) break;
+    const dev = await carkSecenek([
+      { metin:"🔮 Bir soru daha sor", deger:"evet", tur:"mor" },
+      { metin:"Çadırdan çık", deger:"hayir" }
+    ]);
+    if(dev !== "evet") break;
+  }
+  if(!carkCanli(id)) return;
+  await carkKonus("bilge", "Seans bitti. Kaderin kapandı, bir dahaki dönüşte yine açılır. Ücretini sonra konuşuruz.");
+  await carkKonus("esas", "Ücret falan yok. Hadi çıkalım, seni kapıya kadar geçireyim.");
+  const son = await carkSecenek([{ metin:"Haritaya dön", deger:"ana" }, { metin:"Yeni seans", deger:"yeni", tur:"mor" }]);
+  if(son === "yeni") carkiEkran(); else carkiKapat();
 }
 
 /* ---- yedekleme ---- *//* ---- yedekleme ---- */
@@ -3883,12 +4700,13 @@ function menuGovde(tema){
         <div class="hHedef" id="hHedef"></div>
       </div>
 
-      <!-- ust HUD: karakter plakasi -->
-      <div class="hHud mKur karakterKutu" id="lvRozet">
-        <span class="kPortre"><img src="${gv('logo.png')}" alt=""></span>
-        <span class="kBilgi">
+      <!-- ust HUD: dar, ortali karakter plakasi -->
+      <div class="hHud2" id="lvRozet">
+        <img class="h2Logo" src="${gv('logo.png')}" alt="">
+        <span class="h2Bilgi">
           <b class="kad">${esc((kullaniciAdi()||"KAHRAMAN").toLocaleUpperCase("tr"))}</b>
-          <span class="kSatir"><i class="lv">LVL ${kullaniciSeviye()}</i><i class="rutbe">${rutbeAdi(kullaniciSeviye())}</i></span>
+          <span class="h2Satir">${rutbeAmblem(kullaniciSeviye())}
+            <i class="lv">LVL ${kullaniciSeviye()}</i><i class="rutbe">${rutbeAdi(kullaniciSeviye())}</i></span>
           <span class="kCubuk"><i style="width:${(seviyePuan()/seviyeGerekli(kullaniciSeviye()))*100}%"></i></span>
         </span>
       </div>
@@ -3900,11 +4718,13 @@ function menuGovde(tema){
 
 // haritadaki mekanlar (yuzde koordinat)
 const HARITA_NOKTALARI = [
-  { id:"saray",  ad:"Bilge Kral'ın Sarayı", alt:"Rehber",            x:50,  y:48, renk:"#E8C98A", ekran:"rehber", slug:"rehber" },
-  { id:"buz",    ad:"Kuru Kafa Mağarası",   alt:"Zindan",            x:78.5,y:25, renk:"#7BB8FF", ekran:"zindan", slug:"zindan" },
-  { id:"kul",    ad:"Kül Kalesi",           alt:"Yalan Düellosu",    x:17,  y:69, renk:"#FF6B5A", ekran:"yarisma",slug:"yarisma" },
-  { id:"yesil",  ad:"Köy Hanı",             alt:"Melkor TV",         x:21,  y:25, renk:"#6FE3A8", ekran:"tv",     slug:"tv" },
-  { id:"kurak",  ad:"Vaha Falcısı",         alt:"Kader Çarkı",       x:77,  y:77, renk:"#FFB35A", ekran:"carki",  slug:"carki" }
+  { id:"saray",  ad:"Bilge Kral'ın Sarayı", alt:"Bilgeye danış",   x:50,  y:48, renk:"#E8C98A", ekran:"rehber" },
+  { id:"buz",    ad:"Kuru Kafa Mağarası",   alt:"Zindan",          x:78.5,y:25, renk:"#7BB8FF", ekran:"zindan" },
+  { id:"kul",    ad:"Kül Kalesi",           alt:"Yalan Düellosu",  x:17,  y:69, renk:"#FF6B5A", ekran:"yarisma" },
+  { id:"lav",    ad:"Lav Arenası",          alt:"Oyunlar",         x:33,  y:86, renk:"#FF9A3A", ekran:"oyunlar" },
+  { id:"yesil",  ad:"Esas Oğlan'ın Yurdu",  alt:"Esas Oğlan",      x:21,  y:25, renk:"#6FE3A8", ekran:"esas" },
+  { id:"kurak",  ad:"Vaha Çadırı",          alt:"Kader Çarkı",     x:77,  y:77, renk:"#FFB35A", ekran:"carki" },
+  { id:"sinema", ad:"Çöl Sineması",         alt:"Melkor TV",       x:89,  y:66, renk:"#E88AFF", ekran:"tv" }
 ];
 
 // ---------- kamera: kaydirma, yakinlastirma, ucus ----------
@@ -4000,7 +4820,41 @@ function haritaKur(){
   });
 
   haritaAtmosfer();
-  gezginDongu();
+  if(localStorage.getItem("maceraBasla") === "1"){
+    localStorage.removeItem("maceraBasla");
+    setTimeout(maceraKosusu, 500);
+  }else gezginDongu();
+}
+
+// Kader Carki'ndan maceraya: Esas Oglan bagirip buz magarasina kosar
+async function maceraKosusu(){
+  clearTimeout(window.__gezginSaat);
+  GZ.kizgin = true;                          // kendi kendine gezinmesin
+  haritaUc(GZ.x, GZ.y, 1.7, true);
+  await new Promise(r=>setTimeout(r, 800));
+  const el = document.getElementById("hGezgin");
+  el?.classList.add("kostu");
+  gezginSoyle("HEYYYYTTT!", false);
+  try{ sesIkin(); }catch(e){}
+  melkorKonus("Heyyyyttt! Takip et beni!", "gezgin");
+  const hedef = [78.5, 31];
+  // kamera kosuyu takip etsin
+  const takip = setInterval(()=>{
+    const r = el?.getBoundingClientRect(), kap = document.getElementById("hKap")?.getBoundingClientRect();
+    if(!r || !kap) return;
+    const dunya = document.getElementById("hDunya");
+    const px = ((r.left + r.width/2 - kap.left - KAMERA.x) / KAMERA.olcek) / dunya.offsetWidth * 100;
+    const py = ((r.bottom - kap.top - KAMERA.y) / KAMERA.olcek) / dunya.offsetHeight * 100;
+    haritaUc(px, py - 6, KAMERA.olcek, false);
+  }, 60);
+  await gezginYuru(hedef[0], hedef[1], true);
+  clearInterval(takip);
+  haritaUc(78.5, 25, 2.3, true);
+  gezginSoyle("Mağara burada. İçeri giriyoruz!");
+  await new Promise(r=>setTimeout(r, 1600));
+  el?.classList.remove("kostu");
+  GZ.kizgin = false;
+  go("zindan");
 }
 
 function haritaSinirla(){
@@ -9512,12 +10366,15 @@ async function cikis(){ await sb.auth.signOut(); location.reload(); }
 
 /* ================= yonlendirme ================= */
 
-const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, sunum:sunum, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, marka:markaEkran, tema:temaEkran, yedek:yedekEkran, tv:tvEkran, zindan:zindanEkran, carki:carkiEkran, rehber:rehberEkran, yarisma:duelloEkran, yeni:yeniParsel, parsel:parselDetay,
+const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, sunum:sunum, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, marka:markaEkran, tema:temaEkran, yedek:yedekEkran, tv:tvEkran, zindan:zindanEkran, carki:carkiEkran, rehber:rehberEkran, yarisma:duelloEkran, esas:esasEkran, oyunlar:oyunlarEkran, yeni:yeniParsel, parsel:parselDetay,
                    fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
 // gezinti gecmisi: telefonun geri tusu uygulamadan cikmasin, bir ekran geri gitsin
 let GEZINTI = [{ r:"ana", arg:undefined }];
 
 function ekraniCiz(r, arg){
+  try{ oyunDurdur(); }catch(e){}
+  try{ if(DUELLO){ clearTimeout(DUELLO.saat); clearInterval(DUELLO.tik); DUELLO = null; } }catch(e){}
+  try{ if(r !== "carki") CARK = null; }catch(e){}
   (ekranlar[r] || anaMenu)(arg);
   window.scrollTo(0, 0);
   // acilim katmani bir sekilde asili kaldiysa temizle
@@ -9551,7 +10408,7 @@ function go(r, arg){
 // her ekranin bir ust sekmesi: telefonun geri tusu buraya gider
 const UST_EKRAN = {
   harita:"ana", araziler:"ana", ekler:"ana", kml:"ana", cap:"ana", hesap:"ana",
-  yaklasan:"ana", yz:"ana", fiyat:"ana", ayarlar:"ana", marka:"ayarlar", tema:"ana", yedek:"ayarlar", tv:"ana", zindan:"ana", carki:"ana", rehber:"ana", yarisma:"ana", yeni:"araziler",
+  yaklasan:"ana", yz:"ana", fiyat:"ana", ayarlar:"ana", marka:"ayarlar", tema:"ana", yedek:"ayarlar", tv:"ana", zindan:"ana", carki:"ana", rehber:"ana", yarisma:"ana", esas:"ana", oyunlar:"ana", yeni:"araziler",
   parsel:"araziler", parcalar:"parsel", sunum:"parsel", fiyatDuzen:"fiyat", capAyar:"cap"
 };
 
