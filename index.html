@@ -2200,7 +2200,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 12.3";
+const SURUM_MELKOR = "beta 12.4";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -2379,7 +2379,7 @@ const seviyePuan = () => +(localStorage.getItem("seviyePuan") || 0);
 
 // hikaye ilerlemesini sifirla (intro, cark sahnesi, bolumler)
 function melkorHikayeSifirla(sessiz){
-  ["introGoruldu","carkBitti","kuleBitti","bolum1Intro","kuleBolum","maceraBasla","rehberTanisti",
+  ["introGoruldu","carkBitti","kuleBitti","bolum1Intro","bolum2Intro","bolum3Intro","bolum4Intro","bolum5Intro","kuleBolum","maceraBasla","rehberTanisti",
    "seviye","seviyePuan"].forEach(k=>localStorage.removeItem(k));
   for(let i=1;i<=5;i++) localStorage.removeItem("kuleYildiz_" + i);
   if(!sessiz){ toast("Hikâye sıfırlandı"); setTimeout(()=>location.reload(), 600); }
@@ -4386,6 +4386,11 @@ const KBOLUM = [
 ];
 
 let KO = null;
+// bolum introlari: muzik + anlatici + savas muzigi
+const BOLUM_INTRO = {
+  1: { muzik:"intro-buzulmuzik", anlatici:"intro-buzulanlatici", arkaplan:"intro-buzularkaplan" },
+  2: { muzik:"intro-buzulmuzik", anlatici:"intro-yesilanlatici", arkaplan:"intro-buzularkaplan" }
+};
 const kahramanRes = { duz:"kahraman/kule-kahraman-esas-duz", yuru:"kahraman/kule-kahraman-esas-sag",
   vur:"kahraman/kule-kahraman-esas-saldiri", portre:"ikon/kule-ikon-esas-portre",
   y1:"ikon/kule-ikon-esas-yenetek1", y2:"ikon/kule-ikon-esas-yetenek2",
@@ -4492,8 +4497,9 @@ async function kuleBasla(lv){
     kurt:{ d:toplam*.72, x:0, y:0, can:190, max:190, h:20, bek:0, olu:0, vur:0 } };
   { const [ex,ey] = konum(KO.esas.d); KO.esas.x = ex; KO.esas.y = ey; KO.kurt.x = ex-.4; KO.kurt.y = ey+.2; }
   kSesOnYukle();
-  if(lv === 1 && !localStorage.getItem("bolum1Intro")){
-    localStorage.setItem("bolum1Intro", "1");
+  const BI = BOLUM_INTRO[lv];
+  if(BI && !localStorage.getItem("bolum" + lv + "Intro")){
+    localStorage.setItem("bolum" + lv + "Intro", "1");
     KO.duraklat = true;
     const p = document.createElement("div");
     p.className = "bolumIntro"; p.id = "bolumIntro";
@@ -4501,11 +4507,11 @@ async function kuleBasla(lv){
       <button class="tAtla" id="biAtla">GEÇ ▸</button>`;
     document.querySelector(".kSahne")?.appendChild(p);
     const bit = () => { p.classList.add("kapan"); setTimeout(()=>p.remove(), 800);
-      if(KO){ KO.duraklat = false; muzikCal("intro-buzularkaplan", { ses:.22, dongu:true, giris:4000 }); } };
-    anlatimBaslat({ muzik:"intro-buzulmuzik", anlatici:"intro-buzulanlatici", muzikSes:.3, bitince:bit });
+      if(KO){ KO.duraklat = false; muzikCal(BI.arkaplan, { ses:.22, dongu:true, giris:4000 }); } };
+    anlatimBaslat({ muzik:BI.muzik, anlatici:BI.anlatici, muzikSes:.3, bitince:bit });
     document.getElementById("biAtla").onclick = () => { try{ window.__anlatimSes?.pause(); }catch(e){}
       muzikDurdur(600); setTimeout(bit, 400); };
-  }else muzikCal("intro-buzularkaplan", { ses:.22, dongu:true, giris:4000 });
+  }else muzikCal((BI || BOLUM_INTRO[1]).arkaplan, { ses:.22, dongu:true, giris:4000 });
   kuleUi();
   kuleMesaj(`${B.ad} · 3 dalga · son dalgada ${B.boss.ad}`, 2600);
   tv.onpointerdown = kuleDokun;
@@ -5761,6 +5767,7 @@ function muzikKis(oran, sure = 900){
 // anlatim sahnesi: muzik + anlatici + altyazi
 const ANLATIM_METIN = {
   "intro-anlatici": [[0.6,"Bir zamanlar bu kıta, dört büyük diyarın yurduydu."],[4.5,"Ateşin yükseldiği kızıl vadiler."],[7.0,"Buzun sırrı sakladığı dağlar."],[9.3,"Yaşamın direnmeye devam ettiği yeşil ormanlar."],[12.9,"Ve artık yalnızca rüzgârın konuştuğu çorak topraklar."],[17.0,"Bu dört diyarın kesiştiği orta noktada, Bilge Kral'ın kalesi yükselir."],[22.5,"O, kendine düzenin taşıyıcısı der."],[25.1,"Fakat onun düzeni adalet değil; tahakkümdür."],[28.5,"Alevler büyürken, buz susarken,"],[31.0,"yeşil direnmeye çalışırken,"],[33.1,"çorak diyar geçmişini yas tutarak anarken,"],[36.4,"bir yolcu bu topraklara adım attı."],[39.0,"Ve gördüğü zulüm karşısında bir yemin etti."],[42.4,"Bu kıta kurtulacaktı."],[44.0,"Ve zalimin tahtı sonsuza dek yıkılacaktı."]],
+  "intro-yesilanlatici": [[0.6,"Yeşil Diyar, kıtanın hâlâ nefes alan son umududur."],[4.7,"Ormanları, pek çok yıkıma rağmen ayakta kalmayı başardı."],[9.3,"Çünkü bu toprakların derinliklerinde, yaşamı besleyen kutsal bir damar akar."],[15.6,"Kadim kökler, saf su kaynakları ve unutulmuş dualar bu diyarı korur."],[21.2,"Bilge Kral, burayı ele geçirmek için defalarca saldırdı."],[25.8,"Ama Yeşil Diyar, her defasında küllerin arasından yeniden filiz verdi."],[31.6,"Çünkü bazı yaşamlar kılıçla değil,"],[34.4,"inatla ayakta kalır."]],
   "intro-buzulanlatici": [[0.6,"Kuzeyde, güneşin bile solgun doğduğu bir diyar uzanır:"],[4.5,"Buz Diyarı."],[5.7,"Bir zamanlar berrak göllerin, yüksek çamların ve taş şehirlerin yurdu olan bu topraklar,"],[12.0,"bugün sonsuz bir kışın sessizliği altında uyuyor."],[15.6,"Derler ki, dağın kalbinde kadim bir mühür vardır."],[19.1,"Bilge Kral, o mührün ardında saklanan gücü ele geçirmek için buzulu deldi;"],[24.5,"insanları, orduları ve yılları feda etti."],[27.4,"Fakat dağ cevap verdi."],[29.0,"Rüzgâr sustu."],[30.2,"Nehirler dondu."],[31.3,"Gökyüzü karardı."],[32.5,"Ve o günden sonra buz, yalnızca toprağı değil, zamanı da hapsetmeye başladı."],[38.0,"Şimdi, donmuş zirvelerin altında bir şey bekliyor."],[41.6,"Ne tamamen ölü,"],[42.8,"ne de gerçekten uyanık."],[44.4,"Bilge, orada ne saklandığını biliyor."],[47.1,"Ve bildiği şeyden korkuyor."],[49.1,"Senin yolun ise tam oraya çıkıyor."],[51.5,"Buzun altında gömülü olan gerçeği bul."],[54.3,"Çünkü bu diyarın kaderi, o dağın içinde saklı."]]
 };
 function anlatimBaslat({ muzik, anlatici, muzikSes = .34, gecikme = 2500, bitince }){
