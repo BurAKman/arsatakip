@@ -1272,16 +1272,16 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .kosuSec small{font-size:8.5px;line-height:1.3;color:rgba(232,224,255,.75)}
 
 /* ---- yatay oyun kabi ---- */
-.oYatay{position:fixed;left:0;top:0;width:100vw;height:100vh;height:100dvh;width:100dvw;z-index:180;background:#05030A;display:flex;align-items:center;justify-content:center;
+.oYatay{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:180;background:#05030A;display:flex;align-items:center;justify-content:center;
   overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
-.oYatay.dondur{left:0;top:0;width:100vh;width:100dvh;height:100vw;height:100dvw;transform:rotate(90deg) translateY(-100%);transform-origin:top left}
-.oYatay canvas{display:block;width:100%;height:100%;object-fit:contain}
+.oYatay.dondur{transform:rotate(90deg) translateY(-100%);transform-origin:top left}
+.oYatay canvas{display:block;flex:0 0 auto}
 .oYatay .yUst{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:14px;padding:8px 12px;z-index:3;
   font-size:11px;letter-spacing:.1em;color:rgba(255,236,210,.85);background:linear-gradient(180deg,rgba(0,0,0,.55),transparent)}
 .oYatay .yUst b{font-family:"Cinzel",Georgia,serif;font-size:14px;color:#FFE0B0;margin-left:4px}
 .oYatay .yUst #oSagBilgi{margin-left:auto}
 .yCik{width:34px;height:34px;font-size:15px;cursor:pointer;color:#FFE9A8;background:rgba(10,6,20,.7);border:1px solid rgba(232,201,138,.5);border-radius:50%}
-.yTus{position:absolute;bottom:14px;z-index:3;width:92px;height:92px;border-radius:50%;cursor:pointer;touch-action:none;
+.yTus{position:absolute;bottom:12px;z-index:3;width:78px;height:78px;opacity:.78;border-radius:50%;cursor:pointer;touch-action:none;
   display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:30px;line-height:1;color:#FFF3D8;
   background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.22),rgba(20,12,36,.55));border:2px solid rgba(232,201,138,.55);
   box-shadow:0 6px 18px rgba(0,0,0,.5)}
@@ -1289,7 +1289,7 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .yTus.sol{left:18px} .yTus.sag{right:18px}
 .yTus.basili,.yTus:active{transform:scale(.92);background:radial-gradient(circle at 40% 35%,rgba(255,233,168,.45),rgba(60,36,90,.7))}
 .yYon{position:absolute;left:14px;bottom:14px;display:flex;gap:12px;z-index:3}
-.yYon .yTus{position:static;width:84px;height:84px}
+.yYon .yTus{position:static;width:72px;height:72px}
 .oYatay .oPerde{inset:0;z-index:5}
 .oYatay .oMesaj{top:14%}
 
@@ -2191,7 +2191,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 11.8";
+const SURUM_MELKOR = "beta 11.9";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -3620,25 +3620,33 @@ async function oyunYatayAc(id){
   try{ await screen.orientation?.lock?.("landscape"); }catch(e){}
   const boyutla = () => {
     const k = document.getElementById("oYatay"); if(!k) return;
-    k.classList.toggle("dondur", window.innerHeight > window.innerWidth);
+    // gorunen alanin gercek olcusu (adres cubugu, alt tuslar haric)
+    const vv = window.visualViewport;
+    const vw = Math.round(vv ? vv.width : window.innerWidth), vh = Math.round(vv ? vv.height : window.innerHeight);
+    const dik = vh > vw;
+    k.classList.toggle("dondur", dik);
+    const w = dik ? vh : vw, h = dik ? vw : vh;
+    k.style.width = w + "px"; k.style.height = h + "px";
     if(OYUN && OYUN.id === id) return;                 // oyun surerken cozunurluk degismez
     const tv = document.getElementById("oTuval");
-    const w = k.offsetWidth, h = k.offsetHeight;       // dondurulmus olsa da gercek olcu
     const oran = id === "tuzak" ? .625 : 0;
     let cw = w, ch = h;
     if(oran){ ch = Math.min(h, w*oran); cw = ch/oran; }
     const dpr = Math.min(3, window.devicePixelRatio || 1);
-    tv.width = Math.max(320, Math.round(cw*dpr)); tv.height = Math.max(200, Math.round(ch*dpr));
+    tv.width = Math.round(cw*dpr); tv.height = Math.round(ch*dpr);
+    tv.style.width = cw + "px"; tv.style.height = ch + "px";
   };
   boyutla();
   [200, 600].forEach(ms=>setTimeout(boyutla, ms));
   window.__yatayOlc = boyutla;
   window.__yatayBoyut = () => { boyutla(); setTimeout(boyutla, 300); };
   window.addEventListener("resize", window.__yatayBoyut);
+  window.visualViewport?.addEventListener("resize", window.__yatayBoyut);
 }
 function oyunYatayKapat(){
   oyunDurdur();
   window.removeEventListener("resize", window.__yatayBoyut || (()=>{}));
+  window.visualViewport?.removeEventListener("resize", window.__yatayBoyut || (()=>{}));
   try{ screen.orientation?.unlock?.(); }catch(e){}
   try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
   oyunlarEkran();
@@ -3834,6 +3842,7 @@ function kosuSec(kim){
 }
 
 function kosuOyna(K){
+  try{ window.__yatayOlc && window.__yatayOlc(); }catch(e){}
   const tv = document.getElementById("oTuval"), c = tv.getContext("2d");
   const W = tv.width, H = tv.height, zemin = H * .8, boy = H * .34, px = W * .2;
   OYUN = { id:"kosu", K, y:0, vy:0, yerde:true, ciftZip:true, kayT:0, hiz:W*.0046, mesafe:0, altin:0,
@@ -4505,7 +4514,7 @@ function kuleDokun(e){
   const px = (e.clientX - r.left) / r.width * O.tv.width, py = (e.clientY - r.top) / r.height * O.tv.height;
   const bx = (px - (O.tv.width - 12*O.olcek)/2) / O.olcek, by = (py - (O.tv.height - 20*O.olcek)/2) / O.olcek;
   const yakin = O.yuva.map(y=>({ y, d:Math.hypot(y.x - bx, y.y - by) })).sort((a,b)=>a.d - b.d)[0];
-  if(yakin && yakin.d < 1.05){
+  if(yakin && yakin.d < 1.3){
     const Y = yakin.y;
     if(Y.dolu){ O.secKule = Y.dolu; kuleKart(Y.dolu); return; }
     if(!O.secTip) return kuleMesaj("Önce kule ya da baraka seç", 1300);
@@ -4764,8 +4773,8 @@ function kCiz(){
     if(O.secKule === k){ const sv = tip.sv[k.sv];
       if(!baraka){ c.fillStyle = "rgba(255,233,168,.08)"; c.strokeStyle = "rgba(255,233,168,.5)"; c.lineWidth = 3;
         c.beginPath(); c.arc(X(k.x), Y(k.y), sv.m*S, 0, 7); c.fill(); c.stroke(); } }
-    let ciz2 = kresCiz(c, ad + ".webp", X(k.x), Y(k.y) + S*.3, S*2.3);
-    for(let alt = k.sv; !ciz2 && alt >= 1; alt--) ciz2 = kresCiz(c, tip.res + "-" + alt + ".webp", X(k.x), Y(k.y) + S*.3, S*2.3);
+    let ciz2 = kresCiz(c, ad + ".webp", X(k.x), Y(k.y) + S*.42, S*2.2);
+    for(let alt = k.sv; !ciz2 && alt >= 1; alt--) ciz2 = kresCiz(c, tip.res + "-" + alt + ".webp", X(k.x), Y(k.y) + S*.42, S*2.2);
     if(!ciz2){ c.fillStyle = "#4E4458";
       c.beginPath(); c.arc(X(k.x), Y(k.y), S*.35, 0, 7); c.fill(); }
     if(k.dondur > 0){ c.fillStyle = "rgba(160,220,255,.45)"; c.beginPath(); c.arc(X(k.x), Y(k.y), S*.5, 0, 7); c.fill(); }
