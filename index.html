@@ -2102,7 +2102,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 9.3";
+const SURUM_MELKOR = "beta 9.4";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -4084,6 +4084,20 @@ function tuzakBasla(bolum){
 
 /* ======== DİYARI SAVUN: kule savunmasi (gorsel motoru) ======== */
 const KG = (a) => gv("kule/" + a);
+// ---- hazir ses dosyalari (ortak) ----
+const KSES = {};
+function kSes(ad, ses){
+  try{
+    if(!SES_ACIK()) return;
+    let a = KSES[ad];
+    if(!a){ a = new Audio(gv("ses/" + ad + ".mp3")); a.preload = "auto"; KSES[ad] = a; }
+    const c = a.cloneNode();
+    c.volume = ses == null ? 1 : ses;
+    c.play().catch(()=>{});
+  }catch(e){}
+}
+const kSesOnYukle = () => ["kule-insa","kule-upgrade","kule-dalgasavasborusu","kule-buzboss-kukreme",
+  "kule-bolum-dusmankacis","kule-bolum-zafer"].forEach(a=>{ if(!KSES[a]){ const x = new Audio(gv("ses/"+a+".mp3")); x.preload="auto"; KSES[a]=x; } });
 const KRES = {};
 function kresYukle(liste){ liste.forEach(a=>{ if(!KRES[a]){ const im = new Image(); im.src = KG(a); KRES[a] = im; } }); }
 const kresCiz = (c, ad, x, y, boy, ters, aci) => {
@@ -4216,6 +4230,7 @@ function kuleBasla(lv){
     yuva:B.yuva.map(([x,y])=>({x,y,dolu:null})), bitti:false, kare:0, boss:null, yBek:[0,0],
     esas:{ x:5.5, y:12.6, hx:5.5, hy:12.6, can:420, max:420, h:30, bek:0, olu:0, vur:0, kalkanT:0, secili:true },
     kurt:{ x:6.2, y:12.9, can:190, max:190, h:20, bek:0, olu:0, vur:0 } };
+  kSesOnYukle();
   kuleUi();
   kuleMesaj(`${B.ad} · 3 dalga · son dalgada ${B.boss.ad}`, 2600);
   tv.onpointerdown = kuleDokun;
@@ -4277,7 +4292,7 @@ function kuleDokun(e){
     const k = { tip:O.secTip, baraka, x:Y.x, y:Y.y, sv:0, bek:0, dondur:0, harcanan:tip.sv[0].f, yuva:Y, tp:[Y.x, Y.y + .9] };
     Y.dolu = k; O.kule.push(k);
     if(baraka) for(let i=0;i<tip.adet;i++) kuleAskerDog(k, i);
-    O.secTip = null; try{ sesDavul(false); }catch(x){} kYazi(Y.x, Y.y - .4, tip.ad, "#FFE070"); kuleUi();
+    O.secTip = null; kSes("kule-insa"); kYazi(Y.x, Y.y - .4, tip.ad, "#FFE070"); kuleUi();
     return;
   }
   document.getElementById("kKart")?.classList.remove("acik"); O.secKule = null;
@@ -4306,7 +4321,7 @@ function kuleYukselt(){ const O = KO, k = O?.secKule; if(!k) return;
   if(!s2 || s2.f > O.altin) return kuleMesaj(s2 ? "Altın yetmiyor" : "Azami seviye", 1300);
   O.altin -= s2.f; k.harcanan += s2.f; k.sv++;
   if(k.baraka) O.asker.filter(a=>a.baraka === k).forEach(a=>{ a.max = s2.can; a.can = s2.can; a.h = s2.h; a.hz = s2.hz; });
-  try{ sesSeviye(); }catch(x){} kYazi(k.x, k.y - .5, "YÜKSELDİ!", "#FFE070"); kuleKart(k); kuleUi(); }
+  kSes("kule-upgrade"); kYazi(k.x, k.y - .5, "YÜKSELDİ!", "#FFE070"); kuleKart(k); kuleUi(); }
 function kuleSat(){ const O = KO, k = O?.secKule; if(!k) return; O.altin += Math.floor(k.harcanan*.6);
   k.yuva.dolu = null; O.kule = O.kule.filter(q=>q !== k); O.asker = O.asker.filter(a=>a.baraka !== k); kuleKartKapat(); kuleUi(); }
 
@@ -4331,7 +4346,7 @@ function kuleDalgaBaslat(){
   if(O.bekleme > 1){ const b = Math.min(45, Math.ceil(O.bekleme)*3); O.altin += b; kYazi(6, 2, `Erken çağrı +${b}`, "#FFE070"); }
   O.sira = []; O.B.dalgalar[O.dalga].forEach(([t,n,ar])=>{ for(let i=0;i<n;i++) O.sira.push({ t, gec:ar }); });
   O.dalga++; O.aktif = true; O.uret = 0;
-  try{ sesDavul(true); }catch(x){} kuleMesaj(`${O.dalga}. DALGA`, 1400); kuleUi();
+  kSes("kule-dalgasavasborusu"); kuleMesaj(`${O.dalga}. DALGA`, 1400); kuleUi();
 }
 function kDogur(t){
   const O = KO, B = O.B;
@@ -4339,7 +4354,7 @@ function kDogur(t){
     const d = { tip:"BOSS", b, res:b.res + "-duz", can:b.can, max:b.can, hiz:b.hiz, zirh:b.zirh||0, boy:b.boy,
       dps:b.dps, odul:300, d:0, x:0, y:0, yavas:0, yavasT:0, sersem:0, yetT:6, boss:true };
     O.dusman.push(d); O.boss = d; kuleMesaj(`⚠ ${b.ad} GELİYOR!`, 2600);
-    try{ sesDavul(true); sesSeyirci(); }catch(x){} return; }
+    kSes("kule-buzboss-kukreme"); return; }
   const e = B.dusmanlar[t];
   O.dusman.push({ tip:t, e, res:e.res, can:e.can, max:e.can, hiz:e.hiz, zirh:e.zirh||0, boy:e.boy, dps:e.dps,
     odul:e.odul, ucan:!!e.ucan, sifaci:!!e.sifaci, elit:!!e.elit, menzilli:e.menzilli||0,
@@ -4406,7 +4421,7 @@ function kGuncelle(dt){
     if(d.boss){ d.yetT -= dt; if(d.yetT <= 0){ d.yetT = 9;
       O.kule.forEach(k=>{ if(!k.baraka && Math.hypot(k.x-d.x, k.y-d.y) < 3){ k.dondur = 3.2; } });
       O.efekt.push({ t:"dalga", x:d.x, y:d.y, r:0, o:1, renk:"#9CD8FF" });
-      kYazi(d.x, d.y - 1.4, "BUZ KÜKREMESİ!", "#BFE6FF");
+      kYazi(d.x, d.y - 1.4, "BUZ KÜKREMESİ!", "#BFE6FF"); kSes("kule-buzboss-kukreme", .8);
       O.asker.forEach(a=>{ if(a.olu <= 0 && Math.hypot(a.x-d.x, a.y-d.y) < 2.2){ a.can -= 90; if(a.can <= 0) a.olu = 10; } }); } }
     if(d.sifaci && O.kare % 40 === 0) O.dusman.forEach(q=>{ if(q !== d && !q.olmus && Math.hypot(q.x-d.x, q.y-d.y) < 2)
       q.can = Math.min(q.max, q.can + q.max*.05); });
@@ -4437,7 +4452,7 @@ function kGuncelle(dt){
     if(!durdu) d.d += d.hiz * (1 - (d.boss ? d.yavas*.5 : d.yavas)) * dt;
     const [x,y] = O.konum(d.d); d.x = x; d.y = y;
     if(d.d >= O.toplam){ d.olmus = true; O.can -= d.boss ? 10 : d.elit ? 2 : 1;
-      kYazi(x, y, d.boss ? "-10 ❤" : "-1 ❤", "#FF5A6A"); if(d.boss) O.boss = null; }
+      kSes("kule-bolum-dusmankacis"); kYazi(x, y, d.boss ? "-10 ❤" : "-1 ❤", "#FF5A6A"); if(d.boss) O.boss = null; }
   });
   O.dusman = O.dusman.filter(d=>!d.olmus);
   if(O.can <= 0 && !O.bitti){ O.bitti = true; setTimeout(kuleYenilgi, 700); }
@@ -4565,8 +4580,7 @@ function kuleZafer(){
   const kart = document.getElementById("kKart");
   if(kart){ kart.innerHTML = `<b>ZAFER!</b><span>${"★".repeat(yil)}${"☆".repeat(3-yil)} · kalan can ${O.can}</span>
     <div><button class="yuk" onclick="kuleSecim()">DEVAM</button></div>`; kart.classList.add("acik"); }
-  melkorKonus("Diyar bugünlük güvende!", "gezgin");
-  try{ sesSeviye(); }catch(x){}
+  kSes("kule-bolum-zafer");
 }
 function kuleYenilgi(){
   const O = KO; if(!O) return;
