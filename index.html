@@ -2221,7 +2221,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "v 1.0";
+const SURUM_MELKOR = "v 1.0.1";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -2405,6 +2405,9 @@ function melkorHikayeSifirla(sessiz){
   for(let i=1;i<=5;i++) localStorage.removeItem("kuleYildiz_" + i);
   if(!sessiz){ toast("Hikâye sıfırlandı"); setTimeout(()=>location.reload(), 600); }
 }
+// final sesleri eksik yuklendiginde izlenmis sayilan final sahneleri bir kez daha oynasin
+try{ if(!localStorage.getItem("finalSesDuzeltme")){ localStorage.setItem("finalSesDuzeltme","1");
+  localStorage.removeItem("bolum5Intro"); localStorage.removeItem("bolum5Sahne"); } }catch(e){}
 // bir kereye mahsus: eski test kayitlari temizlensin
 try{
   if(!localStorage.getItem("melkorSifirV3")){
@@ -4614,13 +4617,13 @@ function sahne2Oyna(bitince, dizi, kadro){
     const pozVer = () => { if(el) el.src = gv(SAHNE2_RES[p.s][p.poz[n % p.poz.length]] || SAHNE2_RES[p.s].duz); n++; };
     pozVer(); clearInterval(pozSaat); pozSaat = setInterval(pozVer, 1500 + Math.random()*600);
     try{ ses?.pause(); }catch(e){}
-    ses = new Audio(gv("cark/" + p.dosya));
+    ses = sesYukle("cark", p.dosya, () => setTimeout(devam, 2000));
     const devam = () => { clearInterval(pozSaat);
       // BorzBey ilk cumlesinden sonra kahkaha pozunda kalir
       if(el) el.src = gv(p.s === "borz" && dizi === SAHNE2 && i > 3 ? SAHNE2_RES.borz.kahkaha : SAHNE2_RES[p.s].duz);
       setTimeout(sonraki, 380); };
-    ses.onended = devam; ses.onerror = () => setTimeout(devam, 2000);
-    ses.play().catch(()=>setTimeout(devam, 2000));
+    ses.onended = devam;
+    ses.play().catch(()=>setTimeout(()=>{ if(ses.paused) devam(); }, 2200));
   };
   document.getElementById("s2Atla").onclick = kapat;
   setTimeout(sonraki, 900);
@@ -6066,11 +6069,20 @@ function zindanEkran(){
       Görsel roman macerası yakında burada başlayacak.</span></div>`;
 }
 /* ---- muzik ve anlatim katmani ---- */
+// ses dosyasi: once klasorunde, bulunamazsa depo kokunde aranir
+function sesYukle(klasor, ad, hataOlursa){
+  const a = new Audio(gv(klasor + "/" + ad));
+  a.onerror = () => {
+    if(!a.kokDenendi){ a.kokDenendi = true; a.src = gv(ad); a.load(); a.play?.().catch(()=>{}); }
+    else if(hataOlursa) hataOlursa();
+  };
+  return a;
+}
 let MUZIK = null;
 function muzikCal(ad, { ses = .35, dongu = true, giris = 2500 } = {}){
   muzikDurdur(600);
   try{
-    const a = new Audio(gv("ses/" + ad + ".mp3"));
+    const a = sesYukle("ses", ad + ".mp3");
     a.loop = dongu; a.volume = 0;
     a.play().catch(()=>{});
     MUZIK = a;
@@ -6119,19 +6131,19 @@ function anlatimBaslat({ muzik, anlatici, muzikSes = .34, gecikme = 2500, bitinc
   const kutu = document.getElementById("anYazi");
   muzikCal(muzik, { ses:muzikSes, dongu:true, giris:3000 });
   const metin = ANLATIM_METIN[anlatici] || [];
-  let ses = null, zaman = null;
+  let ses = null, zaman = null, bitti2 = false;
   const bitir = () => {
+    if(bitti2) return; bitti2 = true;
     clearInterval(zaman);
     if(kutu) kutu.textContent = "";
     setTimeout(()=>{ muzikDurdur(2600); setTimeout(()=>bitince && bitince(), 1600); }, 2200);
   };
   setTimeout(()=>{
     try{
-      ses = new Audio(gv("ses/" + anlatici + ".mp3"));
+      ses = sesYukle("ses", anlatici + ".mp3", () => bitir());
       ses.volume = 1;
       ses.onended = bitir;
-      ses.onerror = () => bitir();
-      ses.play().catch(()=>bitir());
+      ses.play().catch(()=>setTimeout(()=>{ if(ses.paused) bitir(); }, 2200));
       muzikKis(muzikSes * .55, 1200);
       window.__anlatimSes = ses;
       if(metin.length && kutu){
