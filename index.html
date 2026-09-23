@@ -2221,7 +2221,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "v 1.0.1";
+const SURUM_MELKOR = "v 1.1";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -3573,19 +3573,30 @@ const OYUN_LISTE = [
   { id:"yilan",  ad:"Lav Yılanı",     alt:"Dokunduğun yöne döner · güçlendiriciler · obsidyen kayalar", ikon:"🐍", renk:"#FF8A3A", oran:1 },
   { id:"kosu",   ad:"Kader Koşusu", alt:"Karakterini seç · zıpla, çift zıpla, kay", ikon:"🏃", renk:"#6FE3A8", oran:1 },
   { id:"tuzak",  ad:"Tuzak Zindanı",  alt:"Her şeye güvenme: zemin çöker, dikenler fırlar", ikon:"💀", renk:"#FF5A6A", oran:0.625 },
-  { id:"sandik", ad:"Sandık Taşı",    alt:"Sandıkları rün taşlarına it · 6 bölüm bulmaca", ikon:"📦", renk:"#E8C98A", oran:1 }
+  { id:"sandik", ad:"Sandık Taşı",    alt:"Sandıkları rün taşlarına it · 6 bölüm bulmaca", ikon:"📦", renk:"#E8C98A", oran:1 },
+  { id:"yarinsiz", ad:"Yarınsız Adam", alt:"Sıra tabanlı savaş · prototip", ikon:"🗡️", renk:"#C0303A", oran:1 }
 
 ];
 let OYUN = null;
 const oyunRekor = id => +(localStorage.getItem("oyunRekor_" + id) || 0);
 const oyunRekorYaz = (id, p) => { if(p > oyunRekor(id)){ localStorage.setItem("oyunRekor_" + id, p); return true; } return false; };
 
+// Yarinsiz Adam ayri dosyada: sadece acilinca yuklenir, ana uygulamayi sisirmez
+function yarinsizAc(){
+  oyunDurdur();
+  if(window.YarinsizBasla) return window.YarinsizBasla();
+  const sc = document.createElement("script");
+  sc.src = gv("rpg.js");
+  sc.onload = () => window.YarinsizBasla && window.YarinsizBasla();
+  sc.onerror = () => toast("Oyun dosyası yüklenemedi");
+  document.head.appendChild(sc);
+}
 function oyunlarEkran(){
   oyunDurdur();
   app.innerHTML = head("Lav Arenası","go('ana')") + `
     <div class="oBaslik"><b>LAV ARENASI</b><span>Kalenin altındaki oyun salonu</span></div>
     <div class="oListe">${OYUN_LISTE.map(o=>`
-      <button class="oKart" style="--or:${o.renk}" onclick="${o.id === "kule" ? "kuleSecim()" : `oyunAc('${o.id}')`}">
+      <button class="oKart" style="--or:${o.renk}" onclick="${o.id === "kule" ? "kuleSecim()" : o.id === "yarinsiz" ? "yarinsizAc()" : `oyunAc('${o.id}')`}">
         <span class="oIkon">${o.ikon}</span>
         <span class="oBilgi"><b>${o.ad}</b><small>${o.alt}</small></span>
         <span class="oRekor">${["sandik","tuzak","kule"].includes(o.id) ? "BÖLÜM" : "REKOR"}<br><b>${oyunRekor(o.id)}</b></span>
