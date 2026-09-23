@@ -1384,7 +1384,16 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .kBolum i{font-style:normal;font-size:9px;color:#FFE070}
 .kBolum.kilit{opacity:.32}
 /* oyun ekrani */
-.kOyun{position:fixed;inset:0;z-index:150;display:flex;flex-direction:column;background:#05040C}
+.kOyun{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:150;background:#05040C;overflow:hidden}
+.kOyun.dondur{transform:rotate(90deg) translateY(-100%);transform-origin:top left}
+.kOyun .kSahne{position:absolute;inset:0}
+.kOyun .kHud{position:absolute;left:0;right:0;top:0;z-index:4;padding:6px 10px;background:linear-gradient(180deg,rgba(0,0,0,.65),transparent)}
+.kOyun .kPanel{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);z-index:4;width:auto;padding:5px 8px;gap:6px;
+  background:rgba(8,5,18,.78);border:1px solid rgba(232,201,138,.35);border-radius:14px}
+.kOyun .kPortre{flex:0 0 auto;width:62px;height:56px}
+.kOyun .kMenu,.kOyun .kKart{bottom:76px}
+.kOyun .kKart{left:50%;right:auto;transform:translateX(-50%);width:min(380px,90%)}
+.kOyun .kSek,.kOyun .kYet,.kOyun .kDalgaTus{width:48px;height:48px}
 .kHud{display:flex;align-items:center;gap:8px;padding:8px 10px calc(4px);padding-top:calc(8px + env(safe-area-inset-top,0px))}
 .kSol{display:flex;align-items:center;gap:10px;flex:1;min-width:0;font-size:12px;color:#EAE6FA}
 .kSol b{font-family:"Cinzel",Georgia,serif;font-size:14px;color:#FFE9A8}
@@ -2191,7 +2200,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 12.0";
+const SURUM_MELKOR = "beta 12.1";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -4331,8 +4340,9 @@ const KBARAKA = {
 const KBOLUM = [
   { ad:"Buz Diyarı", harita:"harita/kule-harita-1-buzul", kuleler:["okcu","ates","isik"], barakalar:["ork"],
     altin:360, can:20, tek:true,
-    yol:[[3.8,-0.6],[3.88,1.93],[4.17,2.99],[4.55,3.31],[4.99,3.58],[5.48,3.75],[5.77,3.89],[5.59,4.13],[5.25,4.5],[5.03,4.97],[4.78,5.44],[4.49,5.85],[4.25,6.3],[3.94,6.66],[3.47,6.76],[2.96,6.63],[2.56,6.34],[2.4,6.15],[2.57,6.32],[2.98,6.57],[3.48,6.71],[3.98,6.88],[4.41,7.14],[4.69,7.54],[4.91,7.94],[5.3,8.14],[5.82,8.18],[6.36,8.19],[6.88,8.25],[7.38,8.37],[7.87,8.55],[8.36,8.77],[8.72,9.03],[8.93,9.42],[9.2,9.82],[9.44,10.22],[9.34,10.66],[8.98,11.02],[8.53,11.32],[8.11,11.62],[7.69,11.88],[7.24,12.08],[6.8,12.27],[6.32,12.4],[5.82,12.52],[5.37,12.72],[4.95,12.99],[4.57,13.31],[4.45,13.7],[4.69,14.07],[5.11,14.37],[5.53,14.69],[5.85,15.09],[6.04,15.57],[6.13,16.08],[6.18,16.54],[6.1,16.9]],
-    yuva:[[3.03,3.05],[5.54,3.16],[6.88,4.39],[3.29,5.44],[2.7,7.07],[7.95,6.08],[6.66,8.91],[9.13,8.4],[2.35,8.93],[10.23,10.65],[4.1,12.23],[2.62,13.05],[5.57,13.44],[8.56,15.45]],
+    gen:20, yuk:11.26,
+    yol:[[20.6,2.3],[18.55,2.35],[17.6,2.7],[16.4,3],[15.2,3.3],[14.55,3.9],[14.5,4.8],[14.6,5.6],[14.3,6.35],[13.5,6.85],[12.4,6.85],[11.5,6.35],[10.85,5.55],[9.9,5.15],[8.8,4.7],[7.7,4.1],[6.9,3.5],[6,3.2],[4.8,3.1],[3.8,3.35],[3.3,4],[3.25,4.8],[3.7,5.5],[4.8,5.95],[5.85,6.35],[6.5,7],[6.5,7.8],[5.9,8.35],[4.9,8.7],[3.9,8.95],[2.6,9.2]],
+    yuva:[[14.64,2.31],[8.33,3.67],[5,4.33],[13.15,5.33],[4.27,6.76],[6.36,8.76]],
     dusmanlar:{
       goblin:{ res:"dusman/kule-b1-goblins-a", can:58, hiz:1.15, odul:5, boy:1, dps:7 },
       goblinB:{ res:"dusman/kule-b1-goblins-b", can:78, hiz:1, odul:6, boy:.95, dps:9 },
@@ -4359,7 +4369,7 @@ const kahramanRes = { duz:"kahraman/kule-kahraman-esas-duz", yuru:"kahraman/kule
   kurt:["kahramanyoldas-esas-kurt1","kahramanyoldas-esas-kurt2","kahramanyoldas-esas-kurt3"].map(a=>"kahraman/kule-"+a) };
 
 function kuleSecim(){
-  oyunDurdur();
+  oyunDurdur(); kuleCikis();
   const acik = Math.max(1, +(localStorage.getItem("kuleBolum") || 1));
   app.innerHTML = head("Diyarı Savun","oyunlarEkran()") + `
     <div class="kBaslik"><b>DİYARI SAVUN</b><span>Esas Oğlan, kuleleri ve kurdu · Bilge'nin sürülerine karşı</span></div>
@@ -4375,7 +4385,7 @@ function kuleSecim(){
 function kuleYeniOyun(){ if(!confirm("Yeni oyun: ilerleme sıfırlansın mı?")) return;
   localStorage.setItem("kuleBolum","1"); for(let i=1;i<=5;i++) localStorage.removeItem("kuleYildiz_"+i); kuleBasla(1); }
 
-function kuleBasla(lv){
+async function kuleBasla(lv){
   oyunDurdur();
   const B = KBOLUM[lv-1]; if(!B) return kuleSecim();
   kresYukle([B.harita + ".jpg",
@@ -4392,7 +4402,7 @@ function kuleBasla(lv){
       <div class="kHud">
         <div class="kSol"><span class="kCan">❤ <b id="kCan">${B.can}</b></span><span class="kAlt2">🪙 <b id="kAltin">${B.altin}</b></span>
           <span class="kBolumAd">${B.ad} · <b id="kDalga">0/3</b></span></div>
-        <div class="kSag"><button id="kHiz" onclick="kuleHiz()">1x</button><button onclick="kuleDur()">⏸</button></div>
+        <div class="kSag"><button id="kHiz" onclick="kuleHiz()">1x</button><button onclick="kuleDur()">⏸</button><button onclick="kuleSecim()">✕</button></div>
       </div>
       <div class="kSahne"><canvas id="kTuval"></canvas>
         <div class="kMesaj" id="kMesaj"></div><div class="kKart" id="kKart"></div>
@@ -4407,13 +4417,18 @@ function kuleBasla(lv){
         <button class="kDalgaTus" id="kDalgaTus" onclick="kuleDalgaBaslat()">▶</button>
       </div>
     </div>`;
+  // yatay oyun: telefonu yan kilitlemeyi dene, olmazsa kabi dondur
+  try{ await document.documentElement.requestFullscreen?.(); }catch(e){}
+  try{ await screen.orientation?.lock?.("landscape"); }catch(e){}
+  kuleKabOlc();
+  await new Promise(r=>setTimeout(r, 120)); kuleKabOlc();
+  const GW = B.gen || 12, GH = B.yuk || 20;
   const tv = document.getElementById("kTuval");
   const sahne = document.querySelector(".kSahne");
-  const G = sahne.clientWidth, Y = sahne.clientHeight;
-  tv.width = G*2; tv.height = Y*2; tv.style.width = G+"px"; tv.style.height = Y+"px";
-  // harita 12x20 birim; ekrana sigdir
-  const olcek = Math.max(tv.width/12, tv.height/20);
-  const kx = (tv.width - 12*olcek)/2, ky = (tv.height - 20*olcek)/2;
+  const G = sahne.offsetWidth, Y = sahne.offsetHeight, dpr = Math.min(3, window.devicePixelRatio || 1);
+  tv.width = Math.round(G*dpr); tv.height = Math.round(Y*dpr); tv.style.width = G+"px"; tv.style.height = Y+"px";
+  const olcek = Math.min(tv.width/GW, tv.height/GH);
+  const kx = (tv.width - GW*olcek)/2, ky = (tv.height - GH*olcek)/2;
   const E = (x,y) => [kx + x*olcek, ky + y*olcek];
 
   // yolu yumusat: kose noktalari arasini egri ile doldur (Catmull-Rom)
@@ -4483,6 +4498,18 @@ function kuleBasla(lv){
   };
   OYUN = KO; KO.raf = requestAnimationFrame(dongu);
 }
+function kuleKabOlc(){
+  const k = document.querySelector(".kOyun"); if(!k) return;
+  const vv = window.visualViewport;
+  const vw = Math.round(vv ? vv.width : window.innerWidth), vh = Math.round(vv ? vv.height : window.innerHeight);
+  const dik = vh > vw;
+  k.classList.toggle("dondur", dik);
+  k.style.width = (dik ? vh : vw) + "px"; k.style.height = (dik ? vw : vh) + "px";
+}
+function kuleCikis(){
+  try{ screen.orientation?.unlock?.(); }catch(e){}
+  try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
+}
 function kuleHiz(){ if(!KO) return; KO.hiz = KO.hiz >= 3 ? 1 : KO.hiz + 1; const b = document.getElementById("kHiz"); if(b) b.textContent = KO.hiz + "x"; }
 function kuleDur(){ if(!KO) return; KO.duraklat = !KO.duraklat; kuleMesaj(KO.duraklat ? "DURAKLATILDI" : "DEVAM", 1200); }
 function kuleMesaj(m, s2){ const k = document.getElementById("kMesaj"); if(!k) return;
@@ -4517,8 +4544,13 @@ function kuleKahramanSec(){ const O = KO; if(!O) return; O.esas.secili = true; k
 function kuleDokun(e){
   const O = KO; if(!O || O.bitti) return;
   const r = O.tv.getBoundingClientRect();
-  const px = (e.clientX - r.left) / r.width * O.tv.width, py = (e.clientY - r.top) / r.height * O.tv.height;
-  const bx = (px - (O.tv.width - 12*O.olcek)/2) / O.olcek, by = (py - (O.tv.height - 20*O.olcek)/2) / O.olcek;
+  const don = document.querySelector(".kOyun")?.classList.contains("dondur");
+  // dondurulmus kapta ekran ekseni ile tuval ekseni yer degistirir
+  const lx = don ? (e.clientY - r.top) : (e.clientX - r.left);
+  const ly = don ? (r.right - e.clientX) : (e.clientY - r.top);
+  const px = lx / O.tv.offsetWidth * O.tv.width, py = ly / O.tv.offsetHeight * O.tv.height;
+  const GW = O.B.gen || 12, GH = O.B.yuk || 20;
+  const bx = (px - (O.tv.width - GW*O.olcek)/2) / O.olcek, by = (py - (O.tv.height - GH*O.olcek)/2) / O.olcek;
   const yakin = O.yuva.map(y=>({ y, d:Math.hypot(y.x - bx, y.y - by) })).sort((a,b)=>a.d - b.d)[0];
   const dolu = yakin && yakin.d < 1.1 && yakin.y.dolu;
   if(dolu && !O.tpMod){ O.secKule = yakin.y.dolu; kuleKart(yakin.y.dolu); return; }
@@ -4540,7 +4572,7 @@ function kuleDokun(e){
   if(O.tpMod && O.tpKule){ O.tpKule.tpD = O.yolaYapis(bx, by); O.tpMod = false;
     const [tx,ty] = O.konum(O.tpKule.tpD); O.tpKule.tp = [tx, ty];
     kuleMesaj("Toplanma noktası ayarlandı", 1200); return; }
-  if(O.esas.secili && O.esas.olu <= 0){ O.esas.hd = O.yolaYapis(bx, by);
+  if(O.esas.secili && O.esas.olu <= 0 && bx > 0 && by > 0 && bx < GW && by < GH){ O.esas.hd = O.yolaYapis(bx, by);
     if(Math.random() < .3) kYazi(O.esas.x, O.esas.y - 1.1, ["Geliyorum!","Durun, ben varım!","Oraya mı? Tamam!"][Math.floor(Math.random()*3)], "#9CF5C4"); }
 }
 function kuleAskerDog(k, ix){
@@ -4759,13 +4791,14 @@ function kGuncelle(dt){
 }
 function kCiz(){
   const O = KO, c = O.c, S = O.olcek, tv = O.tv;
-  const kx = (tv.width - 12*S)/2, ky = (tv.height - 20*S)/2;
+  const GW = O.B.gen || 12, GH = O.B.yuk || 20;
+  const kx = (tv.width - GW*S)/2, ky = (tv.height - GH*S)/2;
   const X = x => kx + x*S, Y = y => ky + y*S;
   c.fillStyle = "#05040C"; c.fillRect(0,0,tv.width,tv.height);
   let h = KRES[O.B.harita + ".jpg"];
   if(!h){ h = new Image(); h.src = KG(O.B.harita + ".jpg"); KRES[O.B.harita + ".jpg"] = h; }
-  if(h.complete && h.naturalWidth) c.drawImage(h, kx, ky, 12*S, 20*S);
-  else { c.fillStyle = "#16324A"; c.fillRect(kx, ky, 12*S, 20*S); }
+  if(h.complete && h.naturalWidth) c.drawImage(h, kx, ky, GW*S, GH*S);
+  else { c.fillStyle = "#16324A"; c.fillRect(kx, ky, GW*S, GH*S); }
   // yuvalar
   O.yuva.forEach(y=>{ if(y.dolu) return;
 
@@ -11805,6 +11838,7 @@ let GEZINTI = [{ r:"ana", arg:undefined }];
 
 function ekraniCiz(r, arg){
   try{ if(r !== "carki") muzikDurdur(900); }catch(e){}
+  try{ if(document.querySelector(".kOyun")) kuleCikis(); }catch(e){}
   try{ oyunDurdur(); }catch(e){}
   try{ if(DUELLO){ clearTimeout(DUELLO.saat); clearInterval(DUELLO.tik); DUELLO = null; } }catch(e){}
   try{ if(r !== "carki") CARK = null; }catch(e){}
