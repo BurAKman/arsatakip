@@ -1275,7 +1275,7 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .oYatay{position:fixed;inset:0;z-index:180;background:#05030A;display:flex;align-items:center;justify-content:center;
   overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
 .oYatay.dondur{inset:auto;left:0;top:0;width:100vh;height:100vw;transform:rotate(90deg) translateY(-100%);transform-origin:top left}
-.oYatay canvas{display:block}
+.oYatay canvas{display:block;width:100%;height:100%;object-fit:contain}
 .oYatay .yUst{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:14px;padding:8px 12px;z-index:3;
   font-size:11px;letter-spacing:.1em;color:rgba(255,236,210,.85);background:linear-gradient(180deg,rgba(0,0,0,.55),transparent)}
 .oYatay .yUst b{font-family:"Cinzel",Georgia,serif;font-size:14px;color:#FFE0B0;margin-left:4px}
@@ -2191,7 +2191,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 11.6";
+const SURUM_MELKOR = "beta 11.7";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -3618,28 +3618,15 @@ async function oyunYatayAc(id){
   </div>`;
   try{ await document.documentElement.requestFullscreen?.(); }catch(e){}
   try{ await screen.orientation?.lock?.("landscape"); }catch(e){}
+  const tv0 = document.getElementById("oTuval");
+  // sabit ic cozunurluk: olcum hatasi olsa bile oyun hep ayni gorunur
+  if(id === "tuzak"){ tv0.width = 1600; tv0.height = 1000; } else { tv0.width = 1600; tv0.height = 800; }
   const boyutla = () => {
     const k = document.getElementById("oYatay"); if(!k) return;
-    const dik = window.innerHeight > window.innerWidth;
-    k.classList.toggle("dondur", dik);
-    // donmus olsa bile kabin kendi (dondurulmemis) olcusu
-    const w = k.clientWidth, h = k.clientHeight;
-    const tv = document.getElementById("oTuval"), oran = id === "tuzak" ? .625 : 0;
-    let cw = w, ch = h;
-    if(oran){ ch = Math.min(h, w*oran); cw = ch/oran; }
-    const oynuyor = OYUN && (OYUN.id === id);
-    if(!oynuyor){
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      tv.width = Math.round(cw*dpr); tv.height = Math.round(ch*dpr);
-      tv.style.width = cw + "px"; tv.style.height = ch + "px";
-    }else{
-      // oyun surerken cozunurluk sabit kalir, sadece ekrana sigdirilir
-      const o2 = Math.min(w / tv.width, h / tv.height);
-      tv.style.width = tv.width*o2 + "px"; tv.style.height = tv.height*o2 + "px";
-    }
+    k.classList.toggle("dondur", window.innerHeight > window.innerWidth);
   };
   boyutla();
-  [150, 450, 900].forEach(ms=>setTimeout(boyutla, ms));
+  [200, 600].forEach(ms=>setTimeout(boyutla, ms));
   window.__yatayOlc = boyutla;
   window.__yatayBoyut = () => { boyutla(); setTimeout(boyutla, 300); };
   window.addEventListener("resize", window.__yatayBoyut);
@@ -4293,7 +4280,7 @@ const KRES = {};
 function kresYukle(liste){ liste.forEach(a=>{ if(!KRES[a]){ const im = new Image(); im.src = KG(a); KRES[a] = im; } }); }
 const kresCiz = (c, ad, x, y, boy, ters, aci) => {
   let im = KRES[ad];
-  if(!im){ im = new Image(); im.src = KG(ad); KRES[ad] = im; }
+  if(!im){ im = new Image(); im.onerror = () => { im.hata = true; }; im.src = KG(ad); KRES[ad] = im; }
   if(!im.complete || !im.naturalWidth) return false;
   const g = boy * im.naturalWidth / im.naturalHeight;
   c.save(); c.translate(x, y); if(aci) c.rotate(aci); if(ters) c.scale(-1, 1);
@@ -4323,9 +4310,10 @@ const KBARAKA = {
 // ---- bolum tanimlari ----
 const KBOLUM = [
   { ad:"Buz Diyarı", harita:"harita/kule-harita-1-buzul", kuleler:["okcu","ates","isik"], barakalar:["ork"],
-    altin:300, can:20, tek:true,
+    altin:420, can:20, tek:true,
     yol:[[3.8,-0.6],[3.88,1.93],[4.17,2.99],[4.55,3.31],[4.99,3.58],[5.48,3.75],[5.77,3.89],[5.59,4.13],[5.25,4.5],[5.03,4.97],[4.78,5.44],[4.49,5.85],[4.25,6.3],[3.94,6.66],[3.47,6.76],[2.96,6.63],[2.56,6.34],[2.4,6.15],[2.57,6.32],[2.98,6.57],[3.48,6.71],[3.98,6.88],[4.41,7.14],[4.69,7.54],[4.91,7.94],[5.3,8.14],[5.82,8.18],[6.36,8.19],[6.88,8.25],[7.38,8.37],[7.87,8.55],[8.36,8.77],[8.72,9.03],[8.93,9.42],[9.2,9.82],[9.44,10.22],[9.34,10.66],[8.98,11.02],[8.53,11.32],[8.11,11.62],[7.69,11.88],[7.24,12.08],[6.8,12.27],[6.32,12.4],[5.82,12.52],[5.37,12.72],[4.95,12.99],[4.57,13.31],[4.45,13.7],[4.69,14.07],[5.11,14.37],[5.53,14.69],[5.85,15.09],[6.04,15.57],[6.13,16.08],[6.18,16.54],[6.1,16.9]],
     yuva:[[5.62,3.18],[3.2,5.3],[7.73,6.04],[2.67,9.1],[6.71,8.84],[10.2,10.7],[4.1,12.07],[8.5,15.2]],
+    ortulen:[[3.1,2.96],[7.02,4.38],[2.73,7.07],[5.4,7.4],[9.1,8.4],[2.6,13.2],[5.44,13.3]],
     dusmanlar:{
       goblin:{ res:"dusman/kule-b1-goblins-a", can:58, hiz:1.15, odul:5, boy:1, dps:7 },
       goblinB:{ res:"dusman/kule-b1-goblins-b", can:78, hiz:1, odul:6, boy:.95, dps:9 },
@@ -4336,7 +4324,7 @@ const KBOLUM = [
       destek:{ res:"dusman/kule-b1-goblins-destek", can:95, hiz:.85, odul:12, boy:1, sifaci:true, dps:5 },
       elit:{ res:"dusman/kule-b1-goblins-elite", can:300, hiz:.9, odul:28, boy:1.35, zirh:.25, elit:true, dps:20 }
     },
-    boss:{ ad:"Buz Devi", res:"boss/kule-b1-boss-buzdevi", can:4200, hiz:.4, zirh:.3, boy:2.1, dps:45, yet:"buzdevi" },
+    boss:{ ad:"Buz Devi", res:"boss/kule-b1-boss-buzdevi", can:3000, hiz:.32, zirh:.25, boy:2.1, dps:45, yet:"buzdevi" },
     dalgalar:[
       [["goblin",8,.85],["goblinB",5,1],["suikastci",3,1.1]],
       [["goblinB",6,.8],["zirhli",4,1.4],["ucan",6,.7],["okcu",3,1.2],["suikastci",4,.8],["destek",1,2]],
@@ -4620,7 +4608,7 @@ function kGuncelle(dt){
     O.uret -= dt;
     if(O.sira.length && O.uret <= 0){ const s2 = O.sira.shift(); kDogur(s2.t); O.uret = s2.gec; }
     if(!O.sira.length && !O.dusman.length){
-      O.aktif = false; O.altin += 70; kYazi(6, 2.4, "Dalga temizlendi +70", "#FFE070");
+      O.aktif = false; O.altin += 100; kYazi(6, 2.4, "Dalga temizlendi +100", "#FFE070");
       if(O.dalga >= 3){ O.bitti = true; setTimeout(O.can > 0 ? kuleZafer : kuleYenilgi, 900); } else { O.bekleme = 16; }
     }
   }else if(O.dalga < 3 && !O.bitti){ O.bekleme -= dt; if(O.bekleme <= 0) kuleDalgaBaslat(); }
@@ -4759,8 +4747,14 @@ function kCiz(){
   if(!h){ h = new Image(); h.src = KG(O.B.harita + ".jpg"); KRES[O.B.harita + ".jpg"] = h; }
   if(h.complete && h.naturalWidth) c.drawImage(h, kx, ky, 12*S, 20*S);
   else { c.fillStyle = "#16324A"; c.fillRect(kx, ky, 12*S, 20*S); }
+  // haritada cizili ama kullanilmayan tas yuvalari kar ile ort
+  (O.B.ortulen || []).forEach(([ox,oy])=>{
+    const g3 = c.createRadialGradient(X(ox), Y(oy), 0, X(ox), Y(oy), S*.7);
+    g3.addColorStop(0, "rgba(232,240,248,1)"); g3.addColorStop(.7, "rgba(226,236,246,.95)"); g3.addColorStop(1, "rgba(226,236,246,0)");
+    c.fillStyle = g3; c.beginPath(); c.ellipse(X(ox), Y(oy), S*.72, S*.5, 0, 0, 7); c.fill(); });
   // yuvalar
   O.yuva.forEach(y=>{ if(y.dolu) return;
+    c.fillStyle = "rgba(255,233,168,.12)"; c.beginPath(); c.arc(X(y.x), Y(y.y), S*.7, 0, 7); c.fill();
     const p = O.secTip ? .5 + Math.sin(O.kare/8)*.3 : .18;
     c.strokeStyle = `rgba(255,233,168,${p})`; c.lineWidth = 4; c.setLineDash([8,6]);
     c.beginPath(); c.arc(X(y.x), Y(y.y), S*.75, 0, 7); c.stroke(); c.setLineDash([]); });
@@ -4771,7 +4765,9 @@ function kCiz(){
     if(O.secKule === k){ const sv = tip.sv[k.sv];
       if(!baraka){ c.fillStyle = "rgba(255,233,168,.08)"; c.strokeStyle = "rgba(255,233,168,.5)"; c.lineWidth = 3;
         c.beginPath(); c.arc(X(k.x), Y(k.y), sv.m*S, 0, 7); c.fill(); c.stroke(); } }
-    if(!kresCiz(c, ad + ".webp", X(k.x), Y(k.y) + S*.35, S*2.7)){ c.fillStyle = "#4E4458";
+    let ciz2 = kresCiz(c, ad + ".webp", X(k.x), Y(k.y) + S*.35, S*2.7);
+    for(let alt = k.sv; !ciz2 && alt >= 1; alt--) ciz2 = kresCiz(c, tip.res + "-" + alt + ".webp", X(k.x), Y(k.y) + S*.35, S*2.7);
+    if(!ciz2){ c.fillStyle = "#4E4458";
       c.beginPath(); c.arc(X(k.x), Y(k.y), S*.35, 0, 7); c.fill(); }
     if(k.dondur > 0){ c.fillStyle = "rgba(160,220,255,.45)"; c.beginPath(); c.arc(X(k.x), Y(k.y), S*.5, 0, 7); c.fill(); }
   });
