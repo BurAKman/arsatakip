@@ -1338,9 +1338,10 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .kYet.hazir img{opacity:1}
 .kYet.hazir{box-shadow:0 0 14px rgba(156,245,196,.55)}
 .kYet i{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);pointer-events:none}
-.kPortre{position:relative;flex:1;height:64px;padding:0;overflow:hidden;cursor:pointer;
+.kPortre{position:relative;flex:1;height:68px;padding:0;overflow:hidden;cursor:pointer;
   background:rgba(10,6,20,.9);border:2px solid rgba(232,201,138,.7)}
-.kPortre img{width:100%;height:100%;object-fit:cover;object-position:top}
+.kPortre img{width:100%;height:100%;object-fit:contain;object-position:center;
+  background:radial-gradient(circle at 50% 35%,rgba(232,201,138,.18),rgba(10,6,20,.9))}
 .kCanCubuk{position:absolute;left:0;right:0;bottom:0;height:6px;background:rgba(0,0,0,.6)}
 .kCanCubuk i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#3BBE78,#9CF5C4)}
 .kDalgaTus{position:relative;width:56px;height:56px;flex:0 0 auto;font-size:20px;font-weight:700;cursor:pointer;color:#1A0E06;
@@ -2101,7 +2102,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 9.1";
+const SURUM_MELKOR = "beta 9.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -4085,7 +4086,9 @@ const KG = (a) => gv("kule/" + a);
 const KRES = {};
 function kresYukle(liste){ liste.forEach(a=>{ if(!KRES[a]){ const im = new Image(); im.src = KG(a); KRES[a] = im; } }); }
 const kresCiz = (c, ad, x, y, boy, ters, aci) => {
-  const im = KRES[ad]; if(!im || !im.complete || !im.naturalWidth) return false;
+  let im = KRES[ad];
+  if(!im){ im = new Image(); im.src = KG(ad); KRES[ad] = im; }
+  if(!im.complete || !im.naturalWidth) return false;
   const g = boy * im.naturalWidth / im.naturalHeight;
   c.save(); c.translate(x, y); if(aci) c.rotate(aci); if(ters) c.scale(-1, 1);
   c.drawImage(im, -g/2, -boy, g, boy); c.restore(); return true;
@@ -4165,11 +4168,15 @@ function kuleYeniOyun(){ if(!confirm("Yeni oyun: ilerleme sıfırlansın mı?"))
 function kuleBasla(lv){
   oyunDurdur();
   const B = KBOLUM[lv-1]; if(!B) return kuleSecim();
-  kresYukle([B.harita, B.boss.res + "-duz", B.boss.res + "-saldiri", B.boss.res + "-hasaryer",
-    ...Object.values(B.dusmanlar).map(d=>d.res), ...Object.values(kahramanRes).flat(),
-    ...B.kuleler.flatMap(k=>[1,2,3,"3ekstra"].map(s=>KTIP[k].res + "-" + s)).concat(B.kuleler.map(k=>KTIP[k].ikon)),
-    ...B.barakalar.flatMap(k=>[1,2,3].map(s=>KBARAKA[k].res + "-" + s))
-      .concat(B.barakalar.flatMap(k=>[1,2,3].map(s=>KBARAKA[k].asker + "-" + s))).concat(B.barakalar.map(k=>KBARAKA[k].ikon))]);
+  kresYukle([B.harita + ".jpg",
+    ...["-duz","-saldiri","-hasaryer","-sag","-sol"].map(x=>B.boss.res + x + ".webp"),
+    ...Object.values(B.dusmanlar).map(d=>d.res + ".webp"),
+    ...Object.values(kahramanRes).flat().map(a=>a + ".webp"),
+    ...B.kuleler.flatMap(k=>[1,2,3,"3ekstra"].map(x=>KTIP[k].res + "-" + x + ".webp")),
+    ...B.kuleler.map(k=>KTIP[k].ikon + ".webp"),
+    ...B.barakalar.flatMap(k=>[1,2,3].map(x=>KBARAKA[k].res + "-" + x + ".webp")),
+    ...B.barakalar.flatMap(k=>[1,2,3].map(x=>KBARAKA[k].asker + "-" + x + ".webp")),
+    ...B.barakalar.map(k=>KBARAKA[k].ikon + ".webp")]);
   app.innerHTML = `
     <div class="kOyun">
       <div class="kHud">
@@ -4474,8 +4481,10 @@ function kCiz(){
   const kx = (tv.width - 12*S)/2, ky = (tv.height - 20*S)/2;
   const X = x => kx + x*S, Y = y => ky + y*S;
   c.fillStyle = "#05040C"; c.fillRect(0,0,tv.width,tv.height);
-  const h = KRES[O.B.harita];
-  if(h?.complete && h.naturalWidth) c.drawImage(h, kx, ky, 12*S, 20*S);
+  let h = KRES[O.B.harita + ".jpg"];
+  if(!h){ h = new Image(); h.src = KG(O.B.harita + ".jpg"); KRES[O.B.harita + ".jpg"] = h; }
+  if(h.complete && h.naturalWidth) c.drawImage(h, kx, ky, 12*S, 20*S);
+  else { c.fillStyle = "#16324A"; c.fillRect(kx, ky, 12*S, 20*S); }
   // yuvalar
   O.yuva.forEach(y=>{ if(y.dolu) return;
     const p = O.secTip ? .5 + Math.sin(O.kare/8)*.3 : .18;
