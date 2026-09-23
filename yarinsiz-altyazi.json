@@ -1,0 +1,48 @@
+{
+ "yarinsiz-konusma-giris": [
+  [
+   0.0,
+   "Demek bununla beni yeneceksiniz?"
+  ],
+  [
+   3.3,
+   "Haddini bilmemenin de bir sınırı var."
+  ],
+  [
+   5.8,
+   "İstediğiniz kadar çırpının. En azından can sıkıntımı giderirsiniz."
+  ],
+  [
+   9.4,
+   "Aklınıza kazıyın: En güçlü benim."
+  ],
+  [
+   12.9,
+   "Sizlerse yalnızca benim ihtişamımı ortaya çıkaran figüranlarsınız."
+  ]
+ ],
+ "yarinsiz-replik-sir": [
+  [
+   0.0,
+   "Sana bir sır vereceğim."
+  ]
+ ],
+ "yarinsiz-replik-tehdit": [
+  [
+   0.0,
+   "Ve bu sırrı paylaşman imkânsız olacak!"
+  ]
+ ],
+ "yarinsiz-replik-ulti": [
+  [
+   0.0,
+   "SESSİZ KIYAMET!"
+  ]
+ ],
+ "yarinsiz-replik-final": [
+  [
+   0.0,
+   "Sırrım güvende olacak demiştim."
+  ]
+ ]
+}
