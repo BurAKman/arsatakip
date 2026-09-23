@@ -2139,7 +2139,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 9.8";
+const SURUM_MELKOR = "beta 9.9";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -2315,6 +2315,21 @@ function rutbeAmblem(lv){
 // 10'dan sonra her seviye bir oncekinden 2 giris daha fazla ister (5, 7, 9, 11 ...)
 const seviyeGerekli = lv => lv < 10 ? 3 : 3 + (lv - 9) * 2;
 const seviyePuan = () => +(localStorage.getItem("seviyePuan") || 0);
+
+// hikaye ilerlemesini sifirla (intro, cark sahnesi, bolumler)
+function melkorHikayeSifirla(sessiz){
+  ["introGoruldu","carkBitti","kuleBitti","bolum1Intro","kuleBolum","maceraBasla","rehberTanisti",
+   "seviye","seviyePuan"].forEach(k=>localStorage.removeItem(k));
+  for(let i=1;i<=5;i++) localStorage.removeItem("kuleYildiz_" + i);
+  if(!sessiz){ toast("Hikâye sıfırlandı"); setTimeout(()=>location.reload(), 600); }
+}
+// bir kereye mahsus: eski test kayitlari temizlensin
+try{
+  if(!localStorage.getItem("melkorSifirV3")){
+    localStorage.setItem("melkorSifirV3", "1");
+    melkorHikayeSifirla(true);
+  }
+}catch(e){}
 
 // yeni sisteme gecis: bir kereye mahsus herkes seviye 1'den baslar
 try{
