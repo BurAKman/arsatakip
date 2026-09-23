@@ -2216,7 +2216,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 14.1";
+const SURUM_MELKOR = "beta 14.3";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -4402,48 +4402,48 @@ const KBOLUM = [
        ["BOSS",1,2],["suikastci",12,.4],["zirhli",6,.9],["elit",3,2.2]]
     ] },
   { ad:"Kül Diyarı", harita:"harita/kule-harita-3-lav", kuleler:["okcu","ates","isik","buz","mancinik"], barakalar:["ork","golge"],
-    altin:600, can:20, gen:20, yuk:11.26,
+    altin:720, can:20, gen:20, yuk:11.26, hazirBaraka:true,
     yollar:[
       [[11.64,-0.6],[11.6,1.3],[11.3,2],[10.4,2.6],[9.3,3],[8,3.2],[6.6,3.3],[5.7,3.55],[5.4,4.1],[5.9,4.7],[5.8,5.4],[4.8,6],[3.6,6.4],[2.8,6.75],[2.2,7],[1.6,7.2]],
       [[18.1,-0.6],[18,1.6],[17.4,2.4],[17.2,3.3],[17.5,4.2],[18,4.9],[18.1,5.6],[17.3,6.2],[16.1,6.6],[15.6,7.1],[15.8,8],[15.7,8.7],[14.6,9.25],[12.8,9.6],[11,9.7],[9.8,9.45],[8.8,9],[7.6,8.7],[6.5,8.55],[5.9,8.45]]
     ],
     yuva:[[8.8,2.15],[11,3],[6.6,3.35],[4.55,4.55],[2.2,5.55],[5.1,6.2],[15.55,3.27],[18.9,3.73],[16.9,4.9],[17.2,7.1],[14.45,8.36],[12.8,9.1],[15.7,9.73]],
     dusmanlar:{
-      a:{ res:"dusman/kule-b3-dusman-a", can:120, hiz:1.1, odul:6, boy:1, dps:12 },
-      b:{ res:"dusman/kule-b3-dusman-b", can:150, hiz:1, odul:8, boy:1.05, dps:14 },
-      c:{ res:"dusman/kule-b3-dusman-c", can:300, hiz:.7, odul:15, boy:1.2, zirh:.5, dps:18 },
-      d:{ res:"dusman/kule-b3-dusman-d", can:520, hiz:.55, odul:22, boy:1.3, zirh:.3, dps:26 },
-      e:{ res:"dusman/kule-b3-dusman-e", can:140, hiz:.9, odul:13, boy:1, dps:9, menzilli:2.5 },
-      destek:{ res:"dusman/kule-b3-destek", can:160, hiz:.85, odul:14, boy:1, sifaci:true, dps:7 },
-      ucan:{ res:"dusman/kule-b3-ucan", can:130, hiz:1.35, odul:11, boy:1, ucan:true, dps:10 },
-      suikastci:{ res:"dusman/kule-b3-suikastci-b", can:110, hiz:1.9, odul:9, boy:.95, dps:15 },
-      elit:{ res:"dusman/kule-b3-elit", can:560, hiz:.85, odul:40, boy:1.4, zirh:.3, elit:true, dps:30 }
+      a:{ res:"dusman/kule-b3-dusman-a", can:100, hiz:1.1, odul:6, boy:1, dps:12 },
+      b:{ res:"dusman/kule-b3-dusman-b", can:120, hiz:1, odul:8, boy:1.05, dps:14 },
+      c:{ res:"dusman/kule-b3-dusman-c", can:250, hiz:.7, odul:15, boy:1.2, zirh:.5, dps:18 },
+      d:{ res:"dusman/kule-b3-dusman-d", can:380, hiz:.55, odul:22, boy:1.3, zirh:.3, dps:26 },
+      e:{ res:"dusman/kule-b3-dusman-e", can:110, hiz:.9, odul:13, boy:1, dps:9, menzilli:2.5 },
+      destek:{ res:"dusman/kule-b3-destek", can:130, hiz:.85, odul:14, boy:1, sifaci:true, dps:7 },
+      ucan:{ res:"dusman/kule-b3-ucan", can:110, hiz:1.35, odul:11, boy:1, ucan:true, dps:10 },
+      suikastci:{ res:"dusman/kule-b3-suikastci-b", can:90, hiz:1.9, odul:9, boy:.95, dps:15 },
+      elit:{ res:"dusman/kule-b3-elit", can:400, hiz:.85, odul:40, boy:1.4, zirh:.3, elit:true, dps:30 }
     },
-    boss:{ ad:"Kül Ejderi", res:"boss/kule-b3-boss-ejder", can:8200, hiz:.28, zirh:.35, boy:2.6, dps:65, yet:"ejder",
+    boss:{ ad:"Kül Ejderi", res:"boss/kule-b3-boss-ejder", can:4200, hiz:.28, zirh:.25, boy:2.6, dps:65, yet:"ejder",
            yetAd:"EJDER ALEVİ!", yetRenk:"#FF9A5A" },
     dalgalar:[
       [["a",10,.55,0],["a",10,.55,1],["b",5,.8,0],["b",5,.8,1],["suikastci",4,.8]],
       [["a",12,.45],["c",6,1,0],["ucan",10,.55,1],["e",4,1,0],["destek",2,1.6,1],["suikastci",8,.5],["c",4,1,1],["elit",1,2,0]],
-      [["a",18,.35],["c",8,.8,1],["d",5,1.2,0],["ucan",12,.45],["e",6,.8],["destek",3,1.3],["elit",2,2,0],
-       ["BOSS",1,2,1],["suikastci",14,.35],["d",4,1,1],["elit",2,2.2,1]]
+      [["a",14,.4],["c",6,.9,1],["d",4,1.3,0],["ucan",10,.5],["e",4,.9],["destek",2,1.4],["elit",1,2,0],
+       ["BOSS",1,2,1],["suikastci",10,.4],["d",3,1.1,1],["elit",1,2.4,1]]
     ] },
   { ad:"Çorak Topraklar", harita:"harita/kule-harita-4-kurak", kuleler:["okcu","ates","isik","buz","mancinik"], barakalar:["ork","golge"],
-    altin:680, can:20, gen:20, yuk:11.26,
+    altin:680, can:20, gen:20, yuk:11.26, hazirBaraka:true,
     yollar:[ [[10.96,-0.6],[10.96,1.48],[10.59,1.86],[10.14,2.15],[9.66,2.37],[9.14,2.51],[8.61,2.57],[8.09,2.56],[7.56,2.51],[7.03,2.53],[6.52,2.67],[6.17,2.98],[6.21,3.38],[6.57,3.71],[7.02,3.96],[7.35,4.3],[7.35,4.74],[7.01,5.08],[6.52,5.31],[6.03,5.51],[5.55,5.74],[5.24,6.05],[5.29,6.49],[5.48,6.96],[5.44,7.4],[5.13,7.76],[4.71,8.07],[4.38,8.3],[4.26,8.37]],
              [[18.28,-0.6],[18.28,1.77],[18.11,2.26],[18.11,2.74],[18.38,3.15],[18.78,3.5],[19.04,3.91],[18.98,4.33],[18.61,4.64],[18.13,4.87],[17.64,5.04],[17.14,5.18],[16.7,5.45],[16.42,5.86],[16.46,6.23],[16.8,6.46],[17.14,6.78],[17.18,7.24],[16.89,7.61],[16.41,7.83],[15.89,7.93],[15.36,7.99],[14.83,8.05],[14.31,8.14],[13.79,8.3],[13.3,8.53],[12.83,8.82],[12.37,9.1],[11.9,9.38],[11.51,9.69],[11.2,10.0]] ],
     yuva:[[8.27,1.87],[6.95,2.85],[10.55,2.75],[6.1,4.4],[6.75,6],[16.45,2.75],[18.1,4.1],[17.65,5.7],[16.1,6.9],[15.1,8.65]],
     dusmanlar:{
-      savasci:{ res:"dusman/kule-b4-savasci", can:160, hiz:1.1, odul:8, boy:1, dps:15 },
-      suikastci:{ res:"dusman/kule-b4-suikastci", can:140, hiz:2, odul:10, boy:.95, dps:18 },
-      zirhli:{ res:"dusman/kule-b4-zirhli", can:340, hiz:.7, odul:17, boy:1.2, zirh:.5, dps:20 },
-      zirhliB:{ res:"dusman/kule-b4-zirhli-b", can:400, hiz:.62, odul:20, boy:1.25, zirh:.55, dps:22 },
-      ucan:{ res:"dusman/kule-b4-ucan", can:170, hiz:1.4, odul:12, boy:1, ucan:true, dps:12 },
-      sifaci:{ res:"dusman/kule-b4-sifaci", can:200, hiz:.85, odul:15, boy:1, sifaci:true, dps:8 },
-      buyucu:{ res:"dusman/kule-b4-buyucu", can:180, hiz:.9, odul:14, boy:1, dps:10, menzilli:2.6 },
-      buyucu2:{ res:"dusman/kule-b4-buyucu-2", can:220, hiz:.85, odul:16, boy:1.05, dps:12, menzilli:2.8 },
-      elit:{ res:"dusman/kule-b4-elit", can:600, hiz:.85, odul:45, boy:1.4, zirh:.3, elit:true, dps:34 }
+      savasci:{ res:"dusman/kule-b4-savasci", can:130, hiz:1.1, odul:8, boy:1, dps:15 },
+      suikastci:{ res:"dusman/kule-b4-suikastci", can:110, hiz:2, odul:10, boy:.95, dps:18 },
+      zirhli:{ res:"dusman/kule-b4-zirhli", can:280, hiz:.7, odul:17, boy:1.2, zirh:.5, dps:20 },
+      zirhliB:{ res:"dusman/kule-b4-zirhli-b", can:330, hiz:.62, odul:20, boy:1.25, zirh:.55, dps:22 },
+      ucan:{ res:"dusman/kule-b4-ucan", can:140, hiz:1.4, odul:12, boy:1, ucan:true, dps:12 },
+      sifaci:{ res:"dusman/kule-b4-sifaci", can:160, hiz:.85, odul:15, boy:1, sifaci:true, dps:8 },
+      buyucu:{ res:"dusman/kule-b4-buyucu", can:150, hiz:.9, odul:14, boy:1, dps:10, menzilli:2.6 },
+      buyucu2:{ res:"dusman/kule-b4-buyucu-2", can:180, hiz:.85, odul:16, boy:1.05, dps:12, menzilli:2.8 },
+      elit:{ res:"dusman/kule-b4-elit", can:490, hiz:.85, odul:45, boy:1.4, zirh:.3, elit:true, dps:34 }
     },
-    boss:{ ad:"Kum Devi", res:"boss/kule-b4-boss-kumdevi", can:7200, hiz:.26, zirh:.35, boy:2.7, dps:75, yet:"kumdevi",
+    boss:{ ad:"Kum Devi", res:"boss/kule-b4-boss-kumdevi", can:5900, hiz:.26, zirh:.35, boy:2.7, dps:75, yet:"kumdevi",
            yetAd:"KUM FIRTINASI!", yetRenk:"#FFD27A" },
     dalgalar:[
       [["savasci",10,.5,0],["savasci",10,.5,1],["suikastci",5,.6],["buyucu",3,1,0],["zirhli",3,1.2,1]],
@@ -4455,12 +4455,12 @@ const KBOLUM = [
 
 let KO = null;
 const KAHRAMAN = {
-  esas: { ad:"Esas Oğlan", max:420, h:30, vurHz:.7,
+  esas: { ad:"Esas Oğlan", max:580, h:42, vurHz:.65,
     res:{ duz:"kahraman/kule-kahraman-esas-duz.webp", sag:"kahraman/kule-kahraman-esas-sag.webp", sol:"kahraman/kule-kahraman-esas-sol.webp",
           vur:"kahraman/kule-kahraman-esas-saldiri.webp", ozel:"kahraman/kule-kahraman-esas-kahkaha.webp",
           bekle:"kahraman/kule-kahraman-esas-konusma.webp" },
     portre:"ikon/kule-ikon-esas-portre.webp", y:["ikon/kule-ikon-esas-yenetek1.webp","ikon/kule-ikon-esas-yetenek2.webp"], ysure:[20,26] },
-  borz: { ad:"BorzBey Hz.", max:460, h:34, vurHz:.75,
+  borz: { ad:"BorzBey Hz.", max:640, h:48, vurHz:.7,
     res:{ duz:"kahraman/kule-borz-duz.webp", sag:"kahraman/kule-borz-sag.webp", sol:"kahraman/kule-borz-sol.webp",
           vur:"kahraman/kule-borz-saldiri.webp", ozel:"kahraman/kule-borz-kahkaha.webp" },
     yedek:"esas", portre:"ikon/kule-ikon-borz-portre.webp", y:["ikon/kule-ikon-borz-yenetek1.webp","ikon/kule-ikon-borz-yenetek2.webp"], ysure:[22,28] }
@@ -4678,6 +4678,7 @@ async function kuleBasla(lv){
     yuva:B.yuva.map(([x,y])=>({x,y,dolu:null})), bitti:false, kare:0, boss:null, yBek:[0,0],
     esas:kah[0],
     kurt:{ sahip:kurtSahip, d:kurtSahip.d, yi:kurtSahip.yi, x:kurtSahip.x - .4, y:kurtSahip.y + .2, can:190, max:190, h:20, bek:0, olu:0, vur:0, ofke:0, sesBek:0 } };
+  if(B.hazirBaraka) kuleHazirBaraka();
   kSesOnYukle();
   const BI = BOLUM_INTRO[lv];
   if(BI && !localStorage.getItem("bolum" + lv + "Intro")){
@@ -4815,6 +4816,30 @@ function kuleDokun(e){
     if(yp.yi !== H.yi){ H.yi = yp.yi; H.d = yp.d; O.efekt.push({ t:"sifa", x:bx, y:by, r:0, o:1 }); }
     H.hd = yp.d;
     if(Math.random() < .3) kYazi(O.esas.x, O.esas.y - 1.1, ["Geliyorum!","Durun, ben varım!","Oraya mı? Tamam!"][Math.floor(Math.random()*3)], "#9CF5C4"); }
+}
+// iki koridorun her birine bolum basinda bir ork ve bir golge barakasi
+function kuleHazirBaraka(){
+  const O = KO; if(!O) return;
+  const uzak = (x, y, yi) => { let m = 1e9; const Y2 = O.yollar[yi];
+    Y2.par.forEach(p=>{ const dx = p.x2-p.x1, dy = p.y2-p.y1, L2 = dx*dx+dy*dy || 1;
+      let t = ((x-p.x1)*dx + (y-p.y1)*dy)/L2; t = Math.max(0, Math.min(1, t));
+      m = Math.min(m, Math.hypot(x-(p.x1+dx*t), y-(p.y1+dy*t))); });
+    return m; };
+  O.yollar.forEach((Y2, yi)=>{
+    const adaylar = O.yuva.filter(Y=>!Y.dolu).map(Y=>({ Y, u:uzak(Y.x, Y.y, yi) }))
+      .filter(a=>O.yollar.every((_, yj)=>yj === yi || uzak(a.Y.x, a.Y.y, yj) > a.u))   // o koridora ait taslar
+      .sort((a,b)=>a.u - b.u);
+    // koridorun ortasina yakin iki tas: biri ork, biri golge
+    const orta = adaylar.sort((a,b)=>{ const ya = O.yolaYapis(a.Y.x, a.Y.y).d, yb = O.yolaYapis(b.Y.x, b.Y.y).d;
+      return Math.abs(ya - Y2.toplam*.55) - Math.abs(yb - Y2.toplam*.55); }).slice(0, 2);
+    orta.forEach((a, j)=>{
+      const tur = j === 0 ? "ork" : "golge", tip = KBARAKA[tur];
+      const yp = O.yolaYapis(a.Y.x, a.Y.y); const [tx, ty] = O.konum(yp.d, yp.yi);
+      const k = { tip:"B:" + tur, baraka:true, x:a.Y.x, y:a.Y.y, sv:0, bek:0, dondur:0, harcanan:tip.sv[0].f, yuva:a.Y, tpD:yp.d, tp:[tx, ty] };
+      a.Y.dolu = k; O.kule.push(k);
+      for(let i=0;i<tip.adet;i++) kuleAskerDog(k, i);
+    });
+  });
 }
 function kuleAskerDog(k, ix){
   const tip = KBARAKA[k.tip.slice(2)], sv = tip.sv[k.sv];
