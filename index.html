@@ -2200,7 +2200,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 12.1";
+const SURUM_MELKOR = "beta 12.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -4417,17 +4417,15 @@ async function kuleBasla(lv){
         <button class="kDalgaTus" id="kDalgaTus" onclick="kuleDalgaBaslat()">▶</button>
       </div>
     </div>`;
-  // yatay oyun: telefonu yan kilitlemeyi dene, olmazsa kabi dondur
-  try{ await document.documentElement.requestFullscreen?.(); }catch(e){}
-  try{ await screen.orientation?.lock?.("landscape"); }catch(e){}
+  // yatay oyun: telefonu yan kilitlemeyi DENE ama asla bekleme (bazi telefonlarda cevap gelmiyor)
+  try{
+    const f = document.documentElement.requestFullscreen?.();
+    if(f && f.then) f.then(()=>{ try{ screen.orientation?.lock?.("landscape")?.catch(()=>{}); }catch(e){} }).catch(()=>{});
+  }catch(e){}
   kuleKabOlc();
-  await new Promise(r=>setTimeout(r, 120)); kuleKabOlc();
   const GW = B.gen || 12, GH = B.yuk || 20;
   const tv = document.getElementById("kTuval");
-  const sahne = document.querySelector(".kSahne");
-  const G = sahne.offsetWidth, Y = sahne.offsetHeight, dpr = Math.min(3, window.devicePixelRatio || 1);
-  tv.width = Math.round(G*dpr); tv.height = Math.round(Y*dpr); tv.style.width = G+"px"; tv.style.height = Y+"px";
-  const olcek = Math.min(tv.width/GW, tv.height/GH);
+  const olcek = kuleTuvalOlc(tv, GW, GH);
   const kx = (tv.width - GW*olcek)/2, ky = (tv.height - GH*olcek)/2;
   const E = (x,y) => [kx + x*olcek, ky + y*olcek];
 
@@ -4506,6 +4504,22 @@ function kuleKabOlc(){
   k.classList.toggle("dondur", dik);
   k.style.width = (dik ? vh : vw) + "px"; k.style.height = (dik ? vw : vh) + "px";
 }
+// tuvali kabin gercek olcusune gore kur, olcegi dondur
+function kuleTuvalOlc(tv, GW, GH){
+  const sahne = document.querySelector(".kSahne"); if(!sahne || !tv) return 1;
+  const G = Math.max(200, sahne.offsetWidth), Y = Math.max(150, sahne.offsetHeight), dpr = Math.min(3, window.devicePixelRatio || 1);
+  tv.width = Math.round(G*dpr); tv.height = Math.round(Y*dpr); tv.style.width = G+"px"; tv.style.height = Y+"px";
+  return Math.min(tv.width/GW, tv.height/GH);
+}
+// ekran donunce ya da boyut degisince yeniden olc (oyun devam ederken de)
+function kuleYenidenOlc(){
+  if(!KO || KO.id !== "kule") return;
+  kuleKabOlc();
+  const GW = KO.B.gen || 12, GH = KO.B.yuk || 20;
+  KO.olcek = kuleTuvalOlc(KO.tv, GW, GH);
+}
+window.addEventListener("resize", ()=>{ kuleYenidenOlc(); setTimeout(kuleYenidenOlc, 350); });
+window.visualViewport?.addEventListener("resize", ()=>{ setTimeout(kuleYenidenOlc, 120); });
 function kuleCikis(){
   try{ screen.orientation?.unlock?.(); }catch(e){}
   try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
