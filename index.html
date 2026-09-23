@@ -1228,6 +1228,19 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .sIslem button{padding:12px 14px;font-family:"Cinzel",Georgia,serif;font-size:10.5px;letter-spacing:.1em;cursor:pointer;color:#F0DCA8;
   background:linear-gradient(160deg,rgba(60,40,20,.85),rgba(12,8,4,.92));border:1px solid rgba(232,201,138,.4)}
 
+.hNokta.kilitli{filter:grayscale(1) brightness(.55);animation:none}
+.hNokta.kilitli .hHalka{display:none}
+.hNokta.kilitli .hMadalyon{border-color:rgba(150,150,170,.5);box-shadow:none}
+.hNokta.kilitli .hOk{font-size:13px;animation:none;opacity:.9}
+.hNokta.kilitli .hEtiket{opacity:.45}
+.hBildiri{position:absolute;left:50%;top:14%;transform:translateX(-50%);z-index:10;max-width:88%;padding:9px 16px;
+  text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-family:"Cinzel",Georgia,serif;font-size:11px;letter-spacing:.06em;color:#140A24;
+  background:linear-gradient(160deg,#FFE9A8,#E0A94A);opacity:0;transition:opacity .5s ease;pointer-events:none;
+  box-shadow:0 8px 22px rgba(0,0,0,.6);
+  clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,8px 100%,0 50%)}
+.hBildiri.acik{opacity:1;animation:kehanetYan 2.4s ease-in-out infinite}
+
 /* ---- intro ve anlatim ---- */
 .introKat{position:fixed;inset:0;z-index:200;display:grid;place-items:center;opacity:0;transition:opacity 1.2s ease;
   background:radial-gradient(80% 60% at 50% 30%,rgba(40,24,80,.7),transparent 70%),linear-gradient(180deg,#07050F,#010104)}
@@ -2105,8 +2118,8 @@ h3{letter-spacing:.02em}
   });
   setTimeout(function(){
     var p = document.getElementById("acilis");
-    if(p) p.remove();                       // perde takildiysa kaldir
-  }, 10000);
+    if(p) p.remove();
+  }, 6000);
   setTimeout(function(){
     if(window.__acildi) return;
     if(typeof window.supabase === "undefined") return yaz("Supabase kütüphanesi gelmedi", "cdn.jsdelivr.net adresine ulaşılamıyor olabilir.");
@@ -2126,7 +2139,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 9.6";
+const SURUM_MELKOR = "beta 9.8";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -5875,12 +5888,6 @@ function menuGovde(tema){
 
         ${noktalar}
 
-        <!-- haritada gezen maskot -->
-        <div class="hGezgin" id="hGezgin" style="left:26%;top:40%" onclick="event.stopPropagation();gezginDokun()">
-          <div class="hBalon" id="hBalon"></div>
-          <img src="${gv('maskot-duz.png')}" id="hGezginImg" alt="" draggable="false">
-          <i class="hGolge"></i>
-        </div>
         <div class="hHedef" id="hHedef"></div>
       </div>
 
@@ -5902,7 +5909,16 @@ function menuGovde(tema){
 
 function haritaKilit(){
   const c = localStorage.getItem("carkBitti") === "1";
-  gezginSoyle(c ? "Önce mağaradaki işi bitir." : "Önce kaderini öğren. Çadır seni bekliyor.");
+  haritaBildiri(c ? "Buz mağarası seni bekliyor. Kuzeye git." : "Bu diyar henüz kapalı. Önce kaderini öğren: Vaha Çadırı'na git.");
+}
+function haritaBildiri(metin, kalici){
+  let k = document.getElementById("hBildiri");
+  if(!k){ k = document.createElement("div"); k.id = "hBildiri"; k.className = "hBildiri";
+    document.getElementById("hKap")?.appendChild(k); }
+  k.textContent = metin;
+  k.classList.add("acik");
+  clearTimeout(window.__hBil);
+  if(!kalici) window.__hBil = setTimeout(()=>k.classList.remove("acik"), 3200);
 }
 
 // haritadaki mekanlar (yuzde koordinat)
@@ -6009,10 +6025,14 @@ function haritaKur(){
   });
 
   haritaAtmosfer();
-  if(localStorage.getItem("maceraBasla") === "1"){
-    localStorage.removeItem("maceraBasla");
-    setTimeout(maceraKosusu, 500);
-  }else gezginDongu();
+  // yonlendirme: hangi mekan aciksa oraya isaret et
+  const carkB = localStorage.getItem("carkBitti") === "1", oyunB = localStorage.getItem("kuleBitti") === "1";
+  if(!oyunB) setTimeout(()=>{
+    haritaBildiri(carkB ? "⚔ Buz mağarasına gir · Kuzeydeki kuru kafa" : "🔮 Kader Çarkı seni çağırıyor · Vaha Çadırı", true);
+    const hedef = carkB ? "buz" : "kurak";
+    const n = HARITA_NOKTALARI.find(x=>x.id === hedef);
+    if(n) haritaUc(n.x, n.y - 4, 1.25, true);
+  }, 900);
 }
 
 // Kader Carki'ndan maceraya: Esas Oglan bagirip buz magarasina kosar
@@ -11663,9 +11683,8 @@ function acilisiKapat(){
 
 (function(){
   const v = document.getElementById("acilisVid");
-  if(v && localStorage.getItem("introSesKapali") === "1"){ v.muted = true; }
   if(v){
-    v.volume = 0.42;
+    v.muted = true; v.volume = 0;          // acilis sessiz: intro muzigi ustune binmesin
     v.addEventListener("ended", () => acilisiKapat());
     // tarayicilar dokunmadan sesli oynatmayi engelleyebilir:
     // once sesli dene, olmazsa sessiz basla ve ilk dokunusta sesi ac
@@ -11675,8 +11694,8 @@ function acilisiKapat(){
       const ac = () => { v.muted = false; document.removeEventListener("pointerdown", ac); };
       document.addEventListener("pointerdown", ac, { once:true });
     });
-    setTimeout(acilisiKapat, 12000);
-  }else setTimeout(acilisiKapat, 3000);
+    setTimeout(acilisiKapat, 2600);
+  }else setTimeout(acilisiKapat, 1800);
 })();
 
 function acilisHatasi(mesaj){
