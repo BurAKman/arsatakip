@@ -2216,7 +2216,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 14.0";
+const SURUM_MELKOR = "beta 14.1";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -4325,7 +4325,9 @@ const KRES = {};
 function kresYukle(liste){ liste.forEach(a=>{ if(!KRES[a]){ const im = new Image(); im.src = KG(a); KRES[a] = im; } }); }
 const kresCiz = (c, ad, x, y, boy, ters, aci) => {
   let im = KRES[ad];
-  if(!im){ im = new Image(); im.onerror = () => { im.hata = true; }; im.src = KG(ad); KRES[ad] = im; }
+  if(!im){ im = new Image();
+    im.onerror = () => { if(/\.webp$/.test(ad) && !im.png){ im.png = true; im.src = KG(ad.replace(/\.webp$/, ".png")); } else im.hata = true; };
+    im.src = KG(ad); KRES[ad] = im; }
   if(!im.complete || !im.naturalWidth) return false;
   const g = boy * im.naturalWidth / im.naturalHeight;
   c.save(); c.translate(x, y); if(aci) c.rotate(aci); if(ters) c.scale(-1, 1);
@@ -4400,7 +4402,7 @@ const KBOLUM = [
        ["BOSS",1,2],["suikastci",12,.4],["zirhli",6,.9],["elit",3,2.2]]
     ] },
   { ad:"Kül Diyarı", harita:"harita/kule-harita-3-lav", kuleler:["okcu","ates","isik","buz","mancinik"], barakalar:["ork","golge"],
-    altin:540, can:20, gen:20, yuk:11.26,
+    altin:600, can:20, gen:20, yuk:11.26,
     yollar:[
       [[11.64,-0.6],[11.6,1.3],[11.3,2],[10.4,2.6],[9.3,3],[8,3.2],[6.6,3.3],[5.7,3.55],[5.4,4.1],[5.9,4.7],[5.8,5.4],[4.8,6],[3.6,6.4],[2.8,6.75],[2.2,7],[1.6,7.2]],
       [[18.1,-0.6],[18,1.6],[17.4,2.4],[17.2,3.3],[17.5,4.2],[18,4.9],[18.1,5.6],[17.3,6.2],[16.1,6.6],[15.6,7.1],[15.8,8],[15.7,8.7],[14.6,9.25],[12.8,9.6],[11,9.7],[9.8,9.45],[8.8,9],[7.6,8.7],[6.5,8.55],[5.9,8.45]]
@@ -4529,7 +4531,7 @@ function sahne2Oyna(bitince, dizi, kadro){
   const k = document.createElement("div");
   k.className = "sahne2"; k.id = "sahne2";
   k.className = "sahne2 kadro" + kadro.length;
-  k.innerHTML = kadro.map(id=>`<img class="s2Oyuncu ${id}" id="s2${id}" src="${gv(SAHNE2_RES[id].duz)}" alt="">`).join("") + `
+  k.innerHTML = kadro.map(id=>`<img class="s2Oyuncu ${id}" id="s2${id}" src="${gv(SAHNE2_RES[id].duz)}" onerror="if(this.src.indexOf('.webp')>0)this.src=this.src.replace('.webp','.png')" alt="">`).join("") + `
     <div class="tAd" id="s2Ad"></div>
     <div class="tCubuk"><i id="s2Cubuk"></i></div>
     <button class="tAtla" id="s2Atla">GEÇ ▸</button>`;
@@ -4607,10 +4609,10 @@ async function kuleBasla(lv){
         <button class="kSek" id="kSekBaraka" onclick="kuleMenu('baraka')">🛡</button>
         ${(lv >= 3 ? ["esas","borz"] : ["esas"]).map((id,i)=>{ const T2 = KAHRAMAN[id]; return `
         <div class="kKah ${i === 0 ? "sec" : ""}">
-          <button class="kYet" id="kY${i}1" onclick="kuleYetenek(${i},1)"><img src="${KG(T2.y[0])}" alt=""><i></i></button>
-          <button class="kPortre" onclick="kuleKahramanSec(${i})"><img src="${KG(T2.portre)}" alt="">
+          <button class="kYet" id="kY${i}1" onclick="kuleYetenek(${i},1)"><img src="${KG(T2.y[0])}" onerror="if(this.src.indexOf('.webp')>0)this.src=this.src.replace('.webp','.png')" alt=""><i></i></button>
+          <button class="kPortre" onclick="kuleKahramanSec(${i})"><img src="${KG(T2.portre)}" onerror="if(this.src.indexOf('.webp')>0)this.src=this.src.replace('.webp','.png')" alt="">
             <span class="kCanCubuk"><i id="kCan${i}"></i></span></button>
-          <button class="kYet" id="kY${i}2" onclick="kuleYetenek(${i},2)"><img src="${KG(T2.y[1])}" alt=""><i></i></button>
+          <button class="kYet" id="kY${i}2" onclick="kuleYetenek(${i},2)"><img src="${KG(T2.y[1])}" onerror="if(this.src.indexOf('.webp')>0)this.src=this.src.replace('.webp','.png')" alt=""><i></i></button>
         </div>`; }).join("")}
         <button class="kDalgaTus" id="kDalgaTus" onclick="kuleDalgaBaslat()">▶</button>
       </div>
