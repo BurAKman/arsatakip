@@ -183,7 +183,7 @@ function kapOlc(){
   const dik = vh > vw; S.kap.classList.toggle("dondur", dik);
   const w = dik ? vh : vw, h = dik ? vw : vh;
   S.kap.style.width = w + "px"; S.kap.style.height = h + "px";
-  const dpr = Math.min(2.5, devicePixelRatio || 1);
+  const dpr = Math.min(1.75, devicePixelRatio || 1);
   S.tv.width = Math.round(w*dpr); S.tv.height = Math.round(h*dpr);
   S.tv.style.width = w + "px"; S.tv.style.height = h + "px";
   S.bulanik = null;                         // derinlik katmani yeniden uretilsin
@@ -281,6 +281,8 @@ async function eylem(tip){
   if(y && !y.ulti && S.sp < y.sp) return;
   if(y && y.ulti && S.ulti < 100) return;
   S.mesgul = true; ui();
+  clearTimeout(S.bekci); S.bekci = setTimeout(()=>{ if(S && S.mesgul){ S.anim = null; S.poz = null; S.izAcik = false; S.kesme = null; S.karart = 0;
+    S.x = .72; S.mesgul = false; ui(); } }, 20000);
   const vurus = 1 + S.boost, gc = S.gece > 0;
   S.bp = Math.max(0, S.bp - S.boost);
   if(y && !y.ulti) S.sp -= y.sp;
@@ -368,6 +370,11 @@ async function sessizKiyamet(){
 /* ---- ana dongu ---- */
 function dongu(t){
   if(!S) return;
+  try{ ciz(t); }catch(e){ if(!S.hataSay){ console.log("yarinsiz ciz", e); } S.hataSay = (S.hataSay || 0) + 1;
+    try{ S.tv.getContext("2d").restore(); }catch(x){} }
+  if(S) S.raf = requestAnimationFrame(dongu);
+}
+function ciz(t){
   S.kare++; const dt = Math.min(.05, (t - (S.son || t))/1000); S.son = t;
   const c = S.tv.getContext("2d"), W = S.tv.width, H = S.tv.height;
   if(!S.x) S.x = .72;
@@ -388,8 +395,8 @@ function dongu(t){
   c.beginPath(); c.ellipse(hx, gy, W*.06, H*.03, 0, 0, 7); c.stroke();
   c.beginPath(); c.ellipse(hx, gy, W*.035, H*.017, 0, 0, 7); c.stroke(); c.restore();
   // golge izleri
-  if(S.izAcik && S.kare % 2 === 0){ const im = res(S.cizilen || POZ.hazir); if(im) S.iz.push({ x:S.x, im, o:.55 }); }
-  S.iz.forEach(z=>{ z.o -= .045; }); S.iz = S.iz.filter(z=>z.o > 0);
+  if(S.izAcik && S.kare % 3 === 0){ const im = res(S.cizilen || POZ.hazir); if(im) S.iz.push({ x:S.x, im:golgeKopya(im), o:.5 }); }
+  S.iz.forEach(z=>{ z.o -= .06; }); S.iz = S.iz.filter(z=>z.o > 0).slice(-6);
   S.iz.forEach(z=>karakterCiz(c, W, H, z.im, z.x, z.o, "hue"));
   // karakter
   const im = res(guncelPoz(t));
@@ -403,7 +410,6 @@ function dongu(t){
   c.fillStyle = v; c.fillRect(0,0,W,H);
   if(S.flas){ c.globalAlpha = Math.max(0, S.flas.o); c.fillStyle = S.flas.renk; c.fillRect(0,0,W,H); c.globalAlpha = 1; S.flas.o -= .06; if(S.flas.o <= 0) S.flas = null; }
   if(S.kesme) kesmeCiz(c, W, H, t);
-  S.raf = requestAnimationFrame(dongu);
 }
 function guncelPoz(t){
   const A = S.anim;
@@ -417,6 +423,14 @@ function guncelPoz(t){
   const set = S.gece ? POZ.gbekle : (S.can < S.canMax*.25 ? [POZ.bitkin] : POZ.bekle);
   return (S.cizilen = set[Math.floor(t/420) % set.length]);
 }
+// golge izi icin mor boyali kopya (her poz icin bir kez)
+function golgeKopya(im){
+  if(im.golge) return im.golge;
+  const k = document.createElement("canvas"); k.width = 256; k.height = 256;
+  const x = k.getContext("2d"); x.drawImage(im, 0, 0, 256, 256);
+  x.globalCompositeOperation = "source-in"; x.fillStyle = "rgba(130,80,255,.9)"; x.fillRect(0, 0, 256, 256);
+  k.alt = im.alt; k.naturalWidth = 256; im.golge = k; return k;
+}
 function karakterCiz(c, W, H, im, xOran, alfa, mod){
   const boy = H*.62, x = xOran*W, zemin = H*.83;
   const alt = im.alt || .97;
@@ -424,7 +438,7 @@ function karakterCiz(c, W, H, im, xOran, alfa, mod){
   // yumusak golge
   if(!mod){ c.globalAlpha = .45*alfa; c.fillStyle = "#000"; c.beginPath(); c.ellipse(x, zemin, boy*.17, boy*.035, 0, 0, 7); c.fill(); }
   c.globalAlpha = alfa;
-  if(mod === "hue") c.filter = "brightness(.5) sepia(1) hue-rotate(220deg) saturate(3)";
+  if(mod === "hue") c.globalCompositeOperation = "lighter";
   c.translate(x, zemin); c.scale(-1, 1);                 // sola bakmasi icin aynala
   c.drawImage(im, -boy/2, -boy*alt, boy, boy);
   c.restore();
@@ -490,7 +504,7 @@ function efektler(c, W, H, dt){
   S.parca.forEach(p=>{ p.x += p.vx; p.y += p.vy; if(!p.toz) p.vy += .12*(W/1600); p.o -= p.toz ? .006 : .025;
     c.globalAlpha = Math.max(0, p.o); c.fillStyle = p.renk; c.beginPath(); c.arc(p.x, p.y, p.r, 0, 7); c.fill(); });
   c.globalAlpha = 1; c.globalCompositeOperation = "source-over";
-  S.parca = S.parca.filter(p=>p.o > 0).slice(-400);
+  S.parca = S.parca.filter(p=>p.o > 0).slice(-220);
   // hasar sayilari
   S.sayi.forEach(n=>{ n.y += n.vy; n.o -= .018;
     c.globalAlpha = Math.max(0, Math.min(1, n.o)); const fs = (n.kritik ? .07 : .05)*H;
