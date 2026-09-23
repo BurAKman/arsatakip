@@ -1317,6 +1317,18 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .biIc b{display:block;font-family:"Cinzel",Georgia,serif;font-size:clamp(17px,5.4vw,24px);letter-spacing:.2em;color:#BFE6FF;
   text-shadow:0 0 22px rgba(123,184,255,.6)}
 
+/* ---- sahne 2: harita ustunde uc karakter ---- */
+.sahne2{position:absolute;inset:0;z-index:22;opacity:0;transition:opacity .7s ease;
+  background:radial-gradient(90% 80% at 50% 60%,rgba(20,6,4,.35),rgba(6,2,2,.8))}
+.sahne2.acik{opacity:1}
+.s2Oyuncu{position:absolute;bottom:4%;height:min(78%,92vh);max-width:34%;object-fit:contain;
+  filter:drop-shadow(0 14px 22px rgba(0,0,0,.9)) brightness(.07) contrast(.5);transition:filter .4s ease, transform .4s ease}
+.s2Oyuncu.kahraman{left:4%} .s2Oyuncu.borz{left:50%;transform:translateX(-50%)} .s2Oyuncu.bilge{right:3%}
+.s2Oyuncu.konusan{filter:drop-shadow(0 16px 26px rgba(0,0,0,.9)) drop-shadow(0 0 22px rgba(255,150,70,.35)) brightness(1.1);z-index:2}
+.s2Oyuncu.borz.konusan{transform:translateX(-50%) scale(1.03)}
+.sahne2 .tAd{bottom:4%}
+.tAd.borz{background:linear-gradient(160deg,#FFD79A,#C9573E);color:#1A0806}
+
 /* ---- tiyatro sahnesi ---- */
 .tiyatro{position:fixed;inset:0;z-index:170;overflow:hidden;
   background:radial-gradient(70% 60% at 50% 100%,rgba(90,40,20,.5),transparent 65%),
@@ -2202,7 +2214,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 13.2";
+const SURUM_MELKOR = "beta 13.4";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -2381,7 +2393,7 @@ const seviyePuan = () => +(localStorage.getItem("seviyePuan") || 0);
 
 // hikaye ilerlemesini sifirla (intro, cark sahnesi, bolumler)
 function melkorHikayeSifirla(sessiz){
-  ["introGoruldu","carkBitti","kuleBitti","bolum1Intro","bolum2Intro","bolum3Intro","bolum4Intro","bolum5Intro","kuleBolum","maceraBasla","rehberTanisti",
+  ["introGoruldu","carkBitti","kuleBitti","bolum1Intro","bolum2Intro","bolum3Intro","bolum4Intro","bolum5Intro","bolum3Sahne","kuleBolum","maceraBasla","rehberTanisti",
    "seviye","seviyePuan"].forEach(k=>localStorage.removeItem(k));
   for(let i=1;i<=5;i++) localStorage.removeItem("kuleYildiz_" + i);
   if(!sessiz){ toast("Hikâye sıfırlandı"); setTimeout(()=>location.reload(), 600); }
@@ -4417,7 +4429,8 @@ let KO = null;
 const KAHRAMAN = {
   esas: { ad:"Esas Oğlan", max:420, h:30, vurHz:.7,
     res:{ duz:"kahraman/kule-kahraman-esas-duz.webp", sag:"kahraman/kule-kahraman-esas-sag.webp", sol:"kahraman/kule-kahraman-esas-sol.webp",
-          vur:"kahraman/kule-kahraman-esas-saldiri.webp", ozel:"kahraman/kule-kahraman-esas-kahkaha.webp" },
+          vur:"kahraman/kule-kahraman-esas-saldiri.webp", ozel:"kahraman/kule-kahraman-esas-kahkaha.webp",
+          bekle:"kahraman/kule-kahraman-esas-konusma.webp" },
     portre:"ikon/kule-ikon-esas-portre.webp", y:["ikon/kule-ikon-esas-yenetek1.webp","ikon/kule-ikon-esas-yetenek2.webp"], ysure:[20,26] },
   borz: { ad:"BorzBey Hz.", max:460, h:34, vurHz:.75,
     res:{ duz:"kahraman/kule-borz-duz.webp", sag:"kahraman/kule-borz-sag.webp", sol:"kahraman/kule-borz-sol.webp",
@@ -4457,6 +4470,63 @@ const kahramanRes = { duz:"kahraman/kule-kahraman-esas-duz", yuru:"kahraman/kule
   vur:"kahraman/kule-kahraman-esas-saldiri", portre:"ikon/kule-ikon-esas-portre",
   y1:"ikon/kule-ikon-esas-yenetek1", y2:"ikon/kule-ikon-esas-yetenek2",
   kurt:["kahramanyoldas-esas-kurt1","kahramanyoldas-esas-kurt2","kahramanyoldas-esas-kurt3"].map(a=>"kahraman/kule-"+a) };
+
+
+/* ---- Sahne 2: Kul Diyari girisinde uc karakterli diyalog (harita arka planda) ---- */
+const SAHNE2 = [
+  { s:"bilge",    dosya:"Sahne-2-bilge-01.mp3",    poz:["konusma","sagagziacik"] },
+  { s:"kahraman", dosya:"sahne-2-kahraman-02.mp3", poz:["konusma","sag"] },
+  { s:"bilge",    dosya:"Sahne-2-bilge-03.mp3",    poz:["sagkahkaha","konusma","sol","sagagziacik"] },
+  { s:"borz",     dosya:"Sahne-2-borzbey-04.mp3",  poz:["duz"] },
+  { s:"kahraman", dosya:"Sahne-2-kahraman-05.mp3", poz:["kahkaha","konusma","saldiri","sag"] },
+  { s:"borz",     dosya:"Sahne-2-borzbey-06.mp3",  poz:["kahkaha"] },
+  { s:"bilge",    dosya:"Sahne-2-bilge-07.mp3",    poz:["saldiripozu","konusma","sagkahkaha","sagagziacik"] },
+  { s:"bilge",    dosya:"Sahne-2-bilge-08.mp3",    poz:["sagkahkaha","konusma"] }
+];
+// poz tablolari cagrildigi an kurulur (SAHNE_RES dosyada daha asagida tanimli)
+function sahne2Res(){ return { bilge:SAHNE_RES.bilge, kahraman:SAHNE_RES.kahraman,
+  borz:{ duz:"kule/kahraman/kule-borz-duz.webp", kahkaha:"kule/kahraman/kule-borz-kahkaha.webp" } }; }
+function sahne2Oyna(bitince){
+  const SAHNE2_RES = sahne2Res();
+  const kap = document.querySelector(".kSahne"); if(!kap){ bitince && bitince(); return; }
+  const k = document.createElement("div");
+  k.className = "sahne2"; k.id = "sahne2";
+  k.innerHTML = `
+    <img class="s2Oyuncu kahraman" id="s2kahraman" src="${gv(SAHNE2_RES.kahraman.duz)}" alt="">
+    <img class="s2Oyuncu borz" id="s2borz" src="${gv(SAHNE2_RES.borz.duz)}" alt="">
+    <img class="s2Oyuncu bilge" id="s2bilge" src="${gv(SAHNE2_RES.bilge.duz)}" alt="">
+    <div class="tAd" id="s2Ad"></div>
+    <div class="tCubuk"><i id="s2Cubuk"></i></div>
+    <button class="tAtla" id="s2Atla">GEÇ ▸</button>`;
+  kap.appendChild(k);
+  requestAnimationFrame(()=>k.classList.add("acik"));
+  let i = -1, ses = null, pozSaat = null, bitti = false;
+  const kapat = () => { if(bitti) return; bitti = true; clearInterval(pozSaat); try{ ses?.pause(); }catch(e){}
+    k.classList.remove("acik"); setTimeout(()=>{ k.remove(); bitince && bitince(); }, 700); };
+  const sonraki = () => {
+    if(bitti) return;
+    i++; if(i >= SAHNE2.length) return setTimeout(kapat, 500);
+    const p = SAHNE2[i];
+    ["kahraman","borz","bilge"].forEach(id=>document.getElementById("s2" + id)?.classList.toggle("konusan", id === p.s));
+    const ad = document.getElementById("s2Ad");
+    if(ad){ ad.textContent = p.s === "bilge" ? "BİLGE" : p.s === "borz" ? "BORZBEY HZ." : "ESAS OĞLAN";
+      ad.className = "tAd " + (p.s === "borz" ? "borz" : p.s); ad.classList.remove("yeni"); void ad.offsetWidth; ad.classList.add("yeni"); }
+    const cb = document.getElementById("s2Cubuk"); if(cb) cb.style.width = ((i+1)/SAHNE2.length*100) + "%";
+    const el = document.getElementById("s2" + p.s); let n = 0;
+    const pozVer = () => { if(el) el.src = gv(SAHNE2_RES[p.s][p.poz[n % p.poz.length]] || SAHNE2_RES[p.s].duz); n++; };
+    pozVer(); clearInterval(pozSaat); pozSaat = setInterval(pozVer, 1500 + Math.random()*600);
+    try{ ses?.pause(); }catch(e){}
+    ses = new Audio(gv("cark/" + p.dosya));
+    const devam = () => { clearInterval(pozSaat);
+      // BorzBey ilk cumlesinden sonra kahkaha pozunda kalir
+      if(el) el.src = gv(p.s === "borz" && i > 3 ? SAHNE2_RES.borz.kahkaha : SAHNE2_RES[p.s].duz);
+      setTimeout(sonraki, 380); };
+    ses.onended = devam; ses.onerror = () => setTimeout(devam, 2000);
+    ses.play().catch(()=>setTimeout(devam, 2000));
+  };
+  document.getElementById("s2Atla").onclick = kapat;
+  setTimeout(sonraki, 900);
+}
 
 function kuleSecim(){
   oyunDurdur(); kuleCikis();
@@ -4581,11 +4651,16 @@ async function kuleBasla(lv){
     p.innerHTML = `<div class="biIc"><b>${B.ad}</b><p class="anYazi" id="anYazi"></p></div>
       <button class="tAtla" id="biAtla">GEÇ ▸</button>`;
     document.querySelector(".kSahne")?.appendChild(p);
+    const savasaBasla = () => { if(KO){ KO.duraklat = false; muzikCal(BI.arkaplan, { ses:.22, dongu:true, giris:4000 }); } };
     const bit = () => { p.classList.add("kapan"); setTimeout(()=>p.remove(), 800);
-      if(KO){ KO.duraklat = false; muzikCal(BI.arkaplan, { ses:.22, dongu:true, giris:4000 }); } };
+      if(lv === 3 && !localStorage.getItem("bolum3Sahne")){ localStorage.setItem("bolum3Sahne", "1"); setTimeout(()=>sahne2Oyna(savasaBasla), 500); }
+      else savasaBasla(); };
     anlatimBaslat({ muzik:BI.muzik, anlatici:BI.anlatici, muzikSes:.3, bitince:bit });
     document.getElementById("biAtla").onclick = () => { try{ window.__anlatimSes?.pause(); }catch(e){}
       muzikDurdur(600); setTimeout(bit, 400); };
+  }else if(lv === 3 && !localStorage.getItem("bolum3Sahne")){
+    localStorage.setItem("bolum3Sahne", "1"); KO.duraklat = true;
+    setTimeout(()=>sahne2Oyna(()=>{ if(KO){ KO.duraklat = false; muzikCal(BI.arkaplan, { ses:.22, dongu:true, giris:4000 }); } }), 600);
   }else muzikCal((BI || BOLUM_INTRO[1]).arkaplan, { ses:.22, dongu:true, giris:4000 });
   kuleUi();
   kuleMesaj(`${B.ad} · 3 dalga · son dalgada ${B.boss.ad}`, 2600);
@@ -5001,7 +5076,8 @@ function kCiz(){
   O.kah.forEach((H,hi)=>{
     if(H.olu > 0){ c.fillStyle = "#9CF5C4"; c.font = `${S*.4}px Cinzel, serif`; c.textAlign = "center"; c.fillText("⟳" + Math.ceil(H.olu), X(H.x), Y(H.y)); return; }
     const yurur = Math.abs(H.hd - H.d) > .1, adimP = Math.floor(O.kare/9) % 2, R2 = H.res;
-    let res = H.vur > 0 ? R2.vur : H.ozelT > 0 ? R2.ozel : yurur ? (adimP ? R2.sag : R2.sol) : R2.duz;
+    const bekleP = R2.bekle && !yurur && (O.kare % 240) > 190;
+    let res = H.vur > 0 ? R2.vur : H.ozelT > 0 ? R2.ozel : yurur ? (adimP ? R2.sag : R2.sol) : bekleP ? R2.bekle : R2.duz;
     if(hi === O.secKah && O.kah.length > 1){ c.strokeStyle = "rgba(255,233,168,.7)"; c.lineWidth = 3;
       c.beginPath(); c.ellipse(X(H.x), Y(H.y) + S*.3, S*.45, S*.18, 0, 0, 7); c.stroke(); }
     if(H.kalkanT > 0){ c.strokeStyle = "rgba(156,245,196,.8)"; c.lineWidth = 4; c.beginPath(); c.arc(X(H.x), Y(H.y) - S*.4, S*.75, 0, 7); c.stroke(); }
