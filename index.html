@@ -1228,6 +1228,30 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .sIslem button{padding:12px 14px;font-family:"Cinzel",Georgia,serif;font-size:10.5px;letter-spacing:.1em;cursor:pointer;color:#F0DCA8;
   background:linear-gradient(160deg,rgba(60,40,20,.85),rgba(12,8,4,.92));border:1px solid rgba(232,201,138,.4)}
 
+/* ---- intro ve anlatim ---- */
+.introKat{position:fixed;inset:0;z-index:200;display:grid;place-items:center;opacity:0;transition:opacity 1.2s ease;
+  background:radial-gradient(80% 60% at 50% 30%,rgba(40,24,80,.7),transparent 70%),linear-gradient(180deg,#07050F,#010104)}
+.introKat.acik{opacity:1}
+.iKar{position:absolute;inset:0;opacity:.5;pointer-events:none;
+  background-image:radial-gradient(1.8px 1.8px at 15% 20%,#fff,transparent),radial-gradient(1.4px 1.4px at 45% 40%,#cfe8ff,transparent),
+    radial-gradient(2px 2px at 70% 15%,#fff,transparent),radial-gradient(1.5px 1.5px at 85% 60%,#cfe8ff,transparent),
+    radial-gradient(1.6px 1.6px at 30% 75%,#fff,transparent);
+  background-size:180px 180px;animation:karYag 11s linear infinite}
+.iIc{position:relative;z-index:2;width:min(88%,460px);text-align:center}
+.iBaslik{display:block;font-family:"Cinzel",Georgia,serif;font-size:clamp(18px,6vw,28px);font-weight:700;letter-spacing:.18em;
+  background-image:linear-gradient(115deg,#FFFFFF,#BFF7F0 25%,#7BE8DC 45%,#B49CFF 70%,#E8C98A);
+  background-size:220% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:melkorParla 7s linear infinite;filter:drop-shadow(0 0 16px rgba(123,232,220,.45))}
+.anYazi{min-height:3.4em;margin:26px 0 0;font-size:clamp(13px,3.9vw,17px);line-height:1.65;color:#F2EEFF;
+  text-shadow:0 2px 12px rgba(0,0,0,.95)}
+.anYazi.yeni{animation:balonGir .4s ease}
+.bolumIntro{position:absolute;inset:0;z-index:20;display:grid;place-items:center;transition:opacity .8s ease;
+  background:linear-gradient(180deg,rgba(6,10,26,.92),rgba(3,5,14,.96))}
+.bolumIntro.kapan{opacity:0}
+.biIc{width:min(88%,420px);text-align:center}
+.biIc b{display:block;font-family:"Cinzel",Georgia,serif;font-size:clamp(17px,5.4vw,24px);letter-spacing:.2em;color:#BFE6FF;
+  text-shadow:0 0 22px rgba(123,184,255,.6)}
+
 /* ---- tiyatro sahnesi ---- */
 .tiyatro{position:fixed;inset:0;z-index:170;overflow:hidden;
   background:radial-gradient(70% 60% at 50% 100%,rgba(90,40,20,.5),transparent 65%),
@@ -2102,7 +2126,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 9.4";
+const SURUM_MELKOR = "beta 9.6";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -4231,6 +4255,20 @@ function kuleBasla(lv){
     esas:{ x:5.5, y:12.6, hx:5.5, hy:12.6, can:420, max:420, h:30, bek:0, olu:0, vur:0, kalkanT:0, secili:true },
     kurt:{ x:6.2, y:12.9, can:190, max:190, h:20, bek:0, olu:0, vur:0 } };
   kSesOnYukle();
+  if(lv === 1 && !localStorage.getItem("bolum1Intro")){
+    localStorage.setItem("bolum1Intro", "1");
+    KO.duraklat = true;
+    const p = document.createElement("div");
+    p.className = "bolumIntro"; p.id = "bolumIntro";
+    p.innerHTML = `<div class="biIc"><b>${B.ad}</b><p class="anYazi" id="anYazi"></p></div>
+      <button class="tAtla" id="biAtla">GEÇ ▸</button>`;
+    document.querySelector(".kSahne")?.appendChild(p);
+    const bit = () => { p.classList.add("kapan"); setTimeout(()=>p.remove(), 800);
+      if(KO){ KO.duraklat = false; muzikCal("intro-buzularkaplan", { ses:.22, dongu:true, giris:4000 }); } };
+    anlatimBaslat({ muzik:"intro-buzulmuzik", anlatici:"intro-buzulanlatici", muzikSes:.3, bitince:bit });
+    document.getElementById("biAtla").onclick = () => { try{ window.__anlatimSes?.pause(); }catch(e){}
+      muzikDurdur(600); setTimeout(bit, 400); };
+  }else muzikCal("intro-buzularkaplan", { ses:.22, dongu:true, giris:4000 });
   kuleUi();
   kuleMesaj(`${B.ad} · 3 dalga · son dalgada ${B.boss.ad}`, 2600);
   tv.onpointerdown = kuleDokun;
@@ -4580,10 +4618,11 @@ function kuleZafer(){
   const kart = document.getElementById("kKart");
   if(kart){ kart.innerHTML = `<b>ZAFER!</b><span>${"★".repeat(yil)}${"☆".repeat(3-yil)} · kalan can ${O.can}</span>
     <div><button class="yuk" onclick="kuleSecim()">DEVAM</button></div>`; kart.classList.add("acik"); }
-  kSes("kule-bolum-zafer");
+  muzikDurdur(1800); kSes("kule-bolum-zafer");
 }
 function kuleYenilgi(){
   const O = KO; if(!O) return;
+  muzikDurdur(1500);
   const kart = document.getElementById("kKart");
   if(kart){ kart.innerHTML = `<b>DİYAR DÜŞTÜ</b><span>Esas Oğlan: Pes etmek yok, bir daha!</span>
     <div><button class="yuk" onclick="kuleBasla(${O.lv})">TEKRAR</button><button onclick="kuleSecim()">BÖLÜMLER</button></div>`;
@@ -5362,6 +5401,100 @@ function zindanEkran(){
       <span>Bilgenin gerçek bedeni bu buzulların derinliğinde. Esas Oğlan kapıda bekliyor.
       Görsel roman macerası yakında burada başlayacak.</span></div>`;
 }
+/* ---- muzik ve anlatim katmani ---- */
+let MUZIK = null;
+function muzikCal(ad, { ses = .35, dongu = true, giris = 2500 } = {}){
+  muzikDurdur(600);
+  try{
+    const a = new Audio(gv("ses/" + ad + ".mp3"));
+    a.loop = dongu; a.volume = 0;
+    a.play().catch(()=>{});
+    MUZIK = a;
+    const bas = performance.now();
+    const art = () => {
+      if(MUZIK !== a) return;
+      const o = Math.min(1, (performance.now() - bas) / giris);
+      a.volume = ses * o;
+      if(o < 1) requestAnimationFrame(art);
+    };
+    requestAnimationFrame(art);
+    return a;
+  }catch(e){ return null; }
+}
+function muzikDurdur(sure = 1800){
+  const a = MUZIK; MUZIK = null;
+  if(!a) return;
+  const bas = performance.now(), v0 = a.volume;
+  const azalt = () => {
+    const o = Math.min(1, (performance.now() - bas) / sure);
+    a.volume = Math.max(0, v0 * (1 - o));
+    if(o < 1) requestAnimationFrame(azalt); else { try{ a.pause(); }catch(e){} }
+  };
+  requestAnimationFrame(azalt);
+}
+function muzikKis(oran, sure = 900){
+  const a = MUZIK; if(!a) return;
+  const bas = performance.now(), v0 = a.volume, v1 = oran;
+  const git = () => { if(MUZIK !== a) return;
+    const o = Math.min(1, (performance.now() - bas) / sure);
+    a.volume = v0 + (v1 - v0) * o; if(o < 1) requestAnimationFrame(git); };
+  requestAnimationFrame(git);
+}
+
+// anlatim sahnesi: muzik + anlatici + altyazi
+const ANLATIM_METIN = {
+  "intro-anlatici": [[0.6,"Bir zamanlar bu kıta, dört büyük diyarın yurduydu."],[4.5,"Ateşin yükseldiği kızıl vadiler."],[7.0,"Buzun sırrı sakladığı dağlar."],[9.3,"Yaşamın direnmeye devam ettiği yeşil ormanlar."],[12.9,"Ve artık yalnızca rüzgârın konuştuğu çorak topraklar."],[17.0,"Bu dört diyarın kesiştiği orta noktada, Bilge Kral'ın kalesi yükselir."],[22.5,"O, kendine düzenin taşıyıcısı der."],[25.1,"Fakat onun düzeni adalet değil; tahakkümdür."],[28.5,"Alevler büyürken, buz susarken,"],[31.0,"yeşil direnmeye çalışırken,"],[33.1,"çorak diyar geçmişini yas tutarak anarken,"],[36.4,"bir yolcu bu topraklara adım attı."],[39.0,"Ve gördüğü zulüm karşısında bir yemin etti."],[42.4,"Bu kıta kurtulacaktı."],[44.0,"Ve zalimin tahtı sonsuza dek yıkılacaktı."]],
+  "intro-buzulanlatici": [[0.6,"Kuzeyde, güneşin bile solgun doğduğu bir diyar uzanır:"],[4.5,"Buz Diyarı."],[5.7,"Bir zamanlar berrak göllerin, yüksek çamların ve taş şehirlerin yurdu olan bu topraklar,"],[12.0,"bugün sonsuz bir kışın sessizliği altında uyuyor."],[15.6,"Derler ki, dağın kalbinde kadim bir mühür vardır."],[19.1,"Bilge Kral, o mührün ardında saklanan gücü ele geçirmek için buzulu deldi;"],[24.5,"insanları, orduları ve yılları feda etti."],[27.4,"Fakat dağ cevap verdi."],[29.0,"Rüzgâr sustu."],[30.2,"Nehirler dondu."],[31.3,"Gökyüzü karardı."],[32.5,"Ve o günden sonra buz, yalnızca toprağı değil, zamanı da hapsetmeye başladı."],[38.0,"Şimdi, donmuş zirvelerin altında bir şey bekliyor."],[41.6,"Ne tamamen ölü,"],[42.8,"ne de gerçekten uyanık."],[44.4,"Bilge, orada ne saklandığını biliyor."],[47.1,"Ve bildiği şeyden korkuyor."],[49.1,"Senin yolun ise tam oraya çıkıyor."],[51.5,"Buzun altında gömülü olan gerçeği bul."],[54.3,"Çünkü bu diyarın kaderi, o dağın içinde saklı."]]
+};
+function anlatimBaslat({ muzik, anlatici, muzikSes = .34, gecikme = 2500, bitince }){
+  const kutu = document.getElementById("anYazi");
+  muzikCal(muzik, { ses:muzikSes, dongu:true, giris:3000 });
+  const metin = ANLATIM_METIN[anlatici] || [];
+  let ses = null, zaman = null;
+  const bitir = () => {
+    clearInterval(zaman);
+    if(kutu) kutu.textContent = "";
+    setTimeout(()=>{ muzikDurdur(2600); setTimeout(()=>bitince && bitince(), 1600); }, 2200);
+  };
+  setTimeout(()=>{
+    try{
+      ses = new Audio(gv("ses/" + anlatici + ".mp3"));
+      ses.volume = 1;
+      ses.onended = bitir;
+      ses.onerror = () => bitir();
+      ses.play().catch(()=>bitir());
+      muzikKis(muzikSes * .55, 1200);
+      window.__anlatimSes = ses;
+      if(metin.length && kutu){
+        zaman = setInterval(()=>{
+          const t = ses.currentTime;
+          let g = "";
+          for(const [an, y] of metin) if(t >= an) g = y;
+          if(kutu.textContent !== g){ kutu.textContent = g; kutu.classList.remove("yeni"); void kutu.offsetWidth; kutu.classList.add("yeni"); }
+        }, 200);
+      }
+    }catch(e){ bitir(); }
+  }, gecikme);
+  return () => { try{ ses?.pause(); }catch(e){} bitir(); };
+}
+
+// ---- oyunun ana introsu ----
+function introEkran(){
+  const kapat = () => { localStorage.setItem("introGoruldu", "1"); document.getElementById("introKat")?.remove(); };
+  const k = document.createElement("div");
+  k.id = "introKat"; k.className = "introKat";
+  k.innerHTML = `<div class="iKar"></div>
+    <div class="iIc"><b class="iBaslik">KAHRAMANIN YOLU</b>
+      <p class="anYazi" id="anYazi"></p></div>
+    <button class="tAtla" id="iAtla">GEÇ ▸</button>`;
+  document.body.appendChild(k);
+  requestAnimationFrame(()=>k.classList.add("acik"));
+  const dur = anlatimBaslat({ muzik:"intro-muzik", anlatici:"intro-anlatici", muzikSes:.32,
+    bitince:()=>{ k.classList.remove("acik"); setTimeout(kapat, 900); } });
+  document.getElementById("iAtla").onclick = () => { try{ window.__anlatimSes?.pause(); }catch(e){}
+    muzikDurdur(700); k.classList.remove("acik"); setTimeout(kapat, 700); };
+}
+
 /* ---- KADER ÇARKI: tiyatro sahnesi (seslendirmeli hikaye) ---- */
 const SAHNE1 = [
   { s:"bilge",    n:"01", poz:["duz","konusma","sag"] },
@@ -5423,6 +5556,7 @@ function sahneBaslat(){
   document.getElementById("tBaslangic")?.remove();
   const t = document.getElementById("tiyatro");
   t?.classList.add("acik");
+  muzikCal("intro-kadercarkarkaplan", { ses:.26, dongu:true, giris:3000 });
   setTimeout(()=>{ document.getElementById("tBilge")?.classList.add("sahnede"); }, 900);
   setTimeout(sahneSonraki, 1700);
 }
@@ -5472,6 +5606,7 @@ function sahneBitir(){
   document.getElementById("tKahraman")?.classList.add("kos");
   t?.classList.remove("acik");
   localStorage.setItem("carkBitti", "1");
+  muzikDurdur(2200);
   setTimeout(()=>{
     const k = document.getElementById("tiyatro");
     if(k) k.innerHTML = `<div class="tSon"><b>BUZ DİYARI</b>
@@ -6437,6 +6572,7 @@ async function anaMenu(){
   if(tema === "loca"){
     document.getElementById("maskot")?.remove();
     setTimeout(haritaKur, 30);
+    if(!localStorage.getItem("introGoruldu")) setTimeout(introEkran, 400);
   }else maskotKur("ana");
 }
 
@@ -11426,6 +11562,7 @@ const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, k
 let GEZINTI = [{ r:"ana", arg:undefined }];
 
 function ekraniCiz(r, arg){
+  try{ if(r !== "carki") muzikDurdur(900); }catch(e){}
   try{ oyunDurdur(); }catch(e){}
   try{ if(DUELLO){ clearTimeout(DUELLO.saat); clearInterval(DUELLO.tik); DUELLO = null; } }catch(e){}
   try{ if(r !== "carki") CARK = null; }catch(e){}
