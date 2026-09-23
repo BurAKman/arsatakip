@@ -102,6 +102,28 @@ function sesAc(ad){
   a.onerror = () => { if(!d){ d = 1; a.src = V(ad); a.play().catch(()=>{}); } };
   return a;
 }
+// ---- efekt ve muzik ----
+const SES_KLASOR = KOK + "ses/", SESKOK = {};
+function sfx(ad, ses){
+  if(!S) return;
+  try{
+    const kok = SESKOK[ad];
+    const a = new Audio(V(kok ? ad + ".mp3" : SES_KLASOR + ad + ".mp3"));
+    a.volume = Math.min(1, (ses == null ? 1 : ses) * .85);
+    a.onerror = () => { if(!SESKOK[ad]){ SESKOK[ad] = true; const b = new Audio(V(ad + ".mp3")); b.volume = a.volume; b.play().catch(()=>{}); } };
+    a.play().catch(()=>{});
+  }catch(e){}
+}
+const sec = d => d[Math.floor(Math.random()*d.length)];
+function dongulu(ad, ses){
+  const a = new Audio(V(SES_KLASOR + ad + ".mp3")); let d = 0;
+  a.loop = true; a.volume = ses; a.hedef = ses;
+  a.onerror = () => { if(!d){ d = 1; a.src = V(ad + ".mp3"); a.play().catch(()=>{}); } };
+  a.play().catch(()=>{}); return a;
+}
+function muzikKis(kis){ if(S && S.muzik) S.muzik.volume = kis ? .06 : S.muzik.hedef; }
+const HANCER = ["sfx-hancer-1","sfx-hancer-2","sfx-hancer-3","sfx-hancer-4","sfx-hancer-5"];
+const ULTI_DARBE = ["sfx-ulti-darbe-1","sfx-ulti-darbe-2","sfx-ulti-darbe-3"];
 let ALTYAZI = null;
 function altyaziYukle(){
   const al = u => fetch(V(u)).then(r=>{ if(!r.ok) throw 0; return r.json(); });
@@ -167,9 +189,10 @@ window.YarinsizBasla = function(){
   try{ const f = document.documentElement.requestFullscreen?.(); if(f && f.then) f.then(()=>{ try{ screen.orientation?.lock?.("landscape")?.catch(()=>{}); }catch(e){} }).catch(()=>{}); }catch(e){}
   k.querySelector("#yaCik").onclick = () => YarinsizKapat();
   k.querySelectorAll(".yaKomut button").forEach(b=>b.onclick = () => komut(b.dataset.k));
-  k.querySelector("#yaBoostArti").onclick = () => { if(S.mesgul) return; if(S.boost < Math.min(3, S.bp)) S.boost++; else { const y = k.querySelector("#yaBoostYazi"); y.textContent = S.bp ? "En fazla 3 boost" : "Boost puanı yok, bir tur bekle"; } ui(); };
-  k.querySelector("#yaBoostEksi").onclick = () => { if(S.boost > 0) S.boost--; ui(); };
+  k.querySelector("#yaBoostArti").onclick = () => { if(S.mesgul) return; if(S.boost < Math.min(3, S.bp)){ S.boost++; sfx("sfx-boost", .8); } else { const y = k.querySelector("#yaBoostYazi"); y.textContent = S.bp ? "En fazla 3 boost" : "Boost puanı yok, bir tur bekle"; } ui(); };
+  k.querySelector("#yaBoostEksi").onclick = () => { if(S.boost > 0){ S.boost--; sfx("sfx-boost-geri", .6); } ui(); };
   yetenekMenu(); ui();
+  S.ortam = dongulu("ortam-tapinak", .32);
   S.raf = requestAnimationFrame(dongu);
   // ilk giris: karakter konusur
   setTimeout(()=>girisKonusma(), 900);
@@ -178,7 +201,7 @@ window.__yaTest = { eylem:(t)=>eylem(t), durum:()=>S };
 window.YarinsizKapat = function(sessiz){
   if(!S) return;
   cancelAnimationFrame(S.raf); window.removeEventListener("resize", kapOlc);
-  try{ S.ses?.pause(); }catch(e){}
+  try{ S.ses?.pause(); S.ortam?.pause(); S.muzik?.pause(); }catch(e){}
   S.kap.remove(); S = null;
   try{ screen.orientation?.unlock?.(); if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
   if(!sessiz && typeof oyunlarEkran === "function") oyunlarEkran();
@@ -203,7 +226,7 @@ function yetenekMenu(){
       <img src="${V(KOK + y.ikon)}" onerror="this.onerror=null;this.src='${V(y.ikon.split("/").pop())}'" alt="">
       <span><b>${y.ad}</b><small>${y.acik}</small></span>
       <em>${y.ulti ? "ULTİ" : y.sp + " SP"}</em></button>`).join("");
-  m.querySelectorAll("button").forEach(b=>b.onclick = () => { m.classList.remove("acik"); eylem(b.dataset.y); });
+  m.querySelectorAll("button").forEach(b=>b.onclick = () => { sfx("sfx-menu-onay", .45); m.classList.remove("acik"); eylem(b.dataset.y); });
 }
 function ui(){
   if(!S) return;
@@ -221,7 +244,8 @@ function ui(){
 }
 function komut(k){
   if(!S || S.mesgul) return;
-  if(k === "yetenek") return S.kap.querySelector("#yaYetenek").classList.toggle("acik");
+  if(k === "yetenek"){ sfx("sfx-menu", .7); return S.kap.querySelector("#yaYetenek").classList.toggle("acik"); }
+  sfx("sfx-menu-onay", .45);
   S.kap.querySelector("#yaYetenek").classList.remove("acik");
   if(k === "konus") return girisKonusma(true);
   eylem(k === "saldir" ? "saldir" : "savun");
@@ -243,7 +267,8 @@ function altyazi(anahtar, ses){
 function soyle(dosya, anahtar){
   try{ S.ses?.pause(); }catch(e){}
   const a = sesAc(dosya); S.ses = a; a.play().catch(()=>{}); altyazi(anahtar, a);
-  return new Promise(r=>{ a.onended = r; setTimeout(r, 17000); });
+  muzikKis(true);
+  return new Promise(r=>{ const bit = () => { muzikKis(false); r(); }; a.onended = bit; setTimeout(bit, 17000); });
 }
 function girisKonusma(tekrar){
   if(!S || S.mesgul) return;
@@ -252,7 +277,8 @@ function girisKonusma(tekrar){
   let bitti = false;
   const son = () => { if(bitti || !S) return; bitti = true; atla.classList.remove("acik");
     try{ S.ses?.pause(); }catch(e){} S.kap.querySelector("#yaAltyazi").textContent = ""; clearInterval(S.altSaat);
-    S.poz = null; S.kam.hz = 1; S.mesgul = false; ui(); };
+    S.poz = null; S.kam.hz = 1; S.mesgul = false; ui();
+    if(!S.muzik) S.muzik = dongulu("savas-muzik", .2); };
   atla.onclick = son;
   S.poz = POZ.hazir; S.kam.hz = 1.12;
   soyle("yarinsiz-konusma-giris.mp3", "yarinsiz-konusma-giris").then(son);
@@ -305,8 +331,10 @@ async function eylem(tip){
   const ev = S.x;
   try{
     if(tip === "saldir"){
+      sfx("sfx-vuus", .45);
       await git(.46, 360, gc ? POZ.gatilma : POZ.golge);
       for(let i=0;i<vurus;i++){
+        sfx(sec(HANCER));
         await oynat(gc ? POZ.gsaldiri : POZ.saldiri, 85);
         kesik(gc ? "#B21E3C" : "#E8E8F0", .2, i%2 ? .6 : -.5); kivilcim(10, "#FFE9D0"); sars(6);
         hasarSayi(Math.round((gc ? 340 : 220) * (.9 + Math.random()*.2)), "#FFF");
@@ -316,9 +344,10 @@ async function eylem(tip){
     }
     else if(tip === "golge"){
       // hedefe goz acip kapayincaya kadar sokulur, arkasinda golge izleri
-      S.izAcik = true;
+      S.izAcik = true; sfx("sfx-golge-adimi"); sfx("sfx-vuus", .4);
       await git(.42, 180, POZ.golge);
       for(let i=0;i<vurus;i++){
+        sfx("sfx-savurus", .8); sfx("sfx-golge-adimi", .45);
         await oynat(POZ.golge, 55);
         kesik("#9A6BFF", .24, -.2 + i*.4); kivilcim(14, "#C8A8FF"); sars(8); flas("rgba(120,80,255,.35)");
         hasarSayi(Math.round(260 * (.9 + Math.random()*.2)), "#D6C8FF");
@@ -327,10 +356,11 @@ async function eylem(tip){
       S.poz = gc ? POZ.gbekle[0] : POZ.hazir2; await bekle(300);
     }
     else if(tip === "kanli"){
+      sfx("sfx-vuus", .45);
       await git(.45, 300, gc ? POZ.gatilma : POZ.golge);
       for(let i=0;i<vurus;i++){
         await oynat(POZ.kanli, 90);
-        for(let j=0;j<3;j++){ kesik("#D1122E", .26 - j*.03, -.7 + j*.7, true); kivilcim(16, "#FF5A6A"); sars(11);
+        for(let j=0;j<3;j++){ sfx(["sfx-kanli-1","sfx-kanli-2","sfx-kanli-3"][j]); kesik("#D1122E", .26 - j*.03, -.7 + j*.7, true); kivilcim(16, "#FF5A6A"); sars(11);
           hasarSayi(Math.round((gc ? 420 : 300) * (.9 + Math.random()*.2)), "#FF8A9A", j === 2); await bekle(110); }
       }
       flas("rgba(200,20,40,.35)");
@@ -340,12 +370,13 @@ async function eylem(tip){
     else if(tip === "perde"){
       S.poz = POZ.perde; S.kam.hz = 1.1;
       S.efekt.push({ t:"aura", o:1, r:0 });
+      sfx("sfx-gece-perdesi"); sfx("sfx-pelerin", .55);
       await bekle(1700);
       S.gece = 3 + S.boost; flas("rgba(40,0,20,.6)", .9); sars(5);
       S.kam.hz = 1; await bekle(500);
     }
     else if(tip === "savun"){
-      S.poz = POZ.savunma; await bekle(700);
+      S.poz = POZ.savunma; sfx("sfx-savunma", .8); await bekle(700);
     }
     else if(y && y.ulti){ await sessizKiyamet(); }
     if(S && S.x !== ev) await git(ev, 420, POZ.yuru);
@@ -360,23 +391,23 @@ async function eylem(tip){
 async function sessizKiyamet(){
   S.ulti = 0; ui();
   S.kam.hz = 1.18; S.karart = .75;
-  S.poz = POZ.ulti[0];
+  S.poz = POZ.ulti[0]; sfx("sfx-ulti-sarj", .8);
   await soyle("yarinsiz-replik-sir.mp3", "yarinsiz-replik-sir");
   S.poz = POZ.ulti[1];
   await soyle("yarinsiz-replik-tehdit.mp3", "yarinsiz-replik-tehdit");
   await oynat(POZ.ulti.slice(1, 3), 260);
   // kesme sahnesi
-  S.kesme = { bas:performance.now(), sure:1900 };
+  S.kesme = { bas:performance.now(), sure:1900 }; sfx("sfx-ulti-kesme");
   soyle("yarinsiz-replik-ulti.mp3", "yarinsiz-replik-ulti");
   await bekle(1900);
   S.kesme = null; flas("#FFFFFF", 1);
   await git(.44, 160, [POZ.ulti[3]]);
   for(let i=4;i<8;i++){
     S.poz = POZ.ulti[i];
-    for(let j=0;j<3;j++){ kesik(j%2 ? "#FFFFFF" : "#E0102E", .34, Math.random()*2-1, true); kivilcim(22, j%2 ? "#FFF" : "#FF3A4A");
+    for(let j=0;j<3;j++){ sfx(sec(ULTI_DARBE), .9); kesik(j%2 ? "#FFFFFF" : "#E0102E", .34, Math.random()*2-1, true); kivilcim(22, j%2 ? "#FFF" : "#FF3A4A");
       hasarSayi(Math.round(999 + Math.random()*400), "#FF5A6A", true); sars(16); await bekle(85); }
   }
-  flas("#FF2030", .9); sars(26);
+  flas("#FF2030", .9); sars(26); sfx("sfx-ulti-final");
   S.efekt.push({ t:"patlama", o:1, r:0 });
   hasarSayi(9999, "#FFE9A8", true);
   await bekle(600);
