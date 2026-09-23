@@ -1271,6 +1271,28 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .kosuSec b{font-family:"Cinzel",Georgia,serif;font-size:11px;color:#FFE9A8}
 .kosuSec small{font-size:8.5px;line-height:1.3;color:rgba(232,224,255,.75)}
 
+/* ---- yatay oyun kabi ---- */
+.oYatay{position:fixed;inset:0;z-index:180;background:#05030A;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.oYatay.dondur{inset:auto;left:0;top:0;width:100vh;height:100vw;transform:rotate(90deg) translateY(-100%);transform-origin:top left}
+.oYatay canvas{display:block}
+.oYatay .yUst{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:14px;padding:8px 12px;z-index:3;
+  font-size:11px;letter-spacing:.1em;color:rgba(255,236,210,.85);background:linear-gradient(180deg,rgba(0,0,0,.55),transparent)}
+.oYatay .yUst b{font-family:"Cinzel",Georgia,serif;font-size:14px;color:#FFE0B0;margin-left:4px}
+.oYatay .yUst #oSagBilgi{margin-left:auto}
+.yCik{width:34px;height:34px;font-size:15px;cursor:pointer;color:#FFE9A8;background:rgba(10,6,20,.7);border:1px solid rgba(232,201,138,.5);border-radius:50%}
+.yTus{position:absolute;bottom:14px;z-index:3;width:92px;height:92px;border-radius:50%;cursor:pointer;touch-action:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:30px;line-height:1;color:#FFF3D8;
+  background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.22),rgba(20,12,36,.55));border:2px solid rgba(232,201,138,.55);
+  box-shadow:0 6px 18px rgba(0,0,0,.5)}
+.yTus small{font-family:"Cinzel",Georgia,serif;font-size:10px;letter-spacing:.12em;margin-top:2px}
+.yTus.sol{left:18px} .yTus.sag{right:18px}
+.yTus.basili,.yTus:active{transform:scale(.92);background:radial-gradient(circle at 40% 35%,rgba(255,233,168,.45),rgba(60,36,90,.7))}
+.yYon{position:absolute;left:14px;bottom:14px;display:flex;gap:12px;z-index:3}
+.yYon .yTus{position:static;width:84px;height:84px}
+.oYatay .oPerde{inset:0;z-index:5}
+.oYatay .oMesaj{top:14%}
+
 /* ---- intro ve anlatim ---- */
 .introKat{position:fixed;inset:0;z-index:200;display:grid;place-items:center;opacity:0;transition:opacity 1.2s ease;
   background:radial-gradient(80% 60% at 50% 30%,rgba(40,24,80,.7),transparent 70%),linear-gradient(180deg,#07050F,#010104)}
@@ -2169,7 +2191,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 11.3";
+const SURUM_MELKOR = "beta 11.5";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -3545,6 +3567,7 @@ function oyunDurdur(){
 }
 
 function oyunAc(id){
+  if(id === "kosu" || id === "tuzak") return oyunYatayAc(id);
   oyunDurdur();
   const o = OYUN_LISTE.find(x=>x.id === id);
   const kontrol = id === "kosu" ? `<div class="kPad iki">
@@ -3571,6 +3594,52 @@ function oyunAc(id){
   const G2 = Math.min(document.querySelector(".oCerceve").clientWidth - 12, 460);
   tv.width = Math.round(G2 * 2); tv.height = Math.round(G2 * 2 * o.oran);
   tv.style.width = G2 + "px"; tv.style.height = (G2 * o.oran) + "px";
+}
+
+// yatay tam ekran: once telefonu cevirmeyi dene, olmazsa ekrani dondur
+async function oyunYatayAc(id){
+  oyunDurdur();
+  const o = OYUN_LISTE.find(x=>x.id === id);
+  const ipucu = id === "kosu"
+    ? "Sağ tuş: zıpla (havada bir daha basınca çift zıpla). Sol tuş: kay."
+    : "Sol altta yürü, sağ altta zıpla. Kısa basarsan kısa zıplarsın. Hiçbir şeye güvenme.";
+  const kontrol = id === "kosu"
+    ? `<button class="yTus sol" id="kKay">⤓<small>KAY</small></button><button class="yTus sag" id="kZip">⤒<small>ZIPLA</small></button>`
+    : `<div class="yYon"><button class="yTus" id="tSol">◀</button><button class="yTus" id="tSag">▶</button></div>
+       <button class="yTus sag" id="tZipla">⤒<small>ZIPLA</small></button>`;
+  app.innerHTML = `<div class="oYatay" id="oYatay" style="--or:${o.renk}">
+    <canvas id="oTuval"></canvas>
+    <div class="yUst"><button class="yCik" onclick="oyunYatayKapat()">✕</button>
+      <span id="oSolBilgi">SKOR <b id="oSkor">0</b></span><span id="oSagBilgi">${id === "tuzak" ? "EN İYİ BÖLÜM" : "REKOR"} <b>${oyunRekor(id)}</b></span></div>
+    <div class="oMesaj" id="oMesaj"></div>
+    ${kontrol}
+    <div class="oPerde" id="oPerde"><span class="oPerdeIkon">${o.ikon}</span><b>${o.ad}</b><span>${ipucu}</span>
+      <button class="duBasla" onclick="oyunBaslat('${id}')">OYNA</button></div>
+  </div>`;
+  try{ await document.documentElement.requestFullscreen?.(); }catch(e){}
+  try{ await screen.orientation?.lock?.("landscape"); }catch(e){}
+  const boyutla = () => {
+    const k = document.getElementById("oYatay"); if(!k) return;
+    const dik = window.innerHeight > window.innerWidth;
+    k.classList.toggle("dondur", dik);
+    const w = dik ? window.innerHeight : window.innerWidth, h = dik ? window.innerWidth : window.innerHeight;
+    const tv = document.getElementById("oTuval"), oran = id === "tuzak" ? .625 : 0;
+    let cw = w, ch = h;
+    if(oran){ ch = Math.min(h, w*oran); cw = ch/oran; }
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    tv.width = Math.round(cw*dpr); tv.height = Math.round(ch*dpr);
+    tv.style.width = cw + "px"; tv.style.height = ch + "px";
+  };
+  boyutla();
+  window.__yatayBoyut = () => { boyutla(); };
+  window.addEventListener("resize", window.__yatayBoyut);
+}
+function oyunYatayKapat(){
+  oyunDurdur();
+  window.removeEventListener("resize", window.__yatayBoyut || (()=>{}));
+  try{ screen.orientation?.unlock?.(); }catch(e){}
+  try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
+  oyunlarEkran();
 }
 
 function oyunBaslat(id){
@@ -3776,7 +3845,8 @@ function kosuOyna(K){
     if(!O.yerde){ O.vy = Math.max(O.vy, H*.03); } O.kayT = 42; };
   const tus = (id, fn) => { const b = document.getElementById(id); if(b) b.onpointerdown = e => { e.preventDefault(); fn(); }; };
   tus("kZip", zipla); tus("kKay", kay);
-  tv.onpointerdown = e => { const r = tv.getBoundingClientRect(); (e.clientY - r.top) < r.height*.6 ? zipla() : kay(); };
+  tv.onpointerdown = e => { if(document.getElementById("oYatay")?.classList.contains("dondur")) return zipla();
+    const r = tv.getBoundingClientRect(); (e.clientY - r.top) < r.height*.6 ? zipla() : kay(); };
   O.tus = e => { if(e.key === "ArrowUp" || e.key === " "){ e.preventDefault(); zipla(); } if(e.key === "ArrowDown"){ e.preventDefault(); kay(); } };
   document.addEventListener("keydown", O.tus);
   const skor = () => Math.floor(O.mesafe / (W*.05)) + O.altin * 10;
@@ -4031,9 +4101,11 @@ function tuzakBasla(bolum){
       if(p.yerde) O.havadaKare = 0; else O.havadaKare = (O.havadaKare || 0) + 1;
       if(O.ziplaTampon > 0) O.ziplaTampon--;
       if(O.ziplaTampon > 0 && (p.yerde || O.havadaKare < 6) && !O.ziplandi){
-        p.vy = -T * 0.3; p.yerde = false; O.ziplaTampon = 0; O.ziplandi = true; O.havadaKare = 99; }
+        p.vy = -T * 0.3; p.yerde = false; O.ziplaTampon = 0; O.ziplandi = true; O.havadaKare = 99; O.ziplaKare = 0; O.kesildi = false; }
       if(p.yerde && p.vy >= 0) O.ziplandi = false;
-      if(!O.zipla && p.vy < 0) p.vy *= 0.55;                     // kisa basarsan kisa ziplar
+      O.ziplaKare = (O.ziplaKare || 0) + 1;
+      // kisa basis: tus erken birakilirsa bir kez kes, ama en az yarim karo yukselt
+      if(!O.zipla && p.vy < -T*0.2 && O.ziplaKare > 4 && !O.kesildi){ p.vy = -T*0.2; O.kesildi = true; }
       p.vy = Math.min(p.vy + T * 0.018, T * 0.45);
       // yatay
       p.x += p.vx;
@@ -4241,8 +4313,8 @@ const KBARAKA = {
 const KBOLUM = [
   { ad:"Buz Diyarı", harita:"harita/kule-harita-1-buzul", kuleler:["okcu","ates","isik"], barakalar:["ork"],
     altin:300, can:20, tek:true,
-    yol:[[3.7,-0.6],[3.7,0.9],[3,1.6],[2.2,2.3],[3,2.9],[3.9,3.3],[4.5,3.9],[3.6,4.6],[2.9,5.4],[2.3,6.2],[3.4,6.8],[4.7,7.1],[6.2,7.3],[7.2,7.9],[7.6,9],[6.7,10.2],[5.5,11],[4.7,12],[4.8,13.2],[5,14.4],[5,17.4]],
-    yuva:[[5.6,3],[7,4.1],[5.4,4.7],[7.8,5.8],[9.2,7.9],[2.7,8.6],[4.1,11.3],[2.6,12.4],[6.9,16.9],[3.1,2.9],[2.7,6.6]],
+    yol:[[3.8,-0.6],[3.88,1.93],[4.17,2.99],[4.55,3.31],[4.99,3.58],[5.48,3.75],[5.77,3.89],[5.59,4.13],[5.25,4.5],[5.03,4.97],[4.78,5.44],[4.49,5.85],[4.25,6.3],[3.94,6.66],[3.47,6.76],[2.96,6.63],[2.56,6.34],[2.4,6.15],[2.57,6.32],[2.98,6.57],[3.48,6.71],[3.98,6.88],[4.41,7.14],[4.69,7.54],[4.91,7.94],[5.3,8.14],[5.82,8.18],[6.36,8.19],[6.88,8.25],[7.38,8.37],[7.87,8.55],[8.36,8.77],[8.72,9.03],[8.93,9.42],[9.2,9.82],[9.44,10.22],[9.34,10.66],[8.98,11.02],[8.53,11.32],[8.11,11.62],[7.69,11.88],[7.24,12.08],[6.8,12.27],[6.32,12.4],[5.82,12.52],[5.37,12.72],[4.95,12.99],[4.57,13.31],[4.45,13.7],[4.69,14.07],[5.11,14.37],[5.53,14.69],[5.85,15.09],[6.04,15.57],[6.13,16.08],[6.18,16.54],[6.1,16.9]],
+    yuva:[[3.1,2.96],[5.62,3.18],[7.02,4.38],[3.2,5.3],[2.73,7.07],[5.4,7.4],[7.73,6.04],[6.71,8.84],[9.1,8.4],[2.67,9.1],[10.2,10.7],[4.1,12.07],[2.6,13.2],[5.44,13.3],[8.5,15.2]],
     dusmanlar:{
       goblin:{ res:"dusman/kule-b1-goblins-a", can:58, hiz:1.15, odul:5, boy:1, dps:7 },
       goblinB:{ res:"dusman/kule-b1-goblins-b", can:78, hiz:1, odul:6, boy:.95, dps:9 },
@@ -4362,7 +4434,7 @@ function kuleBasla(lv){
     altin:B.altin, can:B.can, dalga:0, sira:[], uret:0, aktif:false, bekleme:12, hiz:1, duraklat:false,
     dusman:[], kule:[], asker:[], mermi:[], efekt:[], yazi:[], secTip:null, secKule:null, menuAcik:null,
     yuva:B.yuva.map(([x,y])=>({x,y,dolu:null})), bitti:false, kare:0, boss:null, yBek:[0,0],
-    esas:{ d:toplam*.72, hd:toplam*.72, x:0, y:0, can:420, max:420, h:30, bek:0, olu:0, vur:0, kalkanT:0, secili:true },
+    esas:{ d:toplam*.78, hd:toplam*.78, x:0, y:0, can:420, max:420, h:30, bek:0, olu:0, vur:0, kalkanT:0, secili:true },
     kurt:{ d:toplam*.72, x:0, y:0, can:190, max:190, h:20, bek:0, olu:0, vur:0 } };
   { const [ex,ey] = konum(KO.esas.d); KO.esas.x = ex; KO.esas.y = ey; KO.kurt.x = ex-.4; KO.kurt.y = ey+.2; }
   kSesOnYukle();
@@ -6044,7 +6116,7 @@ function haritaBildiri(metin, kalici){
 
 // haritadaki mekanlar (yuzde koordinat)
 const HARITA_NOKTALARI = [
-  { id:"buz",    ad:"Kuru Kafa Mağarası", alt:"Diyarı Savun",  x:78.5,y:25, ikon:"⚔️", renk:"#7BB8FF", ekran:"zindan" },
+  { id:"buz",    ad:"Kuru Kafa Mağarası", alt:"Diyarı Savun",  x:78.5,y:25, ikon:"⚔️", renk:"#7BB8FF", ekran:"kule" },
   { id:"yesil",  ad:"Köy Sineması",       alt:"Melkor TV",     x:21,  y:25, ikon:"📺", renk:"#6FE3A8", ekran:"tv" },
   { id:"lav",    ad:"Lav Arenası",        alt:"Oyunlar",       x:33,  y:86, ikon:"🎮", renk:"#FF9A3A", ekran:"oyunlar" },
   { id:"kurak",  ad:"Vaha Çadırı",        alt:"Kader Çarkı",   x:77,  y:77, ikon:"🔮", renk:"#FFB35A", ekran:"carki" }
@@ -11696,7 +11768,7 @@ async function cikis(){ await sb.auth.signOut(); location.reload(); }
 
 /* ================= yonlendirme ================= */
 
-const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, sunum:sunum, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, marka:markaEkran, tema:temaEkran, yedek:yedekEkran, tv:tvEkran, zindan:zindanEkran, carki:carkiEkran, rehber:rehberEkran, esas:esasEkran, oyunlar:oyunlarEkran, yeni:yeniParsel, parsel:parselDetay,
+const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, sunum:sunum, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, marka:markaEkran, tema:temaEkran, yedek:yedekEkran, tv:tvEkran, zindan:zindanEkran, carki:carkiEkran, rehber:rehberEkran, esas:esasEkran, kule:kuleSecim, oyunlar:oyunlarEkran, yeni:yeniParsel, parsel:parselDetay,
                    fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
 // gezinti gecmisi: telefonun geri tusu uygulamadan cikmasin, bir ekran geri gitsin
 let GEZINTI = [{ r:"ana", arg:undefined }];
@@ -11739,7 +11811,7 @@ function go(r, arg){
 // her ekranin bir ust sekmesi: telefonun geri tusu buraya gider
 const UST_EKRAN = {
   harita:"ana", araziler:"ana", ekler:"ana", kml:"ana", cap:"ana", hesap:"ana",
-  yaklasan:"ana", yz:"ana", fiyat:"ana", ayarlar:"ana", marka:"ayarlar", tema:"ana", yedek:"ayarlar", tv:"ana", zindan:"ana", carki:"ana", rehber:"ana", esas:"ana", oyunlar:"ana", yeni:"araziler",
+  yaklasan:"ana", yz:"ana", fiyat:"ana", ayarlar:"ana", marka:"ayarlar", tema:"ana", yedek:"ayarlar", tv:"ana", zindan:"ana", carki:"ana", rehber:"ana", esas:"ana", kule:"ana", oyunlar:"ana", yeni:"araziler",
   parsel:"araziler", parcalar:"parsel", sunum:"parsel", fiyatDuzen:"fiyat", capAyar:"cap"
 };
 
