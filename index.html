@@ -1324,6 +1324,8 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .s2Oyuncu{position:absolute;bottom:4%;height:min(78%,92vh);max-width:34%;object-fit:contain;
   filter:drop-shadow(0 14px 22px rgba(0,0,0,.9)) brightness(.07) contrast(.5);transition:filter .4s ease, transform .4s ease}
 .s2Oyuncu.kahraman{left:4%} .s2Oyuncu.borz{left:50%;transform:translateX(-50%)} .s2Oyuncu.bilge{right:3%}
+.sahne2.kadro2 .s2Oyuncu.kahraman{left:10%} .sahne2.kadro2 .s2Oyuncu.borz{left:auto;right:10%;transform:scaleX(-1)}
+.sahne2.kadro2 .s2Oyuncu.borz.konusan{transform:scaleX(-1) scale(1.03)}
 .s2Oyuncu.konusan{filter:drop-shadow(0 16px 26px rgba(0,0,0,.9)) drop-shadow(0 0 22px rgba(255,150,70,.35)) brightness(1.1);z-index:2}
 .s2Oyuncu.borz.konusan{transform:translateX(-50%) scale(1.03)}
 .sahne2 .tAd{bottom:4%}
@@ -2214,7 +2216,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 13.4";
+const SURUM_MELKOR = "beta 14.0";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -2393,7 +2395,7 @@ const seviyePuan = () => +(localStorage.getItem("seviyePuan") || 0);
 
 // hikaye ilerlemesini sifirla (intro, cark sahnesi, bolumler)
 function melkorHikayeSifirla(sessiz){
-  ["introGoruldu","carkBitti","kuleBitti","bolum1Intro","bolum2Intro","bolum3Intro","bolum4Intro","bolum5Intro","bolum3Sahne","kuleBolum","maceraBasla","rehberTanisti",
+  ["introGoruldu","carkBitti","kuleBitti","bolum1Intro","bolum2Intro","bolum3Intro","bolum4Intro","bolum5Intro","bolum3Sahne","bolum4Sahne","bolum5Sahne","kuleBolum","maceraBasla","rehberTanisti",
    "seviye","seviyePuan"].forEach(k=>localStorage.removeItem(k));
   for(let i=1;i<=5;i++) localStorage.removeItem("kuleYildiz_" + i);
   if(!sessiz){ toast("Hikâye sıfırlandı"); setTimeout(()=>location.reload(), 600); }
@@ -4422,6 +4424,30 @@ const KBOLUM = [
       [["a",12,.45],["c",6,1,0],["ucan",10,.55,1],["e",4,1,0],["destek",2,1.6,1],["suikastci",8,.5],["c",4,1,1],["elit",1,2,0]],
       [["a",18,.35],["c",8,.8,1],["d",5,1.2,0],["ucan",12,.45],["e",6,.8],["destek",3,1.3],["elit",2,2,0],
        ["BOSS",1,2,1],["suikastci",14,.35],["d",4,1,1],["elit",2,2.2,1]]
+    ] },
+  { ad:"Çorak Topraklar", harita:"harita/kule-harita-4-kurak", kuleler:["okcu","ates","isik","buz","mancinik"], barakalar:["ork","golge"],
+    altin:680, can:20, gen:20, yuk:11.26,
+    yollar:[ [[10.96,-0.6],[10.96,1.48],[10.59,1.86],[10.14,2.15],[9.66,2.37],[9.14,2.51],[8.61,2.57],[8.09,2.56],[7.56,2.51],[7.03,2.53],[6.52,2.67],[6.17,2.98],[6.21,3.38],[6.57,3.71],[7.02,3.96],[7.35,4.3],[7.35,4.74],[7.01,5.08],[6.52,5.31],[6.03,5.51],[5.55,5.74],[5.24,6.05],[5.29,6.49],[5.48,6.96],[5.44,7.4],[5.13,7.76],[4.71,8.07],[4.38,8.3],[4.26,8.37]],
+             [[18.28,-0.6],[18.28,1.77],[18.11,2.26],[18.11,2.74],[18.38,3.15],[18.78,3.5],[19.04,3.91],[18.98,4.33],[18.61,4.64],[18.13,4.87],[17.64,5.04],[17.14,5.18],[16.7,5.45],[16.42,5.86],[16.46,6.23],[16.8,6.46],[17.14,6.78],[17.18,7.24],[16.89,7.61],[16.41,7.83],[15.89,7.93],[15.36,7.99],[14.83,8.05],[14.31,8.14],[13.79,8.3],[13.3,8.53],[12.83,8.82],[12.37,9.1],[11.9,9.38],[11.51,9.69],[11.2,10.0]] ],
+    yuva:[[8.27,1.87],[6.95,2.85],[10.55,2.75],[6.1,4.4],[6.75,6],[16.45,2.75],[18.1,4.1],[17.65,5.7],[16.1,6.9],[15.1,8.65]],
+    dusmanlar:{
+      savasci:{ res:"dusman/kule-b4-savasci", can:160, hiz:1.1, odul:8, boy:1, dps:15 },
+      suikastci:{ res:"dusman/kule-b4-suikastci", can:140, hiz:2, odul:10, boy:.95, dps:18 },
+      zirhli:{ res:"dusman/kule-b4-zirhli", can:340, hiz:.7, odul:17, boy:1.2, zirh:.5, dps:20 },
+      zirhliB:{ res:"dusman/kule-b4-zirhli-b", can:400, hiz:.62, odul:20, boy:1.25, zirh:.55, dps:22 },
+      ucan:{ res:"dusman/kule-b4-ucan", can:170, hiz:1.4, odul:12, boy:1, ucan:true, dps:12 },
+      sifaci:{ res:"dusman/kule-b4-sifaci", can:200, hiz:.85, odul:15, boy:1, sifaci:true, dps:8 },
+      buyucu:{ res:"dusman/kule-b4-buyucu", can:180, hiz:.9, odul:14, boy:1, dps:10, menzilli:2.6 },
+      buyucu2:{ res:"dusman/kule-b4-buyucu-2", can:220, hiz:.85, odul:16, boy:1.05, dps:12, menzilli:2.8 },
+      elit:{ res:"dusman/kule-b4-elit", can:600, hiz:.85, odul:45, boy:1.4, zirh:.3, elit:true, dps:34 }
+    },
+    boss:{ ad:"Kum Devi", res:"boss/kule-b4-boss-kumdevi", can:7200, hiz:.26, zirh:.35, boy:2.7, dps:75, yet:"kumdevi",
+           yetAd:"KUM FIRTINASI!", yetRenk:"#FFD27A" },
+    dalgalar:[
+      [["savasci",10,.5,0],["savasci",10,.5,1],["suikastci",5,.6],["buyucu",3,1,0],["zirhli",3,1.2,1]],
+      [["savasci",12,.4],["zirhli",6,.9,0],["ucan",10,.5,1],["buyucu2",4,1,1],["sifaci",3,1.4,0],["suikastci",8,.45],["zirhliB",3,1.2,1],["elit",1,2,0]],
+      [["savasci",18,.32],["zirhliB",6,1,0],["zirhli",6,.9,1],["ucan",12,.42],["buyucu",4,.8,0],["buyucu2",4,.8,1],["sifaci",4,1.2],["elit",2,2,1],
+       ["BOSS",1,2,0],["suikastci",14,.32],["zirhliB",4,1],["elit",2,2.2,0]]
     ] }
 ];
 
@@ -4473,6 +4499,15 @@ const kahramanRes = { duz:"kahraman/kule-kahraman-esas-duz", yuru:"kahraman/kule
 
 
 /* ---- Sahne 2: Kul Diyari girisinde uc karakterli diyalog (harita arka planda) ---- */
+const HARITA_SAHNE = {
+  3: { anahtar:"bolum3Sahne", dizi:null, kadro:["kahraman","borz","bilge"] },
+  4: { anahtar:"bolum4Sahne", kadro:["kahraman","borz"], dizi:[
+    { s:"borz",     dosya:"sahne-3-borzbey-01.mp3",  poz:["duz","kahkaha"] },
+    { s:"kahraman", dosya:"sahne-3-kahraman-02.mp3", poz:["konusma","sag","kahkaha"] },
+    { s:"borz",     dosya:"sahne-3-borzbey-03.mp3",  poz:["kahkaha","duz"] },
+    { s:"kahraman", dosya:"sahne-3-kahraman-04.mp3", poz:["saldiri","konusma","sag"] },
+    { s:"borz",     dosya:"sahne-3-borzbey-05.mp3",  poz:["kahkaha"] } ] }
+};
 const SAHNE2 = [
   { s:"bilge",    dosya:"Sahne-2-bilge-01.mp3",    poz:["konusma","sagagziacik"] },
   { s:"kahraman", dosya:"sahne-2-kahraman-02.mp3", poz:["konusma","sag"] },
@@ -4485,16 +4520,16 @@ const SAHNE2 = [
 ];
 // poz tablolari cagrildigi an kurulur (SAHNE_RES dosyada daha asagida tanimli)
 function sahne2Res(){ return { bilge:SAHNE_RES.bilge, kahraman:SAHNE_RES.kahraman,
-  borz:{ duz:"kule/kahraman/kule-borz-duz.webp", kahkaha:"kule/kahraman/kule-borz-kahkaha.webp" } }; }
-function sahne2Oyna(bitince){
+  borz:{ duz:"kule/kahraman/kule-borz-duz.webp", kahkaha:"kule/kahraman/kule-borz-kahkaha.webp",
+         saldiri:"kule/kahraman/kule-borz-saldiri.webp", sag:"kule/kahraman/kule-borz-sag.webp", sol:"kule/kahraman/kule-borz-sol.webp" } }; }
+function sahne2Oyna(bitince, dizi, kadro){
+  dizi = dizi || SAHNE2; kadro = kadro || ["kahraman","borz","bilge"];
   const SAHNE2_RES = sahne2Res();
   const kap = document.querySelector(".kSahne"); if(!kap){ bitince && bitince(); return; }
   const k = document.createElement("div");
   k.className = "sahne2"; k.id = "sahne2";
-  k.innerHTML = `
-    <img class="s2Oyuncu kahraman" id="s2kahraman" src="${gv(SAHNE2_RES.kahraman.duz)}" alt="">
-    <img class="s2Oyuncu borz" id="s2borz" src="${gv(SAHNE2_RES.borz.duz)}" alt="">
-    <img class="s2Oyuncu bilge" id="s2bilge" src="${gv(SAHNE2_RES.bilge.duz)}" alt="">
+  k.className = "sahne2 kadro" + kadro.length;
+  k.innerHTML = kadro.map(id=>`<img class="s2Oyuncu ${id}" id="s2${id}" src="${gv(SAHNE2_RES[id].duz)}" alt="">`).join("") + `
     <div class="tAd" id="s2Ad"></div>
     <div class="tCubuk"><i id="s2Cubuk"></i></div>
     <button class="tAtla" id="s2Atla">GEÇ ▸</button>`;
@@ -4505,13 +4540,13 @@ function sahne2Oyna(bitince){
     k.classList.remove("acik"); setTimeout(()=>{ k.remove(); bitince && bitince(); }, 700); };
   const sonraki = () => {
     if(bitti) return;
-    i++; if(i >= SAHNE2.length) return setTimeout(kapat, 500);
-    const p = SAHNE2[i];
-    ["kahraman","borz","bilge"].forEach(id=>document.getElementById("s2" + id)?.classList.toggle("konusan", id === p.s));
+    i++; if(i >= dizi.length) return setTimeout(kapat, 500);
+    const p = dizi[i];
+    kadro.forEach(id=>document.getElementById("s2" + id)?.classList.toggle("konusan", id === p.s));
     const ad = document.getElementById("s2Ad");
     if(ad){ ad.textContent = p.s === "bilge" ? "BİLGE" : p.s === "borz" ? "BORZBEY HZ." : "ESAS OĞLAN";
       ad.className = "tAd " + (p.s === "borz" ? "borz" : p.s); ad.classList.remove("yeni"); void ad.offsetWidth; ad.classList.add("yeni"); }
-    const cb = document.getElementById("s2Cubuk"); if(cb) cb.style.width = ((i+1)/SAHNE2.length*100) + "%";
+    const cb = document.getElementById("s2Cubuk"); if(cb) cb.style.width = ((i+1)/dizi.length*100) + "%";
     const el = document.getElementById("s2" + p.s); let n = 0;
     const pozVer = () => { if(el) el.src = gv(SAHNE2_RES[p.s][p.poz[n % p.poz.length]] || SAHNE2_RES[p.s].duz); n++; };
     pozVer(); clearInterval(pozSaat); pozSaat = setInterval(pozVer, 1500 + Math.random()*600);
@@ -4519,7 +4554,7 @@ function sahne2Oyna(bitince){
     ses = new Audio(gv("cark/" + p.dosya));
     const devam = () => { clearInterval(pozSaat);
       // BorzBey ilk cumlesinden sonra kahkaha pozunda kalir
-      if(el) el.src = gv(p.s === "borz" && i > 3 ? SAHNE2_RES.borz.kahkaha : SAHNE2_RES[p.s].duz);
+      if(el) el.src = gv(p.s === "borz" && dizi === SAHNE2 && i > 3 ? SAHNE2_RES.borz.kahkaha : SAHNE2_RES[p.s].duz);
       setTimeout(sonraki, 380); };
     ses.onended = devam; ses.onerror = () => setTimeout(devam, 2000);
     ses.play().catch(()=>setTimeout(devam, 2000));
@@ -4653,14 +4688,15 @@ async function kuleBasla(lv){
     document.querySelector(".kSahne")?.appendChild(p);
     const savasaBasla = () => { if(KO){ KO.duraklat = false; muzikCal(BI.arkaplan, { ses:.22, dongu:true, giris:4000 }); } };
     const bit = () => { p.classList.add("kapan"); setTimeout(()=>p.remove(), 800);
-      if(lv === 3 && !localStorage.getItem("bolum3Sahne")){ localStorage.setItem("bolum3Sahne", "1"); setTimeout(()=>sahne2Oyna(savasaBasla), 500); }
+      const HS = HARITA_SAHNE[lv];
+      if(HS && !localStorage.getItem(HS.anahtar)){ localStorage.setItem(HS.anahtar, "1"); setTimeout(()=>sahne2Oyna(savasaBasla, HS.dizi, HS.kadro), 500); }
       else savasaBasla(); };
     anlatimBaslat({ muzik:BI.muzik, anlatici:BI.anlatici, muzikSes:.3, bitince:bit });
     document.getElementById("biAtla").onclick = () => { try{ window.__anlatimSes?.pause(); }catch(e){}
       muzikDurdur(600); setTimeout(bit, 400); };
-  }else if(lv === 3 && !localStorage.getItem("bolum3Sahne")){
-    localStorage.setItem("bolum3Sahne", "1"); KO.duraklat = true;
-    setTimeout(()=>sahne2Oyna(()=>{ if(KO){ KO.duraklat = false; muzikCal(BI.arkaplan, { ses:.22, dongu:true, giris:4000 }); } }), 600);
+  }else if(HARITA_SAHNE[lv] && !localStorage.getItem(HARITA_SAHNE[lv].anahtar)){
+    const HS = HARITA_SAHNE[lv]; localStorage.setItem(HS.anahtar, "1"); KO.duraklat = true;
+    setTimeout(()=>sahne2Oyna(()=>{ if(KO){ KO.duraklat = false; muzikCal((BI || BOLUM_INTRO[1]).arkaplan, { ses:.22, dongu:true, giris:4000 }); } }, HS.dizi, HS.kadro), 600);
   }else muzikCal((BI || BOLUM_INTRO[1]).arkaplan, { ses:.22, dongu:true, giris:4000 });
   kuleUi();
   kuleMesaj(`${B.ad} · 3 dalga · son dalgada ${B.boss.ad}`, 2600);
