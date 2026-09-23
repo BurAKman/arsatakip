@@ -61,6 +61,10 @@ if(!document.getElementById("yaStil")){
 .yaBoost span i{width:12px;height:16px;background:rgba(255,255,255,.1);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 .yaBoost span i.var{background:linear-gradient(160deg,#FFE9A8,#C9973E)}
 .yaBoost span i.boost{background:linear-gradient(160deg,#FFFFFF,#FF5A6A);box-shadow:0 0 8px #FF5A6A}
+.yaBoost button{width:40px!important;height:30px!important;font-size:18px}
+.yaBoostYazi{margin-top:4px;text-align:center;font-family:Georgia,serif;font-size:9px;color:#B8ACD8}
+.yaBoostYazi.aktif{color:#FF9AAA;text-shadow:0 0 8px rgba(255,80,100,.7)}
+.yaHata{position:absolute;left:50%;top:50px;transform:translateX(-50%);z-index:9;padding:6px 10px;font:11px monospace;color:#FFD0D0;background:rgba(80,0,0,.8)}
 .yaAtla{position:absolute;right:14px;top:56px;z-index:5;display:none;padding:7px 14px;cursor:pointer;font-family:inherit;font-size:10px;letter-spacing:.14em;
   color:#D8C8F0;background:rgba(10,6,20,.75);border:1px solid rgba(180,156,255,.4)}
 .yaAtla.acik{display:block}`;
@@ -148,12 +152,13 @@ window.YarinsizBasla = function(){
       <div class="yaBar can"><i id="yaCan"></i><span>HP <b id="yaCanY">1840</b></span></div>
       <div class="yaBar sp"><i id="yaSp"></i><span>SP <b id="yaSpY">120</b></span></div>
       <div class="yaBar ulti"><i id="yaUlti"></i><span>ULTİ</span></div>
-      <div class="yaBoost"><button id="yaBoostEksi">◀</button><span id="yaBP"></span><button id="yaBoostArti">▶</button></div>
+      <div class="yaBoost"><button id="yaBoostEksi">−</button><span id="yaBP"></span><button id="yaBoostArti">+</button></div>
+      <div class="yaBoostYazi" id="yaBoostYazi">BOOST · vuruş sayısını artırır</div>
     </div>
     <button class="yaAtla" id="yaAtla">GEÇ ▸</button>`;
   document.body.appendChild(k);
   S = { kap:k, tv:k.querySelector("#yaTuval"), kare:0, zaman:0, t0:performance.now(),
-    can:1840, canMax:1840, sp:120, spMax:120, ulti:100, bp:1, boost:0, gece:0, mesgul:false,
+    can:1840, canMax:1840, sp:120, spMax:120, ulti:100, bp:3, boost:0, gece:0, mesgul:false,
     anim:null, poz:null, x:0, hedefX:0, parca:[], efekt:[], sayi:[], iz:[], sarsinti:0, flas:null, kesme:null,
     kam:{ z:1, hz:1 }, altyazi:null };
   kapOlc(); [150, 500, 1000].forEach(ms=>setTimeout(kapOlc, ms));
@@ -161,7 +166,7 @@ window.YarinsizBasla = function(){
   try{ const f = document.documentElement.requestFullscreen?.(); if(f && f.then) f.then(()=>{ try{ screen.orientation?.lock?.("landscape")?.catch(()=>{}); }catch(e){} }).catch(()=>{}); }catch(e){}
   k.querySelector("#yaCik").onclick = () => YarinsizKapat();
   k.querySelectorAll(".yaKomut button").forEach(b=>b.onclick = () => komut(b.dataset.k));
-  k.querySelector("#yaBoostArti").onclick = () => { if(S.boost < Math.min(3, S.bp)) S.boost++; ui(); };
+  k.querySelector("#yaBoostArti").onclick = () => { if(S.mesgul) return; if(S.boost < Math.min(3, S.bp)) S.boost++; else { const y = k.querySelector("#yaBoostYazi"); y.textContent = S.bp ? "En fazla 3 boost" : "Boost puanı yok, bir tur bekle"; } ui(); };
   k.querySelector("#yaBoostEksi").onclick = () => { if(S.boost > 0) S.boost--; ui(); };
   yetenekMenu(); ui();
   S.raf = requestAnimationFrame(dongu);
@@ -207,6 +212,8 @@ function ui(){
   q("#yaUlti").style.width = S.ulti + "%"; q(".yaBar.ulti").classList.toggle("dolu", S.ulti >= 100);
   q("#yaBP").innerHTML = Array.from({length:5},(_,i)=>`<i class="${i < S.bp ? "var" : ""} ${i < S.boost ? "boost" : ""}"></i>`).join("");
   q("#yaMod").textContent = S.gece ? `· GECE PERDESİ ${S.gece}` : "";
+  q("#yaBoostYazi").textContent = S.boost ? `BOOST ${S.boost} · saldırılar ${S.boost + 1} kez vurur` : "BOOST · vuruş sayısını artırır";
+  q("#yaBoostYazi").classList.toggle("aktif", S.boost > 0);
   S.kap.querySelectorAll(".yaYSatir").forEach(b=>{ const y = YETENEK.find(x=>x.id === b.dataset.y); if(!y) return;
     b.disabled = y.ulti ? S.ulti < 100 : S.sp < y.sp; });
   S.kap.querySelector("#yaKomut").classList.toggle("kilit", S.mesgul);
@@ -252,12 +259,20 @@ function girisKonusma(tekrar){
 
 /* ---- animasyon yardimcilari ---- */
 const bekle = ms => new Promise(r=>setTimeout(r, ms));
-function oynat(kareler, ms, secenek){ return new Promise(r=>{ S.anim = { kareler, ms, bas:performance.now(), bitince:r, ...(secenek||{}) }; }); }
+function oynat(kareler, ms, secenek){
+  return new Promise(r=>{
+    const A = { kareler, ms, bas:performance.now(), ...(secenek||{}) };
+    let bitti = false;
+    A.bitince = () => { if(bitti) return; bitti = true; if(S && S.anim === A){ S.anim = null; S.poz = kareler[kareler.length-1]; } r(); };
+    S.anim = A;
+    setTimeout(A.bitince, kareler.length * ms + 30);   // cizim takilsa bile zincir biter
+  });
+}
 async function git(hedef, sure, kareler){
   const bas = S.x, t0 = performance.now();
   S.anim = { kareler, ms:90, bas:t0, dongu:true };
   await new Promise(r=>{ const f = () => { if(!S) return r(); const o = Math.min(1, (performance.now()-t0)/sure);
-    S.x = bas + (hedef - bas) * (1 - Math.pow(1-o, 3)); if(o < 1) requestAnimationFrame(f); else r(); }; f(); });
+    S.x = bas + (hedef - bas) * (1 - Math.pow(1-o, 3)); if(o < 1) setTimeout(f, 16); else r(); }; f(); });
   S.anim = null;
 }
 function hasarSayi(m, renk, kritik){
@@ -324,7 +339,6 @@ async function eylem(tip){
     else if(tip === "perde"){
       S.poz = POZ.perde; S.kam.hz = 1.1;
       S.efekt.push({ t:"aura", o:1, r:0 });
-      soyle("yarinsiz-replik-tehdit.mp3", "yarinsiz-replik-tehdit");
       await bekle(1700);
       S.gece = 3 + S.boost; flas("rgba(40,0,20,.6)", .9); sars(5);
       S.kam.hz = 1; await bekle(500);
@@ -347,7 +361,9 @@ async function sessizKiyamet(){
   S.kam.hz = 1.18; S.karart = .75;
   S.poz = POZ.ulti[0];
   await soyle("yarinsiz-replik-sir.mp3", "yarinsiz-replik-sir");
-  await oynat(POZ.ulti.slice(0, 3), 260);
+  S.poz = POZ.ulti[1];
+  await soyle("yarinsiz-replik-tehdit.mp3", "yarinsiz-replik-tehdit");
+  await oynat(POZ.ulti.slice(1, 3), 260);
   // kesme sahnesi
   S.kesme = { bas:performance.now(), sure:1900 };
   soyle("yarinsiz-replik-ulti.mp3", "yarinsiz-replik-ulti");
@@ -370,7 +386,9 @@ async function sessizKiyamet(){
 /* ---- ana dongu ---- */
 function dongu(t){
   if(!S) return;
-  try{ ciz(t); }catch(e){ if(!S.hataSay){ console.log("yarinsiz ciz", e); } S.hataSay = (S.hataSay || 0) + 1;
+  try{ ciz(t); }catch(e){ if(!S.hataSay){ console.log("yarinsiz ciz", e);
+      const k = document.createElement("div"); k.className = "yaHata"; k.textContent = "Çizim hatası: " + (e && e.message || e); S.kap.appendChild(k); }
+    S.hataSay = (S.hataSay || 0) + 1;
     try{ S.tv.getContext("2d").restore(); }catch(x){} }
   if(S) S.raf = requestAnimationFrame(dongu);
 }
@@ -416,7 +434,7 @@ function guncelPoz(t){
   if(A){
     const i = Math.floor((t - A.bas) / A.ms);
     if(A.dongu) return (S.cizilen = A.kareler[i % A.kareler.length]);
-    if(i >= A.kareler.length){ S.anim = null; const r = A.bitince; S.poz = A.kareler[A.kareler.length-1]; r && r(); return (S.cizilen = S.poz); }
+    if(i >= A.kareler.length){ const son = A.kareler[A.kareler.length-1]; A.bitince && A.bitince(); return (S.cizilen = son); }
     return (S.cizilen = A.kareler[i]);
   }
   if(S.poz) return (S.cizilen = S.poz);
@@ -519,7 +537,7 @@ function kesmeCiz(c, W, H, t){
   c.save();
   c.fillStyle = `rgba(0,0,0,${.55*gir*(1-cik)})`; c.fillRect(0,0,W,H);
   c.translate(W/2, H/2); c.rotate(-.12);
-  const bantY = H*.36*gir*(1-cik);
+  const bantY = H*.42*gir*(1-cik);
   c.fillStyle = "#1A0206"; c.fillRect(-W, -bantY, W*2, bantY*2);
   c.globalCompositeOperation = "lighter";
   for(let i=0;i<22;i++){ const y = ((i*97 + t*.9) % (bantY*2 || 1)) - bantY, x = ((i*331 + t*3.2) % (W*2)) - W;
@@ -527,8 +545,10 @@ function kesmeCiz(c, W, H, t){
   c.globalCompositeOperation = "source-over";
   const im = res(POZ.kesme);
   if(im && bantY > 2){
-    const g2 = W*1.05, h2 = g2 * im.naturalHeight / im.naturalWidth;
-    const kay = (1 - gir)*W*.6 - o*W*.06;
+    const oran = im.naturalWidth / im.naturalHeight;
+    let h2 = bantY*2*.98, g2 = h2*oran;
+    if(g2 > W*1.1){ g2 = W*1.1; h2 = g2/oran; }
+    const kay = (1 - gir)*W*.5 - o*W*.03;
     c.save(); c.beginPath(); c.rect(-W, -bantY, W*2, bantY*2); c.clip();
     c.globalAlpha = 1 - cik; c.drawImage(im, -g2/2 + kay, -h2/2, g2, h2); c.restore();
   }
