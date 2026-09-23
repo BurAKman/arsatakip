@@ -75,6 +75,7 @@ const V = (typeof gv === "function") ? gv : (a=>a);
 // dosya: once klasorunde, yoksa depo kokunde
 const RES = {};
 function res(yol){
+  if(!yol) return null;
   let im = RES[yol];
   if(!im){
     im = new Image(); im.dene = 0;
@@ -432,7 +433,7 @@ function ciz(t){
 function guncelPoz(t){
   const A = S.anim;
   if(A){
-    const i = Math.floor((t - A.bas) / A.ms);
+    const i = Math.max(0, Math.floor((t - A.bas) / A.ms));   // cizim zamani hamle basindan geride kalabilir
     if(A.dongu) return (S.cizilen = A.kareler[i % A.kareler.length]);
     if(i >= A.kareler.length){ const son = A.kareler[A.kareler.length-1]; A.bitince && A.bitince(); return (S.cizilen = son); }
     return (S.cizilen = A.kareler[i]);
