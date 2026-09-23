@@ -1257,6 +1257,8 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
   cursor:pointer;color:#E8E0FF;background:rgba(60,20,30,.8);border:1px solid rgba(200,60,70,.5)}
 .kHadsiz button.yuk{color:#1A0E06;background:linear-gradient(160deg,#F0DCA8,#C9973E);border:0}
 
+.kPad.iki{grid-template-columns:1fr 1fr}
+.kPad.iki button{height:70px;font-size:16px}
 .kPad{display:grid;grid-template-columns:1fr 1.3fr 1.3fr 1fr;gap:7px;margin-top:12px;user-select:none}
 .kPad button{height:58px;font-family:"Cinzel",Georgia,serif;font-size:13px;font-weight:700;cursor:pointer;touch-action:none;
   color:#DFF8EA;background:linear-gradient(160deg,rgba(30,80,60,.9),rgba(6,18,14,.95));border:1px solid rgba(111,227,168,.45);
@@ -2167,7 +2169,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 11.2";
+const SURUM_MELKOR = "beta 11.3";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -3514,7 +3516,7 @@ function esasDinle(){
 /* ---- LAV ARENASI: diyarin icinde oynanan oyunlar ---- */
 const OYUN_LISTE = [
   { id:"yilan",  ad:"Lav Yılanı",     alt:"Dokunduğun yöne döner · güçlendiriciler · obsidyen kayalar", ikon:"🐍", renk:"#FF8A3A", oran:1 },
-  { id:"kosu",   ad:"Kader Koşusu", alt:"Karakterini seç · zıpla, kay, şerit değiştir", ikon:"🏃", renk:"#6FE3A8", oran:1.45 },
+  { id:"kosu",   ad:"Kader Koşusu", alt:"Karakterini seç · zıpla, çift zıpla, kay", ikon:"🏃", renk:"#6FE3A8", oran:.62 },
   { id:"tuzak",  ad:"Tuzak Zindanı",  alt:"Her şeye güvenme: zemin çöker, dikenler fırlar", ikon:"💀", renk:"#FF5A6A", oran:0.625 },
   { id:"sandik", ad:"Sandık Taşı",    alt:"Sandıkları rün taşlarına it · 6 bölüm bulmaca", ikon:"📦", renk:"#E8C98A", oran:1 }
 
@@ -3545,8 +3547,8 @@ function oyunDurdur(){
 function oyunAc(id){
   oyunDurdur();
   const o = OYUN_LISTE.find(x=>x.id === id);
-  const kontrol = id === "kosu" ? `<div class="kPad">
-      <button id="kSol">◀</button><button id="kZip">⤒ ZIPLA</button><button id="kKay">⤓ KAY</button><button id="kSag">▶</button></div>`
+  const kontrol = id === "kosu" ? `<div class="kPad iki">
+      <button id="kKay">⤓ KAY</button><button id="kZip">⤒ ZIPLA</button></div>`
     : id === "tuzak" ? `<div class="tPad">
       <button id="tSol">◀</button><button id="tSag">▶</button><button id="tZipla" class="zipla">ZIPLA</button></div>`
     : id === "sandik" ? `<div class="sPad">
@@ -3555,7 +3557,7 @@ function oyunAc(id){
         <button onclick="sandikHamle(0,1)">▼</button></div>
       <div class="sIslem"><button onclick="sandikGeri()">↶ GERİ AL</button><button onclick="sandikYeniden()">⟲ BAŞTAN</button></div></div>` : "";
   const ipucu = { yilan:"Ekrana dokun: yılan dokunduğun yöne döner. Altın meyve bonus, buz iksiri yavaşlatır.",
-    kosu:"Alttaki tuşlar ya da kaydırma: şerit değiştir, zıpla, kay. Üç canın var. Engellerin üstündeki oka bak!",
+    kosu:"ZIPLA ile atla, havadayken bir kez daha basarsan çift zıplarsın. KAY ile alçak engellerin altından geç. Ekranın üstüne dokun: zıpla, altına dokun: kay.",
     tuzak:"Kapıya ulaş. ZIPLA'ya kısa basarsan kısa zıplarsın. Hiçbir şeye güvenme: bu zindan seninle dalga geçiyor.",
     sandik:"Kaydır ya da oklarla it. Bütün sandıklar parlayan rünlere oturmalı." }[id];
   app.innerHTML = head(o.ad,"oyunlarEkran()") + `
@@ -3727,18 +3729,20 @@ function yilanBasla(){
 }
 window.yilanYon = () => {};
 
-/* ======== KADER KOSUSU (3 serit parkur) ======== */
+/* ======== KADER KOSUSU (yan kaydirmali parkur) ======== */
 const KOSU_KARAKTER = {
-  esas:  { ad:"Esas Oğlan", res:["maskot-duz.png","maskot-eller.png","maskot-konus.png"], zipla:1.15, hiz:1, kalkan:true,
-           laf:"Bir darbeye dayanır, yüksek zıplar" },
-  bilge: { ad:"Bilge", res:["kule/kahraman/kule-bilge-duz.webp","kule/kahraman/kule-bilge-saldiripozu.webp","kule/kahraman/kule-bilge-konusma.webp"],
-           zipla:.9, hiz:.86, isinla:true, laf:"Yavaş koşar ama arada ışınlanıp engeli atlar" }
+  esas:  { ad:"Esas Oğlan", on:"parkur/parkur-kahraman-", ters:true,
+           kos:["kosu-1","kosu-2","kosu-3","kosu-4"], zipla:["ziplar","ziplar-2"], kay:"kayar", olum:"olum", duz:"duz",
+           ziplaG:1.12, hiz:1, kalkan:true, laf:"Yüksek zıplar, bir darbeye dayanır" },
+  bilge: { ad:"Bilge", on:"parkur/parkur-bilge-", ters:false,
+           kos:["kosu-1","kosu-2","kosu-3","kosu-4"], zipla:["ziplar","ziplar"], kay:"kayar", olum:"olum", duz:"duz",
+           ziplaG:.95, hiz:.9, isinla:true, laf:"Yavaş koşar, arada ışınlanıp engeli geçer" }
 };
 const KOSU_RESIM = {};
-function kosuResimYukle(){
-  Object.values(KOSU_KARAKTER).flatMap(k=>k.res).concat(["maskot-duz.png","maskot-eller.png","maskot-konus.png"])
-    .forEach(ad=>{ if(!KOSU_RESIM[ad]){ const im = new Image(); im.src = gv(ad); KOSU_RESIM[ad] = im; } });
-}
+function kosuRes(ad){ let im = KOSU_RESIM[ad]; if(!im){ im = new Image(); im.src = gv(ad + ".webp"); KOSU_RESIM[ad] = im; }
+  return im.complete && im.naturalWidth ? im : null; }
+function kosuResimYukle(){ Object.values(KOSU_KARAKTER).forEach(k=>[...k.kos, ...k.zipla, k.kay, k.olum, k.duz].forEach(a=>kosuRes(k.on + a))); }
+
 function kosuBasla(){
   kosuResimYukle();
   const p = document.getElementById("oPerde");
@@ -3746,7 +3750,7 @@ function kosuBasla(){
     p.dataset.sec = "1"; p.classList.remove("gizli");
     p.innerHTML = `<b>KADER KOŞUSU</b><span>Kiminle koşacaksın?</span>
       <div class="kosuSec">${Object.entries(KOSU_KARAKTER).map(([id,k])=>`
-        <button onclick="kosuSec('${id}')"><img src="${gv(k.res[0])}" alt=""><b>${k.ad}</b><small>${k.laf}</small></button>`).join("")}</div>`;
+        <button onclick="kosuSec('${id}')"><img src="${gv(k.on + k.duz + '.webp')}" alt=""><b>${k.ad}</b><small>${k.laf}</small></button>`).join("")}</div>`;
     return;
   }
   kosuSec(window.__kosuKim || "esas");
@@ -3756,142 +3760,144 @@ function kosuSec(kim){
   document.getElementById("oPerde")?.classList.add("gizli");
   kosuOyna(KOSU_KARAKTER[kim]);
 }
+
 function kosuOyna(K){
   const tv = document.getElementById("oTuval"), c = tv.getContext("2d");
-  const W = tv.width, H = tv.height, ufukY = H*0.34, altY = H*0.9;
-  OYUN = { id:"kosu", K, serit:1, seritX:1, ziplaT:0, kayT:0, hiz:.0052, mesafe:0, altin:0, nesne:[], parca:[], kare:0,
-           miknatis:0, cift:0, kalkan:!!K.kalkan, can:3, dokunmaz:0, bitti:false, sonUret:0, isinBek:0, uyari:[] };
+  const W = tv.width, H = tv.height, zemin = H * .8, boy = H * .34, px = W * .2;
+  OYUN = { id:"kosu", K, y:0, vy:0, yerde:true, ciftZip:true, kayT:0, hiz:W*.0046, mesafe:0, altin:0,
+    engel:[], esya:[], parca:[], kare:0, can:3, dokunmaz:0, kalkan:!!K.kalkan, miknatis:0, isinBek:0,
+    sonEngel:W*.9, bitti:false, olumKare:0 };
   const O = OYUN;
-  const yon = (dx, dy) => {
-    if(!OYUN || OYUN.id !== "kosu" || O.bitti) return;
-    if(dx){ O.serit = Math.max(0, Math.min(2, O.serit + dx)); try{ duelloTik(false); }catch(e){} }
-    if(dy < 0 && O.ziplaT <= 0){ O.ziplaT = 1; O.kayT = 0; }
-    if(dy > 0 && O.kayT <= 0){ O.kayT = 1; if(O.ziplaT > 0) O.ziplaT = Math.min(O.ziplaT, .2); }
-  };
-  kaydirmaDinle(tv, yon, (bas)=>{ const r = tv.getBoundingClientRect(); yon(bas.x - r.left < r.width/2 ? -1 : 1, 0); });
+  const zipla = () => { if(!OYUN || O.bitti || OYUN.id !== "kosu") return;
+    if(O.yerde){ O.vy = -H*.028*K.ziplaG; O.yerde = false; O.ciftZip = true; O.kayT = 0; kSes("kule-insa", .35); }
+    else if(O.ciftZip){ O.vy = -H*.024*K.ziplaG; O.ciftZip = false;
+      parcacikEkle(O.parca, px, zemin - boy*.3 + O.y, K.ters ? "#FFE9A8" : "#9CD8FF", 10, 3); } };
+  const kay = () => { if(!OYUN || O.bitti || OYUN.id !== "kosu") return;
+    if(!O.yerde){ O.vy = Math.max(O.vy, H*.03); } O.kayT = 42; };
   const tus = (id, fn) => { const b = document.getElementById(id); if(b) b.onpointerdown = e => { e.preventDefault(); fn(); }; };
-  tus("kSol", ()=>yon(-1,0)); tus("kSag", ()=>yon(1,0)); tus("kZip", ()=>yon(0,-1)); tus("kKay", ()=>yon(0,1));
-  O.tus = e => { const m = {ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key]; if(m){ e.preventDefault(); yon(...m); } };
+  tus("kZip", zipla); tus("kKay", kay);
+  tv.onpointerdown = e => { const r = tv.getBoundingClientRect(); (e.clientY - r.top) < r.height*.6 ? zipla() : kay(); };
+  O.tus = e => { if(e.key === "ArrowUp" || e.key === " "){ e.preventDefault(); zipla(); } if(e.key === "ArrowDown"){ e.preventDefault(); kay(); } };
   document.addEventListener("keydown", O.tus);
+  const skor = () => Math.floor(O.mesafe / (W*.05)) + O.altin * 10;
 
-  const olcek = z => 1 / (1 + z * 7);
-  const yEkran = z => ufukY + (altY - ufukY) * olcek(z);
-  const xEkran = (serit, z) => W/2 + (serit - 1) * W * 0.3 * olcek(z);
-  const skor = () => Math.floor(O.mesafe / 12) + O.altin * 10 * (O.cift > 0 ? 2 : 1);
-
+  // engel uretimi: her tur engelin ne yapilacagi belli
   const uret = () => {
-    if(O.mesafe < 900) { for(let k=0;k<4;k++) O.nesne.push({ tur:"altin", serit:1, z:1.05 + k*.05 }); return; }
-    const bos = [0,1,2].sort(()=>Math.random()-.5), z = 1.05, r = Math.random();
-    if(r < .3){ O.nesne.push({ tur:"kaya", serit:bos[0], z });
-      if(O.mesafe > 4000) O.nesne.push({ tur:"kaya", serit:bos[1], z });
-      for(let k=0;k<3;k++) O.nesne.push({ tur:"altin", serit:bos[2], z:z + k*.05 }); }
-    else if(r < .55){ O.nesne.push({ tur:"cit", serit:bos[0], z }, { tur:"cit", serit:bos[1], z });
-      if(O.mesafe > 6000) O.nesne.push({ tur:"cit", serit:bos[2], z }); }
-    else if(r < .78){ O.nesne.push({ tur:"dal", serit:bos[0], z }, { tur:"dal", serit:bos[1], z });
-      if(O.mesafe > 6000) O.nesne.push({ tur:"dal", serit:bos[2], z }); }
-    else if(r < .88){ O.nesne.push({ tur:"tavuk", serit:bos[0], z, hedef:bos[1], faz:0 }); }
-    else { const g = ["miknatis","cift","kalkan"][Math.floor(Math.random()*3)]; O.nesne.push({ tur:g, serit:bos[0], z }); }
+    const x = W + W*.1, r = Math.random(), m = O.mesafe;
+    if(m < W*3){ for(let k=0;k<5;k++) O.esya.push({ tur:"altin", x:x + k*W*.06, y:zemin - boy*.35 }); return W*.55; }
+    if(r < .26){ O.engel.push({ tur:"kaya", x, g:W*.07, h:H*.11 }); return W*.5; }                      // zipla
+    if(r < .44){ O.engel.push({ tur:"dal", x, g:W*.1, y1:zemin - boy*1.12, y2:zemin - boy*.55 }); return W*.55; } // kay
+    if(r < .58){ const g = W*(.12 + Math.random()*.06); O.engel.push({ tur:"cukur", x, g });                // zipla
+      for(let k=0;k<3;k++) O.esya.push({ tur:"altin", x:x + g*.2 + k*g*.3, y:zemin - boy*.9 - Math.sin(k/2*Math.PI)*H*.06 });
+      return W*.6; }
+    if(r < .7 && m > W*12){ O.engel.push({ tur:"kule", x, g:W*.08, h:H*.26 }); return W*.62; }              // cift zipla
+    if(r < .82 && m > W*6){ O.engel.push({ tur:"yarasa", x, g:W*.07, y:zemin - boy*.78, faz:0 }); return W*.5; } // kay
+    if(r < .9){ for(let k=0;k<6;k++) O.esya.push({ tur:"altin", x:x + k*W*.05, y:zemin - boy*.4 - Math.sin(k/5*Math.PI)*H*.16 }); return W*.4; }
+    O.esya.push({ tur:["kalkan","miknatis"][Math.floor(Math.random()*2)], x, y:zemin - boy*.7 }); return W*.4;
   };
 
   const ciz = () => {
     if(!OYUN || OYUN.id !== "kosu") return;
     O.kare++;
     if(!O.bitti){
-      O.hiz = .0052 * K.hiz + Math.min(.0055, O.mesafe / 260000);
-      O.mesafe += O.hiz * 1000;
-      O.seritX += (O.serit - O.seritX) * .22;
-      if(O.ziplaT > 0) O.ziplaT = Math.max(0, O.ziplaT - .018);
-      if(O.kayT > 0) O.kayT = Math.max(0, O.kayT - .02);
-      if(O.miknatis > 0) O.miknatis--; if(O.cift > 0) O.cift--; if(O.dokunmaz > 0) O.dokunmaz--;
-      if(O.isinBek > 0) O.isinBek--;
-      O.sonUret -= O.hiz;
-      if(O.sonUret <= 0){ uret(); O.sonUret = .5 + Math.random()*.2; }
-      O.nesne.forEach(n=>{ n.z -= O.hiz;
-        if(n.tur === "tavuk"){ n.faz += .05; if(n.z < .7) n.serit += (n.hedef - n.serit) * .03; }
-        if(O.miknatis > 0 && n.tur === "altin" && n.z < .5) n.serit += (O.seritX - n.serit) * .2; });
-      const havada = O.ziplaT > .25, yerde = O.kayT > .2;
-      O.nesne.forEach(n=>{
-        if(n.alindi || n.z > .07 || n.z < -.03) return;
-        if(Math.abs(n.serit - O.seritX) > .45) return;
-        if(n.tur === "altin"){ n.alindi = true; O.altin++; try{ duelloTik(true); }catch(e){}
-          parcacikEkle(O.parca, xEkran(O.seritX,0), altY - H*.12, "#FFE070", 6, 4); return; }
-        if(["miknatis","cift","kalkan"].includes(n.tur)){ n.alindi = true; try{ sesSeviye(); }catch(e){}
-          if(n.tur === "miknatis"){ O.miknatis = 600; oyunMesaj("MIKNATIS"); }
-          if(n.tur === "cift"){ O.cift = 600; oyunMesaj("ÇİFT PUAN"); }
-          if(n.tur === "kalkan"){ O.kalkan = true; oyunMesaj("KALKAN"); }
-          return; }
-        if((n.tur === "cit" && havada) || (n.tur === "dal" && yerde) || O.dokunmaz > 0) return;
-        n.alindi = true;
-        if(K.isinla && O.isinBek <= 0){ O.isinBek = 900; O.dokunmaz = 90; oyunMesaj("IŞINLANDI!"); 
-          parcacikEkle(O.parca, xEkran(O.seritX,0), altY - H*.14, "#B49CFF", 24, 6); return; }
-        if(O.kalkan){ O.kalkan = false; O.dokunmaz = 90; oyunMesaj("Kalkan kırıldı!");
-          parcacikEkle(O.parca, xEkran(O.seritX,0), altY - H*.12, "#7BE8DC", 24, 6); try{ sesTekme(); }catch(e){} return; }
-        O.can--; O.dokunmaz = 100;
-        parcacikEkle(O.parca, xEkran(O.seritX,0), altY - H*.12, "#FF7A3A", 30, 7);
-        try{ sesTekme(); }catch(e){}
-        if(O.can <= 0){ O.bitti = true; setTimeout(()=>oyunBitti("kosu", skor()), 900); }
-        else oyunMesaj(`Ahh! ${O.can} can kaldı`);
+      O.hiz = W*.0046*K.hiz + Math.min(W*.005, O.mesafe/ (W*260));
+      O.mesafe += O.hiz;
+      // fizik
+      O.vy += H*.0016; O.y += O.vy;
+      const cukurda = O.engel.some(e=>e.tur === "cukur" && px > e.x + W*.015 && px < e.x + e.g - W*.015);
+      if(O.y >= 0 && !cukurda){ O.y = 0; O.vy = 0; O.yerde = true; } else if(O.y < 0) O.yerde = false;
+      if(cukurda && O.y > H*.25){ kosuDarbe(true); }
+      if(O.kayT > 0) O.kayT--; if(O.dokunmaz > 0) O.dokunmaz--; if(O.miknatis > 0) O.miknatis--; if(O.isinBek > 0) O.isinBek--;
+      O.sonEngel -= O.hiz; if(O.sonEngel <= 0) O.sonEngel = uret();
+      O.engel.forEach(e=>{ e.x -= O.hiz; if(e.tur === "yarasa") e.faz += .15; });
+      O.esya.forEach(e=>{ e.x -= O.hiz;
+        if(O.miknatis > 0 && e.tur === "altin" && e.x < W*.6){ e.x += (px - e.x)*.12; e.y += ((zemin - boy*.5 + O.y) - e.y)*.12; } });
+      O.engel = O.engel.filter(e=>e.x + (e.g||0) > -W*.1); O.esya = O.esya.filter(e=>e.x > -W*.1 && !e.alindi);
+      // carpisma kutusu
+      const kayiyor = O.kayT > 0 && O.yerde;
+      const ust = zemin + O.y - (kayiyor ? boy*.42 : boy*.88), alt = zemin + O.y - boy*.05, sol = px - boy*.16, sag = px + boy*.16;
+      O.engel.forEach(e=>{
+        if(e.vurdu || O.dokunmaz > 0) return;
+        let v = false;
+        if(e.tur === "kaya" || e.tur === "kule") v = sag > e.x && sol < e.x + e.g && alt > zemin - e.h;
+        if(e.tur === "dal") v = sag > e.x && sol < e.x + e.g && ust < e.y2 && alt > e.y1;
+        if(e.tur === "yarasa"){ const yy = e.y + Math.sin(e.faz)*H*.02; v = sag > e.x && sol < e.x + e.g && ust < yy + H*.03 && alt > yy - H*.03; }
+        if(v){ e.vurdu = true; kosuDarbe(false); }
       });
-      O.nesne = O.nesne.filter(n=>n.z > -.08 && !(n.alindi && !["cit","dal","kaya","tavuk"].includes(n.tur)));
+      O.esya.forEach(e=>{
+        if(Math.abs(e.x - px) < boy*.25 && e.y > ust - H*.03 && e.y < alt + H*.02){ e.alindi = true;
+          if(e.tur === "altin"){ O.altin++; try{ duelloTik(true); }catch(x){} parcacikEkle(O.parca, e.x, e.y, "#FFE070", 5, 3); }
+          if(e.tur === "kalkan"){ O.kalkan = true; oyunMesaj("KALKAN"); kSes("kule-upgrade", .6); }
+          if(e.tur === "miknatis"){ O.miknatis = 540; oyunMesaj("MIKNATIS"); kSes("kule-upgrade", .6); } } });
       oyunSkor(skor());
-    }
-    const g = c.createLinearGradient(0,0,0,ufukY); g.addColorStop(0,"#2E5A96"); g.addColorStop(1,"#E8D0A8");
-    c.fillStyle = g; c.fillRect(0,0,W,ufukY+2);
-    c.fillStyle = "#4A6A7A"; c.beginPath(); c.moveTo(0,ufukY);
-    for(let x=0;x<=W;x+=W/10) c.lineTo(x, ufukY - H*.05 - Math.abs(Math.sin(x/W*6+1))*H*.06);
-    c.lineTo(W,ufukY); c.fill();
-    c.fillStyle = "#E8F2FA"; c.fillRect(0, ufukY, W, H-ufukY);
-    const yolSol = z => W/2 - W*.47*olcek(z), yolSag = z => W/2 + W*.47*olcek(z);
-    c.fillStyle = "#BFD4E4"; c.beginPath(); c.moveTo(yolSol(1), yEkran(1)); c.lineTo(yolSag(1), yEkran(1));
-    c.lineTo(yolSag(-.08), yEkran(-.08)); c.lineTo(yolSol(-.08), yEkran(-.08)); c.fill();
-    for(let k=0;k<14;k++){ const z = ((k/14 - (O.mesafe/1000*1.1) % (1/14)) + 1) % 1;
-      const y1 = yEkran(z), y2 = yEkran(z+.025);
-      c.fillStyle = k%2 ? "rgba(90,120,150,.16)" : "rgba(255,255,255,.14)";
-      c.fillRect(yolSol(z), y2, yolSag(z)-yolSol(z), y1-y2); }
-    [0.5,1.5].forEach(sx=>{ c.strokeStyle = "rgba(120,160,200,.5)"; c.lineWidth = 3; c.beginPath();
-      c.moveTo(xEkran(sx,1), yEkran(1)); c.lineTo(xEkran(sx,-.08), yEkran(-.08)); c.stroke(); });
-    for(let k=0;k<8;k++){ const z = ((k/8 - (O.mesafe/1000*1.1) % (1/8)) + 1) % 1, s2 = olcek(z);
-      c.font = `${Math.round(W*.16*s2)}px serif`; c.textAlign = "center";
-      c.fillText("🌲", W/2 - W*.62*s2, yEkran(z)); c.fillText(k%3 ? "🌲" : "🏔", W/2 + W*.62*s2, yEkran(z)); }
-    O.nesne.slice().sort((a,b2)=>b2.z-a.z).forEach(n=>{
-      if(n.alindi && !["cit","dal","kaya","tavuk"].includes(n.tur)) return;
-      const s2 = olcek(Math.max(n.z,-.05)), x = xEkran(n.serit, n.z), y = yEkran(n.z), boy = W*.2*s2;
-      c.textAlign = "center"; c.textBaseline = "alphabetic";
-      if(n.tur === "kaya"){ c.font = `${boy*1.2}px serif`; c.fillText("🪨", x, y); }
-      if(n.tur === "cit"){ c.fillStyle = "#8A5A2A"; c.fillRect(x-boy*.6, y-boy*.45, boy*1.2, boy*.14); c.fillRect(x-boy*.6, y-boy*.22, boy*1.2, boy*.14);
-        if(n.z < .55){ c.fillStyle = "#6FE3A8"; c.font = `700 ${Math.max(13, boy*.34)}px serif`; c.fillText("▲ ZIPLA", x, y - boy*.9); } }
-      if(n.tur === "dal"){ c.fillStyle = "#6A4A28"; c.fillRect(x-boy*.7, y-boy*1.45, boy*1.4, boy*.24);
-        if(n.z < .55){ c.fillStyle = "#7BB8FF"; c.font = `700 ${Math.max(13, boy*.34)}px serif`; c.fillText("▼ KAY", x, y - boy*1.75); } }
-      if(n.tur === "tavuk"){ c.font = `${boy}px serif`; c.fillText("🐔", x + Math.sin(n.faz*3)*boy*.1, y - Math.abs(Math.sin(n.faz*4))*boy*.2); }
-      if(n.tur === "altin"){ c.font = `${boy*.55}px serif`; c.fillText("🪙", x, y - boy*.35 - Math.sin(O.kare/6 + n.z*20)*boy*.08); }
-      if(n.tur === "miknatis"){ c.font = `${boy*.7}px serif`; c.fillText("🧲", x, y-boy*.4); }
-      if(n.tur === "cift"){ c.font = `${boy*.7}px serif`; c.fillText("⭐", x, y-boy*.4); }
-      if(n.tur === "kalkan"){ c.font = `${boy*.7}px serif`; c.fillText("🛡️", x, y-boy*.4); }
+    }else O.olumKare++;
+
+    // ---- cizim: katmanli arka plan ----
+    const g = c.createLinearGradient(0,0,0,zemin); g.addColorStop(0,"#1E3A6A"); g.addColorStop(.7,"#8AA8C8"); g.addColorStop(1,"#E8D8C0");
+    c.fillStyle = g; c.fillRect(0,0,W,zemin);
+    const kat = (hiz, renk, yuk, dal) => { c.fillStyle = renk; c.beginPath(); c.moveTo(0, zemin);
+      for(let x=0; x<=W+20; x+=W/24){ const t = (x + O.mesafe*hiz) / W; c.lineTo(x, zemin - yuk - Math.abs(Math.sin(t*dal))*yuk*.8 - Math.sin(t*dal*2.3)*yuk*.2); }
+      c.lineTo(W, zemin); c.fill(); };
+    kat(.08, "#5A6E90", H*.2, 3.1); kat(.22, "#3C5070", H*.12, 5.3);
+    // agaclar
+    for(let k=0;k<7;k++){ const x = ((k*W*.23 - O.mesafe*.45) % (W*1.6) + W*1.6) % (W*1.6) - W*.2;
+      c.fillStyle = "#23402E"; c.beginPath(); c.moveTo(x, zemin); c.lineTo(x + W*.03, zemin - H*.22); c.lineTo(x + W*.06, zemin); c.fill(); }
+    // zemin
+    c.fillStyle = "#5A4232"; c.fillRect(0, zemin, W, H - zemin);
+    c.fillStyle = "#6E9A4A"; c.fillRect(0, zemin, W, H*.025);
+    for(let k=0;k<24;k++){ const x = ((k*W*.08 - O.mesafe) % (W*1.92) + W*1.92) % (W*1.92) - W*.1;
+      c.fillStyle = "rgba(0,0,0,.14)"; c.fillRect(x, zemin + H*.06, W*.03, H*.012); }
+    // engeller
+    O.engel.forEach(e=>{
+      if(e.tur === "cukur"){ c.fillStyle = "#0A0608"; c.fillRect(e.x, zemin, e.g, H - zemin);
+        c.fillStyle = "#1A0E10"; c.fillRect(e.x, zemin, e.g, H*.02); }
+      if(e.tur === "kaya"){ c.fillStyle = "#6E6A72"; c.beginPath(); c.moveTo(e.x, zemin); c.lineTo(e.x + e.g*.15, zemin - e.h);
+        c.lineTo(e.x + e.g*.8, zemin - e.h*.9); c.lineTo(e.x + e.g, zemin); c.fill();
+        c.fillStyle = "rgba(255,255,255,.18)"; c.fillRect(e.x + e.g*.2, zemin - e.h*.9, e.g*.5, e.h*.12);
+        c.fillStyle = "#6FE3A8"; c.font = `700 ${H*.045}px Cinzel, serif`; c.textAlign = "center"; c.fillText("▲", e.x + e.g/2, zemin - e.h - H*.03); }
+      if(e.tur === "kule"){ c.fillStyle = "#4E4458"; c.fillRect(e.x, zemin - e.h, e.g, e.h);
+        c.fillStyle = "#6A5E78"; for(let k=0;k<4;k++) c.fillRect(e.x + k*e.g*.27, zemin - e.h - H*.02, e.g*.18, H*.02);
+        c.fillStyle = "#FFD27A"; c.font = `700 ${H*.045}px Cinzel, serif`; c.textAlign = "center"; c.fillText("▲▲", e.x + e.g/2, zemin - e.h - H*.05); }
+      if(e.tur === "dal"){ c.fillStyle = "#6A4A28"; c.fillRect(e.x, e.y1, e.g, e.y2 - e.y1 - H*.03);
+        c.fillStyle = "#3A7A3A"; c.fillRect(e.x - W*.005, 0, W*.01, e.y1); c.fillRect(e.x + e.g - W*.005, 0, W*.01, e.y1);
+        c.fillStyle = "#7BB8FF"; c.font = `700 ${H*.045}px Cinzel, serif`; c.textAlign = "center"; c.fillText("▼", e.x + e.g/2, e.y2 + H*.02); }
+      if(e.tur === "yarasa"){ const yy = e.y + Math.sin(e.faz)*H*.02; c.font = `${H*.1}px serif`; c.textAlign = "center"; c.fillText("🦇", e.x + e.g/2, yy + H*.035);
+        c.fillStyle = "#7BB8FF"; c.font = `700 ${H*.04}px Cinzel, serif`; c.fillText("▼", e.x + e.g/2, yy + H*.1); }
     });
-    const px = xEkran(O.seritX, 0);
-    const zipla = O.ziplaT > 0 ? Math.sin((1-O.ziplaT)*Math.PI) * K.zipla : 0;
-    const kos = O.bitti ? 0 : Math.abs(Math.sin(O.kare/5))*H*.012;
-    const boyP = H*.24, kay = O.kayT > .2;
-    const im = KOSU_RESIM[O.ziplaT > 0 ? K.res[1] : (O.kare % 30 < 15 ? K.res[0] : K.res[2])];
-    c.fillStyle = "rgba(0,0,0,.3)"; c.beginPath(); c.ellipse(px, altY, boyP*.25*(1-zipla*.4), boyP*.05, 0, 0, 7); c.fill();
-    if(im?.complete && im.naturalWidth){
-      const g2 = boyP * im.naturalWidth / im.naturalHeight;
-      c.save(); c.translate(px, altY - zipla*H*.2 - kos);
-      if(kay){ c.rotate(-1.2); c.scale(1,.8); }
-      if(O.dokunmaz > 0 && O.kare % 6 < 3) c.globalAlpha = .4;
-      c.drawImage(im, -g2/2, -boyP, g2, boyP); c.restore(); c.globalAlpha = 1;
-      if(O.kalkan){ c.strokeStyle = "rgba(123,232,220,.85)"; c.lineWidth = 5;
-        c.beginPath(); c.arc(px, altY - boyP*.5 - zipla*H*.2, boyP*.55, 0, 7); c.stroke(); }
-    }
-    c.textAlign = "left"; c.font = `600 ${W*.045}px Cinzel, serif`; c.fillStyle = "#FF6B6B";
-    c.fillText("❤".repeat(Math.max(0,O.can)), W*.03, H*.07);
-    c.textAlign = "right"; c.fillStyle = "#FFE070"; c.fillText("🪙 " + O.altin, W*.97, H*.07);
-    if(O.miknatis > 0 || O.cift > 0){ c.textAlign = "left"; c.font = `600 ${W*.033}px Cinzel, serif`; c.fillStyle = "#FFF3D8";
-      c.fillText((O.miknatis>0?"🧲 ":"") + (O.cift>0?"⭐ x2":""), W*.03, H*.115); }
+    O.esya.forEach(e=>{ c.textAlign = "center"; c.font = `${H*(e.tur === "altin" ? .06 : .08)}px serif`;
+      c.fillText(e.tur === "altin" ? "🪙" : e.tur === "kalkan" ? "🛡️" : "🧲", e.x, e.y + Math.sin(O.kare/6 + e.x*.01)*H*.01); });
+    // karakter
+    let ad;
+    if(O.bitti) ad = K.olum;
+    else if(!O.yerde) ad = O.vy < 0 ? K.zipla[0] : K.zipla[1];
+    else if(O.kayT > 0) ad = K.kay;
+    else ad = K.kos[Math.floor(O.kare / Math.max(3, 8 - O.hiz/W*600)) % 4];
+    const im = kosuRes(K.on + ad);
+    c.fillStyle = "rgba(0,0,0,.3)"; c.beginPath(); c.ellipse(px, zemin + 2, boy*.22*(1 + O.y/(H*.6)), boy*.04, 0, 0, 7); c.fill();
+    if(im){ const h = O.kayT > 0 && O.yerde ? boy*.62 : boy, g2 = h * im.naturalWidth / im.naturalHeight;
+      c.save(); c.translate(px, zemin + O.y); if(K.ters) c.scale(-1, 1);
+      if(O.dokunmaz > 0 && O.kare % 6 < 3) c.globalAlpha = .45;
+      c.drawImage(im, -g2/2, -h, g2, h); c.restore(); c.globalAlpha = 1; }
+    if(O.kalkan){ c.strokeStyle = "rgba(123,232,220,.85)"; c.lineWidth = 4; c.beginPath(); c.arc(px, zemin + O.y - boy*.48, boy*.52, 0, 7); c.stroke(); }
+    // ust bilgi
+    c.textAlign = "left"; c.font = `600 ${H*.06}px Cinzel, serif`; c.fillStyle = "#FF6B6B"; c.fillText("❤".repeat(Math.max(0, O.can)), W*.02, H*.09);
+    c.textAlign = "right"; c.fillStyle = "#FFE070"; c.fillText("🪙 " + O.altin, W*.98, H*.09);
+    if(K.isinla){ c.textAlign = "left"; c.font = `600 ${H*.04}px Cinzel, serif`; c.fillStyle = O.isinBek > 0 ? "rgba(180,156,255,.4)" : "#B49CFF";
+      c.fillText("✦ Işınlanma" + (O.isinBek > 0 ? " " + Math.ceil(O.isinBek/60) : ""), W*.02, H*.16); }
     parcacikCiz(c, O.parca);
     O.raf = requestAnimationFrame(ciz);
   };
   OYUN.raf = requestAnimationFrame(ciz);
+}
+function kosuDarbe(cukur){
+  const O = OYUN; if(!O || O.bitti || O.dokunmaz > 0) return;
+  const W = O.K ? document.getElementById("oTuval").width : 0;
+  if(O.K.isinla && O.isinBek <= 0 && !cukur){ O.isinBek = 900; O.dokunmaz = 70; oyunMesaj("IŞINLANDI!"); return; }
+  if(O.kalkan && !cukur){ O.kalkan = false; O.dokunmaz = 80; oyunMesaj("Kalkan kırıldı!"); kSes("kule-insa", .6); return; }
+  O.can--; O.dokunmaz = 100; kSes("kule-bolum-dusmankacis", .6);
+  if(cukur){ O.y = 0; O.vy = 0; O.engel = O.engel.filter(e=>e.tur !== "cukur" || e.x > W*.4); }
+  if(O.can <= 0){ O.bitti = true; setTimeout(()=>oyunBitti("kosu", Math.floor(O.mesafe / (W*.05)) + O.altin*10), 1300); }
+  else oyunMesaj(`Ahh! ${O.can} can kaldı`);
 }
 
 /* ======== TUZAK ZINDANI (troll parkur, 15 bolum) ======== */
