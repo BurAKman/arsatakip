@@ -1391,6 +1391,8 @@ body[data-tema="vitrin"] .kurSerit::after{content:"";position:absolute;top:-60%;
 .kOyun .kPanel{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);z-index:4;width:auto;padding:5px 8px;gap:6px;
   background:rgba(8,5,18,.78);border:1px solid rgba(232,201,138,.35);border-radius:14px}
 .kOyun .kPortre{flex:0 0 auto;width:62px;height:56px}
+.kKah{display:flex;align-items:center;gap:4px;padding:3px;border-radius:12px;border:1px solid transparent}
+.kKah.sec{border-color:rgba(255,233,168,.75);background:rgba(255,233,168,.08);box-shadow:0 0 14px rgba(255,233,168,.25)}
 .kOyun .kMenu,.kOyun .kKart{bottom:76px}
 .kOyun .kKart{left:50%;right:auto;transform:translateX(-50%);width:min(380px,90%)}
 .kOyun .kSek,.kOyun .kYet,.kOyun .kDalgaTus{width:48px;height:48px}
@@ -2200,7 +2202,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
 const SURUM_MORDOR = "v 1.0";
-const SURUM_MELKOR = "beta 12.4";
+const SURUM_MELKOR = "beta 13.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
 let ME = null;                       // profil satiri
@@ -4382,14 +4384,74 @@ const KBOLUM = [
       [["savasci",10,.6],["zirhli",6,1],["ucan",10,.55],["buyucu",4,1],["sifaci",3,1.5],["suikastci",8,.5],["elit",1,2]],
       [["savasci",16,.4],["zirhli",10,.8],["ucan",12,.45],["buyucu",6,.8],["sifaci",4,1.2],["elit",2,2],
        ["BOSS",1,2],["suikastci",12,.4],["zirhli",6,.9],["elit",3,2.2]]
+    ] },
+  { ad:"Kül Diyarı", harita:"harita/kule-harita-3-lav", kuleler:["okcu","ates","isik","buz","mancinik"], barakalar:["ork","golge"],
+    altin:540, can:20, gen:20, yuk:11.26,
+    yollar:[
+      [[11.64,-0.6],[11.6,1.3],[11.3,2],[10.4,2.6],[9.3,3],[8,3.2],[6.6,3.3],[5.7,3.55],[5.4,4.1],[5.9,4.7],[5.8,5.4],[4.8,6],[3.6,6.4],[2.8,6.75],[2.2,7],[1.6,7.2]],
+      [[18.1,-0.6],[18,1.6],[17.4,2.4],[17.2,3.3],[17.5,4.2],[18,4.9],[18.1,5.6],[17.3,6.2],[16.1,6.6],[15.6,7.1],[15.8,8],[15.7,8.7],[14.6,9.25],[12.8,9.6],[11,9.7],[9.8,9.45],[8.8,9],[7.6,8.7],[6.5,8.55],[5.9,8.45]]
+    ],
+    yuva:[[8.8,2.15],[11,3],[6.6,3.35],[4.55,4.55],[2.2,5.55],[5.1,6.2],[15.55,3.27],[18.9,3.73],[16.9,4.9],[17.2,7.1],[14.45,8.36],[12.8,9.1],[15.7,9.73]],
+    dusmanlar:{
+      a:{ res:"dusman/kule-b3-dusman-a", can:120, hiz:1.1, odul:6, boy:1, dps:12 },
+      b:{ res:"dusman/kule-b3-dusman-b", can:150, hiz:1, odul:8, boy:1.05, dps:14 },
+      c:{ res:"dusman/kule-b3-dusman-c", can:300, hiz:.7, odul:15, boy:1.2, zirh:.5, dps:18 },
+      d:{ res:"dusman/kule-b3-dusman-d", can:520, hiz:.55, odul:22, boy:1.3, zirh:.3, dps:26 },
+      e:{ res:"dusman/kule-b3-dusman-e", can:140, hiz:.9, odul:13, boy:1, dps:9, menzilli:2.5 },
+      destek:{ res:"dusman/kule-b3-destek", can:160, hiz:.85, odul:14, boy:1, sifaci:true, dps:7 },
+      ucan:{ res:"dusman/kule-b3-ucan", can:130, hiz:1.35, odul:11, boy:1, ucan:true, dps:10 },
+      suikastci:{ res:"dusman/kule-b3-suikastci-b", can:110, hiz:1.9, odul:9, boy:.95, dps:15 },
+      elit:{ res:"dusman/kule-b3-elit", can:560, hiz:.85, odul:40, boy:1.4, zirh:.3, elit:true, dps:30 }
+    },
+    boss:{ ad:"Kül Ejderi", res:"boss/kule-b3-boss-ejder", can:8200, hiz:.28, zirh:.35, boy:2.6, dps:65, yet:"ejder",
+           yetAd:"EJDER ALEVİ!", yetRenk:"#FF9A5A" },
+    dalgalar:[
+      [["a",10,.55,0],["a",10,.55,1],["b",5,.8,0],["b",5,.8,1],["suikastci",4,.8]],
+      [["a",12,.45],["c",6,1,0],["ucan",10,.55,1],["e",4,1,0],["destek",2,1.6,1],["suikastci",8,.5],["c",4,1,1],["elit",1,2,0]],
+      [["a",18,.35],["c",8,.8,1],["d",5,1.2,0],["ucan",12,.45],["e",6,.8],["destek",3,1.3],["elit",2,2,0],
+       ["BOSS",1,2,1],["suikastci",14,.35],["d",4,1,1],["elit",2,2.2,1]]
     ] }
 ];
 
 let KO = null;
+const KAHRAMAN = {
+  esas: { ad:"Esas Oğlan", max:420, h:30, vurHz:.7,
+    res:{ duz:"kahraman/kule-kahraman-esas-duz.webp", sag:"kahraman/kule-kahraman-esas-sag.webp", sol:"kahraman/kule-kahraman-esas-sol.webp",
+          vur:"kahraman/kule-kahraman-esas-saldiri.webp", ozel:"kahraman/kule-kahraman-esas-kahkaha.webp" },
+    portre:"ikon/kule-ikon-esas-portre.webp", y:["ikon/kule-ikon-esas-yenetek1.webp","ikon/kule-ikon-esas-yetenek2.webp"], ysure:[20,26] },
+  borz: { ad:"BorzBey Hz.", max:460, h:34, vurHz:.75,
+    res:{ duz:"kahraman/kule-borz-duz.webp", sag:"kahraman/kule-borz-sag.webp", sol:"kahraman/kule-borz-sol.webp",
+          vur:"kahraman/kule-borz-saldiri.webp", ozel:"kahraman/kule-borz-kahkaha.webp" },
+    yedek:"esas", portre:"ikon/kule-ikon-borz-portre.webp", y:["ikon/kule-ikon-borz-yenetek1.webp","ikon/kule-ikon-borz-yenetek2.webp"], ysure:[22,28] }
+};
+// kurt sesleri: dosyasiz, kisa hirlama ve uluma
+function kurtSes(tur){
+  try{
+    if(!SES_ACIK()) return;
+    const a = sesKutusu(); if(!a) return;
+    const t = a.currentTime, g = a.createGain(); g.connect(a.destination);
+    if(tur === "ulu"){
+      const o = a.createOscillator(), v = a.createOscillator(), vg = a.createGain();
+      o.type = "sawtooth"; v.frequency.value = 6; vg.gain.value = 12; v.connect(vg); vg.connect(o.frequency);
+      const f = a.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 1400; o.connect(f); f.connect(g);
+      o.frequency.setValueAtTime(320, t); o.frequency.linearRampToValueAtTime(620, t+.5); o.frequency.linearRampToValueAtTime(420, t+1.4);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.16, t+.25); g.gain.linearRampToValueAtTime(0, t+1.5);
+      o.start(t); v.start(t); o.stop(t+1.55); v.stop(t+1.55);
+    }else{
+      const L = Math.floor(a.sampleRate*.45), bf = a.createBuffer(1, L, a.sampleRate), d = bf.getChannelData(0);
+      for(let i=0;i<L;i++){ const z = i/a.sampleRate; d[i] = (Math.random()*2-1) * (.55 + .45*Math.sin(z*2*Math.PI*28)) * Math.min(1, (L-i)/(L*.3)); }
+      const src = a.createBufferSource(); src.buffer = bf;
+      const f = a.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 420; f.Q.value = 4;
+      src.connect(f); f.connect(g); g.gain.value = .22; src.start(t);
+    }
+  }catch(e){}
+}
 // bolum introlari: muzik + anlatici + savas muzigi
 const BOLUM_INTRO = {
   1: { muzik:"intro-buzulmuzik", anlatici:"intro-buzulanlatici", arkaplan:"intro-buzularkaplan" },
-  2: { muzik:"intro-buzulmuzik", anlatici:"intro-yesilanlatici", arkaplan:"intro-buzularkaplan" }
+  2: { muzik:"intro-buzulmuzik", anlatici:"intro-yesilanlatici", arkaplan:"intro-buzularkaplan" },
+  3: { muzik:"intro-buzulmuzik", anlatici:"intro-lavanlatici", arkaplan:"intro-buzularkaplan" },
+  4: { muzik:"intro-buzulmuzik", anlatici:"intro-corakanlatici", arkaplan:"intro-buzularkaplan" }
 };
 const kahramanRes = { duz:"kahraman/kule-kahraman-esas-duz", yuru:"kahraman/kule-kahraman-esas-sag",
   vur:"kahraman/kule-kahraman-esas-saldiri", portre:"ikon/kule-ikon-esas-portre",
@@ -4438,10 +4500,13 @@ async function kuleBasla(lv){
       <div class="kPanel">
         <button class="kSek" id="kSekKule" onclick="kuleMenu('kule')">🏰</button>
         <button class="kSek" id="kSekBaraka" onclick="kuleMenu('baraka')">🛡</button>
-        <button class="kYet" id="kY1" onclick="kuleYetenek(1)"><img src="${KG(kahramanRes.y1 + '.webp')}" alt=""><i></i></button>
-        <button class="kPortre" id="kPortre" onclick="kuleKahramanSec()"><img src="${KG(kahramanRes.portre + '.webp')}" alt="">
-          <span class="kCanCubuk"><i id="kEsasCan"></i></span></button>
-        <button class="kYet" id="kY2" onclick="kuleYetenek(2)"><img src="${KG(kahramanRes.y2 + '.webp')}" alt=""><i></i></button>
+        ${(lv >= 3 ? ["esas","borz"] : ["esas"]).map((id,i)=>{ const T2 = KAHRAMAN[id]; return `
+        <div class="kKah ${i === 0 ? "sec" : ""}">
+          <button class="kYet" id="kY${i}1" onclick="kuleYetenek(${i},1)"><img src="${KG(T2.y[0])}" alt=""><i></i></button>
+          <button class="kPortre" onclick="kuleKahramanSec(${i})"><img src="${KG(T2.portre)}" alt="">
+            <span class="kCanCubuk"><i id="kCan${i}"></i></span></button>
+          <button class="kYet" id="kY${i}2" onclick="kuleYetenek(${i},2)"><img src="${KG(T2.y[1])}" alt=""><i></i></button>
+        </div>`; }).join("")}
         <button class="kDalgaTus" id="kDalgaTus" onclick="kuleDalgaBaslat()">▶</button>
       </div>
     </div>`;
@@ -4457,45 +4522,55 @@ async function kuleBasla(lv){
   const kx = (tv.width - GW*olcek)/2, ky = (tv.height - GH*olcek)/2;
   const E = (x,y) => [kx + x*olcek, ky + y*olcek];
 
-  // yolu yumusat: kose noktalari arasini egri ile doldur (Catmull-Rom)
-  const ham = B.yol, duz = [];
-  const nk = i => ham[Math.max(0, Math.min(ham.length-1, i))];
-  for(let i=0;i<ham.length-1;i++){
-    const p0 = nk(i-1), p1 = nk(i), p2 = nk(i+1), p3 = nk(i+2);
-    for(let t=0;t<1;t+=0.12){
-      const t2 = t*t, t3 = t2*t;
-      duz.push([
-        0.5*((2*p1[0]) + (-p0[0]+p2[0])*t + (2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2 + (-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t3),
-        0.5*((2*p1[1]) + (-p0[1]+p2[1])*t + (2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2 + (-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3)]);
+  // her yolu yumusat (Catmull-Rom) ve uzunluguna gore olc
+  const yolKur = (ham) => {
+    const duz = [], nk = i => ham[Math.max(0, Math.min(ham.length-1, i))];
+    for(let i=0;i<ham.length-1;i++){
+      const p0 = nk(i-1), p1 = nk(i), p2 = nk(i+1), p3 = nk(i+2);
+      for(let t=0;t<1;t+=0.12){ const t2 = t*t, t3 = t2*t;
+        duz.push([
+          0.5*((2*p1[0]) + (-p0[0]+p2[0])*t + (2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2 + (-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t3),
+          0.5*((2*p1[1]) + (-p0[1]+p2[1])*t + (2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2 + (-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3)]); }
     }
-  }
-  duz.push(ham[ham.length-1]);
-  let toplam = 0; const par = [];
-  for(let i=0;i<duz.length-1;i++){ const [x1,y1] = duz[i], [x2,y2] = duz[i+1];
-    const L = Math.hypot(x2-x1, y2-y1); if(L < 1e-4) continue;
-    par.push({x1,y1,x2,y2,bas:toplam,L}); toplam += L; }
-  const konum = d => { d = Math.max(0, Math.min(toplam, isFinite(d) ? d : 0));
-    const p = par.find(q=>d <= q.bas+q.L) || par[par.length-1];
+    duz.push(ham[ham.length-1]);
+    let toplam = 0; const par = [];
+    for(let i=0;i<duz.length-1;i++){ const [x1,y1] = duz[i], [x2,y2] = duz[i+1];
+      const L = Math.hypot(x2-x1, y2-y1); if(L < 1e-4) continue; par.push({x1,y1,x2,y2,bas:toplam,L}); toplam += L; }
+    return { par, toplam };
+  };
+  const yollar = (B.yollar || [B.yol]).map(yolKur);
+  const konum = (d, yi=0) => { const Y2 = yollar[yi] || yollar[0];
+    d = Math.max(0, Math.min(Y2.toplam, isFinite(d) ? d : 0));
+    const p = Y2.par.find(q=>d <= q.bas+q.L) || Y2.par[Y2.par.length-1];
     const t = (d-p.bas)/p.L; return [p.x1+(p.x2-p.x1)*t, p.y1+(p.y2-p.y1)*t]; };
-  // bir noktaya en yakin yol mesafesi (kahraman ve askerler yoldan cikmasin)
+  // bir noktaya en yakin yol ve o yoldaki mesafe
   const yolaYapis = (bx, by) => {
-    let enIyi = 0, enAz = 1e9;
-    par.forEach(p=>{
+    let sonuc = { d:0, yi:0 }, enAz = 1e9;
+    yollar.forEach((Y2, yi)=>Y2.par.forEach(p=>{
       const dx = p.x2-p.x1, dy = p.y2-p.y1, L2 = dx*dx+dy*dy || 1;
       let t = ((bx-p.x1)*dx + (by-p.y1)*dy) / L2; t = Math.max(0, Math.min(1, t));
-      const mx = p.x1+dx*t, my = p.y1+dy*t, u = Math.hypot(bx-mx, by-my);
-      if(u < enAz){ enAz = u; enIyi = p.bas + p.L*t; }
-    });
-    return enIyi;
+      const u = Math.hypot(bx-(p.x1+dx*t), by-(p.y1+dy*t));
+      if(u < enAz){ enAz = u; sonuc = { d:p.bas + p.L*t, yi }; }
+    }));
+    return sonuc;
   };
+  const toplam = yollar[0].toplam;
+  // kahramanlar: 3. bolumden itibaren BorzBey Hz. ikinci yolu savunur
+  const ikinci = lv >= 3;
+  const kahYap = (id, yi) => { const T2 = yollar[yi] || yollar[0], dd = T2.toplam*.78;
+    return Object.assign({ id, yi:Math.min(yi, yollar.length-1), d:dd, hd:dd, x:0, y:0, bek:0, olu:0, vur:0, kalkanT:0, kahraman:true,
+      yBek:[0,0], yon:1 }, KAHRAMAN[id]); };
+  const kah = [kahYap("esas", 0)];
+  if(ikinci) kah.push(kahYap("borz", 1));
+  kah.forEach(h=>{ h.can = h.max; const [x,y] = konum(h.d, h.yi); h.x = x; h.y = y; });
+  const kurtSahip = ikinci ? kah[1] : kah[0];
 
-  KO = { id:"kule", lv, B, tv, c:tv.getContext("2d"), olcek, E, konum, yolaYapis, toplam,
+  KO = { id:"kule", lv, B, tv, c:tv.getContext("2d"), olcek, E, konum, yolaYapis, toplam, yollar, kah, secKah:0, sayac:0,
     altin:B.altin, can:B.can, dalga:0, sira:[], uret:0, aktif:false, bekleme:12, hiz:1, duraklat:false,
     dusman:[], kule:[], asker:[], mermi:[], efekt:[], yazi:[], secTip:null, secKule:null, menuAcik:null,
     yuva:B.yuva.map(([x,y])=>({x,y,dolu:null})), bitti:false, kare:0, boss:null, yBek:[0,0],
-    esas:{ d:toplam*.78, hd:toplam*.78, x:0, y:0, can:420, max:420, h:30, bek:0, olu:0, vur:0, kalkanT:0, secili:true },
-    kurt:{ d:toplam*.72, x:0, y:0, can:190, max:190, h:20, bek:0, olu:0, vur:0 } };
-  { const [ex,ey] = konum(KO.esas.d); KO.esas.x = ex; KO.esas.y = ey; KO.kurt.x = ex-.4; KO.kurt.y = ey+.2; }
+    esas:kah[0],
+    kurt:{ sahip:kurtSahip, d:kurtSahip.d, yi:kurtSahip.yi, x:kurtSahip.x - .4, y:kurtSahip.y + .2, can:190, max:190, h:20, bek:0, olu:0, vur:0, ofke:0, sesBek:0 } };
   kSesOnYukle();
   const BI = BOLUM_INTRO[lv];
   if(BI && !localStorage.getItem("bolum" + lv + "Intro")){
@@ -4565,9 +4640,11 @@ function kuleUi(){
   s2("kAltin", Math.floor(O.altin)); s2("kCan", O.can); s2("kDalga", `${O.dalga}/3`);
   const dt = document.getElementById("kDalgaTus");
   if(dt){ dt.disabled = O.aktif || O.dalga >= 3; dt.innerHTML = O.aktif ? "⚔" : O.dalga >= 3 ? "✓" : `▶<i>${Math.ceil(O.bekleme)}</i>`; }
-  const ec = document.getElementById("kEsasCan"); if(ec) ec.style.width = Math.max(0, O.esas.can/O.esas.max*100) + "%";
-  [1,2].forEach(i=>{ const b = document.getElementById("kY"+i); if(b){ const bek = O.yBek[i-1], tam = i === 1 ? 20 : 26;
-    b.querySelector("i").style.height = (bek/tam*100) + "%"; b.classList.toggle("hazir", bek <= 0); } });
+  O.kah.forEach((H,hi)=>{
+    const ec = document.getElementById("kCan" + hi); if(ec) ec.style.width = Math.max(0, H.can/H.max*100) + "%";
+    [1,2].forEach(n=>{ const b = document.getElementById("kY" + hi + n); if(b){ const bek = H.yBek[n-1], tam = H.ysure[n-1];
+      b.querySelector("i").style.height = (bek/tam*100) + "%"; b.classList.toggle("hazir", bek <= 0 && H.olu <= 0); } });
+  });
 }
 function kuleMenu(tur){
   const O = KO; if(!O) return;
@@ -4582,7 +4659,9 @@ function kuleMenu(tur){
 }
 function kuleTipSec(id){ const O = KO; if(!O) return; O.secTip = id; O.menuAcik = null;
   document.getElementById("kMenu")?.classList.remove("acik"); kuleMesaj("Parlayan yuvaya dokun", 1400); }
-function kuleKahramanSec(){ const O = KO; if(!O) return; O.esas.secili = true; kuleMesaj("Esas Oğlan seçildi · haritaya dokun", 1400); }
+function kuleKahramanSec(i){ const O = KO; if(!O) return; O.secKah = Math.min(i || 0, O.kah.length-1);
+  document.querySelectorAll(".kKah").forEach((b,j)=>b.classList.toggle("sec", j === O.secKah));
+  kuleMesaj(`${O.kah[O.secKah].ad} seçildi · yola dokun`, 1300); }
 
 function kuleDokun(e){
   const O = KO; if(!O || O.bitti) return;
@@ -4603,8 +4682,8 @@ function kuleDokun(e){
     const tip = baraka ? KBARAKA[O.secTip.slice(2)] : KTIP[O.secTip];
     if(tip.sv[0].f > O.altin) return kuleMesaj("Altın yetmiyor", 1300);
     O.altin -= tip.sv[0].f;
-    const tpD = O.yolaYapis(Y.x, Y.y);
-    const [tx, ty] = O.konum(tpD);
+    const yp0 = O.yolaYapis(Y.x, Y.y), tpD = yp0.d;
+    const [tx, ty] = O.konum(tpD, yp0.yi);
     const k = { tip:O.secTip, baraka, x:Y.x, y:Y.y, sv:0, bek:0, dondur:0, harcanan:tip.sv[0].f, yuva:Y, tpD, tp:[tx, ty] };
     Y.dolu = k; O.kule.push(k);
     if(baraka) for(let i=0;i<tip.adet;i++) kuleAskerDog(k, i);
@@ -4612,10 +4691,16 @@ function kuleDokun(e){
     return;
   }
   document.getElementById("kKart")?.classList.remove("acik"); O.secKule = null;
-  if(O.tpMod && O.tpKule){ O.tpKule.tpD = O.yolaYapis(bx, by); O.tpMod = false;
-    const [tx,ty] = O.konum(O.tpKule.tpD); O.tpKule.tp = [tx, ty];
+  if(O.tpMod && O.tpKule){ const ypT = O.yolaYapis(bx, by); O.tpKule.tpD = ypT.d; O.tpMod = false;
+    const [tx,ty] = O.konum(ypT.d, ypT.yi); O.tpKule.tp = [tx, ty];
     kuleMesaj("Toplanma noktası ayarlandı", 1200); return; }
-  if(O.esas.secili && O.esas.olu <= 0 && bx > 0 && by > 0 && bx < GW && by < GH){ O.esas.hd = O.yolaYapis(bx, by);
+  const kahDokun = O.kah.find(h=>h.olu <= 0 && Math.hypot(h.x-bx, h.y-by+.6) < .85);
+  if(kahDokun && O.kah.indexOf(kahDokun) !== O.secKah){ kuleKahramanSec(O.kah.indexOf(kahDokun)); return; }
+  const H = O.kah[O.secKah] || O.kah[0];
+  if(H.olu <= 0 && bx > 0 && by > 0 && bx < GW && by < GH){
+    const yp = O.yolaYapis(bx, by);
+    if(yp.yi !== H.yi){ H.yi = yp.yi; H.d = yp.d; O.efekt.push({ t:"sifa", x:bx, y:by, r:0, o:1 }); }
+    H.hd = yp.d;
     if(Math.random() < .3) kYazi(O.esas.x, O.esas.y - 1.1, ["Geliyorum!","Durun, ben varım!","Oraya mı? Tamam!"][Math.floor(Math.random()*3)], "#9CF5C4"); }
 }
 function kuleAskerDog(k, ix){
@@ -4648,41 +4733,56 @@ function kuleYukselt(){ const O = KO, k = O?.secKule; if(!k) return;
 function kuleSat(){ const O = KO, k = O?.secKule; if(!k) return; O.altin += Math.floor(k.harcanan*.6);
   k.yuva.dolu = null; O.kule = O.kule.filter(q=>q !== k); O.asker = O.asker.filter(a=>a.baraka !== k); kuleKartKapat(); kuleUi(); }
 
-function kuleYetenek(n){
-  const O = KO; if(!O || O.bitti || O.esas.olu > 0 || O.yBek[n-1] > 0) return;
-  if(n === 1){ O.yBek[0] = 20; try{ sesIkin(); setTimeout(()=>sesTekme(), 180); }catch(x){}
-    melkorKonus("Heyt!", "gezgin");
-    O.efekt.push({ t:"dalga", x:O.esas.x, y:O.esas.y, r:0, o:1 });
-    O.dusman.forEach(d=>{ if(Math.hypot(d.x-O.esas.x, d.y-O.esas.y) < 1.9){ kHasar(d, 150 + O.lv*20, "fizik"); d.sersem = 2.2; } });
-    kYazi(O.esas.x, O.esas.y - 1.2, "HEYT!", "#9CF5C4");
-  }else { O.yBek[1] = 26; O.esas.kalkanT = 9;
-    O.efekt.push({ t:"sifa", x:O.esas.x, y:O.esas.y, r:0, o:1 });
-    O.asker.forEach(a=>{ if(a.olu <= 0 && Math.hypot(a.x-O.esas.x, a.y-O.esas.y) < 3){ a.can = Math.min(a.max, a.can + a.max*.5); a.kalkanT = 9; } });
-    O.esas.can = Math.min(O.esas.max, O.esas.can + 140);
-    kYazi(O.esas.x, O.esas.y - 1.2, "KORUYUCU KÜKREME!", "#9CF5C4");
-    melkorKonus("Kimse benim halkıma dokunamaz!", "gezgin");
+function kuleYetenek(hi, n){
+  const O = KO; if(!O || O.bitti) return;
+  const H = O.kah[hi]; if(!H || H.olu > 0 || H.yBek[n-1] > 0) return;
+  H.yBek[n-1] = H.ysure[n-1]; H.ozelT = 1.2;
+  if(H.id === "esas" && n === 1){
+    try{ sesIkin(); setTimeout(()=>sesTekme(), 180); }catch(x){}
+    O.efekt.push({ t:"dalga", x:H.x, y:H.y, r:0, o:1 });
+    O.dusman.forEach(d=>{ if(Math.hypot(d.x-H.x, d.y-H.y) < 1.9){ kHasar(d, 150 + O.lv*20, "fizik"); d.sersem = 2.2; } });
+    kYazi(H.x, H.y - 1.2, "HEYT!", "#9CF5C4");
+  }else if(H.id === "esas"){
+    H.kalkanT = 9;
+    O.efekt.push({ t:"sifa", x:H.x, y:H.y, r:0, o:1 });
+    O.asker.forEach(a=>{ if(a.olu <= 0 && Math.hypot(a.x-H.x, a.y-H.y) < 3){ a.can = Math.min(a.max, a.can + a.max*.5); a.kalkanT = 9; } });
+    H.can = Math.min(H.max, H.can + 140);
+    kYazi(H.x, H.y - 1.2, "KORUYUCU KÜKREME!", "#9CF5C4");
+  }else if(n === 1){
+    // Bozkurt Hucumu: kurt 8 saniye kudurur, iki kat hizli ve iki kat sert
+    const K = O.kurt; if(K.olu > 0){ K.olu = 0; K.can = K.max; }
+    K.ofke = 8; kurtSes("ulu");
+    O.efekt.push({ t:"dalga", x:K.x, y:K.y, r:0, o:1, renk:"#E8C98A" });
+    kYazi(H.x, H.y - 1.2, "BOZKURT HÜCUMU!", "#E8C98A");
+  }else{
+    // Kilic Kasirgasi: cevresine agir hasar ve yavaslatma
+    try{ sesTekme(); }catch(x){}
+    O.efekt.push({ t:"dalga", x:H.x, y:H.y, r:0, o:1, renk:"#FF9A6A" });
+    O.dusman.forEach(d=>{ if(Math.hypot(d.x-H.x, d.y-H.y) < 2.1){ kHasar(d, 190 + O.lv*20, "fizik"); d.yavas = .5; d.yavasT = 3; } });
+    kYazi(H.x, H.y - 1.2, "KILIÇ KASIRGASI!", "#FF9A6A");
   }
   kuleUi();
 }
 function kuleDalgaBaslat(){
   const O = KO; if(!O || O.aktif || O.dalga >= 3) return;
   if(O.bekleme > 1){ const b = Math.min(45, Math.ceil(O.bekleme)*3); O.altin += b; kYazi(6, 2, `Erken çağrı +${b}`, "#FFE070"); }
-  O.sira = []; O.B.dalgalar[O.dalga].forEach(([t,n,ar])=>{ for(let i=0;i<n;i++) O.sira.push({ t, gec:ar }); });
+  O.sira = []; O.B.dalgalar[O.dalga].forEach(([t,n,ar,yol])=>{ for(let i=0;i<n;i++) O.sira.push({ t, gec:ar, yol }); });
   O.dalga++; O.aktif = true; O.uret = 0;
   kSes("kule-dalgasavasborusu"); kuleMesaj(`${O.dalga}. DALGA`, 1400); kuleUi();
 }
-function kDogur(t){
+function kDogur(t, yol){
   const O = KO, B = O.B;
+  const yi = yol != null ? Math.min(yol, O.yollar.length-1) : (O.sayac++ % O.yollar.length);
   if(t === "BOSS"){ const b = B.boss;
     const d = { tip:"BOSS", b, res:b.res + "-duz", can:b.can, max:b.can, hiz:b.hiz, zirh:b.zirh||0, boy:b.boy,
       dps:b.dps, odul:300, d:0, x:0, y:0, yavas:0, yavasT:0, sersem:0, atesBek:0, menzilli:0,
-      ucan:false, sifaci:false, elit:false, yetT:6, boss:true };
+      ucan:false, sifaci:false, elit:false, yetT:6, boss:true, yi };
     O.dusman.push(d); O.boss = d; kuleMesaj(`⚠ ${b.ad} GELİYOR!`, 2600);
     kSes("kule-buzboss-kukreme"); return; }
   const e = B.dusmanlar[t];
   O.dusman.push({ tip:t, e, res:e.res, can:e.can, max:e.can, hiz:e.hiz, zirh:e.zirh||0, boy:e.boy, dps:e.dps,
     odul:e.odul, ucan:!!e.ucan, sifaci:!!e.sifaci, elit:!!e.elit, menzilli:e.menzilli||0,
-    d:-Math.random()*.25, x:0, y:0, yavas:0, yavasT:0, sersem:0, atesBek:0 });
+    d:-Math.random()*.25, x:0, y:0, yavas:0, yavasT:0, sersem:0, atesBek:0, yi });
 }
 function kHasar(d, m, tur){
   if(d.olmus) return;
@@ -4697,10 +4797,10 @@ function kHasar(d, m, tur){
 }
 function kGuncelle(dt){
   const O = KO, E = O.esas, K = O.kurt; O.kare++;
-  O.yBek = O.yBek.map(b=>Math.max(0, b - dt));
+  O.kah.forEach(h=>{ h.yBek = h.yBek.map(b=>Math.max(0, b - dt)); });
   if(O.aktif){
     O.uret -= dt;
-    if(O.sira.length && O.uret <= 0){ const s2 = O.sira.shift(); kDogur(s2.t); O.uret = s2.gec; }
+    if(O.sira.length && O.uret <= 0){ const s2 = O.sira.shift(); kDogur(s2.t, s2.yol); O.uret = s2.gec; }
     if(!O.sira.length && !O.dusman.length){
       O.aktif = false; O.altin += 80; kYazi(6, 2.4, "Dalga temizlendi +80", "#FFE070");
       if(O.dalga >= 3){ O.bitti = true; setTimeout(O.can > 0 ? kuleZafer : kuleYenilgi, 900); } else { O.bekleme = 16; }
@@ -4709,29 +4809,35 @@ function kGuncelle(dt){
   // kahraman
   const savas = (bir, hedefler, menzil) => {
     if(bir.olu > 0){ bir.olu -= dt;
-      if(bir.olu <= 0){ bir.can = bir.max; if(bir.d != null){ bir.d = O.toplam*.72; bir.hd = bir.d;
-        const [rx,ry] = O.konum(bir.d); bir.x = rx; bir.y = ry; } }
+      if(bir.olu <= 0){ bir.can = bir.max; if(bir.d != null){ const yi = bir.yi || 0; bir.d = O.yollar[yi].toplam*.78; bir.hd = bir.d;
+        const [rx,ry] = O.konum(bir.d, yi); bir.x = rx; bir.y = ry; } }
       return null; }
     const h = hedefler.filter(d=>!d.olmus && !d.ucan && Math.hypot(d.x-bir.x, d.y-bir.y) < menzil).sort((a,b)=>b.d-a.d)[0];
-    if(h){ bir.bek -= dt; if(bir.bek <= 0){ bir.bek = bir.vurHz || .7; bir.vur = .25; kHasar(h, bir.h, "fizik"); } }
+    if(h){ bir.bek -= dt; if(bir.bek <= 0){ bir.bek = (bir.vurHz || .7) * (bir.ofke > 0 ? .5 : 1); bir.vur = .25;
+      kHasar(h, bir.h * (bir.ofke > 0 ? 2 : 1), "fizik");
+      if(bir === O.kurt && bir.sesBek <= 0 && Math.random() < .35){ kurtSes("hirla"); bir.sesBek = 4; } } }
     if(bir.vur > 0) bir.vur -= dt;
     return h;
   };
-  if(E.olu <= 0){
-    const fark = E.hd - E.d;
-    if(Math.abs(fark) > .04){ E.yon = Math.sign(fark); E.d += Math.sign(fark) * Math.min(Math.abs(fark), 2.3*dt); }
-    const [ex,ey] = O.konum(E.d); E.x = ex; E.y = ey;
-    E.can = Math.min(E.max, E.can + 6*dt); if(E.kalkanT > 0) E.kalkanT -= dt;
-  }
-  savas(E, O.dusman, 1);
+  O.kah.forEach(H=>{
+    if(H.olu <= 0){
+      const fark = H.hd - H.d;
+      if(Math.abs(fark) > .04){ H.yon = Math.sign(fark); H.d += Math.sign(fark) * Math.min(Math.abs(fark), 2.3*dt); }
+      const [ex,ey] = O.konum(H.d, H.yi); H.x = ex; H.y = ey;
+      H.can = Math.min(H.max, H.can + 6*dt); if(H.kalkanT > 0) H.kalkanT -= dt; if(H.ozelT > 0) H.ozelT -= dt;
+    }
+    savas(H, O.dusman, 1);
+  });
+  if(K.sesBek > 0) K.sesBek -= dt; if(K.ofke > 0) K.ofke -= dt;
   if(K.olu <= 0){
+    const S2 = K.sahip; K.yi = S2.yi;
     K.vurHz = .6;
-    const av = O.dusman.filter(d=>!d.olmus && !d.ucan && Math.abs(d.d - E.d) < 3)
+    const av = O.dusman.filter(d=>!d.olmus && !d.ucan && d.yi === K.yi && Math.abs(d.d - S2.d) < (K.ofke > 0 ? 6 : 3))
       .sort((a,b2)=>Math.abs(a.d-K.d) - Math.abs(b2.d-K.d))[0];
-    const hedefD = av ? av.d : E.d + .55;
+    const hedefD = av ? av.d : S2.d + .55;
     const fark = hedefD - K.d;
-    if(Math.abs(fark) > .1) K.d += Math.sign(fark) * Math.min(Math.abs(fark), 3*dt);
-    const [kx2,ky2] = O.konum(K.d); K.x = kx2 + .25; K.y = ky2 + .2;
+    if(Math.abs(fark) > .1) K.d += Math.sign(fark) * Math.min(Math.abs(fark), (K.ofke > 0 ? 5 : 3)*dt);
+    const [kx2,ky2] = O.konum(K.d, K.yi); K.x = kx2 + .25; K.y = ky2 + .2;
   }
   savas(K, O.dusman, .9);
   // askerler
@@ -4758,7 +4864,7 @@ function kGuncelle(dt){
   O.dusman.forEach(d=>{
     if(d.olmus) return;
     if(d.yavasT > 0) d.yavasT -= dt; else d.yavas = 0;
-    if(d.sersem > 0){ d.sersem -= dt; const [x,y] = O.konum(d.d); d.x = x; d.y = y; return; }
+    if(d.sersem > 0){ d.sersem -= dt; const [x,y] = O.konum(d.d, d.yi); d.x = x; d.y = y; return; }
     if(d.boss){ d.yetT -= dt; if(d.yetT <= 0){ d.yetT = 9;
       O.kule.forEach(k=>{ if(!k.baraka && Math.hypot(k.x-d.x, k.y-d.y) < 3){ k.dondur = 3.2; } });
       O.efekt.push({ t:"dalga", x:d.x, y:d.y, r:0, o:1, renk:"#9CD8FF" });
@@ -4769,15 +4875,15 @@ function kGuncelle(dt){
     // savasan birimlerle temas
     let durdu = false;
     if(!d.ucan){
-      const engeller = [...O.asker.filter(a=>a.olu <= 0), E.olu <= 0 ? E : null, K.olu <= 0 ? K : null].filter(Boolean);
+      const engeller = [...O.asker.filter(a=>a.olu <= 0), ...O.kah.filter(h=>h.olu <= 0), K.olu <= 0 ? K : null].filter(Boolean);
       for(const b of engeller){
-        const tut = b.tut || (b === E ? 2 : b === K ? 1 : KBARAKA[b.tur]?.tut || 1);
+        const tut = b.tut || (b.kahraman ? 2 : b === K ? 1 : KBARAKA[b.tur]?.tut || 1);
         const say = tutulan.get(b) || 0;
         if(say < tut && Math.hypot(b.x-d.x, b.y-d.y) < .62){
           tutulan.set(b, say+1); durdu = true;
           const zrh = b.kalkanT > 0 ? .5 : 1;
           b.can -= d.dps * dt * zrh;
-          if(b.can <= 0){ b.olu = b === E ? 12 : b === K ? 14 : 10; b.can = 0;
+          if(b.can <= 0){ b.olu = b.kahraman ? 12 : b === K ? 14 : 10; b.can = 0;
             if(b === E){ kYazi(E.x, E.y-1, "Ahh! Birazdan dönerim!", "#FF9A9A"); melkorKonus("Ahh! Birazdan dönerim!", "gezgin"); } }
           break;
         }
@@ -4786,13 +4892,13 @@ function kGuncelle(dt){
     if(d.menzilli && !durdu){
       d.atesBek -= dt;
       const h = O.asker.filter(a=>a.olu <= 0 && Math.hypot(a.x-d.x, a.y-d.y) < d.menzilli)[0]
-        || (E.olu <= 0 && Math.hypot(E.x-d.x, E.y-d.y) < d.menzilli ? E : null);
-      if(h){ durdu = true; if(d.atesBek <= 0){ d.atesBek = 1.4; h.can -= 18; if(h.can <= 0){ h.olu = h === E ? 12 : 10; h.can = 0; }
+        || O.kah.find(k2=>k2.olu <= 0 && Math.hypot(k2.x-d.x, k2.y-d.y) < d.menzilli) || null;
+      if(h){ durdu = true; if(d.atesBek <= 0){ d.atesBek = 1.4; h.can -= 18; if(h.can <= 0){ h.olu = h.kahraman ? 12 : 10; h.can = 0; }
         O.mermi.push({ t:"ok", x:d.x, y:d.y, hx:h.x, hy:h.y, o:1 }); } }
     }
     if(!durdu) d.d += d.hiz * (1 - (d.boss ? d.yavas*.5 : d.yavas)) * dt;
-    const [x,y] = O.konum(d.d); d.x = x; d.y = y;
-    if(d.d >= O.toplam){ d.olmus = true;
+    const [x,y] = O.konum(d.d, d.yi); d.x = x; d.y = y;
+    if(d.d >= O.yollar[d.yi || 0].toplam){ d.olmus = true;
       kSes("kule-bolum-dusmankacis");
       if(d.boss){ O.boss = null; O.can = 0; kYazi(x, y, "BOSS KAÇTI!", "#FF5A6A"); }
       else { O.can -= d.elit ? 2 : 1; kYazi(x, y, "-" + (d.elit ? 2 : 1) + " ❤", "#FF5A6A"); } }
@@ -4887,16 +4993,24 @@ function kCiz(){
     if(!d.boss) kCanCubuk(c, X(d.x), Y(d.y) + S*.28 - S*d.boy*1.25 - yk - S*.18, S*.62, d.can/d.max, d.elit);
   });
   // kahraman ve kurt
-  const E = O.esas, K = O.kurt;
-  if(K.olu <= 0) kresCiz(c, kahramanRes.kurt[0] + ".webp", X(K.x), Y(K.y) + S*.3, S*1.25, E.yon < 0);
-  if(E.olu <= 0){
-    const yurur = Math.abs(E.hd - E.d) > .1;
-    const adimP = Math.floor(O.kare/9) % 2;
-    const res = E.vur > 0 ? kahramanRes.vur : yurur ? (adimP ? "kahraman/kule-kahraman-esas-sag" : "kahraman/kule-kahraman-esas-sol") : kahramanRes.duz;
-    if(E.kalkanT > 0){ c.strokeStyle = "rgba(156,245,196,.8)"; c.lineWidth = 4; c.beginPath(); c.arc(X(E.x), Y(E.y) - S*.4, S*.75, 0, 7); c.stroke(); }
-    kresCiz(c, res + ".webp", X(E.x), Y(E.y) + S*.35 - (yurur ? Math.abs(Math.sin(O.kare/9*Math.PI))*S*.08 : 0), S*1.85, E.yon < 0);
-    kCanCubuk(c, X(E.x), Y(E.y) + S*.35 - S*1.85 - S*.18, S*.9, E.can/E.max, E.kalkanT > 0);
-  }else { c.fillStyle = "#9CF5C4"; c.font = `${S*.4}px Cinzel, serif`; c.textAlign = "center"; c.fillText("⟳" + Math.ceil(E.olu), X(E.x), Y(E.y)); }
+  const K = O.kurt;
+  if(K.olu <= 0){
+    if(K.ofke > 0){ c.fillStyle = "rgba(255,200,120,.25)"; c.beginPath(); c.arc(X(K.x), Y(K.y), S*.7, 0, 7); c.fill(); }
+    kresCiz(c, kahramanRes.kurt[0] + ".webp", X(K.x), Y(K.y) + S*.3, S*1.25, K.sahip.yon < 0);
+  }
+  O.kah.forEach((H,hi)=>{
+    if(H.olu > 0){ c.fillStyle = "#9CF5C4"; c.font = `${S*.4}px Cinzel, serif`; c.textAlign = "center"; c.fillText("⟳" + Math.ceil(H.olu), X(H.x), Y(H.y)); return; }
+    const yurur = Math.abs(H.hd - H.d) > .1, adimP = Math.floor(O.kare/9) % 2, R2 = H.res;
+    let res = H.vur > 0 ? R2.vur : H.ozelT > 0 ? R2.ozel : yurur ? (adimP ? R2.sag : R2.sol) : R2.duz;
+    if(hi === O.secKah && O.kah.length > 1){ c.strokeStyle = "rgba(255,233,168,.7)"; c.lineWidth = 3;
+      c.beginPath(); c.ellipse(X(H.x), Y(H.y) + S*.3, S*.45, S*.18, 0, 0, 7); c.stroke(); }
+    if(H.kalkanT > 0){ c.strokeStyle = "rgba(156,245,196,.8)"; c.lineWidth = 4; c.beginPath(); c.arc(X(H.x), Y(H.y) - S*.4, S*.75, 0, 7); c.stroke(); }
+    const yy = Y(H.y) + S*.35 - (yurur ? Math.abs(Math.sin(O.kare/9*Math.PI))*S*.08 : 0);
+    // gorsel henuz yoksa Esas Oglan'in pozuyla ciz
+    if(!kresCiz(c, res, X(H.x), yy, S*1.85, H.yon < 0) && H.yedek){
+      const Y3 = KAHRAMAN[H.yedek].res; kresCiz(c, H.vur > 0 ? Y3.vur : yurur ? (adimP ? Y3.sag : Y3.sol) : Y3.duz, X(H.x), yy, S*1.85, H.yon < 0); }
+    kCanCubuk(c, X(H.x), Y(H.y) + S*.35 - S*1.85 - S*.18, S*.9, H.can/H.max, H.kalkanT > 0);
+  });
   // mermiler
   O.mermi.forEach(m=>{
     if(m.t === "ok"){ c.strokeStyle = `rgba(255,120,120,${m.o})`; c.lineWidth = 3;
@@ -5767,6 +5881,8 @@ function muzikKis(oran, sure = 900){
 // anlatim sahnesi: muzik + anlatici + altyazi
 const ANLATIM_METIN = {
   "intro-anlatici": [[0.6,"Bir zamanlar bu kıta, dört büyük diyarın yurduydu."],[4.5,"Ateşin yükseldiği kızıl vadiler."],[7.0,"Buzun sırrı sakladığı dağlar."],[9.3,"Yaşamın direnmeye devam ettiği yeşil ormanlar."],[12.9,"Ve artık yalnızca rüzgârın konuştuğu çorak topraklar."],[17.0,"Bu dört diyarın kesiştiği orta noktada, Bilge Kral'ın kalesi yükselir."],[22.5,"O, kendine düzenin taşıyıcısı der."],[25.1,"Fakat onun düzeni adalet değil; tahakkümdür."],[28.5,"Alevler büyürken, buz susarken,"],[31.0,"yeşil direnmeye çalışırken,"],[33.1,"çorak diyar geçmişini yas tutarak anarken,"],[36.4,"bir yolcu bu topraklara adım attı."],[39.0,"Ve gördüğü zulüm karşısında bir yemin etti."],[42.4,"Bu kıta kurtulacaktı."],[44.0,"Ve zalimin tahtı sonsuza dek yıkılacaktı."]],
+  "intro-lavanlatici": [[0.6,"Ateş Diyarı:"],[1.9,"bir zamanlar demirin, emeğin ve kudretin toprağıydı."],[6.3,"Dağların altında uyuyan ateş, halkın ocaklarını ısıtır, yaşamı beslerdi."],[12.4,"Fakat Bilge Kral, toprağın kalbinde yatan gücü kendi hükmüne bağlamak istedi."],[18.8,"Kadim mühürler kırıldı."],[20.8,"Derinlikler uyandı."],[22.3,"Ve dağlar öfke kusmaya başladı."],[25.0,"Lavlar yalnızca toprağı değil,"],[27.5,"evleri, hatıraları ve yarınları da yuttu."],[30.9,"Şimdi bu diyarda ateş, insanlara hizmet etmiyor."],[34.9,"Onları yargılıyor."],[36.5,"Ve senin yolun, alevlerin arasından geçiyor."]],
+  "intro-corakanlatici": [[0.6,"Çorak Topraklar:"],[2.0,"bugün rüzgârın yalnızca toz taşıdığı bu diyar, bir zamanlar kıtanın en verimli ovalarından biriydi."],[10.6,"Ağaçlar yükselir, nehirler berrak akardı."],[14.1,"Fakat savaşlar, yanlış yönetim ve toprağın hoyratça sömürülmesi bu diyarı yavaş yavaş öldürdü."],[22.3,"Ormanlar kesildi."],[23.8,"Su yolları kurutuldu."],[25.6,"Toprak, tutunacak kök bulamadı."],[28.3,"Sonra yağmurlar çekildi."],[30.4,"Rüzgâr sertleşti."],[31.8,"Ve bereketli ova, sonunda sessiz bir mezarlığa dönüştü."],[36.6,"Bugün Çorak Topraklar yalnızca kurumuş bir diyar değil,"],[41.4,"insanın açgözlülüğünün bıraktığı bir yaradır."]],
   "intro-yesilanlatici": [[0.6,"Yeşil Diyar, kıtanın hâlâ nefes alan son umududur."],[4.7,"Ormanları, pek çok yıkıma rağmen ayakta kalmayı başardı."],[9.3,"Çünkü bu toprakların derinliklerinde, yaşamı besleyen kutsal bir damar akar."],[15.6,"Kadim kökler, saf su kaynakları ve unutulmuş dualar bu diyarı korur."],[21.2,"Bilge Kral, burayı ele geçirmek için defalarca saldırdı."],[25.8,"Ama Yeşil Diyar, her defasında küllerin arasından yeniden filiz verdi."],[31.6,"Çünkü bazı yaşamlar kılıçla değil,"],[34.4,"inatla ayakta kalır."]],
   "intro-buzulanlatici": [[0.6,"Kuzeyde, güneşin bile solgun doğduğu bir diyar uzanır:"],[4.5,"Buz Diyarı."],[5.7,"Bir zamanlar berrak göllerin, yüksek çamların ve taş şehirlerin yurdu olan bu topraklar,"],[12.0,"bugün sonsuz bir kışın sessizliği altında uyuyor."],[15.6,"Derler ki, dağın kalbinde kadim bir mühür vardır."],[19.1,"Bilge Kral, o mührün ardında saklanan gücü ele geçirmek için buzulu deldi;"],[24.5,"insanları, orduları ve yılları feda etti."],[27.4,"Fakat dağ cevap verdi."],[29.0,"Rüzgâr sustu."],[30.2,"Nehirler dondu."],[31.3,"Gökyüzü karardı."],[32.5,"Ve o günden sonra buz, yalnızca toprağı değil, zamanı da hapsetmeye başladı."],[38.0,"Şimdi, donmuş zirvelerin altında bir şey bekliyor."],[41.6,"Ne tamamen ölü,"],[42.8,"ne de gerçekten uyanık."],[44.4,"Bilge, orada ne saklandığını biliyor."],[47.1,"Ve bildiği şeyden korkuyor."],[49.1,"Senin yolun ise tam oraya çıkıyor."],[51.5,"Buzun altında gömülü olan gerçeği bul."],[54.3,"Çünkü bu diyarın kaderi, o dağın içinde saklı."]]
 };
