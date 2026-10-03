@@ -2220,7 +2220,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.1";
+const SURUM_MORDOR = "v 1.1.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -9072,6 +9072,19 @@ function blokTasi(i, yon){
   bloklariCiz();
 }
 
+// otomatik bulmanin her kenar icin neye baktigini gosterir
+function kenarRaporuYaz(kenarlar){
+  const not = document.getElementById("resmiNot"); if(!not || !kenarlar?.rapor) return;
+  const r = kenarlar.rapor.slice().sort((a,b)=>a.i - b.i);
+  const d = document.createElement("details");
+  d.style.cssText = "margin-top:8px;font-size:11.5px";
+  d.innerHTML = `<summary style="cursor:pointer;color:var(--gold)">Kenar raporu (${r.length} kenar · ${esc(kenarlar.osmDurum||"")})</summary>
+    <div style="margin-top:6px;display:grid;gap:3px">${r.map(x=>`
+      <div style="display:flex;gap:8px;${x.yol ? "color:var(--gold);font-weight:600" : "opacity:.75"}">
+        <span style="width:84px">${x.yon}</span><span class="mono" style="width:54px;text-align:right">${nf2(x.uz)} m</span>
+        <span style="flex:1">${esc(x.metin)}</span></div>`).join("")}</div>`;
+  not.appendChild(d);
+}
 async function resmiYolBul(){
   const not = document.getElementById("resmiNot");
   if(!PARCA.p) return;
@@ -9079,7 +9092,7 @@ async function resmiYolBul(){
   yaz("Komşu parseller sorgulanıyor…");
   try{
     const kenarlar = await resmiYolKenarlari(PARCA.p, yaz);
-    if(!kenarlar.length){ yaz("Yola cepheli kenar bulunamadı. Elle seçebilirsin."); return; }
+    if(!kenarlar.length){ yaz("Yola cepheli kenar bulunamadı. Elle seçebilirsin."); kenarRaporuYaz(kenarlar); return; }
 
     // kenari alt/ust/sol/sag'a cevir
     const M = PARCA.geometri;
@@ -9092,14 +9105,25 @@ async function resmiYolBul(){
     const aMin = Math.min(...izdA), aMax = Math.max(...izdA);
     const dMin = Math.min(...izdD), dMax = Math.max(...izdD);
 
-    // her aday kenari bulundugu tarafa ata, ayni taraftaki parcalari topla
-    const tarafOf = k3 => { const i = k3.i, j = (i+1) % M.length;
-      const oa = (izdA[i]+izdA[j])/2, od = (izdD[i]+izdD[j])/2;
-      return [["alt", oa - aMin], ["ust", aMax - oa], ["sol", od - dMin], ["sag", dMax - od]].sort((x,y)=>x[1]-y[1])[0][0]; };
+    // her aday kenari, DISARI baktigi yone gore tarafa ata (yolu ciken motorla ayni olcu).
+    // capraz kenar iki tarafa birden bakabilir: payini bakis oranina gore dagit.
+    const isaret = alanHesap(M) > 0 ? 1 : -1;
+    const tarafYon = { alt:[-ana[0],-ana[1]], ust:ana, sol:[-dik[0],-dik[1]], sag:dik };
     const taraflar = {};
-    kenarlar.forEach(k3=>{ const t = tarafOf(k3); const T = taraflar[t] || (taraflar[t] = { taraf:t, guc:0, uzunluk:0, nitelik:k3.nitelik });
-      if(k3.guc > T.guc){ T.guc = k3.guc; T.nitelik = k3.nitelik; } T.uzunluk += k3.uzunluk; });
+    kenarlar.forEach(k3=>{
+      const i = k3.i, j = (i+1) % M.length;
+      const ex = M[j][0]-M[i][0], ey = M[j][1]-M[i][1], L = Math.hypot(ex,ey) || 1;
+      const n = isaret > 0 ? [ey/L, -ex/L] : [-ey/L, ex/L];
+      Object.entries(tarafYon).forEach(([t, v])=>{
+        const bakis = n[0]*v[0] + n[1]*v[1];
+        if(bakis <= .3) return;                          // capYerlesim de bu esigi kullaniyor
+        const T = taraflar[t] || (taraflar[t] = { taraf:t, guc:0, uzunluk:0, nitelik:k3.nitelik });
+        if(k3.guc > T.guc){ T.guc = k3.guc; T.nitelik = k3.nitelik; }
+        T.uzunluk += k3.uzunluk * bakis;
+      });
+    });
     const k = Object.values(taraflar).sort((a,b)=>(b.guc - a.guc) || (b.uzunluk - a.uzunluk))[0];
+    if(!k){ yaz("Yola cepheli kenar bulunamadı. Elle seçebilirsin."); return; }
     k.uzunluk = Math.round(k.uzunluk*10)/10;
     PARCA.resmiKenar = k.taraf;
     if(!PARCA.resmiGenislik) PARCA.resmiGenislik = 7;
@@ -9107,10 +9131,14 @@ async function resmiYolBul(){
     const g2 = document.getElementById("prg"), k2 = document.getElementById("prk");
     if(g2) g2.value = String(PARCA.resmiGenislik);
     if(k2) k2.value = PARCA.resmiKenar;
-    const ad = { alt:"alt", ust:"üst", sol:"sol", sag:"sağ" }[PARCA.resmiKenar];
+    kenarPusulaYaz();
+    const secili = k2 && k2.options[k2.selectedIndex];
+    const ad = secili ? secili.textContent.replace(/ kenar/, "").toLocaleLowerCase("tr").replace(" · ", " (") + ")"
+                      : { alt:"alt", ust:"üst", sol:"sol", sag:"sağ" }[PARCA.resmiKenar];
     yaz(k.guc >= 2
       ? `Resmî yol ${ad} kenarda bulundu · ${k.nitelik} · ${k.uzunluk} m cephe. Genişliği değiştirebilirsin.`
       : `Tahmin: resmî yol ${ad} kenarda olabilir (o kenarda kayıtlı komşu yok, kesin değil). Yanlışsa aşağıdan elle seç.`);
+    kenarRaporuYaz(kenarlar);
     ozetCiz();
   }catch(e){ yaz("Sorgu başarısız: " + (e.message||e)); }
 }
@@ -11046,7 +11074,7 @@ async function kenarKomsusu(halka, i, disaMetre, oran, kendi){
     }catch(e){
       const m = String(e && e.message || e);
       if(/Kaynak (404|204)|bulunamad|not found/i.test(m)) return KOMSU_YOK;   // gercekten bos
-      await new Promise(r=>setTimeout(r, 900 * (deneme+1)));             // mesgul / zaman asimi
+      await new Promise(r=>setTimeout(r, 500 * (deneme+1)));             // mesgul / zaman asimi
     }
   }
   return KOMSU_BILINMIYOR;
@@ -11095,10 +11123,14 @@ async function osmCevreCizgileri(halka){
   const s2 = Math.min(...lats) - pay/ky, n2 = Math.max(...lats) + pay/ky, w2 = Math.min(...lons) - pay/kx, e2 = Math.max(...lons) + pay/kx;
   const bb = `${s2.toFixed(6)},${w2.toFixed(6)},${n2.toFixed(6)},${e2.toFixed(6)}`;
   const q = `[out:json][timeout:20];(way[highway](${bb});way[waterway](${bb}););out geom;`;
-  for(const sunucu of OVER_SUNUCU){
-    try{
-      const r = await zamanAsimi(tkgm(sunucu + encodeURIComponent(q)), 25000);
-      if(!r || !Array.isArray(r.elements)) continue;
+  let r = null;
+  try{
+    r = await Promise.any(OVER_SUNUCU.map(sunucu =>
+      zamanAsimi(tkgm(sunucu + encodeURIComponent(q)), 12000)
+        .then(c => { if(!c || !Array.isArray(c.elements)) throw new Error("bos"); return c; })));
+  }catch(e){ return null; }
+  {
+    {
       const yollar = [], sular = [];
       r.elements.forEach(el=>{
         if(!el.geometry || el.geometry.length < 2) return;
@@ -11108,9 +11140,8 @@ async function osmCevreCizgileri(halka){
         else if(t.waterway) sular.push(pts);
       });
       return { yollar, sular };
-    }catch(e){}
+    }
   }
-  return null;
 }
 // bir kenarin disinda, ona paralel ve yakin bir cizgi var mi (3 noktanin en az 2'si)
 function kenarCizgiyeYakin(M, i, isaret, cizgiler, enFazla){
@@ -11147,21 +11178,41 @@ async function resmiYolKenarlari(p, bildir){
   const isaret = halkaIsaret(M);
   if(bildir) bildir("Haritadaki yollar aranıyor…");
   const osm = await osmCevreCizgileri(halka).catch(()=>null);
+  const PUSULA = ["kuzey","kuzeydoğu","doğu","güneydoğu","güney","güneybatı","batı","kuzeybatı"];
+  const kenarYonu = i => { const j = (i+1) % M.length, ex = M[j][0]-M[i][0], ey = M[j][1]-M[i][1], L = Math.hypot(ex,ey) || 1;
+    const n = isaret > 0 ? [ey/L, -ex/L] : [-ey/L, ex/L];
+    return PUSULA[Math.round(((Math.atan2(n[0], n[1])*180/Math.PI + 360) % 360)/45) % 8]; };
+  const rapor = [];
+  const raporla = (k, metin, yol) => rapor.push({ i:k.i, yon:kenarYonu(k.i), uz:k.uz, metin, yol });
+  sonuc.rapor = rapor;
+  sonuc.osmDurum = osm ? `haritada ${osm.yollar.length} yol çizgisi bulundu` : "haritaya ulaşılamadı";
+  const kenarlar = [];
   for(let i=0;i<halka.length;i++){
     const j = (i+1) % halka.length;
     const uzunluk = Math.hypot(M[j][0]-M[i][0], M[j][1]-M[i][1]);
-    if(uzunluk < 6) continue;                   // cok kisa kenari sorma
-    const uz = Math.round(uzunluk*10)/10;
-    // en guclu kanit: haritada kenara paralel, disarida, yakin bir yol cizgisi
-    const osmYol = osm && kenarCizgiyeYakin(M, i, isaret, osm.yollar, 22);
-    if(osmYol){ sonuc.push({ i, uzunluk:uz, nitelik:`haritada yol var (${osmYol.mesafe} m)`, guc:4 }); continue; }
-    const osmSu = osm && kenarCizgiyeYakin(M, i, isaret, osm.sular, 18);
-    if(bildir) bildir(`Komşu parseller sorgulanıyor… ${i+1}/${halka.length}`);
-    const d = await kenarDurumu(halka, i, kendi);
-    if(d.yol && !osmSu && !d.su) sonuc.push({ i, uzunluk:uz, nitelik: d.sebep,
-      guc: d.sebep === "komşu kaydı yol" ? 3 : d.sebep === "arada boşluk var, karşıda parsel" ? 2 : 1 });
-    await new Promise(r=>setTimeout(r, 150));
+    if(uzunluk >= 6) kenarlar.push({ i, uz: Math.round(uzunluk*10)/10 });   // cok kisa kenari sorma
   }
+  // en guclu kanit: haritada kenara paralel, disarida, yakin bir yol cizgisi
+  if(osm) kenarlar.forEach(k=>{ const y = kenarCizgiyeYakin(M, k.i, isaret, osm.yollar, 22);
+    if(y){ sonuc.push({ i:k.i, uzunluk:k.uz, nitelik:`haritada yol var (${y.mesafe} m)`, guc:4 }); raporla(k, `haritada yol çizgisi ${y.mesafe} m dışarıda`, true); }
+    else raporla(k, "haritada yakınında yol yok", false); });
+  if(sonuc.length) return sonuc.sort((a,b)=>b.uzunluk - a.uzunluk);      // haritada bulundu, TKGM'ye gerek yok
+  rapor.length = 0;
+  // haritada yoksa komsu parselleri sor: ayni anda 3 kenar
+  const sorulacak = kenarlar.filter(k=>{ const su = osm && kenarCizgiyeYakin(M, k.i, isaret, osm.sular, 18);
+    if(su) raporla(k, "haritada dere/kanal var", false); return !su; });
+  let biten = 0, sira = 0;
+  const isci = async () => {
+    while(sira < sorulacak.length){
+      const k = sorulacak[sira++];
+      const d = await kenarDurumu(halka, k.i, kendi);
+      raporla(k, d.sebep, d.yol && !d.su);
+      biten++; if(bildir) bildir(`Komşu parseller sorgulanıyor… ${biten}/${sorulacak.length}`);
+      if(d.yol && !d.su) sonuc.push({ i:k.i, uzunluk:k.uz, nitelik: d.sebep,
+        guc: d.sebep === "komşu kaydı yol" ? 3 : d.sebep === "arada boşluk var, karşıda parsel" ? 2 : 1 });
+    }
+  };
+  await Promise.all([isci(), isci(), isci()]);
   // once kanitin gucu (kayitli yol > bosluk > kayit yok), esitse uzun kenar
   return sonuc.sort((a,b)=>(b.guc - a.guc) || (b.uzunluk - a.uzunluk));
 }
