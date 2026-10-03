@@ -2220,7 +2220,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.0.3";
+const SURUM_MORDOR = "v 1.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -8810,6 +8810,7 @@ function parcaAyarHtml(){
     <div class="acts" style="margin-bottom:14px">
       <button id="blokTam">+ Tam Genişlik Blok</button>
       <button id="blokYol">+ Yol İki Yanlı Blok</button>
+      <button id="blokKol">+ Tek Yanlı Kol Blok</button>
     </div>
     <div class="row2">
       <div class="field"><label>Yol adı</label><select id="pyoltip">
@@ -8841,9 +8842,10 @@ function parcaAyarHtml(){
           <option value="alt">Alt kenar</option><option value="ust">Üst kenar</option>
           <option value="sol">Sol kenar</option><option value="sag">Sağ kenar</option></select></div>
       </div>
-      <div class="ipuc" id="resmiNot" style="margin:0">Otomatik bul dersen dört kenarın komşusunu sorgularım:
-        bitişik parsel varsa yol yoktur, arada boşluk varsa orası resmî yoldur. Resmî yol parselin dışında
-        çizilir, alandan düşülmez.</div>
+      <div class="ipuc" id="resmiNot" style="margin:0">Otomatik bul dersen önce haritadaki gerçek yollara bakarım,
+        sonra her kenarın komşusunu üç noktadan sorgularım: bitişik parsel varsa yol yoktur, arada boşluk varsa
+        orası resmî yoldur, dere ve kanallar yol sayılmaz. Kenarların yanında pusula yönü yazar.
+        Resmî yol parselin dışında çizilir, alandan düşülmez.</div>
     </div>
     <div class="card">
       <div class="bolum"><span class="rz yesil">${svg("cetvel")}</span><b>Parsel Yolu</b></div>
@@ -8860,7 +8862,8 @@ function parcaAyarHtml(){
 function parcaKur(toplam, mevcut){
   PARCA.toplam = toplam;
   PARCA.bloklar = (mevcut && mevcut.length) ? mevcut.map(b=>({
-    tip: b.tip === "yol" ? "yol" : "tam",
+    tip: b.tip === "yol" ? "yol" : b.tip === "kol" ? "kol" : "tam",
+    yolTaraf: b.yolTaraf === "sonra" ? "sonra" : "once",
     parcalar: (b.parcalar||[]).map(o=>({ id:++PSAYAC, no:o.no||"", m2:+o.m2||1, renk:o.renk||"#C6D9A7" })),
     sol: (b.sol||[]).map(o=>({ id:++PSAYAC, no:o.no||"", m2:+o.m2||1, renk:o.renk||"#C6D9A7" })),
     sag: (b.sag||[]).map(o=>({ id:++PSAYAC, no:o.no||"", m2:+o.m2||1, renk:o.renk||"#C6D9A7" }))
@@ -8884,6 +8887,14 @@ function parcaKur(toplam, mevcut){
       sol:[yeniParca(pay), yeniParca(pay)], sag:[yeniParca(pay), yeniParca(pay)] });
     numaralariTazele(); bloklariCiz();
   };
+  if(g("blokKol")) g("blokKol").onclick = () => {
+    // one ve arkaya iki parca: yol sadece bir yandan gecer
+    const toplam = isFinite(PARCA.toplam) && PARCA.toplam > 0 ? PARCA.toplam : 1000;
+    const kullanilan = PARCA.bloklar.flatMap(blokParcalari).reduce((t,o)=>t + (isFinite(+o.m2) ? +o.m2 : 0), 0);
+    const pay = Math.max(50, Math.round(Math.max(200, toplam - kullanilan)/3));
+    PARCA.bloklar.push({ tip:"kol", yolTaraf:"once", parcalar:[yeniParca(pay), yeniParca(pay)], sol:[], sag:[] });
+    numaralariTazele(); bloklariCiz();
+  };
   const yg = g("pyg"), yk2 = g("pyk");
   if(yg) yg.oninput = () => { PARCA.enAzYol = Math.max(1, Math.min(12, sayiCoz(yg.value) || 3)); ozetCiz(); };
   if(yk2) yk2.oninput = () => { PARCA.yolKaydir = (+yk2.value)/100; ozetCiz(); };
@@ -8892,18 +8903,37 @@ function parcaKur(toplam, mevcut){
   if(rg){ rg.value = String(PARCA.resmiGenislik || 0);
     rg.onchange = () => { PARCA.resmiGenislik = +rg.value; ozetCiz(); }; }
   if(rk){ rk.value = PARCA.resmiKenar || "alt";
-    rk.onchange = () => { PARCA.resmiKenar = rk.value; ozetCiz(); }; }
+    rk.onchange = () => { PARCA.resmiKenar = rk.value; ozetCiz(); };
+    kenarPusulaYaz(); }
 
   const ol = g("polcu"), yt = g("pyoltip"), yk = g("pyolkonum"), tr = g("pters");
   if(ol){ ol.value = PARCA.olculer === false ? "0" : "1";
     ol.onchange = () => { PARCA.olculer = ol.value === "1"; ozetCiz(); }; }
   if(yt){ yt.value = PARCA.yolTipi || "parsel"; yt.onchange = () => { PARCA.yolTipi = yt.value; ozetCiz(); }; }
   if(yk){ yk.value = PARCA.yolKonum || "oto"; yk.onchange = () => { PARCA.yolKonum = yk.value; ozetCiz(); }; }
-  if(tr){ tr.value = PARCA.ters ? "1" : "0"; tr.onchange = () => { PARCA.ters = tr.value === "1"; ozetCiz(); }; }
+  if(tr){ tr.value = PARCA.ters ? "1" : "0"; tr.onchange = () => { PARCA.ters = tr.value === "1"; kenarPusulaYaz(); ozetCiz(); }; }
 
   bloklariCiz();
 }
 
+// kenar secenekleri parselin kendi eksenine gore; yanina pusula yonunu yaz ("Sag kenar · guneydogu")
+function kenarPusulaYaz(){
+  const rk = document.getElementById("prk"), M = PARCA.geometri;
+  if(!rk || !M) return;
+  try{
+    let ana = anaYon(M); if(PARCA.ters) ana = [-ana[0], -ana[1]];
+    let dik = [-ana[1], ana[0]];
+    const yatay = Math.abs(dik[0]) >= Math.abs(dik[1]);
+    if((yatay && dik[0] < 0) || (!yatay && dik[1] < 0)) dik = [-dik[0], -dik[1]];
+    const yon = { alt:[-ana[0],-ana[1]], ust:ana, sol:[-dik[0],-dik[1]], sag:dik };
+    const ADLAR = ["kuzey","kuzeydoğu","doğu","güneydoğu","güney","güneybatı","batı","kuzeybatı"];
+    const tabanAd = { alt:"Alt", ust:"Üst", sol:"Sol", sag:"Sağ" };
+    [...rk.options].forEach(o=>{ const v = yon[o.value]; if(!v) return;
+      const aci = (Math.atan2(v[0], v[1]) * 180/Math.PI + 360) % 360;   // x dogu, y kuzey
+      o.textContent = `${tabanAd[o.value]} kenar · ${ADLAR[Math.round(aci/45) % 8]}`; });
+  }catch(e){}
+}
+function kolTarafSec(i, v){ const b = PARCA.bloklar[i]; if(!b) return; b.yolTaraf = v === "sonra" ? "sonra" : "once"; ozetCiz(); }
 function blokParcalari(b){ return b.tip === "yol" ? b.sol.concat(b.sag) : b.parcalar; }
 
 // parselin yonune gore iki yanin adi: dikey parselde sol/sag, yatay parselde alt/ust
@@ -8948,7 +8978,7 @@ function bloklariCiz(){
   if(!kutu) return;
   kutu.innerHTML = PARCA.bloklar.map((b,i)=>{
     const bas = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <span class="pill ${b.tip==="yol"?"gold":"on"}">${i+1}. blok · ${b.tip==="yol"?"yol iki yanlı":"tam genişlik"}</span>
+        <span class="pill ${b.tip==="tam"?"on":"gold"}">${i+1}. blok · ${b.tip==="yol"?"yol iki yanlı":b.tip==="kol"?"tek yanlı kol":"tam genişlik"}</span>
         <span style="flex:1"></span>
         ${i>0?`<button class="pill sade" onclick="blokTasi(${i},-1)">↑</button>`:""}
         ${i<PARCA.bloklar.length-1?`<button class="pill sade" onclick="blokTasi(${i},1)">↓</button>`:""}
@@ -8957,6 +8987,22 @@ function bloklariCiz(){
         <span style="width:52px">NO</span><span style="flex:1">METREKARE</span>
         <span style="width:44px;text-align:center">RENK</span><span style="width:32px"></span></div>`;
 
+    if(b.tip === "kol"){
+      const onceAd = i > 0 ? `${i}. blok tarafında` : "parselin başında";
+      const sonraAd = i < PARCA.bloklar.length-1 ? `${i+2}. blok tarafında` : "parselin sonunda";
+      return `<div class="card" style="padding:12px">${bas}
+        <div class="field" style="margin:0 0 10px"><label>Erişim yolu hangi yanda</label>
+          <select onchange="kolTarafSec(${i}, this.value)">
+            <option value="once" ${b.yolTaraf !== "sonra" ? "selected" : ""}>${onceAd}</option>
+            <option value="sonra" ${b.yolTaraf === "sonra" ? "selected" : ""}>${sonraAd}</option>
+          </select></div>
+        ${baslik}
+        ${b.parcalar.map((o,j)=>parcaSatirHtml(o,i,"parcalar",j)).join("")}
+        <button class="pill sade" onclick="parcaEkle(${i},'parcalar')">+ parça</button>
+        <div class="ipuc" style="margin:8px 2px 0">İlk parça resmî yola bakar, sonrakiler arkasına dizilir.
+          Erişim yolu sadece seçtiğin yandan geçer; öbür yanda ve parçaların arasında yol olmaz.</div>
+      </div>`;
+    }
     if(b.tip === "tam"){
       return `<div class="card" style="padding:12px">${bas}${baslik}
         ${b.parcalar.map((o,j)=>parcaSatirHtml(o,i,"parcalar",j)).join("")}
@@ -9131,7 +9177,8 @@ function parcaCfg(){
     bloklar: PARCA.bloklar.map(b=> b.tip === "yol"
       ? { tip:"yol", sol:b.sol.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })),
                      sag:b.sag.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })) }
-      : { tip:"tam", parcalar:b.parcalar.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })) }),
+      : { tip: b.tip === "kol" ? "kol" : "tam", yolTaraf: b.yolTaraf,
+          parcalar:b.parcalar.map(o=>({ no:o.no||"", m2:+o.m2||1, renk:o.renk })) }),
     parcalar: cfgParcalari({ bloklar: PARCA.bloklar.map(b=> b.tip === "yol"
       ? { tip:"yol", sol:b.sol, sag:b.sag } : { tip:"tam", parcalar:b.parcalar }) }) };
 }
@@ -10972,26 +11019,30 @@ function yolAyir(pts, genislik){
 /* ---- resmi yol tespiti: komsu parsellerin niteligine bakar ---- */
 
 // bir kenarin disina cikip oradaki parseli TKGM'ye sorar
-async function kenarKomsusu(halka, i, disaMetre){
+// halka yonunden disari normali bulur (girintili parselde de dogru), kenarin istenen noktasindan cikar
+function halkaIsaret(halka){
+  let a = 0; for(let i=0;i<halka.length;i++){ const j = (i+1)%halka.length; a += halka[i][0]*halka[j][1] - halka[j][0]*halka[i][1]; }
+  return a > 0 ? 1 : -1;
+}
+const parselKimlik = o => o ? [o.adaNo ?? o.ada ?? "", o.parselNo ?? o.parsel ?? "", o.mahalleId ?? o.mahalleAd ?? ""].join("|") : "";
+async function kenarKomsusu(halka, i, disaMetre, oran, kendi){
   const j = (i+1) % halka.length;
-  const a = halka[i], b = halka[j];
-  const ortaLon = (a[0]+b[0])/2, ortaLat = (a[1]+b[1])/2;
-  // kenarin disa bakan normali
-  const merkezLon = halka.reduce((t,k)=>t+k[0],0)/halka.length;
-  const merkezLat = halka.reduce((t,k)=>t+k[1],0)/halka.length;
+  const a = halka[i], b = halka[j], t = oran == null ? .5 : oran;
+  const ortaLon = a[0] + (b[0]-a[0])*t, ortaLat = a[1] + (b[1]-a[1])*t;
   const kx = Math.cos(ortaLat*Math.PI/180)*111320, ky = 110540;
   const dx = (b[0]-a[0])*kx, dy = (b[1]-a[1])*ky;
   const u = Math.hypot(dx,dy) || 1;
-  let nx = -dy/u, ny = dx/u;
-  const mx = (merkezLon-ortaLon)*kx, my = (merkezLat-ortaLat)*ky;
-  if(nx*mx + ny*my > 0){ nx = -nx; ny = -ny; }   // merkezin tersi = disari
+  const isaret = halkaIsaret(halka);
+  const nx = isaret > 0 ? dy/u : -dy/u, ny = isaret > 0 ? -dx/u : dx/u;   // disari
   const d = disaMetre || 12;
   const lon = ortaLon + (nx*d)/kx, lat = ortaLat + (ny*d)/ky;
   // "orada parsel yok" ile "sorgu basarisiz" ayni sey degil: hata olursa iki kez daha dene
   for(let deneme=0; deneme<3; deneme++){
     try{
       const f = await zamanAsimi(tkgm(`${TB3}/parsel/${lat.toFixed(7)}/${lon.toFixed(7)}`), 15000);
-      return f?.properties ? f.properties : KOMSU_YOK;
+      if(!f?.properties) return KOMSU_YOK;
+      if(kendi && parselKimlik(f.properties) === kendi) return KOMSU_KENDI;   // koordinat kaymasi: hala kendi icinde
+      return f.properties;
     }catch(e){
       const m = String(e && e.message || e);
       if(/Kaynak (404|204)|bulunamad|not found/i.test(m)) return KOMSU_YOK;   // gercekten bos
@@ -11000,21 +11051,87 @@ async function kenarKomsusu(halka, i, disaMetre){
   }
   return KOMSU_BILINMIYOR;
 }
-const KOMSU_YOK = { __yok:true }, KOMSU_BILINMIYOR = { __hata:true };
+const KOMSU_YOK = { __yok:true }, KOMSU_BILINMIYOR = { __hata:true }, KOMSU_KENDI = { __kendi:true };
+const SU_NITELIK = /dere|kanal|ark\b|çay\b|nehir|ırmak|göl|gölet|su yolu|sulama/;
 
 // Bir kenarin disinda ne var?  bitisik komsu mu, bosluk (yol) mu
 //   3 m disarida parsel varsa  -> komsu bitisik, yol yok
 //   3 m'de bos, 12 m'de parsel -> arada bosluk var, burasi RESMI YOL
-async function kenarDurumu(halka, i){
-  const yakin = await kenarKomsusu(halka, i, 3);
+async function kenarDurumu(halka, i, kendi){
+  const nit = o => String(o?.nitelik || "").toLocaleLowerCase("tr");
+  // orta nokta, 3 m disari; kendi parselimize dusersek 6 m dene
+  let yakin = await kenarKomsusu(halka, i, 3, .5, kendi);
+  if(yakin.__kendi) yakin = await kenarKomsusu(halka, i, 6, .5, kendi);
   if(yakin.__hata) return { yol:false, sebep:"TKGM cevap vermedi" };       // bilinmiyorsa yol sayma
-  const nitelik = String(yakin?.nitelik || "").toLocaleLowerCase("tr");
-  if(!yakin.__yok && /yol|cadde|sokak|karayol/.test(nitelik)) return { yol:true, sebep:"komşu kaydı yol" };
-  if(!yakin.__yok) return { yol:false, sebep:"bitişik komşu parsel" };
-  const uzak = await kenarKomsusu(halka, i, 12);
+  if(!yakin.__yok && !yakin.__kendi){
+    if(/yol|cadde|sokak|karayol/.test(nit(yakin))) return { yol:true, sebep:"komşu kaydı yol" };
+    if(SU_NITELIK.test(nit(yakin))) return { yol:false, su:true, sebep:"komşu dere/kanal" };
+    return { yol:false, sebep:"bitişik komşu parsel" };
+  }
+  // orta bos gorundu: kenarin ceyreklerinden de bak, cogunluk karar versin
+  let bos = 1, dolu = 0;
+  for(const t of [.2, .8]){
+    const k = await kenarKomsusu(halka, i, 3, t, kendi);
+    if(k.__hata) continue;
+    if(k.__yok || k.__kendi) bos++; else if(/yol|cadde|sokak|karayol/.test(nit(k))) bos++; else dolu++;
+  }
+  if(dolu > bos) return { yol:false, sebep:"kenarın çoğu komşuya bitişik" };
+  const uzak = await kenarKomsusu(halka, i, 12, .5, kendi);
   if(uzak.__hata) return { yol:true, sebep:"kayıtlı komşu yok" };
-  if(!uzak.__yok) return { yol:true, sebep:"arada boşluk var, karşıda parsel" };
+  if(!uzak.__yok && !uzak.__kendi){
+    if(SU_NITELIK.test(nit(uzak))) return { yol:false, su:true, sebep:"karşıda dere/kanal" };
+    return { yol:true, sebep:"arada boşluk var, karşıda parsel" };
+  }
   return { yol:true, sebep:"kayıtlı komşu yok" };
+}
+
+// OpenStreetMap: parselin cevresindeki gercek yol ve su cizgileri (metre, parselle ayni orijin)
+async function osmCevreCizgileri(halka){
+  const lat0 = halka.reduce((t,k)=>t+k[1],0)/halka.length;
+  const kx = Math.cos(lat0*Math.PI/180) * 111320, ky = 110540;
+  const x0 = halka[0][0], y0 = halka[0][1];
+  const lons = halka.map(k=>k[0]), lats = halka.map(k=>k[1]);
+  const pay = 60;
+  const s2 = Math.min(...lats) - pay/ky, n2 = Math.max(...lats) + pay/ky, w2 = Math.min(...lons) - pay/kx, e2 = Math.max(...lons) + pay/kx;
+  const bb = `${s2.toFixed(6)},${w2.toFixed(6)},${n2.toFixed(6)},${e2.toFixed(6)}`;
+  const q = `[out:json][timeout:20];(way[highway](${bb});way[waterway](${bb}););out geom;`;
+  for(const sunucu of OVER_SUNUCU){
+    try{
+      const r = await zamanAsimi(tkgm(sunucu + encodeURIComponent(q)), 25000);
+      if(!r || !Array.isArray(r.elements)) continue;
+      const yollar = [], sular = [];
+      r.elements.forEach(el=>{
+        if(!el.geometry || el.geometry.length < 2) return;
+        const pts = el.geometry.map(g=>[(g.lon-x0)*kx, (g.lat-y0)*ky]);
+        const t = el.tags || {};
+        if(t.highway && !/^(footway|path|steps|cycleway|bridleway|corridor|elevator|proposed|construction)$/.test(t.highway)) yollar.push(pts);
+        else if(t.waterway) sular.push(pts);
+      });
+      return { yollar, sular };
+    }catch(e){}
+  }
+  return null;
+}
+// bir kenarin disinda, ona paralel ve yakin bir cizgi var mi (3 noktanin en az 2'si)
+function kenarCizgiyeYakin(M, i, isaret, cizgiler, enFazla){
+  const j = (i+1) % M.length, a = M[i], b = M[j];
+  const ex = b[0]-a[0], ey = b[1]-a[1], L = Math.hypot(ex,ey) || 1;
+  const nx = isaret > 0 ? ey/L : -ey/L, ny = isaret > 0 ? -ex/L : ex/L;
+  let tutan = 0, toplamU = 0;
+  for(const t of [.2, .5, .8]){
+    const px = a[0] + ex*t, py = a[1] + ey*t;
+    let enIyi = Infinity;
+    cizgiler.forEach(c=>{ for(let k=0;k<c.length-1;k++){
+      const sx = c[k+1][0]-c[k][0], sy = c[k+1][1]-c[k][1], sL2 = sx*sx + sy*sy || 1;
+      let u2 = ((px-c[k][0])*sx + (py-c[k][1])*sy)/sL2; u2 = Math.max(0, Math.min(1, u2));
+      const qx = c[k][0] + sx*u2 - px, qy = c[k][1] + sy*u2 - py, d = Math.hypot(qx, qy);
+      if(qx*nx + qy*ny < -1.5) continue;                                  // parselin icinde kalan cizgi
+      const paralel = Math.abs((sx*ex + sy*ey) / (Math.sqrt(sL2)*L));
+      if(paralel < .55) continue;
+      if(d < enIyi) enIyi = d; } });
+    if(enIyi <= enFazla){ tutan++; toplamU += enIyi; }
+  }
+  return tutan >= 2 ? { mesafe: Math.round(toplamU/tutan) } : null;
 }
 
 // hangi kenarlar resmi yola bakiyor
@@ -11026,13 +11143,22 @@ async function resmiYolKenarlari(p, bildir){
 
   const M = metreye(halka);
   const sonuc = [];
+  const kendi = parselKimlik(p.geojson.properties || p);
+  const isaret = halkaIsaret(M);
+  if(bildir) bildir("Haritadaki yollar aranıyor…");
+  const osm = await osmCevreCizgileri(halka).catch(()=>null);
   for(let i=0;i<halka.length;i++){
     const j = (i+1) % halka.length;
     const uzunluk = Math.hypot(M[j][0]-M[i][0], M[j][1]-M[i][1]);
     if(uzunluk < 6) continue;                   // cok kisa kenari sorma
+    const uz = Math.round(uzunluk*10)/10;
+    // en guclu kanit: haritada kenara paralel, disarida, yakin bir yol cizgisi
+    const osmYol = osm && kenarCizgiyeYakin(M, i, isaret, osm.yollar, 22);
+    if(osmYol){ sonuc.push({ i, uzunluk:uz, nitelik:`haritada yol var (${osmYol.mesafe} m)`, guc:4 }); continue; }
+    const osmSu = osm && kenarCizgiyeYakin(M, i, isaret, osm.sular, 18);
     if(bildir) bildir(`Komşu parseller sorgulanıyor… ${i+1}/${halka.length}`);
-    const d = await kenarDurumu(halka, i);
-    if(d.yol) sonuc.push({ i, uzunluk: Math.round(uzunluk*10)/10, nitelik: d.sebep,
+    const d = await kenarDurumu(halka, i, kendi);
+    if(d.yol && !osmSu && !d.su) sonuc.push({ i, uzunluk:uz, nitelik: d.sebep,
       guc: d.sebep === "komşu kaydı yol" ? 3 : d.sebep === "arada boşluk var, karşıda parsel" ? 2 : 1 });
     await new Promise(r=>setTimeout(r, 150));
   }
@@ -11052,11 +11178,12 @@ function capYerlesim(M, cfg){
   if((yatayMi && dik[0] < 0) || (!yatayMi && dik[1] < 0)) dik = [-dik[0], -dik[1]];
 
   const bloklar = (cfg.bloklar||[]).map(b2=>({
-    tip: b2.tip === "yol" ? "yol" : "tam",
+    tip: b2.tip === "yol" ? "yol" : b2.tip === "kol" ? "kol" : "tam",
+    yolTaraf: b2.yolTaraf === "sonra" ? "sonra" : "once",
     parcalar: (b2.parcalar||[]).map(o=>({ ...o, m2: Math.max(0.01, +o.m2 || 1) })),
     sol: (b2.sol||[]).map(o=>({ ...o, m2: Math.max(0.01, +o.m2 || 1) })),
     sag: (b2.sag||[]).map(o=>({ ...o, m2: Math.max(0.01, +o.m2 || 1) }))
-  })).filter(b2=> b2.tip === "tam" ? b2.parcalar.length : (b2.sol.length + b2.sag.length));
+  })).filter(b2=> b2.tip === "yol" ? (b2.sol.length + b2.sag.length) : b2.parcalar.length);
 
   const bos = { parcalar:[], yol:[], resmiYol:null, ana, dik,
                 yolGenislik:0, yolAlan:0, resmiAlan:0, kalanAlan:0, kucultme:0 };
@@ -11160,8 +11287,24 @@ function capYerlesim(M, cfg){
 
   // bloklar her zaman aMin'den yukari dizilir; resmi yol hangi uctaysa
   // kenar yolu o uctan en yakin kolonlu bloga kadar uzanir
-  const ilkYol = bloklar.findIndex(b2=>b2.tip === "yol");
-  const sonYol = bloklar.map(b2=>b2.tip).lastIndexOf("yol");
+  const ilkYol = bloklar.findIndex(b2=>b2.tip === "yol" || b2.tip === "kol");
+  const sonYol = bloklar.map(b2=>b2.tip === "kol" ? "yol" : b2.tip).lastIndexOf("yol");
+  // tek yanli kol: resmi yol uzun kenardaysa (sol/sag) serit blogun bir ucunda, enlemesine;
+  // kisa uctaysa (alt/ust) serit blogun bir yaninda, boylamasina uzanir
+  const yandanYol = (rKenar === "sol" || rKenar === "sag");
+  const kolSeridi = (b2, a0, a1) => {
+    if(yandanYol) return b2.yolTaraf === "once" ? dilim(a0, Math.min(a1, a0 + w)) : dilim(Math.max(a0, a1 - w), a1);
+    return b2.yolTaraf === "once" ? kutu(a0, a1, dMin, dMin + w) : kutu(a0, a1, dMax - w, dMax);
+  };
+  const kolParcaAlani = (b2, p, a0, a1) => {
+    if(yandanYol) return b2.yolTaraf === "once" ? kA(p, a0 + w, false) : kA(p, a1 - w, true);
+    return b2.yolTaraf === "once" ? kD(p, dMin + w, false) : kD(p, dMax - w, true);
+  };
+  // parcalar resmi yoldan geriye dogru dizilir: ilk parca yola bakar
+  const kolYon = rKenar === "sol" ? dik : rKenar === "sag" ? [-dik[0], -dik[1]]
+               : rKenar === "ust" ? [-ana[0], -ana[1]] : ana;
+  // kol bloguna komsu bloklar arasina ayrica yol bandi konmaz (yan yoldan erisim varsa)
+  const bantVar = i2 => i2 < bloklar.length - 1 && !(yandanYol && (bloklar[i2].tip === "kol" || bloklar[i2+1].tip === "kol"));
   const ustten = (rKenar === "ust");
   // alt/ust kenarda resmi yol varsa kolonlu bloga ulasmak icin kenar yolu gerekir;
   // sol/sag kenarda bloklar arasi bant zaten o kenara degiyor
@@ -11297,9 +11440,9 @@ function capYerlesim(M, cfg){
     return k.length > 2 ? k : p;
   };
 
-  const blokAgirlik = bloklar.map(b2=> b2.tip === "tam"
-    ? b2.parcalar.reduce((t,o)=>t+o.m2,0)
-    : b2.sol.concat(b2.sag).reduce((t,o)=>t+o.m2,0));
+  const blokAgirlik = bloklar.map(b2=> b2.tip === "yol"
+    ? b2.sol.concat(b2.sag).reduce((t,o)=>t+o.m2,0)
+    : b2.parcalar.reduce((t,o)=>t+o.m2,0));
   const T = blokAgirlik.reduce((a,b2)=>a+b2,0) || 1;
 
   // bir blogun [a0,a1] araliginda parcalara kalan net alani
@@ -11311,6 +11454,7 @@ function capYerlesim(M, cfg){
       const ay = ayiriciDeger(b2, a0, a1);
       net -= alan(kutu(a0, a1, ay - w/2, ay + w/2));
     }
+    if(b2.tip === "kol") net -= alan(kolSeridi(b2, a0, a1));
     // Kenar yolu parselin disinda cizilir; alani blogun icinden degil,
     // toplam yol payindan (carpan uzerinden) butun parcalardan dusulur.
     return net;
@@ -11335,7 +11479,7 @@ function capYerlesim(M, cfg){
       }
       yerler.push({ b:b2, a0:imlec, a1:kes, kenarVar });
       if(Math.abs(kes - aMax) < 0.01) tasti = true;
-      imlec = kes + w;                   // bloklar arasinda tam genislik yol bandi
+      imlec = kes + (bantVar(i2) ? w : 0);   // bloklar arasinda tam genislik yol bandi
     });
 
     // yollarin gercek alani
@@ -11346,7 +11490,8 @@ function capYerlesim(M, cfg){
         const k = kutu(y.a0, y.a1, ay - w/2, ay + w/2);
         if(k) yollar.push(k);
       }
-      if(i2 < yerler.length - 1){       // bloklar arasi tam genislik bant
+      if(y.b.tip === "kol"){ const k = kolSeridi(y.b, y.a0, y.a1); if(k) yollar.push(k); }
+      if(bantVar(i2)){                  // bloklar arasi tam genislik bant
         const bant = dilim(y.a1, yerler[i2+1].a0);
         if(bant) yollar.push(bant);
       }
@@ -11379,6 +11524,13 @@ function capYerlesim(M, cfg){
     if(y.b.tip === "tam"){
       parcala(p, y.b.parcalar.map(o=>o.m2*carpan), ana, true)
         .forEach((q,k)=>cikti.push({ poly:q, bilgi:y.b.parcalar[k] }));
+      return;
+    }
+    if(y.b.tip === "kol"){
+      const q0 = kolParcaAlani(y.b, p, y.a0, y.a1);
+      if(q0 && q0.length > 2)
+        parcala(q0, y.b.parcalar.map(o=>o.m2*carpan), kolYon, true)
+          .forEach((q,k)=>cikti.push({ poly:q, bilgi:y.b.parcalar[k] }));
       return;
     }
     const ay = ayiriciDeger(y.b, y.a0, y.a1);
@@ -11516,7 +11668,7 @@ async function capAyar(arg){
            <button class="btn ghost" style="margin-top:10px" onclick="alaniDuzelt('${parselId}',${alan.toFixed(2)})">
              Kayıtlı alanı düzelt (${nf2(alan)} m²)</button>` : ""}
     </div>
-    <p class="ipuc">Çapı bloklardan kur. <b>Tam Genişlik Blok</b> parselin enini kaplar, yol kenarından geçer. <b>Yol İki Yanlı Blok</b> ortasından yol geçirir, soluna ve sağına istediğin kadar parça koyarsın. Blokları yukarı aşağı taşıyabilirsin.</p>
+    <p class="ipuc">Çapı bloklardan kur. <b>Tam Genişlik Blok</b> parselin enini kaplar, yol kenarından geçer. <b>Yol İki Yanlı Blok</b> ortasından yol geçirir, soluna ve sağına istediğin kadar parça koyarsın. <b>Tek Yanlı Kol Blok</b> parçaları resmî yoldan geriye doğru üst üste dizer; erişim yolu sadece seçtiğin bir yandan geçer. Blokları yukarı aşağı taşıyabilirsin.</p>
 
     <div class="card">
       <div class="bolum"><span class="rz yesil">${svg("vector")}</span><b>Canlı önizleme</b>
