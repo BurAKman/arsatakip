@@ -2220,7 +2220,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.0.1";
+const SURUM_MORDOR = "v 1.0.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11941,7 +11941,7 @@ function capCizPng(p, cfg, kucuk){
       x.restore();
     };
 
-    const yolYazisi = (p1, p2, metin) => {
+    const yolYazisi = (p1, p2, metin, boy) => {
       if(kucuk) return;
       const e1 = E(p1), e2 = E(p2);
       const uz = Math.hypot(e2[0]-e1[0], e2[1]-e1[1]);
@@ -11953,8 +11953,8 @@ function capCizPng(p, cfg, kucuk){
       x.translate((e1[0]+e2[0])/2, (e1[1]+e2[1])/2);
       x.rotate(ac);
       x.textAlign = "center"; x.textBaseline = "middle";
-      x.font = `700 ${S(12)}px Arial`;
-      x.lineWidth = S(5); x.strokeStyle = "#FFFFFF"; x.lineJoin = "round";
+      x.font = `700 ${S(boy || 12)}px Arial`;
+      x.lineWidth = S((boy || 12) * .42); x.strokeStyle = "#FFFFFF"; x.lineJoin = "round";
       x.strokeText(metin, 0, 0);
       x.fillStyle = "#1A1A1A"; x.fillText(metin, 0, 0);
       x.restore();
@@ -11984,8 +11984,7 @@ function capCizPng(p, cfg, kucuk){
       const Z = yer.resmiZincir || { ic:[yer.resmiYol[0], yer.resmiYol[1]], dis:[yer.resmiYol[3], yer.resmiYol[2]] };
       x.save();
       // serit: acik gri asfalt dolgusu
-      x.beginPath(); ek.forEach((q,i)=>i ? x.lineTo(q[0],q[1]) : x.moveTo(q[0],q[1])); x.closePath();
-      x.fillStyle = "rgba(205,205,200,.55)"; x.fill();
+
       // iki kenar boyunca kesintisiz duz cizgi
       x.lineWidth = kucuk ? 1.1 : 1.8; x.strokeStyle = "#1A1A1A"; x.lineJoin = "round";
       [Z.ic, Z.dis].forEach(seri=>{ const e2 = seri.map(E); x.beginPath();
@@ -11998,7 +11997,7 @@ function capCizPng(p, cfg, kucuk){
       const o2 = [ (Z.ic[en+1][0]+Z.dis[en+1][0])/2, (Z.ic[en+1][1]+Z.dis[en+1][1])/2 ];
       for(let i=0;i<Z.ic.length-1;i++){
         eksenDolu([ (Z.ic[i][0]+Z.dis[i][0])/2, (Z.ic[i][1]+Z.dis[i][1])/2 ], [ (Z.ic[i+1][0]+Z.dis[i+1][0])/2, (Z.ic[i+1][1]+Z.dis[i+1][1])/2 ]); }
-      yolYazisi(o1, o2, "RESMİ YOL");
+      yolYazisi(o1, o2, "RESMİ YOL", 17);
     }
 
   }else{
