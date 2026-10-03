@@ -2220,7 +2220,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.0.2";
+const SURUM_MORDOR = "v 1.0.3";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -9046,13 +9046,16 @@ async function resmiYolBul(){
     const aMin = Math.min(...izdA), aMax = Math.max(...izdA);
     const dMin = Math.min(...izdD), dMax = Math.max(...izdD);
 
-    const k = kenarlar[0];
-    const i = k.i, j = (i+1) % M.length;
-    const oa = (izdA[i]+izdA[j])/2, od = (izdD[i]+izdD[j])/2;
-    const uzakliklar = [
-      ["alt", oa - aMin], ["ust", aMax - oa], ["sol", od - dMin], ["sag", dMax - od]
-    ].sort((x,y)=>x[1]-y[1]);
-    PARCA.resmiKenar = uzakliklar[0][0];
+    // her aday kenari bulundugu tarafa ata, ayni taraftaki parcalari topla
+    const tarafOf = k3 => { const i = k3.i, j = (i+1) % M.length;
+      const oa = (izdA[i]+izdA[j])/2, od = (izdD[i]+izdD[j])/2;
+      return [["alt", oa - aMin], ["ust", aMax - oa], ["sol", od - dMin], ["sag", dMax - od]].sort((x,y)=>x[1]-y[1])[0][0]; };
+    const taraflar = {};
+    kenarlar.forEach(k3=>{ const t = tarafOf(k3); const T = taraflar[t] || (taraflar[t] = { taraf:t, guc:0, uzunluk:0, nitelik:k3.nitelik });
+      if(k3.guc > T.guc){ T.guc = k3.guc; T.nitelik = k3.nitelik; } T.uzunluk += k3.uzunluk; });
+    const k = Object.values(taraflar).sort((a,b)=>(b.guc - a.guc) || (b.uzunluk - a.uzunluk))[0];
+    k.uzunluk = Math.round(k.uzunluk*10)/10;
+    PARCA.resmiKenar = k.taraf;
     if(!PARCA.resmiGenislik) PARCA.resmiGenislik = 7;
 
     const g2 = document.getElementById("prg"), k2 = document.getElementById("prk");
@@ -10984,22 +10987,33 @@ async function kenarKomsusu(halka, i, disaMetre){
   if(nx*mx + ny*my > 0){ nx = -nx; ny = -ny; }   // merkezin tersi = disari
   const d = disaMetre || 12;
   const lon = ortaLon + (nx*d)/kx, lat = ortaLat + (ny*d)/ky;
-  try{
-    const f = await zamanAsimi(tkgm(`${TB3}/parsel/${lat.toFixed(7)}/${lon.toFixed(7)}`), 15000);
-    return f?.properties || null;
-  }catch(e){ return null; }
+  // "orada parsel yok" ile "sorgu basarisiz" ayni sey degil: hata olursa iki kez daha dene
+  for(let deneme=0; deneme<3; deneme++){
+    try{
+      const f = await zamanAsimi(tkgm(`${TB3}/parsel/${lat.toFixed(7)}/${lon.toFixed(7)}`), 15000);
+      return f?.properties ? f.properties : KOMSU_YOK;
+    }catch(e){
+      const m = String(e && e.message || e);
+      if(/Kaynak (404|204)|bulunamad|not found/i.test(m)) return KOMSU_YOK;   // gercekten bos
+      await new Promise(r=>setTimeout(r, 900 * (deneme+1)));             // mesgul / zaman asimi
+    }
+  }
+  return KOMSU_BILINMIYOR;
 }
+const KOMSU_YOK = { __yok:true }, KOMSU_BILINMIYOR = { __hata:true };
 
 // Bir kenarin disinda ne var?  bitisik komsu mu, bosluk (yol) mu
 //   3 m disarida parsel varsa  -> komsu bitisik, yol yok
 //   3 m'de bos, 12 m'de parsel -> arada bosluk var, burasi RESMI YOL
 async function kenarDurumu(halka, i){
   const yakin = await kenarKomsusu(halka, i, 3);
+  if(yakin.__hata) return { yol:false, sebep:"TKGM cevap vermedi" };       // bilinmiyorsa yol sayma
   const nitelik = String(yakin?.nitelik || "").toLocaleLowerCase("tr");
-  if(yakin && /yol|cadde|sokak|karayol/.test(nitelik)) return { yol:true, sebep:"komşu kaydı yol" };
-  if(yakin) return { yol:false, sebep:"bitişik komşu parsel" };
+  if(!yakin.__yok && /yol|cadde|sokak|karayol/.test(nitelik)) return { yol:true, sebep:"komşu kaydı yol" };
+  if(!yakin.__yok) return { yol:false, sebep:"bitişik komşu parsel" };
   const uzak = await kenarKomsusu(halka, i, 12);
-  if(uzak) return { yol:true, sebep:"arada boşluk var, karşıda parsel" };
+  if(uzak.__hata) return { yol:true, sebep:"kayıtlı komşu yok" };
+  if(!uzak.__yok) return { yol:true, sebep:"arada boşluk var, karşıda parsel" };
   return { yol:true, sebep:"kayıtlı komşu yok" };
 }
 
