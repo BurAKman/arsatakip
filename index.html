@@ -2220,7 +2220,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.1";
+const SURUM_MORDOR = "v 2.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -7266,11 +7266,12 @@ async function yaklasanRozet(){
   try{
     const bugun = new Date(); bugun.setHours(0,0,0,0);
     const sinir = new Date(bugun.getTime() + 30*86400000).toISOString().slice(0,10);
-    const [{ data:ek }, { data:vd }] = await Promise.all([
+    const [{ data:ek }, { data:vd }, { data:tk }] = await Promise.all([
       sb.from("ekler").select("gecerlilik_tarihi,suresiz").lte("gecerlilik_tarihi", sinir),
-      sb.from("hesap_vade").select("tarih").eq("odendi", false).lte("tarih", sinir)
+      sb.from("hesap_vade").select("tarih, hesap(kapandi)").eq("odendi", false).lte("tarih", sinir),
+      sb.from("hesap").select("id").eq("vadeli", false).eq("kapandi", false).lte("tarih", sinir)
     ]);
-    const say = (ek||[]).filter(o=>!o.suresiz && o.gecerlilik_tarihi).length + (vd||[]).length;
+    const say = (ek||[]).filter(o=>!o.suresiz && o.gecerlilik_tarihi).length + (vd||[]).filter(v=>!v.hesap?.kapandi).length + (tk||[]).length;
     const r = document.getElementById("yakRozet");
     if(r && say) r.textContent = say;
   }catch(e){}
@@ -9460,13 +9461,49 @@ async function parcalariKaydet(parselId){
 
 /* ================= hesap - kitap ================= */
 
-let HESAP_TIP = "alacak";
+let HESAP_TIP = "alacak", HESAP_FILTRE = "acik";
+const tlYaz = x => nf(Math.round(+x || 0)) + " ₺";
+const bugunISO = () => { const t = new Date(); t.setMinutes(t.getMinutes() - t.getTimezoneOffset()); return t.toISOString().slice(0,10); };
+const gunFark = t => { const b = new Date(); b.setHours(0,0,0,0); return Math.round((new Date(t) - b) / 86400000); };
+const trTarih = t => t ? new Date(t).toLocaleDateString("tr-TR") : "—";
+const vadeKalan = v => v.odendi ? 0 : Math.max(0, (+v.tutar||0) - (+v.odenen||0));
+// bir kaydin taksit durumunun ozeti
+function hesapOzet(k, vs){
+  vs = (vs||[]).slice().sort((a,b)=>String(a.tarih).localeCompare(String(b.tarih)));
+  let toplam, kalan, adet, odenenAdet, acik, sonraki;
+  if(k.vadeli && vs.length){
+    toplam = vs.reduce((t,v)=>t+(+v.tutar||0), 0);
+    kalan = vs.reduce((t,v)=>t+vadeKalan(v), 0);
+    adet = vs.length; odenenAdet = vs.filter(v=>vadeKalan(v) < .5).length;
+    acik = vs.filter(v=>vadeKalan(v) >= .5).map(v=>({ ...v, kalan:vadeKalan(v) }));
+  }else{
+    toplam = +k.tutar || 0;
+    kalan = k.kapandi ? 0 : Math.max(0, toplam - (+k.odenen||0));
+    adet = 1; odenenAdet = kalan < .5 ? 1 : 0;
+    acik = kalan >= .5 ? [{ tarih:k.tarih, tutar:toplam, kalan, sanal:true }] : [];
+  }
+  if(k.kapandi){ kalan = 0; acik = []; }
+  sonraki = acik.find(v=>v.tarih) || acik[0] || null;
+  const geciken = acik.filter(v=>v.tarih && gunFark(v.tarih) < 0);
+  const ay = new Date(), ayBas = new Date(ay.getFullYear(), ay.getMonth(), 1), aySon = new Date(ay.getFullYear(), ay.getMonth()+1, 0);
+  const buAy = acik.filter(v=>v.tarih && new Date(v.tarih) >= ayBas && new Date(v.tarih) <= aySon);
+  return { toplam, kalan, odenen: Math.max(0, toplam - kalan), adet, odenenAdet, acik, sonraki, geciken, buAy, vs };
+}
+function dbHatasi(error){
+  if(/odenen|odeme_tarihi|odeme_notu|column/i.test(error?.message || ""))
+    return toast("Önce veritabanı güncellemesini çalıştır: arsatakip-guncelleme-8.sql");
+  toast("Olmadı: " + (error?.message || error));
+}
 
 async function hesap(){
   app.innerHTML = head("Hesap - Kitap","go('ana')") + `
-    <div class="acts" style="margin-bottom:14px">
+    <div class="acts" style="margin-bottom:10px">
       <button class="${HESAP_TIP==="alacak"?"pri":""}" onclick="HESAP_TIP='alacak';hesap()">Alacaklarım</button>
       <button class="${HESAP_TIP==="borc"?"pri":""}" onclick="HESAP_TIP='borc';hesap()">Borçlarım</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      ${[["acik","Açık"],["kapali","Kapanan"],["tumu","Tümü"]].map(([v,a])=>
+        `<button class="pill ${HESAP_FILTRE===v?"on":"sade"}" onclick="HESAP_FILTRE='${v}';hesapListele()">${a}</button>`).join("")}
     </div>
     <div id="hlist"><div class="spin"></div></div>
     ${ME.role!=='uye'?`<button class="fab" onclick="hesapYeni()">+</button>`:""}`;
@@ -9474,62 +9511,66 @@ async function hesap(){
 }
 
 async function hesapListele(){
+  document.querySelectorAll('[onclick^="HESAP_FILTRE"]').forEach(b=>{
+    const v = (b.getAttribute("onclick").match(/'(\w+)'/)||[])[1]; b.className = "pill " + (v === HESAP_FILTRE ? "on" : "sade"); });
   const kutu = document.getElementById("hlist");
-  const { data, error } = await sb.from("hesap").select("*").eq("tip", HESAP_TIP).order("tarih",{nullsFirst:false});
+  const { data, error } = await sb.from("hesap").select("*").eq("tip", HESAP_TIP);
   if(error) return kutu.innerHTML = `<div class="empty">${esc(error.message)}</div>`;
   const kayitlar = data || [];
-  if(!kayitlar.length) return kutu.innerHTML =
-    `<div class="empty"><b>Kayıt yok</b>${ME.role!=='uye'?"Sağ alttaki + ile ekle.":""}</div>`;
-
-  const { data:vadeler } = await sb.from("hesap_vade").select("*").in("hesap_id", kayitlar.map(k=>k.id));
+  const { data:vadeler } = kayitlar.length ? await sb.from("hesap_vade").select("*").in("hesap_id", kayitlar.map(k=>k.id)) : { data:[] };
   const grup = {};
   (vadeler||[]).forEach(v=>(grup[v.hesap_id] ||= []).push(v));
+  const liste = kayitlar.map(k=>({ k, o:hesapOzet(k, grup[k.id]) }));
+  const renkAna = HESAP_TIP === "alacak" ? "var(--green)" : "var(--red)";
 
-  const bugun = new Date(); bugun.setHours(0,0,0,0);
-  const gun = t => Math.round((new Date(t) - bugun) / 86400000);
+  // ust ozet (kapali olanlar da dahil, filtreden bagimsiz)
+  let kalan = 0, toplam = 0, buAyT = 0, buAyS = 0, gecT = 0, gecS = 0;
+  liste.forEach(({o})=>{ kalan += o.kalan; toplam += o.toplam;
+    o.buAy.forEach(v=>{ buAyT += v.kalan; buAyS++; }); o.geciken.forEach(v=>{ gecT += v.kalan; gecS++; }); });
+  const yuzde = toplam ? Math.round((toplam - kalan)/toplam*100) : 0;
 
-  let acikToplam = 0, yaklasan = 0;
-  kayitlar.forEach(k=>{
-    if(k.kapandi) return;
-    const vs = grup[k.id] || [];
-    if(k.vadeli && vs.length){
-      vs.forEach(v=>{ if(!v.odendi){ acikToplam += +v.tutar||0; if(gun(v.tarih) <= 20) yaklasan++; } });
-    }else{
-      acikToplam += +k.tutar||0;
-      if(k.tarih && gun(k.tarih) <= 20) yaklasan++;
-    }
-  });
+  const gorunen = liste.filter(({o})=> HESAP_FILTRE === "tumu" ? true : HESAP_FILTRE === "acik" ? o.kalan >= .5 : o.kalan < .5)
+    .sort((a,b)=>{
+      if((a.o.kalan >= .5) !== (b.o.kalan >= .5)) return a.o.kalan >= .5 ? -1 : 1;
+      const ta = a.o.sonraki?.tarih || "9999", tb = b.o.sonraki?.tarih || "9999";
+      return String(ta).localeCompare(String(tb));
+    });
 
   kutu.innerHTML = `
     <div class="card">
-      <div class="kv"><span>Açık ${HESAP_TIP==="alacak"?"alacak":"borç"}</span>
-        <b class="mono" style="color:${HESAP_TIP==="alacak"?"var(--green)":"var(--red)"}">${nf(Math.round(acikToplam))} ₺</b></div>
-      <div class="kv"><span>20 gün içinde vadesi gelen</span><b class="mono">${yaklasan}</b></div>
+      <div style="font-size:11px;letter-spacing:.1em;color:var(--ink-3);text-transform:uppercase">Kalan ${HESAP_TIP==="alacak"?"alacak":"borç"}</div>
+      <div class="mono" style="font-size:26px;font-weight:700;color:${renkAna};margin:4px 0 2px">${tlYaz(kalan)}</div>
+      <div style="font-size:12px;color:var(--ink-3)">toplam ${tlYaz(toplam)} · ${HESAP_TIP==="alacak"?"tahsil edilen":"ödenen"} ${tlYaz(toplam-kalan)}</div>
+      <div style="height:7px;border-radius:5px;background:rgba(255,255,255,.08);margin:10px 0 12px;overflow:hidden">
+        <div style="height:100%;width:${yuzde}%;background:${renkAna}"></div></div>
+      <div class="kv"><span>Bu ay vadesi gelen</span><b class="mono">${buAyS ? `${buAyS} taksit · ${tlYaz(buAyT)}` : "—"}</b></div>
+      <div class="kv"><span style="color:${gecS?"var(--red)":"inherit"}">Geciken</span>
+        <b class="mono" style="color:${gecS?"var(--red)":"inherit"}">${gecS ? `${gecS} taksit · ${tlYaz(gecT)}` : "yok"}</b></div>
     </div>
-    ${kayitlar.map(k=>{
-      const vs = (grup[k.id]||[]).sort((a,b)=>a.tarih.localeCompare(b.tarih));
-      const acik = vs.filter(v=>!v.odendi);
-      const sonraki = acik[0];
-      const g = sonraki ? gun(sonraki.tarih) : (k.tarih ? gun(k.tarih) : null);
-      const renk = k.kapandi ? "var(--ink-3)" : (g != null && g <= 20 ? (g < 0 ? "var(--red)" : "var(--gold)") : "var(--ink-2)");
-      const durum = k.kapandi ? "kapandı"
-        : g == null ? "tarihsiz"
-        : g < 0 ? `${Math.abs(g)} gün geçti`
-        : g === 0 ? "bugün" : `${g} gün kaldı`;
-      return `<div class="card" style="${k.kapandi?"opacity:.55":""}">
-        <div style="display:flex;align-items:center;gap:10px">
+    ${gorunen.length ? gorunen.map(({k,o})=>{
+      const s = o.sonraki, g = s?.tarih ? gunFark(s.tarih) : null;
+      const kapali = o.kalan < .5;
+      const renk = kapali ? "var(--ink-3)" : g == null ? "var(--ink-2)" : g < 0 ? "var(--red)" : g <= 20 ? "var(--gold)" : "var(--ink-2)";
+      const durum = g == null ? "" : g < 0 ? `${Math.abs(g)} gün geçti` : g === 0 ? "bugün" : `${g} gün kaldı`;
+      const yz = o.toplam ? Math.round(o.odenen/o.toplam*100) : 0;
+      return `<button class="card" style="display:block;width:100%;text-align:left;${kapali?"opacity:.6":""}" onclick="hesapAc('${k.id}')">
+        <div style="display:flex;align-items:baseline;gap:10px">
           <b style="font-size:15px;flex:1">${esc(k.kisi)}</b>
-          <b class="mono" style="color:${HESAP_TIP==="alacak"?"var(--green)":"var(--red)"}">${nf(Math.round(k.tutar))} ₺</b></div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">
-          <span class="pill sade">${k.vadeli ? `${vs.length} vade` : "tek ödeme"}</span>
-          <span class="pill" style="background:transparent;color:${renk};border-color:${renk}">${durum}</span>
-          ${k.tarih && !k.vadeli ? `<span class="pill sade">${new Date(k.tarih).toLocaleDateString("tr-TR")}</span>` : ""}
-          <span style="flex:1"></span>
-          ${ME.role!=='uye'?`<button class="pill gold" onclick="hesapAc('${k.id}')">detay</button>`:""}
-        </div>
-        ${k.notu?`<div style="font-size:13px;color:var(--ink-2);margin-top:8px">${esc(k.notu)}</div>`:""}
-      </div>`;
-    }).join("")}`;
+          <b class="mono" style="font-size:17px;color:${kapali?"var(--ink-3)":renkAna}">${tlYaz(o.kalan)}</b></div>
+        <div style="display:flex;gap:10px;font-size:11.5px;color:var(--ink-3);margin-top:2px">
+          <span style="flex:1">${k.vadeli ? `${o.odenenAdet}/${o.adet} taksit ödendi${o.adet - o.odenenAdet ? ` · ${o.adet - o.odenenAdet} kaldı` : ""}` : "tek ödeme"}</span>
+          <span class="mono">/ ${tlYaz(o.toplam)}</span></div>
+        <div style="height:5px;border-radius:4px;background:rgba(255,255,255,.08);margin:8px 0;overflow:hidden">
+          <div style="height:100%;width:${yz}%;background:${kapali?"var(--ink-3)":renkAna}"></div></div>
+        ${kapali ? `<div style="font-size:12px;color:var(--ink-3)">✓ kapandı</div>`
+          : s ? `<div style="display:flex;gap:8px;align-items:center;font-size:12px;flex-wrap:wrap">
+              <span style="color:var(--ink-2)">Sıradaki: ${trTarih(s.tarih)} · <b class="mono">${tlYaz(s.kalan)}</b></span>
+              ${durum ? `<span style="color:${renk};font-weight:600">${durum}</span>` : ""}
+              ${o.geciken.length ? `<span class="pill" style="background:transparent;color:var(--red);border-color:var(--red)">${o.geciken.length} taksit gecikti</span>` : ""}
+            </div>` : ""}
+        ${k.notu ? `<div style="font-size:12.5px;color:var(--ink-2);margin-top:6px">${esc(k.notu)}</div>` : ""}
+      </button>`;
+    }).join("") : `<div class="empty"><b>${HESAP_FILTRE==="kapali"?"Kapanan kayıt yok":"Kayıt yok"}</b>${ME.role!=='uye'&&HESAP_FILTRE!=="kapali"?"Sağ alttaki + ile ekle.":""}</div>`}`;
 }
 
 function hesapYeni(){
@@ -9540,25 +9581,32 @@ function hesapYeni(){
     <div class="field"><label>Kişi / kurum</label><input id="hkisi" placeholder="Ad soyad"></div>
     <div class="field"><label>Toplam tutar (₺)</label><input id="htutar" inputmode="decimal"></div>
     <div class="field"><label>Ödeme biçimi</label><select id="hvadeli">
-      <option value="0">Tek ödeme</option><option value="1">Vadeli</option></select></div>
-    <div class="field" id="htarihK"><label>Tarih</label><input id="htarih" type="date"></div>
+      <option value="0">Tek ödeme</option><option value="1">Taksitli</option></select></div>
+    <div class="field" id="htarihK"><label>Vade tarihi</label><input id="htarih" type="date"></div>
     <div id="hvadeK" style="display:none">
       <div class="row2">
-        <div class="field"><label>Vade sayısı</label><input id="hadet" type="number" min="1" max="120" value="6"></div>
-        <div class="field"><label>İlk vade</label><input id="hilk" type="date"></div>
+        <div class="field"><label>Taksit sayısı</label><input id="hadet" type="number" min="1" max="120" value="6"></div>
+        <div class="field"><label>İlk taksit</label><input id="hilk" type="date"></div>
       </div>
-      <p class="ipuc">Tutar vadelere eşit bölünür; sonra tek tek düzenleyebilirsin.</p>
+      <div class="field"><label>Aralık</label><select id="haralik">
+        <option value="1">Her ay</option><option value="2">2 ayda bir</option><option value="3">3 ayda bir</option>
+        <option value="6">6 ayda bir</option><option value="12">Yılda bir</option></select></div>
+      <p class="ipuc" id="honiz">Tutar taksitlere eşit bölünür; sonra her taksiti tek tek düzenleyebilirsin.</p>
     </div>
     <div class="field"><label>Not (isteğe bağlı)</label><input id="hnot" placeholder="Tek satır not"></div>
     <button class="btn" id="hkay">Kaydet</button>`;
-
   const vd = document.getElementById("hvadeli");
+  const oniz = () => {
+    const t = sayiCoz(document.getElementById("htutar").value) || 0, a = Math.max(1, +document.getElementById("hadet").value || 1);
+    const p = document.getElementById("honiz"); if(p && t > 0) p.textContent = `${a} taksit × yaklaşık ${tlYaz(t/a)}. Sonra her taksiti tek tek düzenleyebilirsin.`;
+  };
+  ["htutar","hadet"].forEach(id=>document.getElementById(id).oninput = oniz);
   vd.onchange = () => {
     const v = vd.value === "1";
     document.getElementById("hvadeK").style.display = v ? "block" : "none";
     document.getElementById("htarihK").style.display = v ? "none" : "block";
+    oniz();
   };
-
   document.getElementById("hkay").onclick = async e => {
     const kisi = document.getElementById("hkisi").value.trim();
     const tutar = sayiCoz(document.getElementById("htutar").value) || 0;
@@ -9571,118 +9619,257 @@ function hesapYeni(){
       vadeli, tarih: vadeli ? null : (document.getElementById("htarih").value || null),
       notu: document.getElementById("hnot").value.trim() || null, created_by:ME.id
     }).select().single();
-    if(error){ e.target.disabled = false; return toast("Olmadı: "+error.message); }
-
-    if(vadeli){
-      const adet = Math.max(1, Math.min(120, +document.getElementById("hadet").value || 1));
-      const ilk = document.getElementById("hilk").value;
-      const pay = Math.round(tutar/adet);
-      const satirlar = Array.from({length:adet},(_,i)=>{
-        const t = ilk ? new Date(ilk) : new Date();
-        t.setMonth(t.getMonth() + i);
-        return { hesap_id:k.id, team_id:ME.team_id, tarih:t.toISOString().slice(0,10),
-                 tutar: i === adet-1 ? tutar - pay*(adet-1) : pay };
-      });
-      await sb.from("hesap_vade").insert(satirlar);
-    }
-    HESAP_TIP = k.tip;
+    if(error){ e.target.disabled = false; return dbHatasi(error); }
+    if(vadeli) await taksitOlustur(k.id, tutar, +document.getElementById("hadet").value || 1,
+      document.getElementById("hilk").value, +document.getElementById("haralik").value || 1);
+    HESAP_TIP = k.tip; HESAP_FILTRE = "acik";
     toast("Kaydedildi"); go("hesap");
   };
+}
+// tutari taksitlere boler: kuruslar son taksite
+async function taksitOlustur(hid, tutar, adet, ilk, aralik){
+  adet = Math.max(1, Math.min(120, adet));
+  const pay = Math.floor(tutar/adet);
+  const satirlar = Array.from({length:adet},(_,i)=>{
+    const t = ilk ? new Date(ilk) : new Date();
+    const gun = t.getDate(); t.setDate(1); t.setMonth(t.getMonth() + i*(aralik||1));
+    t.setDate(Math.min(gun, new Date(t.getFullYear(), t.getMonth()+1, 0).getDate()));
+    return { hesap_id:hid, team_id:ME.team_id, tarih:t.toISOString().slice(0,10),
+             tutar: i === adet-1 ? Math.round((tutar - pay*(adet-1))*100)/100 : pay };
+  });
+  return sb.from("hesap_vade").insert(satirlar);
 }
 
 async function hesapAc(id){
   const { data:k } = await sb.from("hesap").select("*").eq("id",id).single();
   if(!k) return;
   const { data:vs } = await sb.from("hesap_vade").select("*").eq("hesap_id",id).order("tarih");
-  const bugun = new Date(); bugun.setHours(0,0,0,0);
-  const gun = t => Math.round((new Date(t) - bugun) / 86400000);
-  const acik = (vs||[]).filter(v=>!v.odendi).reduce((t,v)=>t+(+v.tutar||0),0);
+  const o = hesapOzet(k, vs);
   const yazabilir = ME.role !== 'uye';
+  const renkAna = k.tip === "alacak" ? "var(--green)" : "var(--red)";
+  const yz = o.toplam ? Math.round(o.odenen/o.toplam*100) : 0;
+  const kapali = o.kalan < .5;
+  const durumCip = (v) => {
+    const kl = v.sanal ? o.kalan : vadeKalan(v);
+    if(kl < .5) return { ad:`ödendi${v.odeme_tarihi ? " · " + trTarih(v.odeme_tarihi) : ""}`, renk:"var(--green)" };
+    const g = v.tarih ? gunFark(v.tarih) : null;
+    const kismi = (+v.odenen||0) > 0 ? ` · ${tlYaz(v.odenen)} ödendi` : "";
+    if(g == null) return { ad:"bekliyor" + kismi, renk:"var(--ink-2)" };
+    if(g < 0) return { ad:`${Math.abs(g)} gün gecikti` + kismi, renk:"var(--red)" };
+    return { ad:(g === 0 ? "bugün" : `${g} gün kaldı`) + kismi, renk: g <= 20 ? "var(--gold)" : "var(--ink-2)" };
+  };
+  const taksitSatir = (v, i) => {
+    const d = durumCip(v), kl = vadeKalan(v);
+    return `<div style="border-top:1px solid var(--cizgi);padding:11px 0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="mono" style="font-size:11px;color:var(--ink-3);width:26px">${i+1}.</span>
+        <div style="flex:1"><div style="font-size:13.5px">${trTarih(v.tarih)}</div>
+          <div style="font-size:11.5px;color:${d.renk};margin-top:2px">${d.ad}</div></div>
+        <div style="text-align:right"><b class="mono" style="${kl < .5 ? "color:var(--ink-3);text-decoration:line-through" : ""}">${tlYaz(v.tutar)}</b>
+          ${kl >= .5 && (+v.odenen||0) > 0 ? `<div class="mono" style="font-size:11px;color:var(--gold)">kalan ${tlYaz(kl)}</div>` : ""}</div>
+      </div>
+      ${yazabilir ? `<div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;flex-wrap:wrap">
+        ${kl >= .5 ? `<button class="pill gold" onclick="vadeOde('${v.id}','${id}',true)">Ödendi</button>
+          <button class="pill sade" onclick="vadeOde('${v.id}','${id}',false)">Kısmi</button>`
+          : `<button class="pill sade" onclick="vadeGeriAl('${v.id}','${id}')">Geri al</button>`}
+        <button class="pill sade" onclick="vadeDuzenAc('${v.id}')">Düzenle</button>
+      </div>
+      <div id="vd${v.id}" style="display:none;margin-top:8px">
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="date" id="vt${v.id}" value="${v.tarih}" style="flex:1;padding:9px 10px;font-size:13px">
+          <input id="vm${v.id}" inputmode="decimal" value="${ham(v.tutar)}" style="width:110px;text-align:right;padding:9px 10px;font-size:13px">
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">
+          <button class="pill gold" onclick="vadeKaydet('${v.id}','${id}')">Kaydet</button>
+          <button class="pill sade" style="color:var(--red)" onclick="vadeSil('${v.id}','${id}')">Sil</button></div>
+      </div>` : ""}
+    </div>`;
+  };
+  const gecmis = (vs||[]).filter(v=>v.odendi || (+v.odenen||0) > 0)
+    .sort((a,b)=>String(b.odeme_tarihi||b.tarih).localeCompare(String(a.odeme_tarihi||a.tarih)));
 
   app.innerHTML = head(k.kisi,"go('hesap')") + `
     <div class="card">
-      <div class="bolum"><span class="rz altin">${svg("money")}</span><b>Kayıt bilgileri</b>
-        ${k.kapandi?`<span class="pill sade">kapandı</span>`:""}</div>
-      ${yazabilir ? `
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="pill sade">${k.tip==="alacak"?"Alacağım":"Borcum"}</span>
+        ${kapali ? `<span class="pill" style="background:transparent;color:var(--green);border-color:var(--green)">kapandı</span>` : ""}
+        ${o.geciken.length ? `<span class="pill" style="background:transparent;color:var(--red);border-color:var(--red)">${o.geciken.length} taksit gecikti</span>` : ""}
+      </div>
+      <div style="font-size:11px;letter-spacing:.1em;color:var(--ink-3);text-transform:uppercase;margin-top:12px">Kalan</div>
+      <div class="mono" style="font-size:28px;font-weight:700;color:${kapali?"var(--ink-3)":renkAna}">${tlYaz(o.kalan)}</div>
+      <div style="height:8px;border-radius:5px;background:rgba(255,255,255,.08);margin:10px 0;overflow:hidden">
+        <div style="height:100%;width:${yz}%;background:${renkAna}"></div></div>
+      <div class="kv"><span>Toplam</span><b class="mono">${tlYaz(o.toplam)}</b></div>
+      <div class="kv"><span>${k.tip==="alacak"?"Tahsil edilen":"Ödenen"}</span><b class="mono">${tlYaz(o.odenen)} · %${yz}</b></div>
+      ${k.vadeli ? `<div class="kv"><span>Taksit</span><b>${o.odenenAdet}/${o.adet} ödendi${o.adet-o.odenenAdet ? ` · ${o.adet-o.odenenAdet} kaldı` : ""}</b></div>` : ""}
+      ${o.sonraki ? `<div class="kv"><span>Sıradaki</span><b>${trTarih(o.sonraki.tarih)} · <span class="mono">${tlYaz(o.sonraki.kalan)}</span></b></div>` : ""}
+      ${k.vadeli && o.acik.length ? `<div class="kv"><span>Son taksit</span><b>${trTarih(o.acik[o.acik.length-1].tarih)}</b></div>` : ""}
+      ${k.notu ? `<div style="font-size:13px;color:var(--ink-2);margin-top:8px">${esc(k.notu)}</div>` : ""}
+      ${yazabilir && !kapali ? `<button class="btn" style="margin-top:12px" onclick="kalaniKapat('${id}')">Kalanını tek seferde kapat (${tlYaz(o.kalan)})</button>` : ""}
+    </div>
+
+    ${k.vadeli ? `<div class="card">
+      <div class="bolum"><span class="rz yesil">${svg("note")}</span><b>Taksitler</b><span class="sayi">${(vs||[]).length}</span></div>
+      ${(vs||[]).map(taksitSatir).join("") || `<div class="empty" style="padding:14px">Taksit yok</div>`}
+      ${yazabilir ? `<button class="btn ghost" style="margin-top:12px" onclick="vadeEkle('${id}')">+ Taksit ekle</button>` : ""}
+    </div>` : `<div class="card">
+      <div class="bolum"><span class="rz yesil">${svg("note")}</span><b>Ödeme</b></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1"><div style="font-size:13.5px">Vade: ${trTarih(k.tarih)}</div>
+          <div style="font-size:11.5px;color:${durumCip({ ...k, sanal:true, odeme_tarihi:k.odeme_tarihi }).renk};margin-top:2px">${durumCip({ ...k, sanal:true, odeme_tarihi:k.odeme_tarihi }).ad}</div></div>
+        <b class="mono">${tlYaz(k.tutar)}</b></div>
+      ${yazabilir ? `<div style="display:flex;gap:6px;margin-top:10px;justify-content:flex-end;flex-wrap:wrap">
+        ${!kapali ? `<button class="pill gold" onclick="tekOde('${id}',true)">Ödendi</button>
+          <button class="pill sade" onclick="tekOde('${id}',false)">Kısmi</button>
+          <button class="pill sade" onclick="taksiteBol('${id}')">Taksite böl</button>`
+          : `<button class="pill sade" onclick="tekGeriAl('${id}')">Geri al</button>`}</div>` : ""}
+    </div>`}
+
+    ${gecmis.length || (+k.odenen||0) > 0 ? `<div class="card">
+      <div class="bolum"><b>Ödeme geçmişi</b></div>
+      ${(k.vadeli ? gecmis.map(v=>({ t:v.odeme_tarihi || v.tarih, m: v.odendi ? (+v.odenen||+v.tutar) : +v.odenen, n: v.odendi ? "taksit kapandı" : "kısmi ödeme" }))
+        : [{ t:k.odeme_tarihi, m:+k.odenen || (kapali ? +k.tutar : 0), n: kapali ? "ödendi" : "kısmi ödeme" }])
+        .map(r=>`<div class="kv"><span>${trTarih(r.t)} · <span style="color:var(--ink-3)">${r.n}</span></span><b class="mono">${tlYaz(r.m)}</b></div>`).join("")}
+    </div>` : ""}
+
+    ${yazabilir ? `<details class="card"><summary style="cursor:pointer;font-weight:600">Kayıt bilgilerini düzenle</summary>
+      <div style="margin-top:12px">
         <div class="field"><label>Tür</label><select id="dtip">
           <option value="alacak"${k.tip==="alacak"?" selected":""}>Alacağım</option>
           <option value="borc"${k.tip==="borc"?" selected":""}>Borcum</option></select></div>
         <div class="field"><label>Kişi / kurum</label><input id="dkisi" value="${esc(k.kisi)}"></div>
-        <div class="row2">
-          <div class="field"><label>Toplam tutar (₺)</label><input id="dtutar" inputmode="decimal" value="${Math.round(k.tutar)}"></div>
-          <div class="field"><label>Tarih</label><input id="dtarih" type="date" value="${k.tarih||""}"></div>
-        </div>
+        ${!k.vadeli ? `<div class="row2">
+          <div class="field"><label>Tutar (₺)</label><input id="dtutar" inputmode="decimal" value="${ham(k.tutar)}"></div>
+          <div class="field"><label>Vade tarihi</label><input id="dtarih" type="date" value="${k.tarih||""}"></div></div>` : ""}
         <div class="field"><label>Not</label><input id="dnot" value="${esc(k.notu||"")}" placeholder="Tek satır not"></div>
-        <button class="btn" onclick="hesapGuncelle('${id}')">Değişiklikleri Kaydet</button>
+        <button class="btn" onclick="hesapGuncelle('${id}')">Kaydet</button>
         <div class="acts" style="margin-top:10px">
-          <button class="${k.kapandi?"":"pri"}" onclick="hesapKapat('${id}',${!k.kapandi})">${k.kapandi?"Yeniden Aç":"Kapandı İşaretle"}</button>
+          <button onclick="hesapKapat('${id}',${!k.kapandi})">${k.kapandi?"Yeniden aç":"Elle kapat"}</button>
           ${ME.role==='admin'?`<button class="kirmizi" onclick="hesapSil('${id}')">Sil</button>`:""}
-        </div>`
-      : `<div class="kv"><span>Tür</span><b>${k.tip==="alacak"?"Alacağım":"Borcum"}</b></div>
-         <div class="kv"><span>Toplam</span><b class="mono">${nf(Math.round(k.tutar))} ₺</b></div>
-         ${k.tarih?`<div class="kv"><span>Tarih</span><b>${new Date(k.tarih).toLocaleDateString("tr-TR")}</b></div>`:""}
-         ${k.notu?`<div style="font-size:13px;color:var(--ink-2);margin-top:8px">${esc(k.notu)}</div>`:""}`}
-    </div>
+        </div></div></details>` : ""}`;
+}
+function vadeDuzenAc(vid){ const d = document.getElementById("vd"+vid); if(d) d.style.display = d.style.display === "none" ? "block" : "none"; }
 
-    <div class="card">
-      <div class="bolum"><span class="rz yesil">${svg("note")}</span><b>Vadeler</b>
-        <span class="sayi">${(vs||[]).length}</span></div>
-      ${(vs||[]).length ? `<div class="kv"><span>Kalan</span><b class="mono">${nf(Math.round(acik))} ₺</b></div>` : ""}
-      ${(vs||[]).map(v=>{
-        const g = gun(v.tarih);
-        const renk = v.odendi ? "var(--ink-3)" : g < 0 ? "var(--red)" : g <= 20 ? "var(--gold)" : "var(--ink-2)";
-        return `<div style="border-top:1px solid var(--cizgi);padding:11px 0;${v.odendi?"opacity:.6":""}">
-          ${yazabilir ? `
-            <div style="display:flex;gap:8px;align-items:center">
-              <input type="date" id="vt${v.id}" value="${v.tarih}" style="flex:1;padding:9px 10px;font-size:13px">
-              <input id="vm${v.id}" inputmode="decimal" value="${Math.round(v.tutar)}" style="width:110px;text-align:right;padding:9px 10px;font-size:13px">
-              <button class="sil" style="width:32px;height:32px" onclick="vadeSil('${v.id}','${id}')">${svg("trash")}</button>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-              <span style="flex:1;font-size:12px;color:${renk}">${v.odendi?"ödendi":g<0?`${Math.abs(g)} gün geçti`:g===0?"bugün":`${g} gün kaldı`}</span>
-              <button class="pill sade" onclick="vadeKaydet('${v.id}','${id}')">kaydet</button>
-              <button class="pill ${v.odendi?"sade":"gold"}" onclick="vadeIsaret('${v.id}','${id}',${!v.odendi})">${v.odendi?"geri al":"ödendi"}</button>
-            </div>`
-          : `<div style="display:flex;align-items:center;gap:10px">
-              <b class="mono" style="flex:1">${nf(Math.round(v.tutar))} ₺</b>
-              <span style="font-size:12px;color:${renk}">${new Date(v.tarih).toLocaleDateString("tr-TR")}</span></div>`}
-        </div>`;
-      }).join("")}
-      ${yazabilir ? `<button class="btn ghost" style="margin-top:12px" onclick="vadeEkle('${id}')">+ Vade ekle</button>` : ""}
-    </div>`;
+// odeme sonrasi: kalan sifirsa kapandi, degilse acik
+async function kapanisTazele(hid){
+  const { data:k } = await sb.from("hesap").select("*").eq("id",hid).single();
+  const { data:vs } = await sb.from("hesap_vade").select("*").eq("hesap_id",hid);
+  if(!k || !k.vadeli || !(vs||[]).length) return;
+  const kalan = (vs||[]).reduce((t,v)=>t+vadeKalan(v), 0);
+  const kapandi = kalan < .5;
+  if(kapandi !== !!k.kapandi) await sb.from("hesap").update({ kapandi }).eq("id", hid);
+}
+async function vadeOde(vid, hid, tam){
+  const { data:v } = await sb.from("hesap_vade").select("*").eq("id",vid).single(); if(!v) return;
+  const kalan = vadeKalan(v);
+  let odenen;
+  if(tam) odenen = +v.tutar || 0;
+  else{
+    const g = prompt(`Ne kadar ${HESAP_TIP==="alacak"?"tahsil edildi":"ödendi"}? (kalan ${tlYaz(kalan)})`, "");
+    if(g === null) return;
+    const m = sayiCoz(g); if(!(m > 0)) return toast("Geçerli bir tutar yaz");
+    if(m > kalan + .5) return toast("Kalan tutardan fazla olamaz");
+    odenen = Math.min(+v.tutar, (+v.odenen||0) + m);
+  }
+  const { error } = await sb.from("hesap_vade").update({ odenen, odendi: odenen >= (+v.tutar||0) - .5, odeme_tarihi: bugunISO() }).eq("id", vid);
+  if(error) return dbHatasi(error);
+  await kapanisTazele(hid); hesapAc(hid);
+}
+async function vadeGeriAl(vid, hid){
+  if(!confirm("Bu taksitin ödemesi geri alınsın mı?")) return;
+  const { error } = await sb.from("hesap_vade").update({ odendi:false, odenen:0, odeme_tarihi:null }).eq("id", vid);
+  if(error) return dbHatasi(error);
+  await kapanisTazele(hid); hesapAc(hid);
+}
+async function kalaniKapat(hid){
+  const { data:k } = await sb.from("hesap").select("*").eq("id",hid).single(); if(!k) return;
+  if(!confirm("Kalan bütün tutar bugün ödenmiş olarak işaretlensin mi?")) return;
+  if(k.vadeli){
+    const { data:vs } = await sb.from("hesap_vade").select("*").eq("hesap_id",hid);
+    for(const v of (vs||[]).filter(v=>vadeKalan(v) >= .5)){
+      const { error } = await sb.from("hesap_vade").update({ odendi:true, odenen:+v.tutar||0, odeme_tarihi:bugunISO() }).eq("id", v.id);
+      if(error) return dbHatasi(error);
+    }
+    await kapanisTazele(hid);
+  }else{
+    const { error } = await sb.from("hesap").update({ odenen:+k.tutar||0, odeme_tarihi:bugunISO(), kapandi:true }).eq("id", hid);
+    if(error) return dbHatasi(error);
+  }
+  toast("Kapatıldı"); hesapAc(hid);
+}
+async function tekOde(hid, tam){
+  const { data:k } = await sb.from("hesap").select("*").eq("id",hid).single(); if(!k) return;
+  const kalan = Math.max(0, (+k.tutar||0) - (+k.odenen||0));
+  let odenen = +k.tutar || 0;
+  if(!tam){
+    const g = prompt(`Ne kadar ${k.tip==="alacak"?"tahsil edildi":"ödendi"}? (kalan ${tlYaz(kalan)})`, "");
+    if(g === null) return;
+    const m = sayiCoz(g); if(!(m > 0)) return toast("Geçerli bir tutar yaz");
+    if(m > kalan + .5) return toast("Kalan tutardan fazla olamaz");
+    odenen = Math.min(+k.tutar, (+k.odenen||0) + m);
+  }
+  const { error } = await sb.from("hesap").update({ odenen, odeme_tarihi:bugunISO(), kapandi: odenen >= (+k.tutar||0) - .5 }).eq("id", hid);
+  if(error) return dbHatasi(error);
+  hesapAc(hid);
+}
+async function tekGeriAl(hid){
+  if(!confirm("Ödeme geri alınsın mı?")) return;
+  const { error } = await sb.from("hesap").update({ odenen:0, odeme_tarihi:null, kapandi:false }).eq("id", hid);
+  if(error) return dbHatasi(error);
+  hesapAc(hid);
+}
+// tek odemeyi kalan tutar uzerinden taksitlere cevirir
+async function taksiteBol(hid){
+  const { data:k } = await sb.from("hesap").select("*").eq("id",hid).single(); if(!k) return;
+  const kalan = Math.max(0, (+k.tutar||0) - (+k.odenen||0));
+  const a = prompt(`Kalan ${tlYaz(kalan)} kaç taksite bölünsün? (aylık)`, "6"); if(a === null) return;
+  const adet = Math.max(1, Math.min(120, parseInt(a) || 0)); if(!adet) return;
+  const ilk = prompt("İlk taksit tarihi (GG.AA.YYYY)", trTarih(k.tarih || bugunISO())); if(ilk === null) return;
+  const p = ilk.split(/[./-]/); const iso = p.length === 3 ? `${p[2].padStart(4,"20")}-${p[1].padStart(2,"0")}-${p[0].padStart(2,"0")}` : bugunISO();
+  const satirlar = [];
+  if((+k.odenen||0) > 0) satirlar.push({ hesap_id:hid, team_id:ME.team_id, tarih:k.odeme_tarihi || bugunISO(), tutar:+k.odenen, odendi:true, odenen:+k.odenen, odeme_tarihi:k.odeme_tarihi || bugunISO() });
+  if(satirlar.length){ const { error } = await sb.from("hesap_vade").insert(satirlar); if(error) return dbHatasi(error); }
+  const { error } = await taksitOlustur(hid, kalan, adet, iso, 1);
+  if(error) return dbHatasi(error);
+  await sb.from("hesap").update({ vadeli:true, tarih:null }).eq("id", hid);
+  toast(`${adet} taksite bölündü`); hesapAc(hid);
 }
 
 async function hesapGuncelle(id){
-  const v = x => document.getElementById(x).value;
-  const kisi = v("dkisi").trim();
+  const v = x => document.getElementById(x)?.value;
+  const kisi = (v("dkisi")||"").trim();
   if(!kisi) return toast("Kişi adı boş olamaz");
-  const { error } = await sb.from("hesap").update({
-    tip: v("dtip"), kisi, tutar: sayiCoz(v("dtutar")) || 0,
-    tarih: v("dtarih") || null, notu: v("dnot").trim() || null
-  }).eq("id", id);
-  if(error) return toast("Olmadı: " + error.message);
+  const alanlar = { tip: v("dtip"), kisi, notu: (v("dnot")||"").trim() || null };
+  if(document.getElementById("dtutar")){ alanlar.tutar = sayiCoz(v("dtutar")) || 0; alanlar.tarih = v("dtarih") || null; }
+  const { error } = await sb.from("hesap").update(alanlar).eq("id", id);
+  if(error) return dbHatasi(error);
   toast("Kaydedildi"); hesapAc(id);
 }
 async function hesapKapat(id, deger){ await sb.from("hesap").update({ kapandi: deger }).eq("id", id); hesapAc(id); }
 async function hesapSil(id){
-  if(!confirm("Bu kayıt ve vadeleri silinsin mi?")) return;
+  if(!confirm("Bu kayıt ve bütün taksitleri silinsin mi?")) return;
   const { error } = await sb.from("hesap").delete().eq("id", id);
   if(error) return toast("Olmadı: " + error.message);
   toast("Silindi"); go("hesap");
 }
-async function vadeIsaret(vid, hid, deger){ await sb.from("hesap_vade").update({ odendi: deger }).eq("id", vid); hesapAc(hid); }
+async function vadeIsaret(vid, hid, deger){ return deger ? vadeOde(vid, hid, true) : vadeGeriAl(vid, hid); }
 async function vadeKaydet(vid, hid){
   const t = document.getElementById("vt"+vid).value;
   const m = sayiCoz(document.getElementById("vm"+vid).value) || 0;
   if(!t) return toast("Tarih seç");
-  const { error } = await sb.from("hesap_vade").update({ tarih:t, tutar:m }).eq("id", vid);
-  if(error) return toast("Olmadı: " + error.message);
-  toast("Vade kaydedildi"); hesapAc(hid);
+  if(!(m > 0)) return toast("Tutar yaz");
+  const { data:v } = await sb.from("hesap_vade").select("*").eq("id",vid).single();
+  const guncel = { tarih:t, tutar:m };
+  if(v && v.odendi && m > (+v.odenen||+v.tutar)) guncel.odendi = false;
+  const { error } = await sb.from("hesap_vade").update(guncel).eq("id", vid);
+  if(error) return dbHatasi(error);
+  await kapanisTazele(hid);
+  toast("Taksit kaydedildi"); hesapAc(hid);
 }
 async function vadeSil(vid, hid){
-  if(!confirm("Bu vade silinsin mi?")) return;
+  if(!confirm("Bu taksit silinsin mi?")) return;
   await sb.from("hesap_vade").delete().eq("id", vid);
-  hesapAc(hid);
+  await kapanisTazele(hid); hesapAc(hid);
 }
 async function vadeEkle(hid){
   const { data:son } = await sb.from("hesap_vade").select("tarih,tutar").eq("hesap_id",hid)
@@ -9691,8 +9878,8 @@ async function vadeEkle(hid){
   t.setMonth(t.getMonth() + 1);
   const { error } = await sb.from("hesap_vade").insert({
     hesap_id:hid, team_id:ME.team_id, tarih:t.toISOString().slice(0,10), tutar: son?.[0]?.tutar || 0 });
-  if(error) return toast("Olmadı: " + error.message);
-  hesapAc(hid);
+  if(error) return dbHatasi(error);
+  await kapanisTazele(hid); hesapAc(hid);
 }
 
 /* ================= yaklaşanlar ================= */
@@ -9702,9 +9889,10 @@ async function yaklasanlar(){
   const bugun = new Date(); bugun.setHours(0,0,0,0);
   const gun = t => Math.round((new Date(t) - bugun) / 86400000);
 
-  const [{ data:ekler }, { data:vadeler }] = await Promise.all([
+  const [{ data:ekler }, { data:vadeler }, { data:tekler }] = await Promise.all([
     sb.from("ekler").select("*"),
-    sb.from("hesap_vade").select("*, hesap(kisi,tip)").eq("odendi", false)
+    sb.from("hesap_vade").select("*, hesap(kisi,tip,kapandi)").eq("odendi", false),
+    sb.from("hesap").select("*").eq("vadeli", false).eq("kapandi", false).not("tarih","is",null)
   ]);
 
   const satirlar = [];
@@ -9714,9 +9902,16 @@ async function yaklasanlar(){
       g:gun(k.gecerlilik_tarihi), tarih:k.gecerlilik_tarihi, git:"go('ekler')" });
   });
   (vadeler||[]).forEach(v=>{
+    if(v.hesap?.kapandi || vadeKalan(v) < .5) return;
+    const kismi = (+v.odenen||0) > 0 ? ` (taksit ${nf(Math.round(v.tutar))} ₺)` : "";
     satirlar.push({ tur: v.hesap?.tip === "borc" ? "Borç" : "Alacak",
-      baslik: v.hesap?.kisi || "—", alt: nf(Math.round(v.tutar)) + " ₺ vade",
-      g:gun(v.tarih), tarih:v.tarih, git:"go('hesap')" });
+      baslik: v.hesap?.kisi || "—", alt: nf(Math.round(vadeKalan(v))) + " ₺ taksit" + kismi,
+      g:gun(v.tarih), tarih:v.tarih, git:`hesapAc('${v.hesap_id}')` });
+  });
+  (tekler||[]).forEach(k=>{
+    const kl = Math.max(0, (+k.tutar||0) - (+k.odenen||0)); if(kl < .5) return;
+    satirlar.push({ tur: k.tip === "borc" ? "Borç" : "Alacak", baslik:k.kisi, alt: nf(Math.round(kl)) + " ₺ ödeme",
+      g:gun(k.tarih), tarih:k.tarih, git:`hesapAc('${k.id}')` });
   });
 
   satirlar.sort((a,b)=>a.g - b.g);
