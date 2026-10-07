@@ -2220,7 +2220,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.2";
+const SURUM_MORDOR = "v 2.3.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11368,7 +11368,15 @@ function capYerlesimAgac(M, cfg, hizli){
   const ITER = hizli ? 3 : 12;
   for(let it=0; it<ITER; it++){
     eDeg = new Map();
-    yapr.forEach(y=>eDeg.set(y.id, y.kalan ? Math.max(1, (net - sabitTop)/kalanlar.length) : Math.max(.01, +y.hedef||0)));
+    // otomatik kirpma: fazlalik, kilitsiz butun parcalardan ayni oranda dusulur
+    let oran = 1;
+    if(cfg.kirpOto && it > 0){
+      const kilitTop = yapr.filter(y=>!y.kalan && y.kilit).reduce((t,y)=>t+Math.max(.01,+y.hedef||0), 0);
+      const serbestTop = sabitTop - kilitTop, yer2 = net - kilitTop - (kalanlar.length ? kalanlar.length : 0);
+      if(serbestTop > 0 && sabitTop > net) oran = Math.max(.01, Math.min(1, yer2 / serbestTop));
+    }
+    yapr.forEach(y=>eDeg.set(y.id, y.kalan ? Math.max(1, (net - sabitTop*1)/kalanlar.length) :
+      Math.max(.01, (+y.hedef||0) * (y.kilit ? 1 : oran))));
     const eTopM = new Map();
     const eTop = d => { if(eTopM.has(d.id)) return eTopM.get(d.id);
       const v = yaprakMi(d) ? eDeg.get(d.id) : d.cocuk.reduce((t,c)=>t+eTop(c), 0); eTopM.set(d.id, v); return v; };
@@ -11443,12 +11451,15 @@ function capYerlesimAgac(M, cfg, hizli){
       });
     };
     duzelt(kok);
-    if(hata < 2e-4 && (!kalanlar.length || Math.abs(net - netOnce) < .01)) break;
+    if(hata < 2e-4 && ((!kalanlar.length && !cfg.kirpOto) || Math.abs(net - netOnce) < .01) && it > 0) break;
   }
   const yolAlan = yollar.reduce((t,y)=>t + polyAlan(y.poly), 0);
   const parcalar = yapr.map((y,i)=>{
     const poly = bolgeler.get(y.id);
-    return { poly, id:y.id, bilgi:{ no: y.no || String(i+1), m2: Math.round((gercek.get(y.id)||0)*100)/100, renk:y.renk, hedef:+y.hedef||0, kalan:!!y.kalan } };
+    const ger = Math.round((gercek.get(y.id)||0)*100)/100;
+    // kirpma kapaliysa kagitta yazilan metrekare gorunur; kalani alan parca hep olculeni yazar
+    const yaz = (!cfg.kirpOto && !y.kalan) ? Math.round((+y.hedef||0)*100)/100 : ger;
+    return { poly, id:y.id, bilgi:{ no: y.no || String(i+1), m2: yaz, olculen: ger, renk:y.renk, hedef:+y.hedef||0, kalan:!!y.kalan } };
   }).filter(o=>o.poly && o.poly.length > 2);
   const ilk = C.resmiler[0] || null;
   return { agacMi:true, parcalar, yol: yollar.map(y=>y.poly), yolEksen: yollar.map(y=>y.eksen ? { p1:y.eksen[0], p2:y.eksen[1], g:y.g } : null).filter(Boolean),
@@ -11508,9 +11519,10 @@ function capDenetim(yer){
   });
   if(yer.bosAlan > .5) uyari.push({ tur:"bilgi", metin:`${nf2(yer.bosAlan)} m² ayrılmamış alan var · boş alana dokunup parça yapabilirsin` });
   const fazla = (yer.girilen || 0) - (yer.net || 0);
-  if(fazla > .5) uyari.push({ tur:"hata", metin:`Yazılan toplam parselin kullanılabilir alanını ${nf2(fazla)} m² aşıyor; sondaki parçalar istenenden küçük çıktı` });
-  (yer.parcalar||[]).forEach(o=>{ const d = Math.abs(o.bilgi.m2 - o.bilgi.hedef);
-    if(d > 1 && fazla <= .5 && !o.bilgi.kalan) uyari.push({ tur:"dikkat", id:o.id, metin:`${o.bilgi.no} nolu parça ${nf2(o.bilgi.m2)} m² çıktı, istenen ${nf2(o.bilgi.hedef)} m²` }); });
+  if(fazla > .5) uyari.push({ tur:"hata", metin:`Yazılan toplam parselin kullanılabilir alanını ${nf2(fazla)} m² aşıyor. ` +
+    (PARCA.kirpOto ? "Otomatik kırpma açık: fazlalık kilitsiz bütün parçalardan aynı oranda düşüldü." : "Kırpma kapalı: kâğıda senin yazdığın metrekareler yazılacak.") });
+  (yer.parcalar||[]).forEach(o=>{ const d = Math.abs((o.bilgi.olculen ?? o.bilgi.m2) - o.bilgi.hedef);
+    if(d > 1 && !o.bilgi.kalan && !(PARCA.kirpOto && fazla > .5)) uyari.push({ tur:"dikkat", id:o.id, metin:`${o.bilgi.no} nolu parça çizimde ${nf2(o.bilgi.olculen ?? o.bilgi.m2)} m², yazılan ${nf2(o.bilgi.hedef)} m²` }); });
   return { uyari, cephe, bagli };
 }
 
@@ -11695,7 +11707,7 @@ function ozetCiz(hizli){
 function parcaCfgTemel(){
   return { surum:2, resmiGenislik: PARCA.resmiGenislik || 0, resmiKenar: PARCA.resmiKenar || "alt",
     resmiEk: (PARCA.resmiEk||[]).map(e=>({ kenar:e.kenar, yon:e.yon, g:+e.g })), ters: !!PARCA.ters,
-    enAzYol: PARCA.enAzYol || 3, capTema:"yatay", olculer: PARCA.olculer !== false };
+    enAzYol: PARCA.enAzYol || 3, capTema:"yatay", olculer: PARCA.olculer !== false, kirpOto: !!PARCA.kirpOto };
 }
 function parcaCfg(){
   const cfg = { ...parcaCfgTemel(), agac: agacTemiz(PARCA.agac) };
@@ -11985,6 +11997,8 @@ function editorCiz(){
     x.textAlign = "center"; x.textBaseline = "middle"; x.fillStyle = "#14170F";
     x.font = "700 13px Arial"; x.fillText(String(o.bilgi.no) + (d?.kilit ? " 🔒" : "") + (d?.kalan ? " ∗" : ""), m[0], m[1]-7);
     x.font = "400 10.5px Arial"; x.fillText(nfAkilli(o.bilgi.m2) + " m²", m[0], m[1]+7);
+    if(Math.abs((o.bilgi.olculen ?? o.bilgi.m2) - o.bilgi.m2) > 1){ x.font = "400 9px Arial"; x.fillStyle = "#B03030";
+      x.fillText("çizimde " + nfAkilli(o.bilgi.olculen) , m[0], m[1]+19); }
   });
   // tutamaklar
   const secEbeveyn = secB ? (secB.ebeveyn ? secB.ebeveyn.id : null) : null;
@@ -12763,6 +12777,13 @@ async function capAyar(arg){
     <p class="ipuc">Çizim, TKGM'deki parsel sınırının birebir kendisidir. Parsel tek parça olarak başlar: bir parçaya dokunup
       istediğin yönde istediğin kadar böl, çıkan her parçayı tekrar böl. Yolları kesimlere ya da parçaların kenarına sen koy.</p>
     ${capEditorHtml()}
+    <div class="card" style="padding:12px">
+      <label style="display:flex;gap:10px;align-items:flex-start;font-size:13.5px;cursor:pointer">
+        <input type="checkbox" id="kirpOto" style="margin-top:3px;width:18px;height:18px">
+        <span><b>Fazlalığı otomatik kırp</b><br><span style="font-size:12px;color:var(--ink-3)">İşaretlersen yazılan toplam parsele sığmadığında
+          fazlalık kilitsiz bütün parçalardan aynı oranda düşülür ve kâğıda düşülmüş metrekareler yazılır. İşaretlemezsen fazlalık sadece uyarı olarak
+          gösterilir; kâğıda ve hisselere senin yazdığın metrekareler birebir geçer.</span></span></label>
+    </div>
     ${belgeId
       ? `<button class="btn" id="ciz" style="margin-top:6px">Üzerine Kaydet</button>
          <button class="btn ghost" id="cizYeni" style="margin-top:8px">Farklı Kaydet</button>`
@@ -12806,6 +12827,8 @@ async function capAyar(arg){
     if(g2("prg")) g2("prg").value = String(PARCA.resmiGenislik);
     if(g2("prk")) g2("prk").value = PARCA.resmiKenar;
   }
+  PARCA.kirpOto = !!(duzen && duzen.kirpOto);
+  { const kk = document.getElementById("kirpOto"); if(kk){ kk.checked = PARCA.kirpOto; kk.onchange = () => { PARCA.kirpOto = kk.checked; ozetCiz(); }; } }
   capEditorKur();
   if(PARCA.eskiCevrildi) toast("Bu çap eski blok düzeniyle çizilmişti; yeni düzenleyiciye yaklaşık olarak aktarıldı, kontrol et");
   if(!window.__capBoyut){ window.__capBoyut = true; window.addEventListener("resize", () => { if(document.getElementById("capEditor")) editorCiz(); }); }
@@ -12814,7 +12837,7 @@ async function capAyar(arg){
     const cfg = parcaCfg();
     if(!cfg.parcalar.length) return toast("En az bir parça olmalı");
     if(cfg.parcalar.some(o=>!(+o.m2 > 0))) return toast("Alanı sıfır çıkan parça var, kesimleri kontrol et");
-    const hata = (PARCA.denetim?.uyari || []).filter(u=>u.tur === "hata");
+    const hata = (PARCA.denetim?.uyari || []).filter(u=>u.tur === "hata" && !/aşıyor/.test(u.metin));
     if(hata.length && !confirm(hata.map(u=>u.metin).join("\n") + "\n\nYine de çizilsin mi?")) return;
     e.target.disabled = true; const eskiYazi = e.target.textContent; e.target.textContent = "Çiziliyor…";
     await capCiz(parselId, cfg, belgeId || null);
