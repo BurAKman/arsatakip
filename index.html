@@ -2220,7 +2220,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.3.1";
+const SURUM_MORDOR = "v 2.3.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11618,6 +11618,12 @@ function capEditorHtml(){
         <div class="field" style="margin:0"><label>Kenar ölçüleri</label><select id="polcu">
           <option value="1">Göster</option><option value="0">Gizle</option></select></div>
       </div>
+      <div class="row2" style="margin-top:10px">
+        <div class="field" style="margin:0"><label>Resmî yol görünümü</label><select id="prstil">
+          <option value="cizgi">Düz (beyaz)</option><option value="asfalt">Asfalt</option></select></div>
+        <div class="field" style="margin:0"><label>Parsel yolu görünümü</label><select id="pystil">
+          <option value="kesik">Kesik çizgi</option><option value="toprak">Toprak yol</option></select></div>
+      </div>
     </div>`;
 }
 
@@ -11629,6 +11635,9 @@ function capEditorKur(){
   if(rk){ rk.value = PARCA.resmiKenar || "alt"; rk.onchange = () => degisim(()=>{ PARCA.resmiKenar = rk.value; }); kenarPusulaYaz(); }
   if(yg) yg.onchange = () => { PARCA.enAzYol = Math.max(1, Math.min(20, sayiCoz(yg.value) || 3)); };
   if(ol){ ol.value = PARCA.olculer === false ? "0" : "1"; ol.onchange = () => { PARCA.olculer = ol.value === "1"; }; }
+  const rs = g("prstil"), ys = g("pystil");
+  if(rs){ rs.value = PARCA.resmiStil || "cizgi"; rs.onchange = () => { PARCA.resmiStil = rs.value; }; }
+  if(ys){ ys.value = PARCA.yolStil || "kesik"; ys.onchange = () => { PARCA.yolStil = ys.value; }; }
   const c = g("capEditor");
   if(c){
     c.onpointerdown = editorBas; c.onpointermove = editorSurukle;
@@ -11707,7 +11716,8 @@ function ozetCiz(hizli){
 function parcaCfgTemel(){
   return { surum:2, resmiGenislik: PARCA.resmiGenislik || 0, resmiKenar: PARCA.resmiKenar || "alt",
     resmiEk: (PARCA.resmiEk||[]).map(e=>({ kenar:e.kenar, yon:e.yon, g:+e.g })), ters: !!PARCA.ters,
-    enAzYol: PARCA.enAzYol || 3, capTema:"yatay", olculer: PARCA.olculer !== false, kirpOto: !!PARCA.kirpOto };
+    enAzYol: PARCA.enAzYol || 3, capTema:"yatay", olculer: PARCA.olculer !== false, kirpOto: !!PARCA.kirpOto,
+    resmiStil: PARCA.resmiStil || "cizgi", yolStil: PARCA.yolStil || "kesik" };
 }
 function parcaCfg(){
   const cfg = { ...parcaCfgTemel(), agac: agacTemiz(PARCA.agac) };
@@ -12758,6 +12768,8 @@ async function capAyar(arg){
   PARCA.bloklar = []; PARCA.enAzYol = 3; PARCA.ters = false; PARCA.yolTipi = "parsel";
   PARCA.yolKonum = "oto"; PARCA.capTema = "yatay";
   PARCA.resmiGenislik = 0; PARCA.resmiKenar = "alt"; PARCA.yolKaydir = 0; PARCA.olculer = true;
+  PARCA.resmiStil = "cizgi"; PARCA.yolStil = "kesik";
+  capDokuYukle();
 
   app.innerHTML = head(belgeId ? "Çapı Düzenle" : "Çap Çizdir", belgeId ? `go('parsel','${parselId}')` : "go('cap')") + `
     <div class="card">
@@ -12828,6 +12840,8 @@ async function capAyar(arg){
     if(g2("prk")) g2("prk").value = PARCA.resmiKenar;
   }
   PARCA.kirpOto = !!(duzen && duzen.kirpOto);
+  PARCA.resmiStil = (duzen && duzen.resmiStil) || "cizgi";
+  PARCA.yolStil = (duzen && duzen.yolStil) || "kesik";
   { const kk = document.getElementById("kirpOto"); if(kk){ kk.checked = PARCA.kirpOto; kk.onchange = () => { PARCA.kirpOto = kk.checked; ozetCiz(); }; } }
   capEditorKur();
   if(PARCA.eskiCevrildi) toast("Bu çap eski blok düzeniyle çizilmişti; yeni düzenleyiciye yaklaşık olarak aktarıldı, kontrol et");
@@ -12868,6 +12882,7 @@ async function capCiz(parselId, cfg, belgeId){
       birlesik.width = G2; birlesik.height = Y2;
       const bx = birlesik.getContext("2d");
       bx.fillStyle = "#FFFFFF"; bx.fillRect(0,0,G2,Y2);
+      try{ await capDokuYukle(); }catch(e){}
       const sol = await yukleGorsel(capCizPng(p, cfg));
       const sag = await yukleGorsel(muvafakatPng(p, 1000, 1400));
       bx.drawImage(sol, 0, 0, 1000, 1400);
@@ -13109,6 +13124,18 @@ function yaziKutusu(cx, cy, gen, yuk, aci){
 const kutuCakisiyor = (a,b) => !(a.x2 < b.x1 || b.x2 < a.x1 || a.y2 < b.y1 || b.y2 < a.y1);
 
 // resmi capa benzer cizim: kunye tablosu, kuzey gulu, parcalar ve olculer
+// cap cizimindeki asfalt / toprak yol dokulari (peyzaj klasoru; duz yuklenmisse kokten)
+let CAP_DOKU = null, CAP_DOKU_SOZ = null;
+function capDokuYukle(){
+  if(CAP_DOKU_SOZ) return CAP_DOKU_SOZ;
+  const al = ad => new Promise(r => { const i = new Image();
+    i.onload = () => r(i);
+    i.onerror = () => { const j = new Image(); j.onload = () => r(j); j.onerror = () => r(null); j.src = gv(ad + ".webp"); };
+    i.src = gv("peyzaj/" + ad + ".webp"); });
+  CAP_DOKU_SOZ = Promise.all([al("asfalt"), al("toprakyol")]).then(([a, t]) => (CAP_DOKU = { asfalt:a, toprak:t }));
+  return CAP_DOKU_SOZ;
+}
+
 function capCizPng(p, cfg, kucuk){
   const parcalar = cfg?.parcalar || null;
   const M = capHalkasi(p);
@@ -13228,7 +13255,9 @@ function capCizPng(p, cfg, kucuk){
       x.restore();
     };
 
-    const yolYazisi = (p1, p2, metin, boy) => {
+    const desen = (img, metre) => { if(!img) return null; const pt = x.createPattern(img, "repeat");
+      try{ pt.setTransform(new DOMMatrix().scale(metre*olcek/img.width)); }catch(e){} return pt; };
+    const yolYazisi = (p1, p2, metin, boy, renk) => {
       if(kucuk) return;
       const e1 = E(p1), e2 = E(p2);
       const uz = Math.hypot(e2[0]-e1[0], e2[1]-e1[1]);
@@ -13241,9 +13270,9 @@ function capCizPng(p, cfg, kucuk){
       x.rotate(ac);
       x.textAlign = "center"; x.textBaseline = "middle";
       x.font = `700 ${S(boy || 12)}px Arial`;
-      x.lineWidth = S((boy || 12) * .42); x.strokeStyle = "#FFFFFF"; x.lineJoin = "round";
+      x.lineWidth = S((boy || 12) * .42); x.strokeStyle = renk ? renk[1] : "#FFFFFF"; x.lineJoin = "round";
       x.strokeText(metin, 0, 0);
-      x.fillStyle = "#1A1A1A"; x.fillText(metin, 0, 0);
+      x.fillStyle = renk ? renk[0] : "#1A1A1A"; x.fillText(metin, 0, 0);
       x.restore();
     };
 
@@ -13269,21 +13298,58 @@ function capCizPng(p, cfg, kucuk){
     const yolListesi = yer.yolEksen
       ? yer.yolEksen.map(o=>({ p1:o.p1, p2:o.p2, uzunluk:Math.hypot(o.p2[0]-o.p1[0], o.p2[1]-o.p1[1]) }))
       : (yer.yol||[]).filter(p=>p && p.length > 2).map(ortaEksen);
-    yolListesi.forEach(o=>{ kesikCiz(o.p1, o.p2); eksenDolu(o.p1, o.p2); });
+    const toprak = cfg.yolStil === "toprak";
+    const seritler = (yer.yollarDetay && yer.yollarDetay.length ? yer.yollarDetay.map(r=>r.poly) : (yer.yol||[])).filter(q=>q && q.length > 2);
+    if(toprak && seritler.length){
+      x.save();
+      x.beginPath(); seritler.forEach(q=>{ q.map(E).forEach((k,i)=> i ? x.lineTo(k[0],k[1]) : x.moveTo(k[0],k[1])); x.closePath(); });
+      x.fillStyle = "#B98C5E"; x.fill();
+      const pt = desen(CAP_DOKU && CAP_DOKU.toprak, 5); if(pt){ x.fillStyle = pt; x.fill(); }
+      x.clip();
+      // kenarlarda koyulasma
+      x.lineWidth = Math.max(3, olcek*0.9); x.strokeStyle = "rgba(90,55,25,.40)"; x.lineJoin = "round"; x.stroke();
+      // teker izleri
+      x.lineWidth = Math.max(1, olcek*0.3); x.strokeStyle = "rgba(85,55,28,.32)";
+      yolListesi.forEach(o=>{ const dx = o.p2[0]-o.p1[0], dy = o.p2[1]-o.p1[1], L = Math.hypot(dx,dy) || 1, nx = -dy/L, ny = dx/L;
+        [-0.6, 0.6].forEach(f=>{ const a = E([o.p1[0]+nx*f, o.p1[1]+ny*f]), b2 = E([o.p2[0]+nx*f, o.p2[1]+ny*f]);
+          x.beginPath(); x.moveTo(a[0],a[1]); x.lineTo(b2[0],b2[1]); x.stroke(); }); });
+      x.restore();
+      x.save(); x.lineWidth = kucuk ? .8 : 1.1; x.strokeStyle = "#7A5230";
+      seritler.forEach(q=>{ yol(q.map(E)); x.stroke(); }); x.restore();
+      yolListesi.forEach(o=>eksenDolu(o.p1, o.p2));
+    }else{
+      yolListesi.forEach(o=>{ kesikCiz(o.p1, o.p2); eksenDolu(o.p1, o.p2); });
+    }
     const enUzunYol = yolListesi.sort((a,b2)=>b2.uzunluk - a.uzunluk)[0];
-    if(enUzunYol) yolYazisi(enUzunYol.p1, enUzunYol.p2, "PARSEL YOLU");
+    if(enUzunYol) yolYazisi(enUzunYol.p1, enUzunYol.p2, "PARSEL YOLU", null, toprak ? ["#FFF4DE", "#5A3A1C"] : null);
 
     // resmi yol: parselin disinda, iki uzun kenari duz cizgi
     (yer.resmiler || (yer.resmiYol ? [{ resmiYol:yer.resmiYol, resmiZincir:yer.resmiZincir }] : [])).forEach(RY=>{
     if(RY.resmiYol && RY.resmiYol.length > 3){
       const Z = RY.resmiZincir || { ic:[RY.resmiYol[0], RY.resmiYol[1]], dis:[RY.resmiYol[3], RY.resmiYol[2]] };
+      const asfalt = cfg.resmiStil === "asfalt";
+      const cizgiCiz = seri => { const e2 = seri.map(E); x.beginPath();
+        e2.forEach((q,i)=>i ? x.lineTo(q[0],q[1]) : x.moveTo(q[0],q[1])); x.stroke(); };
       x.save();
-      // serit: acik gri asfalt dolgusu
-
-      // iki kenar boyunca kesintisiz duz cizgi
-      x.lineWidth = kucuk ? 1.1 : 1.8; x.strokeStyle = "#1A1A1A"; x.lineJoin = "round";
-      [Z.ic, Z.dis].forEach(seri=>{ const e2 = seri.map(E); x.beginPath();
-        e2.forEach((q,i)=>i ? x.lineTo(q[0],q[1]) : x.moveTo(q[0],q[1])); x.stroke(); });
+      if(asfalt){
+        // serit: asfalt dokusu, kenarda beyaz bant, ortada kesik serit
+        yol(Z.ic.concat(Z.dis.slice().reverse()).map(E));
+        x.fillStyle = "#5E6166"; x.fill();
+        const pt = desen(CAP_DOKU && CAP_DOKU.asfalt, 9); if(pt){ x.fillStyle = pt; x.fill(); x.fillStyle = "rgba(60,62,68,.22)"; x.fill(); }
+        x.save(); x.clip();
+        x.lineJoin = "round"; x.lineWidth = Math.max(3, olcek*0.7); x.strokeStyle = "rgba(250,248,240,.92)";
+        cizgiCiz(Z.ic); cizgiCiz(Z.dis);
+        const orta = Z.ic.map((q,i)=>[(q[0]+Z.dis[i][0])/2, (q[1]+Z.dis[i][1])/2]);
+        x.setLineDash([Math.max(8, olcek*3), Math.max(6, olcek*2.4)]); x.lineWidth = Math.max(1.4, olcek*0.22);
+        x.strokeStyle = "rgba(250,240,190,.95)"; cizgiCiz(orta); x.setLineDash([]);
+        x.restore();
+        x.lineWidth = kucuk ? .8 : 1.1; x.strokeStyle = "#2A2C30"; x.lineJoin = "round";
+        cizgiCiz(Z.ic); cizgiCiz(Z.dis);
+      }else{
+        // iki kenar boyunca kesintisiz duz cizgi
+        x.lineWidth = kucuk ? 1.1 : 1.8; x.strokeStyle = "#1A1A1A"; x.lineJoin = "round";
+        cizgiCiz(Z.ic); cizgiCiz(Z.dis);
+      }
       x.restore();
       // yazi ve eksen: en uzun parcanin ortasinda
       let en = 0, enUz = -1;
@@ -13292,7 +13358,7 @@ function capCizPng(p, cfg, kucuk){
       const o2 = [ (Z.ic[en+1][0]+Z.dis[en+1][0])/2, (Z.ic[en+1][1]+Z.dis[en+1][1])/2 ];
       for(let i=0;i<Z.ic.length-1;i++){
         eksenDolu([ (Z.ic[i][0]+Z.dis[i][0])/2, (Z.ic[i][1]+Z.dis[i][1])/2 ], [ (Z.ic[i+1][0]+Z.dis[i+1][0])/2, (Z.ic[i+1][1]+Z.dis[i+1][1])/2 ]); }
-      yolYazisi(o1, o2, "RESMİ YOL", 17);
+      yolYazisi(o1, o2, "RESMİ YOL", 17, asfalt ? ["#FFFFFF", "#2A2C30"] : null);
     }
     });
 
