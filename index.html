@@ -2221,7 +2221,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.3.7";
+const SURUM_MORDOR = "v 2.3.8";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -13211,22 +13211,18 @@ async function capCiz(parselId, cfg, belgeId){
     const { jsPDF } = window.jspdf;
     let pdf;
     {
-      // iki sayfa yan yana: tek yatay A4
-      const G2 = 2000, Y2 = 1400;
-      const birlesik = document.createElement("canvas");
-      birlesik.width = G2; birlesik.height = Y2;
-      const bx = birlesik.getContext("2d");
-      bx.fillStyle = "#FFFFFF"; bx.fillRect(0,0,G2,Y2);
+      // iki sayfa yan yana: tek yatay A4. Her yarim yuksek cozunurlukte (2,5 kat, ~460 dpi) ayri gomulur,
+      // boylece yazilar ve ince cizgiler baskida da keskin kalir; PNG sikistirilir ki dosya sismesin.
+      const KAT = 2.5;
       try{ await capDokuYukle(); }catch(e){}
-      const sol = await yukleGorsel(capCizPng(p, cfg));
-      const sag = await yukleGorsel(muvafakatPng(p, 1000, 1400));
-      bx.drawImage(sol, 0, 0, 1000, 1400);
-      bx.drawImage(sag, 1000, 0, 1000, 1400);
-      bx.strokeStyle = "#D8DBDE"; bx.lineWidth = 2;
-      bx.beginPath(); bx.moveTo(1000, 40); bx.lineTo(1000, Y2-40); bx.stroke();
-      pdf = new jsPDF({ orientation:"landscape", unit:"mm", format:"a4" });
-      const gen = 277, yuk = gen * (Y2/G2);
-      pdf.addImage(birlesik.toDataURL("image/png"), "PNG", 10, (210-yuk)/2, gen, yuk);
+      const solUrl = capCizPng(p, cfg, false, KAT);
+      const sagUrl = muvafakatPng(p, 1000, 1400, KAT);
+      pdf = new jsPDF({ orientation:"landscape", unit:"mm", format:"a4", compress:true });
+      const gen = 277, yuk = gen * (1400/2000), y0 = (210-yuk)/2;
+      pdf.addImage(solUrl, "PNG", 10, y0, gen/2, yuk, "sol", "FAST");
+      pdf.addImage(sagUrl, "PNG", 10 + gen/2, y0, gen/2, yuk, "sag", "FAST");
+      pdf.setDrawColor(216, 219, 222); pdf.setLineWidth(.2);
+      pdf.line(10 + gen/2, y0 + yuk*40/1400, 10 + gen/2, y0 + yuk - yuk*40/1400);
     }
     const blob = pdf.output("blob");
     const dosya = new File([blob], capDosyaAdi(p, "pdf"), { type:"application/pdf" });
@@ -13384,9 +13380,10 @@ function capKunye(x, p, sol, ust, gen){
 }
 
 // ikinci sayfa: muvafakatname
-function muvafakatPng(p, G, Y){
-  const c = document.createElement("canvas"); c.width = G; c.height = Y;
-  const x = c.getContext("2d");
+function muvafakatPng(p, G, Y, kat){
+  const K = Math.max(1, +kat || 1);
+  const c = document.createElement("canvas"); c.width = Math.round(G*K); c.height = Math.round(Y*K);
+  const x = c.getContext("2d"); x.scale(K, K);
   capCerceve(x, G, Y, "MUVAFAKATNAME");
 
   const sol = 70, gen = G - 140;
@@ -13471,15 +13468,16 @@ function capDokuYukle(){
   return CAP_DOKU_SOZ;
 }
 
-function capCizPng(p, cfg, kucuk){
+function capCizPng(p, cfg, kucuk, kat){
   const parcalar = cfg?.parcalar || null;
   const M = capHalkasi(p);
   if(!M) throw new Error("sınır çizimi yok");
 
   const G = kucuk ? 700 : 1000, Y = kucuk ? 900 : 1400;
   const ustAlan = kucuk ? 110 : 330, altAlan = kucuk ? 30 : 90, kenar = kucuk ? 40 : 80;
-  const c = document.createElement("canvas"); c.width = G; c.height = Y;
-  const x = c.getContext("2d");
+  const K = Math.max(1, +kat || 1);   // PDF icin yuksek cozunurluk: cizim ayni, piksel K kat
+  const c = document.createElement("canvas"); c.width = Math.round(G*K); c.height = Math.round(Y*K);
+  const x = c.getContext("2d"); x.scale(K, K);
   if(kucuk){ x.fillStyle = "#FFFFFF"; x.fillRect(0,0,G,Y); }
   else capCerceve(x, G, Y, "PARSELASYON KROKİSİ");
   const S = k => kucuk ? Math.max(8, Math.round(k*0.66)) : k;
@@ -13618,7 +13616,7 @@ function capCizPng(p, cfg, kucuk){
       const e1 = E(p1), e2 = E(p2);
       const uz = Math.hypot(e2[0]-e1[0], e2[1]-e1[1]);
       const adet = Math.max(2, Math.round(uz / S(16)));
-      const yari = S(9);
+      const yari = S(5);
       for(let t = 0; t <= adet; t++){
         const px = e1[0] + (e2[0]-e1[0])*t/adet, py = e1[1] + (e2[1]-e1[1])*t/adet;
         dolu.push({ x1:px-yari, y1:py-yari, x2:px+yari, y2:py+yari });
@@ -13708,8 +13706,8 @@ function capCizPng(p, cfg, kucuk){
   if(bekleyen.length){
     // resmi caplardaki gibi: olcu, kenara paralel ve yasli, parcanin icinde; arka zemin yok, ince siyah
     x.font = `400 ${S(11)}px Arial`; x.textAlign = "center"; x.textBaseline = "middle";
-    const konumlar = [0.5, 0.38, 0.62, 0.27, 0.73];
-    const uzakliklar = [7.5, 10.5];
+    const konumlar = [0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74];
+    const uzakliklar = [6, 9];
     bekleyen.forEach(b2=>{
       const nx = -b2.dy/b2.u, ny = b2.dx/b2.u;
       const mx0 = b2.a1[0] + b2.dx*.5, my0 = b2.a1[1] + b2.dy*.5;
