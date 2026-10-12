@@ -2221,7 +2221,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.4.0";
+const SURUM_MORDOR = "v 2.4.3";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -13328,24 +13328,56 @@ const CAP_R = { kirmizi:"#A3242C", gri:"#8B9096", sari:"#FCF3CF", cizgi:"#3A3A3A
 // kurumsal kirmizi-gri cerceve
 function capCerceve(x, G, Y, baslik){
   x.fillStyle = "#FFFFFF"; x.fillRect(0,0,G,Y);
+  // tapu senedi usulu guilloche bandi: ince, sik ve faz kaydirmali dalga telleri; koselerde kendi icinde
+  // simetrik rozet hucresi. Bordo soluk tutulur ki cizimle yarismasin.
+  const D = 12, I = 42, w = I - D, m = (D + I)/2;
+  const tel = "rgba(150,28,40,.50)", tel2 = "rgba(150,28,40,.26)", hat = "rgba(122,26,32,.85)";
+  x.fillStyle = "#FDF7F6"; x.fillRect(D, D, G-2*D, w); x.fillRect(D, Y-I, G-2*D, w); x.fillRect(D, D, w, Y-2*D); x.fillRect(G-I, D, w, Y-2*D);
+  const serit = (yatay, sabit) => {
+    const bas = I, son = (yatay ? G : Y) - I, L = son - bas;
+    const lam = L / Math.max(1, Math.round(L / 19)), A = w/2 - 3.2;
+    x.save(); x.beginPath();
+    if(yatay) x.rect(I, sabit - w/2, G - 2*I, w); else x.rect(sabit - w/2, I, w, Y - 2*I);
+    x.clip();
+    const ciz = (gen, dalga, faz, renk, kal) => { x.strokeStyle = renk; x.lineWidth = kal; x.beginPath();
+      for(let t = 0; t <= L; t += .8){ const v = gen*Math.sin(2*Math.PI*t/dalga + faz);
+        const px = yatay ? bas + t : sabit + v, py = yatay ? sabit + v : bas + t; t ? x.lineTo(px, py) : x.moveTo(px, py); } x.stroke(); };
+    for(let k=0;k<10;k++) ciz(A, lam, Math.PI/2 + k*Math.PI/10, tel, .4);        // ana orgu
+    for(let k=0;k<2;k++) ciz(A*.42, lam/2, Math.PI/2 + k*Math.PI, tel2, .35);     // ortadaki ince zincir
+    x.restore();
+    // bandin ic ve dis kenarinda ikili ince cetvel
+    x.strokeStyle = hat; x.lineWidth = .5; x.beginPath();
+    if(yatay){ [sabit - w/2 + 1.6, sabit + w/2 - 1.6].forEach(yy=>{ x.moveTo(I, yy); x.lineTo(G - I, yy); }); }
+    else { [sabit - w/2 + 1.6, sabit + w/2 - 1.6].forEach(xx=>{ x.moveTo(xx, I); x.lineTo(xx, Y - I); }); }
+    x.stroke();
+  };
+  serit(true, m); serit(true, Y - m); serit(false, m); serit(false, G - m);
+  // kose hucresi: kare icinde 8 yaprakli gul egrisi + ic ice daireler, tam simetrik
+  const kose = (cx, cy) => {
+    x.save(); x.beginPath(); x.rect(cx - w/2, cy - w/2, w, w); x.clip();
+    x.fillStyle = "#FDF7F6"; x.fillRect(cx - w/2, cy - w/2, w, w);
+    const R = w/2 - 2.5;
+    x.lineWidth = .45; x.strokeStyle = tel;
+    for(let k=0;k<3;k++){ const r0 = R*(1 - k*.16); x.beginPath();
+      for(let a=0; a<=Math.PI*2 + .01; a += .02){ const r = r0*Math.abs(Math.cos(4*a + k*Math.PI/12)); const px = cx + r*Math.cos(a), py = cy + r*Math.sin(a); a ? x.lineTo(px,py) : x.moveTo(px,py); }
+      x.stroke(); }
+    x.lineWidth = .5; x.strokeStyle = hat;
+    [R, R*.42].forEach(r=>{ x.beginPath(); x.arc(cx, cy, r, 0, 7); x.stroke(); });
+    x.beginPath(); x.arc(cx, cy, 1.6, 0, 7); x.fillStyle = hat; x.fill();
+    x.restore();
+    x.lineWidth = .8; x.strokeStyle = hat; x.strokeRect(cx - w/2 + .5, cy - w/2 + .5, w - 1, w - 1);
+  };
+  [[m,m],[G-m,m],[m,Y-m],[G-m,Y-m]].forEach(([a,b])=>kose(a,b));
+  // dis ince bordo hat, ic koyu gri ikili hat
+  x.lineWidth = 1; x.strokeStyle = hat; x.strokeRect(D - .5, D - .5, G - 2*D + 1, Y - 2*D + 1);
+  x.lineWidth = 1.3; x.strokeStyle = "#3A3A3A"; x.strokeRect(I + 3, I + 3, G - 2*I - 6, Y - 2*I - 6);
+  x.lineWidth = .5; x.strokeStyle = "#8B9096"; x.strokeRect(I + 6.5, I + 6.5, G - 2*I - 13, Y - 2*I - 13);
+  // sayfa koselerinde ince kesim isaretleri (tapudaki gibi)
+  x.strokeStyle = "#4A4A4A"; x.lineWidth = 1;
+  [[4,4,1,1],[G-4,4,-1,1],[4,Y-4,1,-1],[G-4,Y-4,-1,-1]].forEach(([cx,cy,sx,sy])=>{
+    x.beginPath(); x.moveTo(cx + sx*16, cy); x.lineTo(cx, cy); x.lineTo(cx, cy + sy*16); x.stroke(); });
 
-  // ince cift cerceve
-  x.strokeStyle = CAP_R.kirmizi; x.lineWidth = 3;
-  x.strokeRect(26, 26, G-52, Y-52);
-  x.strokeStyle = "#C9CDD2"; x.lineWidth = 1;
-  x.strokeRect(34, 34, G-68, Y-68);
-
-  // kose aksanlari
-  const k = 34, u = 46;
-  x.strokeStyle = CAP_R.kirmizi; x.lineWidth = 6;
-  [[k,k,1,1],[G-k,k,-1,1],[k,Y-k,1,-1],[G-k,Y-k,-1,-1]].forEach(([cx,cy,sx,sy])=>{
-    x.beginPath(); x.moveTo(cx + sx*u, cy); x.lineTo(cx, cy); x.lineTo(cx, cy + sy*u); x.stroke();
-  });
-
-  // ust serit
   if(baslik){
-    x.fillStyle = CAP_R.kirmizi;
-    x.fillRect(34, 34, G-68, 6);
     x.textAlign = "center"; x.textBaseline = "alphabetic";
     x.fillStyle = "#1A1A1A"; x.font = "400 34px Georgia, serif";
     x.fillText(baslik, G/2, 104);
@@ -13721,7 +13753,7 @@ function capCizPng(p, cfg, kucuk, kat){
           const ox = b2.a1[0] + b2.dx*t, oy = b2.a1[1] + b2.dy*t;
           const px = ox + nx*S(uzk)*ic, py = oy + ny*S(uzk)*ic;
           const kutu = yaziKutusu(px, py, gen, yuk, ac);
-          if(kutu.x1 < 40 || kutu.y1 < 40 || kutu.x2 > G-40 || kutu.y2 > Y-40) continue;
+          if(kutu.x1 < 58 || kutu.y1 < 58 || kutu.x2 > G-58 || kutu.y2 > Y-58) continue;
           if(dolu.some(k=>kutuCakisiyor(kutu, k))) continue;
           dolu.push(kutu);
           x.save(); x.translate(px, py); x.rotate(ac);
