@@ -2221,7 +2221,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.4.3";
+const SURUM_MORDOR = "v 2.4.4";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -13203,6 +13203,20 @@ async function capAyar(arg){
   };
 }
 
+// cap PDF'i: cizim ve muvafakat yuksek cozunurlukte resim, cerceve vektor
+function capPdfOlustur(p, cfg, jsPDF){
+  const KAT = 2.5;
+  const solUrl = capCizPng(p, cfg, false, KAT, true);
+  const sagUrl = muvafakatPng(p, 1000, 1400, KAT, true);
+  const pdf = new jsPDF({ orientation:"landscape", unit:"mm", format:"a4", compress:true, precision:3 });
+  const gen = 277, yuk = gen * (1400/2000), y0 = (210-yuk)/2, sc = (gen/2)/1000;
+  pdf.addImage(solUrl, "PNG", 10, y0, gen/2, yuk, "sol", "FAST");
+  pdf.addImage(sagUrl, "PNG", 10 + gen/2, y0, gen/2, yuk, "sag", "FAST");
+  cerceveVektor(pdf, 10, y0, sc, 1000, 1400);
+  cerceveVektor(pdf, 10 + gen/2, y0, sc, 1000, 1400);
+  return pdf;
+}
+
 async function capCiz(parselId, cfg, belgeId){
   const { data:p } = await sb.from("parcels").select("*").eq("id",parselId).single();
   if(!p || !p.geojson) return toast("Bu parselin sınır çizimi yok");
@@ -13213,16 +13227,8 @@ async function capCiz(parselId, cfg, belgeId){
     {
       // iki sayfa yan yana: tek yatay A4. Her yarim yuksek cozunurlukte (2,5 kat, ~460 dpi) ayri gomulur,
       // boylece yazilar ve ince cizgiler baskida da keskin kalir; PNG sikistirilir ki dosya sismesin.
-      const KAT = 2.5;
       try{ await capDokuYukle(); }catch(e){}
-      const solUrl = capCizPng(p, cfg, false, KAT);
-      const sagUrl = muvafakatPng(p, 1000, 1400, KAT);
-      pdf = new jsPDF({ orientation:"landscape", unit:"mm", format:"a4", compress:true });
-      const gen = 277, yuk = gen * (1400/2000), y0 = (210-yuk)/2;
-      pdf.addImage(solUrl, "PNG", 10, y0, gen/2, yuk, "sol", "FAST");
-      pdf.addImage(sagUrl, "PNG", 10 + gen/2, y0, gen/2, yuk, "sag", "FAST");
-      pdf.setDrawColor(216, 219, 222); pdf.setLineWidth(.2);
-      pdf.line(10 + gen/2, y0 + yuk*40/1400, 10 + gen/2, y0 + yuk - yuk*40/1400);
+      pdf = capPdfOlustur(p, cfg, jsPDF);
     }
     const blob = pdf.output("blob");
     const dosya = new File([blob], capDosyaAdi(p, "pdf"), { type:"application/pdf" });
@@ -13326,8 +13332,9 @@ function dxfIndir(){
 const CAP_R = { kirmizi:"#A3242C", gri:"#8B9096", sari:"#FCF3CF", cizgi:"#3A3A3A" };
 
 // kurumsal kirmizi-gri cerceve
-function capCerceve(x, G, Y, baslik){
+function capCerceve(x, G, Y, baslik, cercevesiz){
   x.fillStyle = "#FFFFFF"; x.fillRect(0,0,G,Y);
+  if(cercevesiz){ capBaslikYaz(x, G, baslik); return; }   // PDF'te cerceve vektor cizilir (net ve hafif)
   // tapu senedi usulu guilloche bandi: ince, sik ve faz kaydirmali dalga telleri; koselerde kendi icinde
   // simetrik rozet hucresi. Bordo soluk tutulur ki cizimle yarismasin.
   const D = 12, I = 42, w = I - D, m = (D + I)/2;
@@ -13377,13 +13384,75 @@ function capCerceve(x, G, Y, baslik){
   [[4,4,1,1],[G-4,4,-1,1],[4,Y-4,1,-1],[G-4,Y-4,-1,-1]].forEach(([cx,cy,sx,sy])=>{
     x.beginPath(); x.moveTo(cx + sx*16, cy); x.lineTo(cx, cy); x.lineTo(cx, cy + sy*16); x.stroke(); });
 
-  if(baslik){
-    x.textAlign = "center"; x.textBaseline = "alphabetic";
-    x.fillStyle = "#1A1A1A"; x.font = "400 34px Georgia, serif";
-    x.fillText(baslik, G/2, 104);
-    x.strokeStyle = "#D8DBDE"; x.lineWidth = 1;
-    x.beginPath(); x.moveTo(G*0.30, 120); x.lineTo(G*0.70, 120); x.stroke();
-  }
+  capBaslikYaz(x, G, baslik);
+}
+function capBaslikYaz(x, G, baslik){
+  if(!baslik) return;
+  x.textAlign = "center"; x.textBaseline = "alphabetic";
+  x.fillStyle = "#1A1A1A"; x.font = "400 34px Georgia, serif";
+  x.fillText(baslik, G/2, 104);
+  x.strokeStyle = "#D8DBDE"; x.lineWidth = 1;
+  x.beginPath(); x.moveTo(G*0.30, 120); x.lineTo(G*0.70, 120); x.stroke();
+}
+// ayni cerceve, PDF'e: duz cizgiler VEKTOR, dalga orgusu tek bir dalga boyluk cok yuksek cozunurluklu karo resim.
+// Karo PDF'e bir kez gomulur, kenarlar boyunca tekrar tekrar yerlestirilir -> her yakinlastirmada net, dosya hafif.
+let CERCEVE_KARO = null;
+function cerceveKarolari(){
+  if(CERCEVE_KARO) return CERCEVE_KARO;
+  const D = 12, I = 42, w = I - D, lam0 = 19, S = 14;   // S: birim basina piksel (~2500 dpi)
+  const tel = "rgba(150,28,40,.50)", tel2 = "rgba(150,28,40,.26)", hat = "rgba(122,26,32,.85)", zemin = "#FDF7F6";
+  const A = w/2 - 3.2;
+  const karo = (dikey) => {
+    const c = document.createElement("canvas"); c.width = Math.round((dikey ? w : lam0)*S); c.height = Math.round((dikey ? lam0 : w)*S);
+    const x = c.getContext("2d"); x.scale(S, S); x.fillStyle = zemin; x.fillRect(0, 0, dikey ? w : lam0, dikey ? lam0 : w);
+    const ciz = (gen, dl, faz, renk, kal) => { x.strokeStyle = renk; x.lineWidth = kal; x.beginPath();
+      for(let t = -1; t <= lam0 + 1; t += .1){ const v = w/2 + gen*Math.sin(2*Math.PI*t/dl + faz);
+        if(dikey){ t > -1 ? x.lineTo(v, t) : x.moveTo(v, t); } else { t > -1 ? x.lineTo(t, v) : x.moveTo(t, v); } } x.stroke(); };
+    for(let k=0;k<10;k++) ciz(A, lam0, Math.PI/2 + k*Math.PI/10, tel, .4);
+    for(let k=0;k<2;k++) ciz(A*.42, lam0/2, Math.PI/2 + k*Math.PI, tel2, .35);
+    return c.toDataURL("image/png");
+  };
+  const kose = () => {
+    const c = document.createElement("canvas"); c.width = c.height = Math.round(w*S);
+    const x = c.getContext("2d"); x.scale(S, S); x.fillStyle = zemin; x.fillRect(0, 0, w, w);
+    const cx = w/2, cy = w/2, R = w/2 - 2.5;
+    x.lineWidth = .45; x.strokeStyle = tel;
+    for(let k=0;k<3;k++){ const r0 = R*(1 - k*.16); x.beginPath();
+      for(let a=0; a<=Math.PI*2 + .01; a += .01){ const r = r0*Math.abs(Math.cos(4*a + k*Math.PI/12)); const px = cx + r*Math.cos(a), py = cy + r*Math.sin(a); if(a) x.lineTo(px,py); else x.moveTo(px,py); }
+      x.stroke(); }
+    x.lineWidth = .5; x.strokeStyle = hat;
+    [R, R*.42].forEach(r=>{ x.beginPath(); x.arc(cx, cy, r, 0, 7); x.stroke(); });
+    x.beginPath(); x.arc(cx, cy, 1.6, 0, 7); x.fillStyle = hat; x.fill();
+    return c.toDataURL("image/png");
+  };
+  CERCEVE_KARO = { yatay: karo(false), dikey: karo(true), kose: kose() };
+  return CERCEVE_KARO;
+}
+// (ox, oy) sayfanin mm cinsinden sol ust kosesi, sc: 1 cizim biriminin mm karsiligi
+function cerceveVektor(pdf, ox, oy, sc, G, Y){
+  const D = 12, I = 42, w = I - D, m = (D + I)/2;
+  const X = u => ox + u*sc, Yy = v => oy + v*sc;
+  const K = cerceveKarolari(), HAT = [142,59,64];
+  pdf.setFillColor(253,247,246);
+  [[D, D, G-2*D, w],[D, Y-I, G-2*D, w],[D, D, w, Y-2*D],[G-I, D, w, Y-2*D]].forEach(r=>pdf.rect(X(r[0]), Yy(r[1]), r[2]*sc, r[3]*sc, "F"));
+  const serit = (yatay, sabit) => {
+    const L = (yatay ? G : Y) - 2*I, n = Math.max(1, Math.round(L / 19)), lam = L / n, ek = .04;
+    for(let i=0;i<n;i++){ const t = I + i*lam;
+      if(yatay) pdf.addImage(K.yatay, "PNG", X(t), Yy(sabit - w/2), (lam + ek)*sc, w*sc, "cerYatay", "FAST");
+      else pdf.addImage(K.dikey, "PNG", X(sabit - w/2), Yy(t), w*sc, (lam + ek)*sc, "cerDikey", "FAST"); }
+    pdf.setDrawColor(...HAT); pdf.setLineWidth(.5*sc);
+    [sabit - w/2 + 1.6, sabit + w/2 - 1.6].forEach(c=>{ if(yatay) pdf.line(X(I), Yy(c), X(G-I), Yy(c)); else pdf.line(X(c), Yy(I), X(c), Yy(Y-I)); });
+  };
+  serit(true, m); serit(true, Y - m); serit(false, m); serit(false, G - m);
+  [[m,m],[G-m,m],[m,Y-m],[G-m,Y-m]].forEach(([cx,cy])=>{
+    pdf.addImage(K.kose, "PNG", X(cx - w/2), Yy(cy - w/2), w*sc, w*sc, "cerKose", "FAST");
+    pdf.setDrawColor(...HAT); pdf.setLineWidth(.8*sc); pdf.rect(X(cx - w/2 + .5), Yy(cy - w/2 + .5), (w-1)*sc, (w-1)*sc, "S"); });
+  pdf.setDrawColor(...HAT); pdf.setLineWidth(1*sc); pdf.rect(X(D-.5), Yy(D-.5), (G-2*D+1)*sc, (Y-2*D+1)*sc, "S");
+  pdf.setDrawColor(58,58,58); pdf.setLineWidth(1.3*sc); pdf.rect(X(I+3), Yy(I+3), (G-2*I-6)*sc, (Y-2*I-6)*sc, "S");
+  pdf.setDrawColor(139,144,150); pdf.setLineWidth(.5*sc); pdf.rect(X(I+6.5), Yy(I+6.5), (G-2*I-13)*sc, (Y-2*I-13)*sc, "S");
+  pdf.setDrawColor(74,74,74); pdf.setLineWidth(1*sc);
+  [[4,4,1,1],[G-4,4,-1,1],[4,Y-4,1,-1],[G-4,Y-4,-1,-1]].forEach(([cx,cy,sx,sy])=>{
+    pdf.line(X(cx + sx*16), Yy(cy), X(cx), Yy(cy)); pdf.line(X(cx), Yy(cy), X(cx), Yy(cy + sy*16)); });
 }
 
 // kunye tablosu (sari basliklar)
@@ -13412,11 +13481,11 @@ function capKunye(x, p, sol, ust, gen){
 }
 
 // ikinci sayfa: muvafakatname
-function muvafakatPng(p, G, Y, kat){
+function muvafakatPng(p, G, Y, kat, cercevesiz){
   const K = Math.max(1, +kat || 1);
   const c = document.createElement("canvas"); c.width = Math.round(G*K); c.height = Math.round(Y*K);
   const x = c.getContext("2d"); x.scale(K, K);
-  capCerceve(x, G, Y, "MUVAFAKATNAME");
+  capCerceve(x, G, Y, "MUVAFAKATNAME", cercevesiz);
 
   const sol = 70, gen = G - 140;
 
@@ -13500,7 +13569,7 @@ function capDokuYukle(){
   return CAP_DOKU_SOZ;
 }
 
-function capCizPng(p, cfg, kucuk, kat){
+function capCizPng(p, cfg, kucuk, kat, cercevesiz){
   const parcalar = cfg?.parcalar || null;
   const M = capHalkasi(p);
   if(!M) throw new Error("sınır çizimi yok");
@@ -13511,7 +13580,7 @@ function capCizPng(p, cfg, kucuk, kat){
   const c = document.createElement("canvas"); c.width = Math.round(G*K); c.height = Math.round(Y*K);
   const x = c.getContext("2d"); x.scale(K, K);
   if(kucuk){ x.fillStyle = "#FFFFFF"; x.fillRect(0,0,G,Y); }
-  else capCerceve(x, G, Y, "PARSELASYON KROKİSİ");
+  else capCerceve(x, G, Y, "PARSELASYON KROKİSİ", cercevesiz);
   const S = k => kucuk ? Math.max(8, Math.round(k*0.66)) : k;
 
   // resmi yol disarida kaldigi icin cizim sinirlarina onu da kat
