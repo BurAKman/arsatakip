@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Cinzel:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Cinzel:wght@500;600;700&family=Anton&family=Oswald:wght@500;600;700&family=Inter:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{
@@ -2106,6 +2106,29 @@ h3{letter-spacing:.02em}
 .dosya .ops button.kirmizi{color:var(--red);border-color:rgba(240,112,92,.35);background:var(--red-soft)}
 
 
+/* ---- ilan afisi ---- */
+.ilSahne{position:relative;width:100%;border-radius:var(--r);overflow:hidden;border:1px solid var(--cizgi-2);background:#0B100E;margin-bottom:10px}
+.ilSahne canvas{display:block;width:100%;height:auto;touch-action:none;user-select:none}
+.ilIpucu{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:rgba(0,0,0,.72);color:#fff;font-size:13px;
+  padding:8px 14px;border-radius:30px;pointer-events:none;white-space:nowrap;border:1px solid var(--cizgi-2)}
+.ilSeg{display:flex;gap:6px;margin-bottom:11px}
+.ilSeg button{flex:1;padding:10px 8px;border-radius:12px;border:1px solid var(--cizgi);background:var(--cam);color:var(--ink-2);font:600 13px inherit;font-family:inherit}
+.ilSeg button.on{background:var(--gold-soft);border-color:var(--gold);color:var(--ink)}
+.ilIki{display:flex;gap:8px}.ilIki .btn{margin:0}
+.ilIki .btn[disabled]{opacity:.45}
+.ilNot{font-size:12.5px;color:var(--ink-3);margin-top:9px;line-height:1.5}
+.ilNot b{color:var(--ink-2)}
+.ilKay label{display:flex;justify-content:space-between}
+.ilKay input[type=range]{width:100%;accent-color:var(--gold)}
+.ilTik{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--ink-2);margin:9px 0}
+.ilTik input{width:18px;height:18px;accent-color:var(--gold)}
+.ilListe{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.ilOge{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:11px;border:1px solid var(--cizgi);background:var(--cam);cursor:pointer}
+.ilOge span{flex:1;font-size:14px;color:var(--ink)}
+.ilOge.sec{border-color:var(--gold);background:var(--gold-soft)}
+.ilOge.gizli span{opacity:.45;text-decoration:line-through}
+.ilGoz{border:1px solid var(--cizgi-2);background:transparent;color:var(--ink-2);border-radius:20px;padding:4px 11px;font-size:12px;font-family:inherit}
+
 /* ---- sunum düzenleyici ---- */
 #tuval{position:relative;width:100%;border-radius:var(--r);overflow:hidden;border:1px solid var(--cizgi-2);
   background:#0B100E;touch-action:none;user-select:none;margin-bottom:12px}
@@ -2221,7 +2244,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.4.5";
+const SURUM_MORDOR = "v 2.4.6";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -7936,6 +7959,7 @@ async function parselDetay(id){
       ${y && ME.role==='admin' ? `<button class="btn ghost" style="margin-top:10px"
         onclick="SONPARSELID='${id}';go('fiyatDuzen','${y.id}')">Tapu bilgilerini düzenle</button>
       <button class="btn ghost" style="margin-top:8px" onclick="go('sunum','${id}')">Sunum Görseli Hazırla</button>
+      <button class="btn ghost" style="margin-top:8px" onclick="go('ilan','${id}')">İlan Afişi Hazırla</button>
       <button class="btn ghost" style="margin-top:8px" onclick="go('parcalar','${id}')">Parçalar / Hisseler</button>
 ` : ""}
     </div>
@@ -11302,6 +11326,735 @@ const yukleGorsel = src => new Promise((res,rej)=>{
   i.onload = ()=>res(i); i.onerror = rej; i.src = src;
 });
 
+/* ================= ILAN AFISI · cizim motoru =================
+   ilanCiz(canvas, durum, V)  durum: { oran, zemin, ogeler:[...] }  V: gorseller + veri
+   Parsel cizimi: metre -> H (homografi, cizgiye oturtma ile bulunur) -> foto pikseli -> derinlik yerlesimi -> tuval
+*/
+const IL_ORAN = { "916": { W:1080, H:1920, pGen:.6, pY:.58, altBant:.8 }, "45": { W:1080, H:1350, pGen:.55, pY:.56, altBant:.78 } };
+const IL_RENK = { gok1:"#7FAAC9", gok2:"#B9D1DE", ufuk:"#DDE6E4", pus1:"rgba(221,230,228,.82)", pus2:"rgba(221,230,228,.32)", pus0:"rgba(221,230,228,0)", ust:"#0E3A2E", orta:"#0C3028", alt:"#081F1A", ortu:"rgba(10,44,34,.45)",
+  bant:"rgba(13,56,43,.97)", bantYari:"rgba(12,52,40,.72)", bos:"rgba(10,40,32,0)", altYari:"rgba(9,34,28,.62)", altTam:"rgba(7,28,22,.92)" };
+const IL_FONT = { kalin:"Anton, Impact, sans-serif", serit:"Oswald, 'Arial Narrow', sans-serif", govde:"Inter, system-ui, sans-serif" };
+
+function ilH(H, m){ const x = H[0]*m[0] + H[1]*m[1] + H[2], y = H[3]*m[0] + H[4]*m[1] + H[5], w = H[6]*m[0] + H[7]*m[1] + H[8]; return [x/w, y/w]; }
+function ilIcinde(p, poly){ let c = false; for(let i=0,j=poly.length-1;i<poly.length;j=i++){ const a=poly[i], b=poly[j];
+  if(((a[1]>p[1])!==(b[1]>p[1])) && (p[0] < (b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])) c = !c; } return c; }
+function ilOfset(pts, d){ const n = pts.length, out = [];
+  for(let i=0;i<n;i++){ const nr = [];
+    if(i>0){ const a=pts[i-1], b=pts[i], L=Math.hypot(b[0]-a[0],b[1]-a[1])||1; nr.push([-(b[1]-a[1])/L,(b[0]-a[0])/L]); }
+    if(i<n-1){ const a=pts[i], b=pts[i+1], L=Math.hypot(b[0]-a[0],b[1]-a[1])||1; nr.push([-(b[1]-a[1])/L,(b[0]-a[0])/L]); }
+    let nx=0, ny=0; nr.forEach(v=>{nx+=v[0];ny+=v[1];}); const L=Math.hypot(nx,ny)||1; nx/=L; ny/=L;
+    const c = nr.length>1 ? Math.max(.35, nr[0][0]*nx+nr[0][1]*ny) : 1;
+    out.push([pts[i][0]+nx*d/c, pts[i][1]+ny*d/c]); }
+  return out; }
+function ilUzat(pts, bas, son){ const p = pts.map(q=>q.slice()), u=(a,b)=>{const L=Math.hypot(b[0]-a[0],b[1]-a[1])||1; return [(b[0]-a[0])/L,(b[1]-a[1])/L];};
+  if(bas){ const v=u(p[1],p[0]); p[0]=[p[0][0]+v[0]*bas,p[0][1]+v[1]*bas]; }
+  if(son){ const n=p.length, v=u(p[n-2],p[n-1]); p[n-1]=[p[n-1][0]+v[0]*son,p[n-1][1]+v[1]*son]; } return p; }
+function ilYol(x, pts){ x.beginPath(); pts.forEach((q,i)=> i ? x.lineTo(q[0],q[1]) : x.moveTo(q[0],q[1])); x.closePath(); }
+function ilCizgi(x, pts){ x.beginPath(); pts.forEach((q,i)=> i ? x.lineTo(q[0],q[1]) : x.moveTo(q[0],q[1])); }
+function ilYuvarlak(x,X,Y,w,h,r){ x.beginPath(); x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+h,r); x.arcTo(X+w,Y+h,X,Y+h,r); x.arcTo(X,Y+h,X,Y,r); x.arcTo(X,Y,X+w,Y,r); x.closePath(); }
+const ilSayi = n => (+n).toLocaleString("tr-TR", { maximumFractionDigits:2 });
+function ilSigdir(x, metin, font, agirlik, maxW, buyuk, kucuk){ let s = buyuk;
+  while(s > kucuk){ x.font = `${agirlik} ${s}px ${font}`; if(x.measureText(metin).width <= maxW) break; s -= 1; }
+  x.font = `${agirlik} ${s}px ${font}`; return s; }
+function ilYazi(x, metin, X, Y, renk, kontur, kal){ x.lineJoin = "round"; if(kal){ x.lineWidth = kal; x.strokeStyle = kontur; x.strokeText(metin, X, Y); } x.fillStyle = renk; x.fillText(metin, X, Y); }
+
+/* ---------- parca etiketi: numara + m2, parcanin icine sigacak en buyuk boyutta ----------
+   En ic nokta (kenarlara en uzak) bulunur; "ust-alt" ve "yan yana" dizilimler denenir, sigan en buyuk secilir. */
+function ilKenarUzak(p, P){ let d = 1e9;
+  for(let i=0;i<P.length;i++){ const a = P[i], b = P[(i+1)%P.length], vx = b[0]-a[0], vy = b[1]-a[1], L2 = vx*vx + vy*vy || 1;
+    const t = Math.max(0, Math.min(1, ((p[0]-a[0])*vx + (p[1]-a[1])*vy)/L2)); d = Math.min(d, Math.hypot(p[0]-a[0]-t*vx, p[1]-a[1]-t*vy)); }
+  return ilIcinde(p, P) ? d : -d; }
+function ilKutuIcinde(P, x0, y0, x1, y1, pay){
+  const nk = [];
+  for(let i=0;i<=4;i++) for(let j=0;j<=2;j++) nk.push([x0 + (x1-x0)*i/4, y0 + (y1-y0)*j/2]);
+  return nk.every(q => ilKenarUzak(q, P) >= pay); }
+function ilEtiket(x, P, no, m2, carp){
+  let mnx = 1e9, mny = 1e9, mxx = -1e9, mxy = -1e9; P.forEach(q => { mnx = Math.min(mnx, q[0]); mny = Math.min(mny, q[1]); mxx = Math.max(mxx, q[0]); mxy = Math.max(mxy, q[1]); });
+  let en = null; const st = Math.max(2, Math.min(mxx-mnx, mxy-mny)/40);
+  for(let X=mnx; X<=mxx; X+=st) for(let Y=mny; Y<=mxy; Y+=st){ const d = ilKenarUzak([X, Y], P); if(!en || d > en.d) en = { d, X, Y }; }
+  if(!en || en.d <= 0) return;
+  const olcu = B => { x.font = `400 ${B}px ${IL_FONT.kalin}`; const nw = no ? x.measureText(no).width : 0, nh = no ? B*.78 : 0;
+    x.font = `800 ${Math.round(B*.44)}px ${IL_FONT.govde}`; const mw = x.measureText(m2).width + B*.42, mh = B*.62; return { nw, nh, mw, mh }; };
+  const dene = (cx, cy) => { for(let B = Math.round(60*carp); B >= 15; B--){ const o = olcu(B), g = B*.12;
+      const ust = { tip:"ust", w: Math.max(o.nw, o.mw), h: o.nh + g + o.mh }, yan = { tip:"yan", w: o.nw + g*1.6 + o.mw, h: Math.max(o.nh, o.mh) };
+      for(const k of [ust, yan]) if(ilKutuIcinde(P, cx - k.w/2, cy - k.h/2, cx + k.w/2, cy + k.h/2, 3)) return { B, k, o, g, cx, cy }; } return null; };
+  // en ic nokta + cevresi denenir, en buyuk sonuc alinir
+  let iyi = null;
+  [[0,0],[-1,0],[1,0],[0,-1],[0,1]].forEach(([a, b]) => { const r = dene(en.X + a*en.d*.35, en.Y + b*en.d*.35); if(r && (!iyi || r.B > iyi.B)) iyi = r; });
+  if(!iyi) iyi = { B:15, k:{ tip:"yan" }, o: olcu(15), g:1.8, cx: en.X, cy: en.Y };
+  const { B, k, o, g, cx, cy } = iyi;
+  x.save(); x.textBaseline = "middle";
+  let nX, nY, mX, mY;
+  if(k.tip === "ust"){ nX = cx; nY = cy - (o.mh + g)/2; mX = cx; mY = cy + (o.nh + g)/2; }
+  else { const w = o.nw + g*1.6 + o.mw; nX = cx - w/2 + o.nw/2; nY = cy; mX = cx + w/2 - o.mw/2; mY = cy; }
+  x.textAlign = "center"; x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 6; x.shadowOffsetY = 2;
+  if(no){ x.font = `400 ${B}px ${IL_FONT.kalin}`; ilYazi(x, no, nX, nY + B*.02, "#FFFFFF", "rgba(8,30,10,.95)", Math.max(3, B*.13)); }
+  x.shadowColor = "rgba(0,0,0,.35)"; x.shadowBlur = 5;
+  ilYuvarlak(x, mX - o.mw/2, mY - o.mh/2, o.mw, o.mh, o.mh/2); x.fillStyle = "rgba(255,255,255,.95)"; x.fill(); x.shadowColor = "transparent";
+  x.font = `800 ${Math.round(B*.44)}px ${IL_FONT.govde}`; x.fillStyle = "#123B1E"; x.fillText(m2, mX, mY + 1);
+  x.restore(); }
+
+function ilYogun(pts, adim, kapali){ const out = [], n = pts.length, son = kapali ? n : n-1;
+  for(let i=0;i<son;i++){ const a = pts[i], b = pts[(i+1)%n], L = Math.hypot(b[0]-a[0], b[1]-a[1]), m = Math.max(1, Math.ceil(L/adim));
+    for(let j=0;j<m;j++) out.push([a[0]+(b[0]-a[0])*j/m, a[1]+(b[1]-a[1])*j/m]); }
+  if(!kapali) out.push(pts[n-1]); return out; }
+/* ---------- parsel plani (uygulama surumu) ----------
+   F: { H (metre -> foto px), foto:{w,h}, sinir, parcalar:[{no,m2,poly}], yollar:[poly], eksenler:[[p1,p2]], resmiler:[{ic,dis}] }
+   Derinlik yerlesimi: uzak satirlar sikisir, parselin oldugu yakin bant buyur (drone perspektifi gibi). */
+function ilZeminOnbellek(V){
+  if(V._zk && V._zsrc === V.zemin) return V._zk;
+  const c = document.createElement("canvas"); c.width = V.veri.foto.w; c.height = V.veri.foto.h;
+  c.getContext("2d").drawImage(V.zemin, 0, 0, c.width, c.height);
+  V._zk = c; V._zsrc = V.zemin; return c; }
+// parselin fotoda kapladigi kutu (foto px)
+function ilSinirKutu(F){ const S = F.sinir.map(m => ilH(F.H, m)), xs = S.map(q=>q[0]), ys = S.map(q=>q[1]);
+  return { x0:Math.min(...xs), x1:Math.max(...xs), y0:Math.min(...ys), y1:Math.max(...ys),
+    uc: xs.reduce((a,b)=>a+b,0)/xs.length, vc: ys.reduce((a,b)=>a+b,0)/ys.length }; }
+// oran icin baslangic yerlesimi: parsel ekranin ~%60'i, sag kenara yasli, dikeyde ortanin biraz alti
+function ilDerVarsayilan(F, oran){ const O = IL_ORAN[oran], K = ilSinirKutu(F), pw = (K.x1 - K.x0) || 1, ph = (K.y1 - K.y0) || 1;
+  const k1 = Math.max(.3, Math.min(8, O.pGen*O.W/pw));
+  return { k1, ax: Math.min(O.W*.62, O.W - 30 - k1*(K.x1 - K.uc)), hy: O.pY*O.H, uzak: .3, gecis: 1.9*ph, wv: .7*ph, altBant: O.altBant }; }
+
+function ilPlan(x, D, V, W, Hc){
+  const O = IL_ORAN[D.oran], F = V.veri, H = F.H, z = D.zemin || {};
+  const K = ilSinirKutu(F), vc = K.vc, uc = K.uc, fw = F.foto.w, fh = F.foto.h;
+  const sig = t => 1/(1+Math.exp(-t));
+  const DO = (D.der && D.der[D.oran]) || ilDerVarsayilan(F, D.oran);
+  const ax = DO.ax + (z.x||0), hy = DO.hy + (z.y||0), k1 = DO.k1 * (z.zum || 1);
+  const derin = D.derinlik !== false;
+  const f = derin ? (z.uzak ?? DO.uzak) : 1, v0 = vc - DO.gecis + (z.gecis || 0), wv = DO.wv || 110;
+  const k0 = derin ? Math.max(k1*.55, (ax + 4)/Math.max(1, uc), (W - ax + 4)/Math.max(1, fw - uc)) : k1;
+  const t = v => sig((v - v0)/wv), sx = v => k0 + (k1 - k0)*t(v), sy = v => sx(v)*(f + (1 - f)*t(v));
+  const cum = new Float64Array(fh + 2); for(let i=0;i<=fh;i++) cum[i+1] = cum[i] + sy(i + .5);
+  const C = v => { const i = Math.max(0, Math.min(fh, Math.floor(v))), r = v - i; return cum[i] + (cum[Math.min(fh+1, i+1)] - cum[i])*r; };
+  const Cvc = C(vc), Y = v => hy + C(v) - Cvc;
+  const TF = p => [ax + sx(p[1])*(p[0] - uc), Y(p[1])];
+  const T = m => TF(ilH(H, m));
+  const olc = m => { const p = T(m), b = T([m[0]+1, m[1]]), c = T([m[0], m[1]+1]); return (Math.hypot(b[0]-p[0], b[1]-p[1]) + Math.hypot(c[0]-p[0], c[1]-p[1]))/2; };
+  const TP = (pts, kapali) => ilYogun(pts, 1.5, kapali).map(T);
+
+  // zemin: koyu zumrut + fotografin bulanik kopyasi (bosluk kalirsa)
+  const R = IL_RENK, Z = ilZeminOnbellek(V);
+  let g = x.createLinearGradient(0, 0, 0, Hc); g.addColorStop(0, R.ust); g.addColorStop(1, R.alt); x.fillStyle = g; x.fillRect(0, 0, W, Hc);
+  { const kc = Math.max(W/fw, Hc/fh)*1.08; x.save(); x.filter = "blur(22px) brightness(.7)"; x.drawImage(Z, W/2 - fw*kc/2, Hc/2 - fh*kc/2, fw*kc, fh*kc); x.restore(); }
+  // fotograf: satir satir
+  x.imageSmoothingQuality = "high";
+  const y0 = Y(0); if(derin && y0 > 0) x.drawImage(Z, 0, 0, fw, 3, ax - sx(0)*uc, 0, fw*sx(0), y0 + 1);
+  for(let v=0; v<fh; v+=2){ const a1 = Y(v), a2 = Y(Math.min(fh, v+2)); if(a2 < -2 || a1 > Hc+2) continue;
+    const sc = sx(v + 1); x.drawImage(Z, 0, v, fw, Math.min(2, fh - v), ax - sc*uc, a1, fw*sc, a2 - a1 + .6); }
+
+  // resmi yollar: capin kendi resmi yol seritleri, iki uctan uzatilir (kavsak ucunda uzatma yok)
+  const U = D.yolUzat ?? 30, uclar = (F.resmiler||[]).map(r => [r.ic[0], r.ic[r.ic.length-1]]);
+  const resmiSeritler = (F.resmiler||[]).map((r, ri) => {
+    const yakin = q => uclar.some((u, ui) => ui !== ri && u.some(e => Math.hypot(e[0]-q[0], e[1]-q[1]) < 15));
+    const g2 = Math.hypot(r.dis[0][0]-r.ic[0][0], r.dis[0][1]-r.ic[0][1]) || 7;
+    const b1 = yakin(r.ic[0]) ? g2 : U, b2 = yakin(r.ic[r.ic.length-1]) ? g2 : U;
+    const ic = r.ic.length > 1 ? ilUzat(r.ic, b1, b2) : r.ic, dis = r.dis.length > 1 ? ilUzat(r.dis, b1, b2) : r.dis;
+    return { poly: ic.concat(dis.slice().reverse()), orta: ic.map((q, i) => [(q[0]+dis[i][0])/2, (q[1]+dis[i][1])/2]) };
+  });
+  const yollar = F.yollar || [];
+
+  const P0 = TP(F.sinir, true);
+  if(D.karart > 0){
+    const L = document.createElement("canvas"); L.width = W; L.height = Hc; const l = L.getContext("2d");
+    l.fillStyle = `rgba(4,12,8,${D.karart})`; l.fillRect(0, 0, W, Hc);
+    l.globalCompositeOperation = "destination-out"; l.filter = "blur(10px)"; l.fillStyle = "#000"; l.strokeStyle = "#000"; l.lineJoin = "round"; l.lineWidth = 26;
+    [F.sinir].concat(resmiSeritler.map(r => r.poly), yollar).forEach(pm => { ilYol(l, TP(pm, true)); l.fill(); l.stroke(); });
+    x.drawImage(L, 0, 0); }
+
+  // alt: dibe dogru hafif gecis (alt kutular okunsun)
+  { const alt = (DO.altBant || O.altBant)*Hc, gg = x.createLinearGradient(0, alt, 0, Hc);
+    gg.addColorStop(0, "rgba(10,40,32,0)"); gg.addColorStop(.5, "rgba(9,34,28,.32)"); gg.addColorStop(1, "rgba(7,28,22,.72)"); x.fillStyle = gg; x.fillRect(0, alt, W, Hc - alt); }
+
+  const asfalt = V.asfalt ? x.createPattern(V.asfalt, "repeat") : null; if(asfalt) asfalt.setTransform(new DOMMatrix().scale(.35));
+  const cim = V.cim ? x.createPattern(V.cim, "repeat") : "#5E9E3E"; if(V.cim) cim.setTransform(new DOMMatrix().scale(.32));
+  const yolBoya = polyM => { const P = TP(polyM, true);
+    x.save(); ilYol(x, P); x.fillStyle = "#4A4E52"; x.fill(); if(asfalt){ x.globalAlpha = .55; x.fillStyle = asfalt; x.fill(); x.globalAlpha = 1; }
+    x.lineWidth = 3; x.strokeStyle = "rgba(240,240,236,.85)"; x.stroke(); x.restore(); };
+  const kesik = ptsM => { x.save(); x.setLineDash([22, 18]); x.lineWidth = 3.2; x.strokeStyle = "rgba(255,255,255,.92)"; ilCizgi(x, TP(ptsM, false)); x.stroke(); x.restore(); };
+  resmiSeritler.forEach(r => { yolBoya(r.poly); kesik(r.orta); });
+  yollar.forEach(yolBoya); (F.eksenler||[]).forEach(e => kesik(e));
+
+  // parsel dis parlamasi
+  x.save(); ilYol(x, P0); x.shadowColor = "rgba(190,255,150,.75)"; x.shadowBlur = 28; x.lineWidth = 5; x.strokeStyle = "rgba(220,255,200,.9)"; x.stroke(); x.restore();
+
+  // parseller: ic hafif saydam, kenarlarda cim seridi
+  F.parcalar.forEach(p => { const P = TP(p.poly, true), c = p.poly.reduce((t,q)=>[t[0]+q[0]/p.poly.length, t[1]+q[1]/p.poly.length],[0,0]);
+    const bant = Math.max(7, Math.min(26, (D.kenarSerit ?? 2.2) * olc(c) * 2));
+    x.save(); ilYol(x, P); x.globalAlpha = D.icDolgu ?? .3; x.fillStyle = cim; x.fill();
+    x.globalAlpha = 1; x.fillStyle = "rgba(150,230,110,.16)"; x.fill();
+    x.clip(); x.lineJoin = "round"; x.lineWidth = bant; x.strokeStyle = cim; ilYol(x, P); x.stroke();
+    x.lineWidth = bant*.5; x.strokeStyle = "rgba(170,240,120,.28)"; x.stroke();
+    x.lineWidth = 2; x.strokeStyle = "rgba(230,255,215,.5)"; ilYol(x, P); x.stroke(); x.restore(); });
+
+  // panel citler (arkadan one)
+  if(D.cit !== false){
+    const kenarlar = new Map();
+    F.parcalar.forEach(p => p.poly.forEach((q, i) => { const b = p.poly[(i+1) % p.poly.length];
+      const an = [q, b].map(r=>r.map(v=>Math.round(v*2)/2).join(",")).sort().join("|");
+      if(!kenarlar.has(an)) kenarlar.set(an, [q, b]); }));
+    const citH = D.citBoy || 2.1;
+    [...kenarlar.values()].map(([q, b]) => ({ q, b, y: (T(q)[1] + T(b)[1])/2 })).sort((u, v) => u.y - v.y).forEach(({ q, b }) => {
+      const L = Math.hypot(b[0]-q[0], b[1]-q[1]); if(L < .5) return;
+      const adim = Math.max(1, Math.round(L/2.4)), M = tt => [q[0] + (b[0]-q[0])*tt, q[1] + (b[1]-q[1])*tt];
+      for(let j=0; j<adim; j++){
+        const m1 = M(j/adim), m2 = M((j+1)/adim), A = T(m1), B = T(m2), h1 = citH*olc(m1), h2 = citH*olc(m2);
+        x.beginPath(); x.moveTo(A[0], A[1]); x.lineTo(B[0], B[1]); x.lineTo(B[0], B[1]-h2); x.lineTo(A[0], A[1]-h1); x.closePath();
+        x.fillStyle = "rgba(30,105,48,.55)"; x.fill();
+        x.strokeStyle = "rgba(170,230,150,.55)"; x.lineWidth = 1;
+        [.35, .7].forEach(ff => { x.beginPath(); x.moveTo(A[0], A[1]-h1*ff); x.lineTo(B[0], B[1]-h2*ff); x.stroke(); });
+        x.strokeStyle = "#174A22"; x.lineWidth = 2.6; x.beginPath(); x.moveTo(A[0], A[1]); x.lineTo(A[0], A[1]-h1-1); x.stroke();
+      }
+      const A = T(q), B = T(b), h1 = citH*olc(q), h2 = citH*olc(b);
+      x.strokeStyle = "#174A22"; x.lineWidth = 2.6; x.beginPath(); x.moveTo(B[0], B[1]); x.lineTo(B[0], B[1]-h2-1); x.stroke();
+      x.strokeStyle = "#A6EA88"; x.lineWidth = 2.6; x.beginPath(); x.moveTo(A[0], A[1]-h1); x.lineTo(B[0], B[1]-h2); x.stroke();
+      x.strokeStyle = "#F4FFE8"; x.lineWidth = 2.2; x.beginPath(); x.moveTo(A[0], A[1]); x.lineTo(B[0], B[1]); x.stroke();
+    });
+  }
+
+  // yol yazilari
+  const aciDuz = (A, B) => { let ac = Math.atan2(B[1]-A[1], B[0]-A[0]); if(ac > Math.PI/2) ac -= Math.PI; if(ac < -Math.PI/2) ac += Math.PI; return ac; };
+  const yolYazi = (ptsM, metin, boy) => { const P = ptsM.map(T); let ui = 0, ul = 0;
+    for(let i=0;i<P.length-1;i++){ const l = Math.hypot(P[i+1][0]-P[i][0], P[i+1][1]-P[i][1]); if(l > ul){ ul = l; ui = i; } }
+    if(ul < 60) return; const A = P[ui], B = P[ui+1];
+    x.save(); x.translate((A[0]+B[0])/2, (A[1]+B[1])/2); x.rotate(aciDuz(A, B)); x.textAlign = "center"; x.textBaseline = "middle";
+    const harf = metin.split("").join(String.fromCharCode(8202, 8202));
+    ilSigdir(x, harf, IL_FONT.serit, 600, ul*.9, boy, 10); ilYazi(x, harf, 0, 0, "#FFFFFF", "rgba(20,20,20,.85)", 5); x.restore(); };
+  const yolYaziInce = (ptsM, metin) => { const A = T(ptsM[0]), B = T(ptsM[ptsM.length-1]), ul = Math.hypot(B[0]-A[0], B[1]-A[1]); if(ul < 70) return;
+    x.save(); x.translate((A[0]+B[0])/2, (A[1]+B[1])/2); x.rotate(aciDuz(A, B)); x.textAlign = "center"; x.textBaseline = "middle";
+    x.letterSpacing = "1.5px"; ilSigdir(x, metin, IL_FONT.govde, 700, ul*.55, 14, 9);
+    const tw = x.measureText(metin).width + 14; ilYuvarlak(x, -tw/2, -10, tw, 20, 10); x.fillStyle = "rgba(20,24,22,.82)"; x.fill();
+    x.fillStyle = "#FFFFFF"; x.fillText(metin, 0, 1); x.letterSpacing = "0px"; x.restore(); };
+  if(D.yolYazi !== false){
+    resmiSeritler.forEach((r, i) => yolYazi(r.orta, (D.yolAd||[])[i] || "RESMİ YOL", 24));
+    (F.eksenler||[]).forEach(e => yolYaziInce(e, D.pyAd || "PARSEL YOLU")); }
+
+  // numara + m2: her parcanin icine sigacak sekilde
+  F.parcalar.forEach(p => ilEtiket(x, p.poly.map(T), String(p.no ?? ""), ilSayi(p.m2) + " m²", D.noBoy || 1));
+
+  const c0 = F.sinir.reduce((tt,q)=>[tt[0]+q[0]/F.sinir.length, tt[1]+q[1]/F.sinir.length], [0,0]);
+  const n0 = T(c0), n1 = T([c0[0], c0[1] + 10*(F.yYukari ? 1 : -1)]);
+  return { kuzey: Math.atan2(n1[0]-n0[0], -(n1[1]-n0[1])) };
+}
+
+/* ---------- ogeler ---------- */
+const IL_IKON = {
+  yol(x,s){ x.beginPath(); x.moveTo(-s*.35,s*.45); x.lineTo(-s*.08,-s*.45); x.lineTo(s*.08,-s*.45); x.lineTo(s*.35,s*.45); x.closePath(); x.fill();
+    x.strokeStyle = "#0E1A12"; x.lineWidth = s*.06; x.setLineDash([s*.12,s*.1]); x.beginPath(); x.moveTo(0,-s*.4); x.lineTo(0,s*.42); x.stroke(); x.setLineDash([]); },
+  cit(x,s){ for(let i=-2;i<=2;i++){ x.fillRect(i*s*.18 - s*.04, -s*.38, s*.08, s*.8); } x.fillRect(-s*.45, -s*.18, s*.9, s*.07); x.fillRect(-s*.45, s*.14, s*.9, s*.07); },
+  simsek(x,s){ x.beginPath(); x.moveTo(s*.08,-s*.48); x.lineTo(-s*.28,s*.06); x.lineTo(-s*.02,s*.06); x.lineTo(-s*.1,s*.48); x.lineTo(s*.28,-s*.08); x.lineTo(s*.02,-s*.08); x.closePath(); x.fill(); },
+  agac(x,s){ x.beginPath(); x.arc(0,-s*.12,s*.3,0,7); x.fill(); x.fillRect(-s*.05,s*.1,s*.1,s*.36); },
+  grafik(x,s){ [[-.32,.2],[-.08,.05],[.16,-.12]].forEach(([a,h])=>x.fillRect(a*s, h*s, s*.16, (.45-h)*s));
+    x.lineWidth = s*.07; x.strokeStyle = x.fillStyle; x.beginPath(); x.moveTo(-s*.4,-s*.05); x.lineTo(-s*.05,-s*.25); x.lineTo(s*.12,-s*.15); x.lineTo(s*.42,-s*.42); x.stroke(); },
+  ev(x,s){ x.beginPath(); x.moveTo(-s*.4,0); x.lineTo(0,-s*.4); x.lineTo(s*.4,0); x.closePath(); x.fill(); x.fillRect(-s*.28,0,s*.56,s*.38); },
+  bina(x,s){ x.fillRect(-s*.32,-s*.38,s*.3,s*.8); x.fillRect(s*.04,-s*.18,s*.28,s*.6); },
+  tren(x,s){ ilYuvarlak(x,-s*.3,-s*.42,s*.6,s*.66,s*.14); x.fill(); x.fillStyle = "#0E1A12"; x.fillRect(-s*.2,-s*.3,s*.4,s*.18);
+    x.beginPath(); x.arc(-s*.14,s*.08,s*.06,0,7); x.arc(s*.14,s*.08,s*.06,0,7); x.fill(); },
+  araba(x,s){ ilYuvarlak(x,-s*.42,-s*.08,s*.84,s*.3,s*.08); x.fill(); x.beginPath(); x.moveTo(-s*.26,-s*.08); x.lineTo(-s*.14,-s*.3); x.lineTo(s*.16,-s*.3); x.lineTo(s*.28,-s*.08); x.fill();
+    x.fillStyle = "#0E1A12"; x.beginPath(); x.arc(-s*.22,s*.24,s*.09,0,7); x.arc(s*.22,s*.24,s*.09,0,7); x.fill(); },
+  konum(x,s){ x.beginPath(); x.arc(0,-s*.12,s*.3,Math.PI,0); x.lineTo(0,s*.46); x.closePath(); x.fill(); x.fillStyle = "#0E1A12"; x.beginPath(); x.arc(0,-s*.12,s*.11,0,7); x.fill(); }
+};
+const IL_MESAFE_IKON = { koy:"ev", ilce:"bina", tren:"tren", sehir:"bina", araba:"araba" };
+
+const IL_OGE = {
+  bayrak(x, e){ const a = e.alan; x.save(); x.rotate(-.17);
+    const w = 330, h = 190; x.fillStyle = "#D7242F"; x.beginPath(); x.moveTo(0,0); x.lineTo(w,-18); x.lineTo(w-26,h); x.lineTo(-18,h+14); x.closePath();
+    x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 18; x.shadowOffsetY = 8; x.fill(); x.shadowColor = "transparent";
+    x.fillStyle = "rgba(0,0,0,.16)"; x.beginPath(); x.moveTo(w-26,h); x.lineTo(w,-18); x.lineTo(w+30,10); x.lineTo(w+6,h+18); x.closePath(); x.fill();
+    x.textAlign = "left"; x.textBaseline = "alphabetic";
+    x.font = `400 84px ${IL_FONT.kalin}`; ilYazi(x, a.s1, 26, 86, "#FFFFFF", "rgba(60,0,0,.6)", 6);
+    ilSigdir(x, a.s2, IL_FONT.kalin, 400, w-40, 84, 30); ilYazi(x, a.s2, 22, 168, "#FFFFFF", "rgba(60,0,0,.6)", 6);
+    x.restore(); return [-30, -70, w+40, h+40]; },
+  baslik(x, e, W){ const a = e.alan, maxW = 980;
+    x.textAlign = "left"; x.textBaseline = "alphabetic";
+    const s1 = ilSigdir(x, a.s1, IL_FONT.kalin, 400, maxW*.78, 132, 40);
+    x.save(); x.shadowColor = "rgba(0,0,0,.6)"; x.shadowBlur = 16; x.shadowOffsetY = 8;
+    ilYazi(x, a.s1, 0, s1, "#FFFFFF", "#0B0B0B", 12); x.restore();
+    const w1 = x.measureText(a.s1).width;
+    const s2 = ilSigdir(x, a.s2, IL_FONT.kalin, 400, maxW, 120, 40);
+    x.save(); x.shadowColor = "rgba(0,0,0,.6)"; x.shadowBlur = 16; x.shadowOffsetY = 8;
+    const gr = x.createLinearGradient(0, s1+12, 0, s1+12+s2); gr.addColorStop(0, "#FFE04A"); gr.addColorStop(1, "#F5B400");
+    x.lineJoin = "round"; x.lineWidth = 12; x.strokeStyle = "#0B0B0B"; x.strokeText(a.s2, 0, s1 + 14 + s2*.92);
+    x.restore(); x.fillStyle = gr; x.fillText(a.s2, 0, s1 + 14 + s2*.92);
+    return [-10, -10, Math.max(w1, x.measureText(a.s2).width) + 10, s1 + 24 + s2]; },
+  slogan(x, e){ const a = e.alan; x.font = `600 34px ${IL_FONT.serit}`; const w = Math.min(900, x.measureText(a.metin).width + 90), h = 64;
+    x.save(); x.rotate(-.025); const gr = x.createLinearGradient(0,0,w,0); gr.addColorStop(0,"#1F6B2C"); gr.addColorStop(1,"#0F4A1C");
+    x.beginPath(); x.moveTo(22,0); x.lineTo(w,0); x.lineTo(w-22,h); x.lineTo(0,h); x.closePath(); x.fillStyle = gr;
+    x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 12; x.shadowOffsetY = 5; x.fill(); x.shadowColor = "transparent";
+    x.strokeStyle = "rgba(160,230,140,.5)"; x.lineWidth = 2; x.stroke();
+    x.textAlign = "center"; x.textBaseline = "middle"; ilSigdir(x, a.metin, IL_FONT.serit, 600, w-70, 34, 14);
+    ilYazi(x, a.metin, w/2, h/2+1, "#FFFFFF", "rgba(0,0,0,.4)", 3); x.restore(); return [-6, -14, w+6, h+20]; },
+  pusula(x, e, W, P){ const r = 34, n = P.kuzey || 0; x.save(); x.translate(r, r);
+    x.beginPath(); x.arc(0,0,r,0,7); x.fillStyle = "rgba(8,20,12,.55)"; x.fill(); x.lineWidth = 1.5; x.strokeStyle = "rgba(227,178,60,.85)"; x.stroke();
+    x.rotate(n); x.beginPath(); x.moveTo(0,-r*.72); x.lineTo(r*.2,r*.1); x.lineTo(0,0); x.closePath(); x.fillStyle = "#E3B23C"; x.fill();
+    x.beginPath(); x.moveTo(0,-r*.72); x.lineTo(-r*.2,r*.1); x.lineTo(0,0); x.closePath(); x.fillStyle = "#9C7A22"; x.fill();
+    x.beginPath(); x.moveTo(0,r*.62); x.lineTo(r*.16,r*.04); x.lineTo(-r*.16,r*.04); x.closePath(); x.fillStyle = "rgba(255,255,255,.55)"; x.fill();
+    x.restore(); x.textAlign = "center"; x.textBaseline = "middle"; x.font = `700 20px ${IL_FONT.serit}`;
+    ilYazi(x, e.alan.metin, r + Math.sin(n)*(r+16), r - Math.cos(n)*(r+16), "#F2D27A", "rgba(0,0,0,.7)", 3);
+    return [-20, -20, r*2+20, r*2+20]; },
+  kunye(x, e, W){ const a = e.alan, w = 940; ilSigdir(x, a.ana, IL_FONT.kalin, 400, w-90, 86, 36); const anaY0 = 84 + x.measureText(a.ana).actualBoundingBoxAscent, h = anaY0 + 34 + 112;
+    x.save(); x.translate(-w/2, 0);
+    // zemin: koyu cam + ince altin cerceve
+    x.save(); x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 30; x.shadowOffsetY = 10;
+    ilYuvarlak(x, 0, 0, w, h, 22); const gz = x.createLinearGradient(0,0,0,h); gz.addColorStop(0,"rgba(14,32,22,.92)"); gz.addColorStop(1,"rgba(6,16,10,.92)");
+    x.fillStyle = gz; x.fill(); x.restore();
+    const ga = x.createLinearGradient(0,0,w,0); ga.addColorStop(0,"#8C6A1E"); ga.addColorStop(.5,"#F5D77E"); ga.addColorStop(1,"#8C6A1E");
+    x.lineWidth = 2; x.strokeStyle = ga; ilYuvarlak(x, 0, 0, w, h, 22); x.stroke();
+    x.lineWidth = 1; x.globalAlpha = .45; ilYuvarlak(x, 9, 9, w-18, h-18, 16); x.stroke(); x.globalAlpha = 1;
+    // ust satir: il · ilce
+    x.textAlign = "center"; x.textBaseline = "middle";
+    x.letterSpacing = "7px"; x.font = `600 26px ${IL_FONT.serit}`; x.fillStyle = "#E3C06A"; x.fillText(a.ust, w/2 + 3, 50); x.letterSpacing = "0px";
+    const uw = Math.min(w*.7, x.measureText(a.ust).width + 7*a.ust.length);
+    [[w/2 - uw/2 - 70, w/2 - uw/2 - 18], [w/2 + uw/2 + 18, w/2 + uw/2 + 70]].forEach(([p, q]) => {
+      const gl = x.createLinearGradient(p,0,q,0); gl.addColorStop(p < w/2 ? 0 : 1, "rgba(227,192,106,0)"); gl.addColorStop(p < w/2 ? 1 : 0, "rgba(227,192,106,.9)");
+      x.fillStyle = gl; x.fillRect(p, 49, q-p, 2); });
+    // ana: koy/mahalle (ust bosluk olculerek yerlestirilir; ust satirla cakismaz)
+    x.textBaseline = "alphabetic"; ilSigdir(x, a.ana, IL_FONT.kalin, 400, w-90, 86, 36);
+    const mt = x.measureText(a.ana), anaY = 84 + mt.actualBoundingBoxAscent;
+    x.save(); x.shadowColor = "rgba(0,0,0,.6)"; x.shadowBlur = 10; x.shadowOffsetY = 4; x.fillStyle = "#FFFFFF"; x.fillText(a.ana, w/2, anaY); x.restore();
+    // alt: ada / parsel / alan hucreleri
+    x.textBaseline = "middle";
+    const hucre = [["ADA", a.ada], ["PARSEL", a.parsel], ["YÜZÖLÇÜMÜ", a.alan]].filter(q => (q[1]||"").trim());
+    const y0 = anaY + 34, hw = (w - 80)/hucre.length;
+    x.fillStyle = ga; x.fillRect(40, y0 - 10, w - 80, 1.2);
+    hucre.forEach(([etk, deg], i) => { const cx = 40 + hw*i + hw/2;
+      if(i) { x.fillStyle = "rgba(227,192,106,.55)"; x.fillRect(40 + hw*i, y0 + 8, 1.2, 74); }
+      x.letterSpacing = "4px"; x.font = `600 19px ${IL_FONT.serit}`; x.fillStyle = "#BFA25A"; x.fillText(etk, cx + 2, y0 + 22); x.letterSpacing = "0px";
+      ilSigdir(x, deg, IL_FONT.kalin, 400, hw - 24, 48, 20); x.fillStyle = "#FFFFFF"; x.fillText(deg, cx, y0 + 64); });
+    x.restore(); return [-w/2, 0, w/2, h]; },
+  rozet(x, e){ const r = 150, sat = e.alan.satirlar.split("\n").filter(Boolean); x.save(); x.translate(r, r);
+    x.shadowColor = "rgba(0,0,0,.5)"; x.shadowBlur = 20; x.shadowOffsetY = 8;
+    const gr = x.createLinearGradient(-r,-r,r,r); gr.addColorStop(0,"#F7D774"); gr.addColorStop(.5,"#B98A23"); gr.addColorStop(1,"#F2CC5B");
+    x.beginPath(); x.arc(0,0,r,0,7); x.fillStyle = gr; x.fill(); x.shadowColor = "transparent";
+    x.beginPath(); x.arc(0,0,r*.86,0,7); x.fillStyle = "#101010"; x.fill();
+    x.lineWidth = 2; x.strokeStyle = "rgba(247,215,116,.6)"; x.beginPath(); x.arc(0,0,r*.8,0,7); x.stroke();
+    x.textAlign = "center"; x.textBaseline = "middle";
+    const n = sat.length, adim = Math.min(54, (r*1.4)/Math.max(1,n));
+    sat.forEach((t, i) => { const vurgu = t.startsWith("*"), m = vurgu ? t.slice(1) : t;
+      const boy = ilSigdir(x, m, IL_FONT.kalin, 400, r*1.45 - Math.abs(i-(n-1)/2)*24, vurgu ? 62 : 44, 18);
+      ilYazi(x, m, 0, (i - (n-1)/2)*adim*1.02, vurgu ? "#F7D774" : "#FFFFFF", "rgba(0,0,0,.6)", 3); });
+    x.restore(); return [0, 0, r*2, r*2]; },
+  etiket(x, e){ const a = e.alan; x.font = `400 40px ${IL_FONT.kalin}`; const w = x.measureText(a.metin).width + 56, h = 64;
+    x.save(); x.rotate(-.06); x.fillStyle = "#C8101D"; x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 12; x.shadowOffsetY = 5;
+    x.beginPath(); x.moveTo(0,0); x.lineTo(w,0); x.lineTo(w-14,h/2); x.lineTo(w,h); x.lineTo(0,h); x.closePath(); x.fill(); x.shadowColor = "transparent";
+    x.textAlign = "left"; x.textBaseline = "middle"; ilYazi(x, a.metin, 22, h/2+2, "#FFFFFF", "rgba(0,0,0,.35)", 3); x.restore(); return [-4, -10, w+6, h+16]; },
+  parselSay(x, e){ const a = e.alan, w = 400, sat = a.alt.split("\n").filter(Boolean), h = 120 + sat.length*44;
+    x.save(); x.rotate(-.06);
+    const gr = x.createLinearGradient(0,0,0,h); gr.addColorStop(0,"#E1262F"); gr.addColorStop(1,"#9E1018");
+    x.fillStyle = gr; x.shadowColor = "rgba(0,0,0,.5)"; x.shadowBlur = 16; x.shadowOffsetY = 8;
+    x.beginPath(); x.moveTo(26,0); x.lineTo(w,8); x.lineTo(w-20,h); x.lineTo(0,h-8); x.closePath(); x.fill(); x.shadowColor = "transparent";
+    x.textAlign = "center"; x.textBaseline = "alphabetic";
+    ilSigdir(x, a.ust, IL_FONT.kalin, 400, w-60, 92, 30); ilYazi(x, a.ust, w/2, 104, "#FFFFFF", "rgba(60,0,0,.6)", 5);
+    sat.forEach((t,i) => { ilSigdir(x, t, IL_FONT.kalin, 400, w-56, 42, 16); ilYazi(x, t, w/2, 152 + i*44, "#FFE04A", "rgba(60,0,0,.6)", 4); });
+    x.restore(); return [-6, -14, w+8, h+24]; },
+  ozellik(x, e){ const sat = e.alan.maddeler.split("\n").map(t => t.trim()).filter(Boolean);
+    const ikon = t => { const u = t.toLocaleUpperCase("tr");
+      return /KÖY|MAHALLE|MERKEZ/.test(u) ? "ev" : /YOL|ASFALT|CEPHE/.test(u) ? "yol" : /ÇİT|CIT/.test(u) ? "cit" : /ELEKTR|ENERJ/.test(u) ? "simsek" :
+        /DOĞA|ORMAN|AĞAÇ|HAVA/.test(u) ? "agac" : /DEĞER|YATIRIM|ARTI/.test(u) ? "grafik" : /TREN|İSTASYON/.test(u) ? "tren" : /ŞEHİR|İLÇE/.test(u) ? "bina" : "konum"; };
+    if(e.yatay){ // yan yana, ortalanmis kartlar
+      const H = 92, ara = 22; x.font = `700 34px ${IL_FONT.serit}`;
+      const ws = sat.map(t => { const par = t.split("|"); x.font = `700 34px ${IL_FONT.serit}`; let w = x.measureText(par[0]).width;
+        if(par[1]){ x.font = `600 24px ${IL_FONT.serit}`; w = Math.max(w, x.measureText(par[1]).width); } return Math.min(420, w) + 96 + 40; });
+      const top = ws.reduce((a, b) => a + b, 0) + ara*(sat.length - 1); let X = -top/2;
+      sat.forEach((t, i) => { const w = ws[i], par = t.split("|");
+        x.save(); x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 16; x.shadowOffsetY = 6;
+        ilYuvarlak(x, X, 0, w, H, 20); x.fillStyle = "rgba(8,22,16,.82)"; x.fill(); x.restore();
+        x.lineWidth = 2; x.strokeStyle = "rgba(227,178,60,.85)"; ilYuvarlak(x, X, 0, w, H, 20); x.stroke();
+        ilYuvarlak(x, X + 12, 12, 68, 68, 14); x.fillStyle = "#E3B23C"; x.fill();
+        x.save(); x.translate(X + 46, 46); x.fillStyle = "#0E2418"; x.strokeStyle = "#0E2418"; IL_IKON[ikon(t)](x, 48); x.restore();
+        x.textAlign = "left"; x.textBaseline = "middle";
+        if(par[1]){ ilSigdir(x, par[0], IL_FONT.serit, 700, w - 120, 34, 14); ilYazi(x, par[0], X + 96, 32, "#FFFFFF");
+          ilSigdir(x, par[1], IL_FONT.serit, 600, w - 120, 24, 12); ilYazi(x, par[1], X + 96, 64, "#F2D27A"); }
+        else { ilSigdir(x, par[0], IL_FONT.serit, 700, w - 120, 36, 14); ilYazi(x, par[0], X + 96, H/2 + 1, "#FFFFFF"); }
+        X += w + ara; });
+      return [-top/2, 0, top/2, H]; }
+    const satH = 104, w = 500;
+    sat.forEach((t, i) => { const y = i*satH;
+      ilYuvarlak(x, 0, y, 86, 86, 14); x.fillStyle = "rgba(10,14,12,.86)"; x.fill(); x.lineWidth = 2.5; x.strokeStyle = "#E3B23C"; x.stroke();
+      x.save(); x.translate(43, y+43); x.fillStyle = "#F2C94C"; x.strokeStyle = "#F2C94C"; IL_IKON[ikon(t)](x, 60); x.restore();
+      ilYuvarlak(x, 96, y+8, w-96, 70, 12); x.fillStyle = "rgba(10,14,12,.62)"; x.fill();
+      const par = t.split("|"); x.textAlign = "left"; x.textBaseline = "middle";
+      if(par.length > 1){ ilSigdir(x, par[0], IL_FONT.serit, 700, w-130, 32, 14); ilYazi(x, par[0], 114, y+29, "#FFFFFF");
+        ilSigdir(x, par[1], IL_FONT.serit, 600, w-130, 28, 12); ilYazi(x, par[1], 114, y+60, "#FFFFFF"); }
+      else { ilSigdir(x, t, IL_FONT.serit, 700, w-130, 32, 14); ilYazi(x, t, 114, y+44, "#FFFFFF"); } });
+    return [0, 0, w, sat.length*satH]; },
+  konum(x, e, W, P, V){ const a = e.alan, sat = a.satirlar.split("\n").filter(Boolean), w = 470, satH = 58, h = 92 + sat.length*satH;
+    ilYuvarlak(x, 0, 0, w, h, 18); x.fillStyle = "rgba(8,12,10,.82)"; x.fill(); x.lineWidth = 3; x.strokeStyle = "#E3B23C"; x.stroke();
+    x.save(); x.translate(44, 46); x.fillStyle = "#F2C94C"; IL_IKON.konum(x, 52); x.restore();
+    x.textAlign = "left"; x.textBaseline = "middle"; ilSigdir(x, a.baslik, IL_FONT.kalin, 400, w-100, 40, 16); ilYazi(x, a.baslik, 84, 47, "#F2C94C");
+    x.fillStyle = "rgba(227,178,60,.45)"; x.fillRect(22, 84, w-44, 2);
+    sat.forEach((t, i) => { const y = 92 + i*satH + satH/2, par = t.split("|"), tur = (par[2]||"").trim();
+      x.save(); x.translate(44, y); x.fillStyle = "#FFFFFF"; (IL_IKON[IL_MESAFE_IKON[tur] || "konum"])(x, 34); x.restore();
+      x.textAlign = "left"; ilSigdir(x, (par[0]||"").trim(), IL_FONT.serit, 600, w-210, 27, 12); ilYazi(x, (par[0]||"").trim(), 80, y, "#FFFFFF");
+      x.textAlign = "right"; x.font = `700 28px ${IL_FONT.serit}`; ilYazi(x, (par[1]||"").trim(), w-22, y, "#F2C94C"); });
+    return [0, 0, w, h]; },
+  bilgi(x, e){ const a = e.alan; x.font = `700 30px ${IL_FONT.govde}`; const w = x.measureText(a.metin).width + 60, h = 62;
+    ilYuvarlak(x, 0, 0, w, h, h/2); x.fillStyle = "rgba(255,255,255,.18)"; x.fill(); x.lineWidth = 2; x.strokeStyle = "rgba(255,255,255,.6)"; x.stroke();
+    x.textAlign = "left"; x.textBaseline = "middle"; x.save(); x.shadowColor = "rgba(0,0,0,.6)"; x.shadowBlur = 6;
+    ilYazi(x, a.metin, 30, h/2+1, "#FFFFFF"); x.restore(); return [0, 0, w, h]; },
+  kart(x, e, W, P, V){ const a = e.alan, w = 220, h = 190, img = V[a.gorsel];
+    x.save(); x.shadowColor = "rgba(0,0,0,.5)"; x.shadowBlur = 14; x.shadowOffsetY = 6;
+    ilYuvarlak(x, 0, 0, w, h, 14); x.fillStyle = "#EAF2E0"; x.fill(); x.restore();
+    x.save(); ilYuvarlak(x, 0, 0, w, h, 14); x.clip();
+    const g = x.createLinearGradient(0,0,0,h); g.addColorStop(0,"#BFE3F2"); g.addColorStop(.6,"#E6F2D8"); g.addColorStop(1,"#9CC67A"); x.fillStyle = g; x.fillRect(0,0,w,h);
+    if(img){ const s = Math.min((w-24)/img.width, (h-60)/img.height); x.drawImage(img, (w-img.width*s)/2, h-48-img.height*s, img.width*s, img.height*s); }
+    x.restore(); x.lineWidth = 3; x.strokeStyle = "#E3B23C"; ilYuvarlak(x, 0, 0, w, h, 14); x.stroke();
+    x.save(); x.rotate(-.05); x.fillStyle = "#E3B23C"; x.beginPath(); x.moveTo(-4,h-44); x.lineTo(w*.78,h-50); x.lineTo(w*.72,h-6); x.lineTo(-4,h); x.closePath(); x.fill();
+    x.textAlign = "left"; x.textBaseline = "middle"; ilSigdir(x, a.metin, IL_FONT.kalin, 400, w*.66, 32, 12); ilYazi(x, a.metin, 12, h-25, "#1A1206"); x.restore();
+    return [0, 0, w, h]; }
+};
+
+function ilanCiz(cv, D, V){
+  const O = IL_ORAN[D.oran], W = O.W, Hc = O.H;
+  cv.width = W; cv.height = Hc;
+  const x = cv.getContext("2d");
+  const P = ilPlan(x, D, V, W, Hc);
+  // ust ve alt yazi alanlari icin hafif karartma
+  D.ogeler.forEach(e => {
+    if(e.gizli){ e._kutu = null; return; }
+    const pos = e.pos[D.oran] || e.pos["916"], s = (typeof e.s === "object" ? e.s[D.oran] : e.s) || 1;
+    x.save(); x.translate(pos[0]*W, pos[1]*Hc); x.scale(s, s);
+    const k = IL_OGE[e.tip](x, e, W, P, V) || [0,0,0,0];
+    x.restore();
+    e._kutu = [pos[0]*W + k[0]*s, pos[1]*Hc + k[1]*s, pos[0]*W + k[2]*s, pos[1]*Hc + k[3]*s];
+  });
+  return P;
+}
+
+/* ================= ILAN AFISI · ekran =================
+   Akis: zemin yukle (GPT ile canlandirilmis, sarı cizgili) -> parselin icine dokun (cizgi bulunur, cap perspektifle oturur)
+   -> yazilar / ogeler duzenlenir -> afis indirilir ve parselin belgelerine kaydedilir. */
+let ILAN = null;
+
+// zemin gorseli parsel basina telefonda saklanir (IndexedDB)
+function ilanDb(){ return new Promise((ok, no) => { const r = indexedDB.open("ilanAfis", 1);
+  r.onupgradeneeded = () => r.result.createObjectStore("zemin"); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); }); }
+async function ilanZeminYaz(id, blob){ try{ const db = await ilanDb(); await new Promise((ok, no) => { const t = db.transaction("zemin", "readwrite"); t.objectStore("zemin").put(blob, id); t.oncomplete = ok; t.onerror = () => no(t.error); }); }catch(e){} }
+async function ilanZeminOku(id){ try{ const db = await ilanDb(); return await new Promise(ok => { const t = db.transaction("zemin").objectStore("zemin").get(id); t.onsuccess = () => ok(t.result || null); t.onerror = () => ok(null); }); }catch(e){ return null; } }
+function ilanKaydet(){ if(!ILAN) return; try{ const d = JSON.parse(JSON.stringify(ILAN.D, (k, v) => k === "_kutu" ? undefined : v)); localStorage.setItem("ilan:" + ILAN.id, JSON.stringify(d)); }catch(e){} }
+
+function ilanDokuYukle(){
+  if(window.__ilanDoku) return window.__ilanDoku;
+  const al = ad => new Promise(r => { const i = new Image(); i.onload = () => r(i);
+    i.onerror = () => { const j = new Image(); j.onload = () => r(j); j.onerror = () => r(null); j.src = gv(ad + ".webp"); }; i.src = gv("peyzaj/" + ad + ".webp"); });
+  return (window.__ilanDoku = Promise.all([al("asfalt"), al("cim-1")]).then(([a, c]) => ({ asfalt:a, cim:c })));
+}
+async function ilanFontlar(){ try{ await Promise.all(["400 40px Anton", "600 30px Oswald", "700 30px Oswald", "700 20px Inter", "800 20px Inter"].map(f => document.fonts.load(f, "ŞİĞÜÖÇşığüöç0123"))); }catch(e){} }
+
+// capin geometrisi: metre (y yukari), parcalar, yollar, resmi yollar
+function ilanVeriKur(p){
+  const M = capHalkasi(p); if(!M) throw new Error("Parselin sınır çizimi yok");
+  const cfg = (p.cap_config && !Array.isArray(p.cap_config) && p.cap_config.parcalar?.length) ? p.cap_config : null;
+  const alan = +p.alan_m2 || alanHesap(M);
+  let parcalar = [{ no:"", m2: alan, poly: M }], yollar = [], eksenler = [], resmiler = [];
+  if(cfg){ try{ const yer = capYerlesim(M, cfg);
+    parcalar = yer.parcalar.map((o, i) => ({ no: o.bilgi?.no || String(i+1), m2: (isFinite(+o.bilgi?.m2) && +o.bilgi.m2 > 0) ? +o.bilgi.m2 : alanHesap(o.poly), poly: o.poly }));
+    yollar = (yer.yol || []).filter(q => q && q.length > 2);
+    eksenler = (yer.yolEksen || []).map(e => [e.p1, e.p2]);
+    resmiler = (yer.resmiler || []).filter(r => r.resmiZincir && r.resmiZincir.ic.length > 1).map(r => ({ ic: r.resmiZincir.ic, dis: r.resmiZincir.dis }));
+  }catch(e){ console.warn("ilan cap", e); } }
+  return { sinir: M, parcalar, yollar, eksenler, resmiler, yYukari: true };
+}
+
+function ilanOgeler(p){
+  const U = t => String(t || "").toLocaleUpperCase("tr");
+  const mh = U(p.mahalle), ana = !mh ? "" : /MAH|KÖY/.test(mh) ? mh : mh + " KÖYÜ";
+  return [
+    { id:"kunye", tip:"kunye", alan:{ ust:[U(p.il), U(p.ilce)].filter(Boolean).join("  ·  "), ana, ada:String(p.ada ?? ""), parsel:String(p.parsel ?? ""), alan: p.alan_m2 ? ilSayi(p.alan_m2) + " m²" : "" },
+      pos:{ "916":[.5,.022], "45":[.5,.022] }, s:{ "916":1, "45":.82 } },
+    { id:"pusula", tip:"pusula", alan:{ metin:"K" }, pos:{ "916":[.885,.2], "45":[.885,.245] }, s:{ "916":1, "45":.9 } },
+    { id:"ozellik", tip:"ozellik", yatay:true, alan:{ maddeler:"ASFALT YOLA CEPHE\nKÖY MERKEZİNE YAKIN" }, pos:{ "916":[.5,.9], "45":[.5,.87] }, s:{ "916":1, "45":.85 } },
+    { id:"satilik", tip:"parselSay", gizli:true, alan:{ ust:"SATILIK", alt:"" }, pos:{ "916":[.6,.7], "45":[.68,.665] }, s:{ "916":.7, "45":.52 } },
+    { id:"konum", tip:"konum", gizli:true, alan:{ baslik:"KONUM & MESAFELER", satirlar:"Köy merkezi|~300 m|koy\nİlçe merkezi|~6 km|ilce\nHızlı tren|~15 km|tren" },
+      pos:{ "916":[.55,.7], "45":[.6,.66] }, s:{ "916":.9, "45":.66 } },
+    { id:"slogan", tip:"slogan", gizli:true, alan:{ metin:"DOĞAYLA İÇ İÇE, GELECEĞE YATIRIM" }, pos:{ "916":[.12,.205], "45":[.1,.215] }, s:{ "916":1, "45":.85 } }
+  ];
+}
+const ILAN_AD = { kunye:"Parsel künyesi", pusula:"Pusula", ozellik:"Alt özellikler", parselSay:"Kırmızı kutu", konum:"Konum & mesafeler", slogan:"Slogan şeridi" };
+const ILAN_ALAN = { ust:"Üst satır", ana:"Köy / mahalle", ada:"Ada", parsel:"Parsel", alan:"Yüzölçümü", metin:"Metin", maddeler:"Maddeler (her satır bir kutu)", alt:"Alt satırlar", baslik:"Başlık", satirlar:"Satırlar (ad|mesafe|ikon)" };
+
+async function ilanAfisi(parselId){
+  const { data:p } = await sb.from("parcels").select("*").eq("id", parselId).single();
+  if(!p) return toast("Parsel bulunamadı");
+  let F; try{ F = ilanVeriKur(p); }catch(e){ return toast(e.message || String(e)); }
+  let D = null; try{ D = JSON.parse(localStorage.getItem("ilan:" + parselId) || "null"); }catch(e){}
+  if(!D) D = { oran:"916", zemin:{}, karart:0, derinlik:true, yolYazi:true, cit:true, yolAd:[], pyAd:"PARSEL YOLU", ogeler: ilanOgeler(p), der:{} };
+  ILAN = { id: parselId, p, F, D, V:{ veri:null }, dokun:false, secili:null };
+  const [doku, blob] = await Promise.all([ilanDokuYukle(), ilanZeminOku(parselId)]);
+  Object.assign(ILAN.V, doku);
+  if(blob){ try{ ILAN.V.zemin = await ilanResim(blob); }catch(e){} }
+  ilanVeriBagla();
+  ilanEkran();
+  ilanFontlar().then(() => ilanCizTuval());
+}
+function ilanResim(blob){ return new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = URL.createObjectURL(blob); }); }
+// zemin + kayitli oturtma birlestirilir; foto boyutu degistiyse oturtma gecersiz
+function ilanVeriBagla(){
+  const { V, D, F } = ILAN;
+  if(V.zemin && D.H && D.foto && D.foto.w === V.zemin.naturalWidth && D.foto.h === V.zemin.naturalHeight){
+    V.veri = { ...F, H: D.H, foto: D.foto }; V._zk = null; }
+  else V.veri = null;
+}
+
+function ilanEkran(){
+  const { D } = ILAN, oturdu = !!ILAN.V.veri, zeminVar = !!ILAN.V.zemin;
+  const z = D.zemin || {};
+  const ogeSat = D.ogeler.map((e, i) => `<div class="ilOge ${ILAN.secili === i ? "sec" : ""} ${e.gizli ? "gizli" : ""}" onclick="ilanSec(${i})">
+      <span>${ILAN_AD[e.tip] || e.tip}</span><button class="ilGoz" onclick="event.stopPropagation();ilanGoz(${i})">${e.gizli ? "Göster" : "Gizle"}</button></div>`).join("");
+  app.innerHTML = head("İlan Afişi", `go('parsel','${ILAN.id}')`) + `
+    <div class="ilSahne"><canvas id="ilTuval"></canvas>${ILAN.dokun ? `<div class="ilIpucu">Fotoğrafta parselin <b>içine</b> dokun</div>` : ""}</div>
+    <div class="ilSeg">${[["916","9:16 Hikâye"],["45","4:5 Gönderi"]].map(([o, a]) => `<button class="${D.oran === o ? "on" : ""}" onclick="ilanOran('${o}')">${a}</button>`).join("")}</div>
+    <div class="card">
+      <div class="bolum"><span class="rz altin">${svg("photo")}</span><b>Zemin</b></div>
+      <div class="ilIki">
+        <button class="btn ${zeminVar ? "ghost" : ""}" onclick="ilanZeminSec()">${zeminVar ? "Zemini Değiştir" : "Zemin Yükle"}</button>
+        <button class="btn ${zeminVar && !oturdu ? "" : "ghost"}" ${zeminVar ? "" : "disabled"} onclick="ilanDokunBaslat()">${oturdu ? "Yeniden Oturt" : "Çizgiye Oturt"}</button>
+      </div>
+      <div class="ilNot">${!zeminVar ? "GPT ile canlandırdığın, parselin <b>sarı çizgisi</b> duran görseli yükle." : !oturdu ? "Şimdi “Çizgiye Oturt”a bas ve fotoğrafta parselin içine dokun." : "Çap oturdu. Boş yeri sürükle: zemin kayar · öğeyi sürükle: yeri değişir."}</div>
+    </div>
+    ${oturdu ? `<div class="card">
+      <div class="bolum"><span class="rz altin">${svg("vector")}</span><b>Görünüm</b></div>
+      ${ilanKaydirici("zum", "Yakınlaştır", Math.round((z.zum || 1)*100), 50, 250, "%")}
+      ${ilanKaydirici("uzak", "Uzağı sıkıştır (gökyüzü/tepeler)", Math.round((z.uzak ?? .3)*100), 12, 100, "%")}
+      ${ilanKaydirici("gecis", "Geçiş noktası (yukarı ↔ aşağı)", Math.round(z.gecis || 0), -400, 300, "")}
+      ${ilanKaydirici("karart", "Parsel dışını karart", Math.round((D.karart || 0)*100), 0, 75, "%")}
+      <label class="ilTik"><input type="checkbox" ${D.derinlik !== false ? "checked" : ""} onchange="ilanAyar('derinlik', this.checked)"> Derinlik efekti (uzak sıkışır, parsel büyür)</label>
+      <label class="ilTik"><input type="checkbox" ${D.cit !== false ? "checked" : ""} onchange="ilanAyar('cit', this.checked)"> Panel çit</label>
+      <label class="ilTik"><input type="checkbox" ${D.yolYazi !== false ? "checked" : ""} onchange="ilanAyar('yolYazi', this.checked)"> Yol yazıları</label>
+      ${(ILAN.F.resmiler || []).map((r, i) => `<div class="field"><label>${i+1}. resmi yolun adı</label><input value="${esc((D.yolAd||[])[i] || "RESMİ YOL")}" oninput="ilanYolAd(${i}, this.value)"></div>`).join("")}
+      ${(ILAN.F.eksenler || []).length ? `<div class="field"><label>Parsel yolu yazısı</label><input value="${esc(D.pyAd || "PARSEL YOLU")}" oninput="ILAN.D.pyAd=this.value;ilanCizTuval();ilanKaydetGec()"></div>` : ""}
+      <button class="btn ghost" style="margin-top:6px" onclick="ilanSifirla()">Yerleşimi Sıfırla</button>
+    </div>
+    <div class="card">
+      <div class="bolum"><span class="rz altin">${svg("note")}</span><b>Yazılar ve Öğeler</b></div>
+      <div class="ilListe">${ogeSat}</div>
+      <div id="ilDuzen"></div>
+    </div>
+    <button class="btn" style="margin-top:14px" onclick="ilanUret()">Afişi İndir ve Kaydet</button>` : ""}`;
+  ilanDuzenCiz();
+  ilanTuvalOlay();
+  ilanCizTuval();
+}
+function ilanKaydirici(ad, etk, v, mn, mx, bir){
+  return `<div class="field ilKay"><label>${etk} <b id="ilk_${ad}">${v}${bir}</b></label>
+    <input type="range" min="${mn}" max="${mx}" value="${v}" oninput="ilanKay('${ad}', +this.value, '${bir}')"></div>`; }
+let ILAN_KAYDET_ZAMAN = null;
+function ilanKaydetGec(){ clearTimeout(ILAN_KAYDET_ZAMAN); ILAN_KAYDET_ZAMAN = setTimeout(ilanKaydet, 400); }
+function ilanKay(ad, v, bir){
+  const D = ILAN.D, z = D.zemin = D.zemin || {};
+  if(ad === "zum") z.zum = v/100; else if(ad === "uzak") z.uzak = v/100; else if(ad === "gecis") z.gecis = v; else if(ad === "karart") D.karart = v/100;
+  const b = document.getElementById("ilk_" + ad); if(b) b.textContent = v + bir;
+  ilanCizTuval(); ilanKaydetGec(); }
+function ilanAyar(k, v){ ILAN.D[k] = v; ilanCizTuval(); ilanKaydetGec(); }
+function ilanYolAd(i, v){ (ILAN.D.yolAd = ILAN.D.yolAd || [])[i] = v; ilanCizTuval(); ilanKaydetGec(); }
+function ilanOran(o){ ILAN.D.oran = o; ilanKaydet(); ilanEkran(); }
+function ilanGoz(i){ const e = ILAN.D.ogeler[i]; e.gizli = !e.gizli; ilanKaydet(); ilanEkran(); }
+function ilanSec(i){ ILAN.secili = ILAN.secili === i ? null : i; ilanEkran(); }
+function ilanSifirla(){ const D = ILAN.D; D.zemin = {}; D.der = {}; if(ILAN.V.veri) D.der[D.oran] = ilDerVarsayilan(ILAN.V.veri, D.oran);
+  const yeni = ilanOgeler(ILAN.p); D.ogeler.forEach(e => { const y = yeni.find(q => q.id === e.id); if(y){ e.pos = y.pos; e.s = y.s; } });
+  ilanKaydet(); ilanEkran(); }
+function ilanDuzenCiz(){
+  const K = document.getElementById("ilDuzen"); if(!K) return;
+  const e = ILAN.secili != null ? ILAN.D.ogeler[ILAN.secili] : null;
+  if(!e){ K.innerHTML = `<div class="ilNot">Düzenlemek için bir öğeye dokun. Yazılar her zaman değiştirilebilir.</div>`; return; }
+  const o = ILAN.D.oran, sv = Math.round(((typeof e.s === "object" ? e.s[o] : e.s) || 1)*100);
+  K.innerHTML = Object.keys(e.alan).map(k => { const cok = /maddeler|satirlar|^alt$/.test(k);
+      return `<div class="field"><label>${ILAN_ALAN[k] || k}</label>${cok
+        ? `<textarea rows="3" oninput="ilanAlan('${k}', this.value)">${esc(e.alan[k])}</textarea>`
+        : `<input value="${esc(e.alan[k])}" oninput="ilanAlan('${k}', this.value)">`}</div>`; }).join("") +
+    ilanKaydirici("boyut", "Boyut", sv, 30, 170, "%").replace(`ilanKay('boyut'`, `ilanBoyut(`).replace(`, +this.value, '%')`, `+this.value)`);
+}
+function ilanAlan(k, v){ const e = ILAN.D.ogeler[ILAN.secili]; if(!e) return; e.alan[k] = v; ilanCizTuval(); ilanKaydetGec(); }
+function ilanBoyut(v){ const e = ILAN.D.ogeler[ILAN.secili]; if(!e) return; if(typeof e.s !== "object") e.s = { "916": e.s || 1, "45": e.s || 1 };
+  e.s[ILAN.D.oran] = v/100; const b = document.getElementById("ilk_boyut"); if(b) b.textContent = v + "%"; ilanCizTuval(); ilanKaydetGec(); }
+
+async function ilanZeminSec(){
+  const f = await dosyaSec("image/*"); if(!f) return;
+  try{ ILAN.V.zemin = await ilanResim(f); }catch(e){ return toast("Görsel açılamadı"); }
+  await ilanZeminYaz(ILAN.id, f);
+  ILAN.V._zk = null; ilanVeriBagla();
+  if(!ILAN.V.veri){ ILAN.dokun = true; toast("Şimdi fotoğrafta parselin içine dokun"); }
+  ilanEkran();
+}
+function ilanDokunBaslat(){ if(!ILAN.V.zemin) return toast("Önce zemin yükle"); ILAN.dokun = true; ilanEkran();
+  document.getElementById("ilTuval")?.scrollIntoView({ behavior:"smooth", block:"center" }); }
+
+// tuvalde zemin "ham" gosterilirken (oturtma oncesi) kullanilan yerlesim
+function ilanHamYerlesim(W, Hc){ const im = ILAN.V.zemin, k = Math.min(W/im.naturalWidth, Hc/im.naturalHeight);
+  return { k, dx: (W - im.naturalWidth*k)/2, dy: (Hc - im.naturalHeight*k)/2 }; }
+
+function ilanCizTuval(){
+  const cv = document.getElementById("ilTuval"); if(!cv || !ILAN) return;
+  const O = IL_ORAN[ILAN.D.oran], W = O.W, Hc = O.H;
+  cv.width = W; cv.height = Hc; const x = cv.getContext("2d");
+  if(!ILAN.V.zemin || !ILAN.V.veri || ILAN.dokun){
+    x.fillStyle = "#0B2A20"; x.fillRect(0, 0, W, Hc);
+    if(ILAN.V.zemin){ const Y = ilanHamYerlesim(W, Hc), im = ILAN.V.zemin; x.drawImage(im, Y.dx, Y.dy, im.naturalWidth*Y.k, im.naturalHeight*Y.k); }
+    else { x.fillStyle = "rgba(255,255,255,.7)"; x.font = `600 40px ${IL_FONT.serit}`; x.textAlign = "center"; x.fillText("Zemin görseli yükle", W/2, Hc/2); }
+    return; }
+  const D = ILAN.D; D.der = D.der || {};
+  if(!D.der[D.oran]) D.der[D.oran] = ilDerVarsayilan(ILAN.V.veri, D.oran);
+  ilanCiz(cv, D, ILAN.V);
+}
+
+// ---- dokunma / surukleme ----
+function ilanTuvalOlay(){
+  const cv = document.getElementById("ilTuval"); if(!cv) return;
+  let sur = null;
+  const nk = ev => { const b = cv.getBoundingClientRect(); return [(ev.clientX - b.left)*cv.width/b.width, (ev.clientY - b.top)*cv.height/b.height]; };
+  cv.onpointerdown = ev => { const [px, py] = nk(ev); cv.setPointerCapture(ev.pointerId);
+    if(ILAN.dokun || !ILAN.V.veri){ sur = { dokun:true, px, py }; return; }
+    const D = ILAN.D, hit = [...D.ogeler].reverse().find(e => e._kutu && px >= e._kutu[0] && px <= e._kutu[2] && py >= e._kutu[1] && py <= e._kutu[3]);
+    if(hit){ sur = { e:hit, px, py, p0:(hit.pos[D.oran] || hit.pos["916"]).slice() }; }
+    else { const z = D.zemin = D.zemin || {}; sur = { zemin:true, px, py, z0:[z.x || 0, z.y || 0] }; } };
+  cv.onpointermove = ev => { if(!sur || sur.dokun) return; const [px, py] = nk(ev), D = ILAN.D;
+    if(sur.zemin){ D.zemin.x = sur.z0[0] + px - sur.px; D.zemin.y = sur.z0[1] + py - sur.py; }
+    else sur.e.pos[D.oran] = [sur.p0[0] + (px - sur.px)/cv.width, sur.p0[1] + (py - sur.py)/cv.height];
+    sur.oynadi = true; if(!ILAN.rafVar){ ILAN.rafVar = true; requestAnimationFrame(() => { ILAN.rafVar = false; ilanCizTuval(); }); } };
+  cv.onpointerup = ev => { const s = sur; sur = null; if(!s) return;
+    if(s.dokun){ if(ILAN.V.zemin && ILAN.dokun) ilanOturt(s.px, s.py); return; }
+    if(s.e && !s.oynadi){ ILAN.secili = ILAN.D.ogeler.indexOf(s.e); ilanEkran(); return; }
+    ilanKaydetGec(); };
+}
+
+// ---- cizgiye oturtma: once benzerlik (mevcut motor), sonra perspektif (homografi) ince ayari ----
+function ilanHomografi(src, dst){ // 4 nokta -> 3x3
+  const A = [], b = [];
+  for(let i=0;i<4;i++){ const [x, y] = src[i], [u, v] = dst[i];
+    A.push([x, y, 1, 0, 0, 0, -u*x, -u*y]); b.push(u); A.push([0, 0, 0, x, y, 1, -v*x, -v*y]); b.push(v); }
+  const n = 8; for(let c=0;c<n;c++){ let p = c; for(let r=c+1;r<n;r++) if(Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+    [A[c], A[p]] = [A[p], A[c]]; [b[c], b[p]] = [b[p], b[c]]; const d = A[c][c] || 1e-12;
+    for(let r=0;r<n;r++){ if(r === c) continue; const f = A[r][c]/d; if(!f) continue; for(let k=c;k<n;k++) A[r][k] -= f*A[c][k]; b[r] -= f*b[c]; } }
+  const h = b.map((v, i) => v/(A[i][i] || 1e-12)); return [h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7], 1]; }
+function ilanRenkliCizgi(veri, w, h, tx, ty, sMin, tTol){ // canli renkli (sari vb.) ince cizgi; ici sarimsi tarla olsa da sasirmaz
+  const P = veri.data, ix = (x, y) => (y*w + x)*4;
+  const q = k => hsv(P[k], P[k+1], P[k+2]);
+  const tonlar = [];
+  for(let a=0; a<90; a++){ const dx = Math.cos(a/90*2*Math.PI), dy = Math.sin(a/90*2*Math.PI); let en = null;
+    for(let r=2; r<Math.max(w, h); r++){ const x = Math.round(tx + dx*r), y = Math.round(ty + dy*r); if(x < 0 || y < 0 || x >= w || y >= h) break;
+      const c = q(ix(x, y)); if(c[1] >= sMin && c[2] > .5){ en = c; break; } }
+    if(en) tonlar.push(en[0]); }
+  if(tonlar.length < 40) return { hata:"Renkli çizgi bulunamadı" };
+  tonlar.sort((a, b) => a - b); const ton = tonlar[Math.floor(tonlar.length/2)];
+  const fark = v => { const d = Math.abs(v - ton); return Math.min(d, 360 - d); };
+  const kalin = new Uint8Array(w*h), liste = [];
+  for(let i=0;i<w*h;i++){ const c = q(i*4); if(c[1] >= sMin && c[2] > .5 && fark(c[0]) < tTol) liste.push(i); }
+  for(const j of liste){ const x = j % w, y = (j - x)/w;
+    for(let yy=Math.max(0,y-1); yy<=Math.min(h-1,y+1); yy++) for(let xx=Math.max(0,x-1); xx<=Math.min(w-1,x+1); xx++) kalin[yy*w+xx] = 1; }
+  // dokunulan nokta cizgiye denk geldiyse en yakin bos noktaya kay
+  let sx = tx, sy = ty;
+  if(kalin[ty*w+tx]){ let bul = false; for(let r=1; r<12 && !bul; r++) for(let dy=-r; dy<=r && !bul; dy++) for(let dx=-r; dx<=r; dx++){ const x = tx+dx, y = ty+dy;
+      if(x > 0 && y > 0 && x < w-1 && y < h-1 && !kalin[y*w+x]){ sx = x; sy = y; bul = true; break; } } }
+  const ic = new Uint8Array(w*h), yig = new Int32Array(w*h); let n = 0, alan = 0, x0 = sx, x1 = sx, y0 = sy, y1 = sy;
+  yig[n++] = sy*w+sx; ic[sy*w+sx] = 1;
+  while(n){ const j = yig[--n], x = j % w, y = (j - x)/w; alan++;
+    if(x === 0 || y === 0 || x === w-1 || y === h-1) return { hata:"Çizgi parseli tam çevrelemiyor" };
+    if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y;
+    for(const k of [j-1, j+1, j-w, j+w]) if(!ic[k] && !kalin[k]){ ic[k] = 1; yig[n++] = k; } }
+  if(alan > w*h*.5 || alan < 150) return { hata:"Çizgi parseli tam çevrelemiyor" };
+  // dis bolge: kutunun kenarindan, ne ic ne cizgi olan piksellerle doldur. Parsel icindeki sari lekeler disla komsu olmaz.
+  const X0 = Math.max(0, x0-14), X1 = Math.min(w-1, x1+14), Y0 = Math.max(0, y0-14), Y1 = Math.min(h-1, y1+14);
+  const dis = new Uint8Array(w*h); n = 0;
+  const tohum = j => { if(!dis[j] && !ic[j] && !kalin[j]){ dis[j] = 1; yig[n++] = j; } };
+  for(let x=X0;x<=X1;x++){ tohum(Y0*w+x); tohum(Y1*w+x); } for(let y=Y0;y<=Y1;y++){ tohum(y*w+X0); tohum(y*w+X1); }
+  while(n){ const j = yig[--n], x = j % w, y = (j - x)/w;
+    for(const [xx, yy] of [[x-1,y],[x+1,y],[x,y-1],[x,y+1]]) if(xx>=X0 && xx<=X1 && yy>=Y0 && yy<=Y1) tohum(yy*w+xx); }
+  const hedef = [];
+  for(const j of liste){ const x = j % w, y = (j - x)/w; if(x < X0 || x > X1 || y < Y0 || y > Y1) continue;
+    let ice = false, disa = false;
+    for(let dy=-4; dy<=4; dy++) for(let dx=-4; dx<=4; dx++){ const xx = x+dx, yy = y+dy; if(xx<0 || yy<0 || xx>=w || yy>=h) continue; const k = yy*w+xx;
+      if(ic[k]) ice = true; if(dis[k]) disa = true; }
+    if(ice && disa) hedef.push([x, y]); }
+  if(hedef.length < 20) return { hata:"Çizgi seçilemedi" };
+  return { ic, alan, hedef, kutu:[x0, y0, x1, y1] };
+}
+function ilanKoyuCizgi(veri, w, h, tx, ty){ // ince siyah/koyu cizgi: renkli cizgi bulunamazsa
+  const P = veri.data, kalin = new Uint8Array(w*h), liste = [];
+  const koyu = k => { const mx = Math.max(P[k], P[k+1], P[k+2]); return mx < 70; };
+  for(let i=0;i<w*h;i++) if(koyu(i*4)) liste.push(i);
+  for(const j of liste){ const x = j % w, y = (j - x)/w;
+    for(let yy=Math.max(0,y-1); yy<=Math.min(h-1,y+1); yy++) for(let xx=Math.max(0,x-1); xx<=Math.min(w-1,x+1); xx++) kalin[yy*w+xx] = 1; }
+  if(kalin[ty*w+tx]) return { hata:"Çizginin üstüne dokundun; biraz içeriye dokun" };
+  const ic = new Uint8Array(w*h), yig = new Int32Array(w*h); let n = 0, alan = 0, x0 = tx, x1 = tx, y0 = ty, y1 = ty;
+  yig[n++] = ty*w+tx; ic[ty*w+tx] = 1;
+  while(n){ const j = yig[--n], x = j % w, y = (j - x)/w; alan++;
+    if(x === 0 || y === 0 || x === w-1 || y === h-1) return { hata:"Parselin etrafında kapalı bir çizgi bulamadım (sarı ya da koyu)" };
+    if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y;
+    for(const k of [j-1, j+1, j-w, j+w]) if(!ic[k] && !kalin[k]){ ic[k] = 1; yig[n++] = k; } }
+  if(alan > w*h*.6 || alan < 200) return { hata:"Çizgi parseli tam çevrelemiyor" };
+  const hedef = [];
+  for(const j of liste){ const x = j % w, y = (j - x)/w; if(x < x0-6 || x > x1+6 || y < y0-6 || y > y1+6) continue;
+    let yak = false; for(let dy=-4; dy<=4 && !yak; dy++) for(let dx=-4; dx<=4; dx++){ const xx = x+dx, yy = y+dy; if(xx>=0 && yy>=0 && xx<w && yy<h && ic[yy*w+xx]){ yak = true; break; } }
+    if(yak) hedef.push([x, y]); }
+  if(hedef.length < 20) return { hata:"Çizgi seçilemedi" };
+  return { ic, alan, hedef, kutu:[x0, y0, x1, y1] };
+}
+async function ilanOturt(px, py){
+  const V = ILAN.V, im = V.zemin, O = IL_ORAN[ILAN.D.oran];
+  const Y = ilanHamYerlesim(O.W, O.H), fx = (px - Y.dx)/Y.k, fy = (py - Y.dy)/Y.k;
+  const nw = im.naturalWidth, nh = im.naturalHeight;
+  if(fx < 1 || fy < 1 || fx >= nw-1 || fy >= nh-1) return toast("Fotoğrafın içine dokun");
+  toast("Çizgi aranıyor, çap oturtuluyor…");
+  await new Promise(r => setTimeout(r, 40));
+  try{
+    const k0 = Math.min(1, 2000/Math.max(nw, nh)), w = Math.round(nw*k0), h = Math.round(nh*k0);
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    const x = c.getContext("2d", { willReadFrequently:true }); x.drawImage(im, 0, 0, w, h);
+    const tx = Math.round(fx*k0), ty = Math.round(fy*k0), veri = x.getImageData(0, 0, w, h);
+    let B = null;
+    for(const dene of [() => ilanRenkliCizgi(veri, w, h, tx, ty, .55, 16), () => ilanRenkliCizgi(veri, w, h, tx, ty, .42, 20), () => cizgiBul(veri, w, h, tx, ty), () => ilanKoyuCizgi(veri, w, h, tx, ty)]){
+      const r = dene(); if(!r.hata){ B = r; break; } if(!B) B = r; }
+    if(B.hata) return toast(B.hata);
+    const M = ILAN.F.sinir;
+    const S = poligonOturt(M, B, w, h);  // benzerlik: p = s*R*([m0,-m1] - ort) + o
+    const sim = m => { const c2 = Math.cos(S.t), s2 = Math.sin(S.t), a = (m[0]-S.ort[0])*S.s, b = (-m[1]-S.ort[1])*S.s; return [a*c2 - b*s2 + S.ox, a*s2 + b*c2 + S.oy]; };
+    // kontrol noktalari: sinirin kutusunun 4 kosesi (metre)
+    const xs = M.map(q=>q[0]), ys = M.map(q=>q[1]), kk = [[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)], [Math.min(...xs), Math.max(...ys)]];
+    const p0 = kk.map(sim).flat();
+    // mesafe haritasi (cizginin ortasina)
+    const [bx0, by0, bx1, by1] = B.kutu, pay = 60, X0 = Math.max(0, bx0-pay), Y0 = Math.max(0, by0-pay), X1 = Math.min(w-1, bx1+pay), Y1 = Math.min(h-1, by1+pay);
+    const W2 = X1-X0+1, H2 = Y1-Y0+1, dt = new Float32Array(W2*H2).fill(1e6);
+    B.hedef.forEach(([a, b]) => { if(a>=X0 && a<=X1 && b>=Y0 && b<=Y1) dt[(b-Y0)*W2 + (a-X0)] = 0; });
+    for(let y=0;y<H2;y++) for(let xx=0;xx<W2;xx++){ let v = dt[y*W2+xx]; if(xx>0) v = Math.min(v, dt[y*W2+xx-1]+1); if(y>0) v = Math.min(v, dt[(y-1)*W2+xx]+1);
+      if(xx>0 && y>0) v = Math.min(v, dt[(y-1)*W2+xx-1]+1.414); if(xx<W2-1 && y>0) v = Math.min(v, dt[(y-1)*W2+xx+1]+1.414); dt[y*W2+xx] = v; }
+    for(let y=H2-1;y>=0;y--) for(let xx=W2-1;xx>=0;xx--){ let v = dt[y*W2+xx]; if(xx<W2-1) v = Math.min(v, dt[y*W2+xx+1]+1); if(y<H2-1) v = Math.min(v, dt[(y+1)*W2+xx]+1);
+      if(xx<W2-1 && y<H2-1) v = Math.min(v, dt[(y+1)*W2+xx+1]+1.414); if(xx>0 && y<H2-1) v = Math.min(v, dt[(y+1)*W2+xx-1]+1.414); dt[y*W2+xx] = v; }
+    const ornek = []; for(let i=0;i<M.length;i++){ const a = M[i], b = M[(i+1)%M.length], L = Math.hypot(b[0]-a[0], b[1]-a[1]), n = Math.max(2, Math.ceil(L/.8));
+      for(let j=0;j<n;j++) ornek.push([a[0]+(b[0]-a[0])*j/n, a[1]+(b[1]-a[1])*j/n]); }
+    const hed = B.hedef.filter((_, i) => i % Math.max(1, Math.floor(B.hedef.length/350)) === 0);
+    const maliyet = v => { const Hh = ilanHomografi(kk, [[v[0],v[1]],[v[2],v[3]],[v[4],v[5]],[v[6],v[7]]]);
+      let a = 0; for(const q of ornek){ const p = ilH(Hh, q), xx = Math.round(p[0]) - X0, yy = Math.round(p[1]) - Y0;
+        a += (xx < 0 || yy < 0 || xx >= W2 || yy >= H2 || !isFinite(p[0])) ? 40 : Math.min(40, dt[yy*W2+xx]); }
+      a /= ornek.length;
+      const T = M.map(q => ilH(Hh, q)); let b = 0;
+      for(const hp of hed){ let m = 1e9; for(let i=0;i<T.length;i++) m = Math.min(m, segUzaklik(hp, T[i], T[(i+1)%T.length])); b += Math.min(40, m); }
+      return a + b/hed.length; };
+    let en = { x:p0, f:maliyet(p0) };
+    for(const [st, it] of [[4, 700], [1.5, 700], [.6, 600], [.25, 500]]){ const r = nelderMead(maliyet, en.x, Array(8).fill(st), it); if(r.f < en.f) en = r; }
+    const Hh = ilanHomografi(kk, [[en.x[0],en.x[1]],[en.x[2],en.x[3]],[en.x[4],en.x[5]],[en.x[6],en.x[7]]]);
+    // calisma olceginden foto pikseline
+    const H = [Hh[0]/k0, Hh[1]/k0, Hh[2]/k0, Hh[3]/k0, Hh[4]/k0, Hh[5]/k0, Hh[6], Hh[7], Hh[8]];
+    const D = ILAN.D; D.H = H; D.foto = { w:nw, h:nh }; D.zemin = {}; D.der = {};
+    ILAN.dokun = false; ilanVeriBagla(); D.der[D.oran] = ilDerVarsayilan(ILAN.V.veri, D.oran);
+    ilanKaydet();
+    toast(en.f < 2.5 ? "Çap çizgiye oturtuldu" : "Oturttum ama tam örtüşmedi (" + en.f.toFixed(1) + " px)");
+    ilanEkran();
+  }catch(e){ console.error(e); toast("Olmadı: " + (e.message || e)); }
+}
+
+async function ilanUret(){
+  if(!ILAN?.V.veri) return toast("Önce çapı zemine oturt");
+  toast("Afiş hazırlanıyor…");
+  await ilanFontlar();
+  const c = document.createElement("canvas"), D = ILAN.D, sec = ILAN.secili; ILAN.secili = null;
+  ilanCiz(c, D, ILAN.V); ILAN.secili = sec; ilanCizTuval();
+  const blob = await new Promise(r => c.toBlob(r, "image/jpeg", .93));
+  const p = ILAN.p, ad2 = `${p.ada || 0}-${p.parsel}-ilan-${D.oran === "45" ? "4x5" : "9x16"}-${Date.now().toString().slice(-5)}.jpg`;
+  indirBlob(blob, ad2);
+  try{ await dosyaYukle(new File([blob], ad2, { type:"image/jpeg" }), "sunum", ILAN.id); toast("Afiş indirildi ve parselin belgelerine kaydedildi"); }
+  catch(e){ toast("İndirildi ama kaydedilemedi: " + (e.message || e)); }
+}
+
 /* ================= KML ve çap ================= */
 
 // kayitli parselleri gruplu liste halinde sec
@@ -14327,7 +15080,7 @@ async function cikis(){ await sb.auth.signOut(); location.reload(); }
 
 /* ================= yonlendirme ================= */
 
-const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, sunum:sunum, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, marka:markaEkran, tema:temaEkran, yedek:yedekEkran, tv:tvEkran, zindan:zindanEkran, carki:carkiEkran, rehber:rehberEkran, esas:esasEkran, kule:kuleSecim, oyunlar:oyunlarEkran, yeni:yeniParsel, parsel:parselDetay,
+const ekranlar = { ana:anaMenu, harita:harita, araziler:araziler, ekler:ekler, kml:kmlEkran, cap:capEkran, capAyar:capAyar, sunum:sunum, ilan:ilanAfisi, yz:yapayZeka, yaklasan:yaklasanlar, hesap:hesap, parcalar:parcalarEkran, marka:markaEkran, tema:temaEkran, yedek:yedekEkran, tv:tvEkran, zindan:zindanEkran, carki:carkiEkran, rehber:rehberEkran, esas:esasEkran, kule:kuleSecim, oyunlar:oyunlarEkran, yeni:yeniParsel, parsel:parselDetay,
                    fiyat:fiyat, fiyatDuzen:fiyatDuzen, ayarlar:ayarlar };
 // gezinti gecmisi: telefonun geri tusu uygulamadan cikmasin, bir ekran geri gitsin
 let GEZINTI = [{ r:"ana", arg:undefined }];
@@ -14372,7 +15125,7 @@ function go(r, arg){
 const UST_EKRAN = {
   harita:"ana", araziler:"ana", ekler:"ana", kml:"ana", cap:"ana", hesap:"ana",
   yaklasan:"ana", yz:"ana", fiyat:"ana", ayarlar:"ana", marka:"ayarlar", tema:"ana", yedek:"ayarlar", tv:"ana", zindan:"ana", carki:"ana", rehber:"ana", esas:"ana", kule:"ana", oyunlar:"ana", yeni:"araziler",
-  parsel:"araziler", parcalar:"parsel", sunum:"parsel", fiyatDuzen:"fiyat", capAyar:"cap"
+  parsel:"araziler", parcalar:"parsel", sunum:"parsel", ilan:"parsel", fiyatDuzen:"fiyat", capAyar:"cap"
 };
 
 window.addEventListener("popstate", () => {
