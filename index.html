@@ -2221,7 +2221,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.4.4";
+const SURUM_MORDOR = "v 2.4.5";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -10063,12 +10063,18 @@ const KUTU_STIL = [
   { ad:"Beyaz Kart",
     zemin:[[0,"#FFFFFF"],[1,"#F1F1F1"]],
     cerceve:"rgba(0,0,0,.12)", ic:null, kalinlik:.012, kose:"yuvarlak",
-    ustRenk:"#9A6B1E", altRenk:"#15181B", golge:true }
+    ustRenk:"#9A6B1E", altRenk:"#15181B", golge:true },
+
+  { ad:"Saydam Cam",
+    zemin:[[0,"rgba(255,255,255,.30)"],[.5,"rgba(255,255,255,.14)"],[1,"rgba(255,255,255,.08)"]],
+    cerceve:"rgba(255,255,255,.55)", ic:null, kalinlik:.012, kose:"yuvarlak",
+    ustRenk:"rgba(255,255,255,.88)", altRenk:"#FFFFFF", golge:true, cam:true }
 ];
 
 const CAP_TEMA = [
   { ad:"Beyaz saydam", dis:"#FFFFFF", ic:"#FFFFFF", dolgu:.42, golge:"rgba(0,0,0,.45)", yaziRenk:"#FFFFFF", yaziGolge:"rgba(0,0,0,.6)" },
-  { ad:"Metalik / siyah şerit", dis:"#111111", ic:"#1B1B1B", dolgu:.62, golge:"rgba(255,255,255,.35)", yaziRenk:"#151515", yaziGolge:"rgba(255,255,255,.75)", metalik:true }
+  { ad:"Metalik / siyah şerit", dis:"#111111", ic:"#1B1B1B", dolgu:.62, golge:"rgba(255,255,255,.35)", yaziRenk:"#151515", yaziGolge:"rgba(255,255,255,.75)", metalik:true },
+  { ad:"Uydu · sarı sınır", dis:"#F5C400", ic:"#FFFFFF", dolgu:.16, golge:"rgba(0,0,0,.55)", yaziRenk:"#FFFFFF", yaziGolge:"rgba(0,0,0,.78)", uydu:true }
 ];
 
 // kutu yolunu ciz (kose bicimine gore)
@@ -10135,7 +10141,7 @@ function kutuOnizleme(canvas, stilIx, ust, alt){
 function kutuCiz(x, o, w, h){
   const st = KUTU_STIL[o.stil ?? 0];
   x.save();
-  if(st.golge){ x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = h*.14; x.shadowOffsetY = h*.05; }
+  if(st.golge && !st.cam){ x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = h*.14; x.shadowOffsetY = h*.05; }
   const gr = x.createLinearGradient(0,0,w*.25,h);
   st.zemin.forEach(([d,c])=>gr.addColorStop(d,c));
   kutuYolu(x, w, h, st.kose); x.fillStyle = gr; x.fill();
@@ -10148,10 +10154,17 @@ function kutuCiz(x, o, w, h){
     x.lineWidth = Math.max(1, h*.012); x.strokeStyle = st.ic;
     kutuYolu(x, w-p*2, h-p*2, st.kose); x.stroke(); x.restore();
   }
+  if(st.cam){   // camin ust kenarinda isik
+    x.save(); kutuYolu(x, w, h, st.kose); x.clip();
+    const pr = x.createLinearGradient(0, 0, 0, h*.5);
+    pr.addColorStop(0, "rgba(255,255,255,.28)"); pr.addColorStop(1, "rgba(255,255,255,0)");
+    x.fillStyle = pr; x.fillRect(0, 0, w, h*.5); x.restore();
+  }
   x.restore();
 
   const m = kutuMetrik(o, w, h);
   x.textBaseline = "top";
+  if(st.cam){ x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = Math.max(3, h*.06); x.shadowOffsetY = Math.max(1, h*.012); }
   if(o.ust && m.ustP){
     x.fillStyle = st.ustRenk; x.font = `700 ${m.ustP}px Arial`;
     x.fillText(o.ust, m.pad, m.ustY);
@@ -10160,6 +10173,7 @@ function kutuCiz(x, o, w, h){
     x.fillStyle = st.altRenk; x.font = `700 ${m.altP}px Arial`;
     m.satirlar.forEach((t,i)=> x.fillText(t, m.pad, m.altY + i*m.altP*m.SATIR));
   }
+  x.shadowColor = "transparent";
 }
 
 // onizleme icin CSS karsiligi
@@ -10167,6 +10181,9 @@ function kutuCss(o){
   const st = KUTU_STIL[o.stil ?? 0];
   const gr = st.zemin.map(([d,c])=>`${c} ${Math.round(d*100)}%`).join(",");
   const kose = st.kose === "yuvarlak" ? "12px" : "0";
+  if(st.cam) return `background:linear-gradient(170deg,${gr});border:1.5px solid ${st.cerceve};border-radius:${kose};
+    backdrop-filter:blur(8px) saturate(1.2);-webkit-backdrop-filter:blur(8px) saturate(1.2);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45), 0 8px 22px rgba(0,0,0,.30);text-shadow:0 1px 4px rgba(0,0,0,.55);`;
   return `background:linear-gradient(150deg,${gr});border:2px solid ${st.cerceve};border-radius:${kose};
     box-shadow:${st.golge?"0 6px 18px rgba(0,0,0,.45)":"none"};`;
 }
@@ -10178,7 +10195,7 @@ const ORANLAR = [
   { ad:"Dikey 4:5",  w:1080, h:1350 },
   { ad:"Kare 1:1",   w:1080, h:1080 }
 ];
-let SON_CAP_ANKRAJ = null;
+let SON_CAP_ANKRAJ = null, SON_CAP_GEO = null;
 let SON_ETIKETLER = [];
 let SUNUM = { parselId:null, ogeler:[], secili:null, arka:null, oranIx:0, kaydir:50 };
 
@@ -10227,18 +10244,19 @@ function capSeffafPng(p, cfg, mod, ayar){
         x.fillStyle = pr; x.globalAlpha = a.dolgu ?? tema.dolgu;
       }
       x.fill(); x.globalAlpha = 1;
-      x.lineWidth = 5; x.strokeStyle = icRenk; x.stroke();
+      if(tema.uydu){ x.lineWidth = 11; x.strokeStyle = "rgba(0,0,0,.45)"; x.stroke(); }
+      x.lineWidth = tema.uydu ? 7 : 5; x.strokeStyle = icRenk; x.stroke();
 
       if(mod === 3){
-        const om = E(agirlikMerkezi(d));
-        x.textAlign = "center"; x.textBaseline = "middle";
-        x.lineWidth = 7; x.strokeStyle = tema.yaziGolge;
-        x.font = "700 62px Arial";
+        const om = E(agirlikMerkezi(d)), yk = a.yazi || (tema.uydu ? 1.6 : 1);
+        x.textAlign = "center"; x.textBaseline = "middle"; x.lineJoin = "round";
+        x.lineWidth = (tema.uydu ? 11 : 7)*yk; x.strokeStyle = tema.yaziGolge;
+        x.font = `${tema.uydu ? 800 : 700} ${Math.round(62*yk)}px Arial`;
         const no = String(bilgi.no || (i+1));
-        x.strokeText(no, om[0], om[1]-20); x.fillStyle = tema.yaziRenk; x.fillText(no, om[0], om[1]-20);
-        x.font = "700 36px Arial";
+        x.strokeText(no, om[0], om[1]-20*yk); x.fillStyle = tema.yaziRenk; x.fillText(no, om[0], om[1]-20*yk);
+        x.font = `700 ${Math.round(36*yk)}px Arial`; x.lineWidth = (tema.uydu ? 8 : 7)*yk;
         const m2 = nfAkilli(isFinite(+bilgi.m2) && +bilgi.m2 > 0 ? +bilgi.m2 : alanHesap(d)) + " m²";
-        x.strokeText(m2, om[0], om[1]+28); x.fillText(m2, om[0], om[1]+28);
+        x.strokeText(m2, om[0], om[1]+28*yk); x.fillText(m2, om[0], om[1]+28*yk);
       }
     });
 
@@ -10260,9 +10278,9 @@ function capSeffafPng(p, cfg, mod, ayar){
     yol(N); x.fillStyle = tema.metalik ? "rgba(0,0,0,.18)" : "rgba(255,255,255,.14)"; x.fill();
   }
 
-  yol(N);
-  x.lineWidth = 12; x.strokeStyle = tema.golge; x.stroke();
-  x.lineWidth = 6; x.strokeStyle = disRenk; x.stroke();
+  yol(N); x.lineJoin = "round";
+  x.lineWidth = tema.uydu ? 22 : 12; x.strokeStyle = tema.golge; x.stroke();
+  x.lineWidth = tema.uydu ? 14 : 6; x.strokeStyle = disRenk; x.stroke();
 
   // hizalama icin uzun eksenin iki ucu (goruntuye gore oranli)
   const anaY = anaYon(M);
@@ -10270,6 +10288,7 @@ function capSeffafPng(p, cfg, mod, ayar){
   const i1 = izd.indexOf(Math.min(...izd)), i2 = izd.indexOf(Math.max(...izd));
   const e1 = E(M[i1]), e2 = E(M[i2]);
   SON_CAP_ANKRAJ = [[e1[0]/W, e1[1]/H], [e2[0]/W, e2[1]/H]];
+  SON_CAP_GEO = { M: M.map(q=>[q[0], q[1]]), minX, maxY, olcek, pay, W, H };
   return c.toDataURL("image/png");
 }
 
@@ -10331,7 +10350,9 @@ function sekmeCiz(){
           <div class="field"><label>Dikey konum</label>
             <input type="range" id="kaydirSec" min="0" max="100" value="${SUNUM.kaydir}" style="padding:0"></div>
           <div class="field"><label>Yakınlaştırma</label>
-            <input type="range" id="zumSec" min="100" max="240" value="${Math.round((SUNUM.zum||1)*100)}" style="padding:0"></div>
+            <input type="range" id="zumSec" min="100" max="800" value="${Math.round((SUNUM.zum||1)*100)}" style="padding:0"></div>
+          <div class="field"><label>Yatay konum</label>
+            <input type="range" id="kaydirXSec" min="0" max="100" value="${SUNUM.kaydirX ?? 50}" style="padding:0"></div>
           <div class="field" style="margin:0"><label>Alt karartma · yazılar okunsun diye</label>
             <input type="range" id="perdeSec" min="0" max="80" value="${Math.round((SUNUM.perde??.35)*100)}" style="padding:0"></div>
         </div>`
@@ -10344,6 +10365,8 @@ function sekmeCiz(){
     document.getElementById("arkaSec").onclick = sunumArka;
     const ks = document.getElementById("kaydirSec");
     if(ks) ks.oninput = e => { SUNUM.kaydir = +e.target.value; sunumCiz(); };
+    const kx = document.getElementById("kaydirXSec");
+    if(kx) kx.oninput = e => { SUNUM.kaydirX = +e.target.value; sunumCiz(); };
     const zs = document.getElementById("zumSec");
     if(zs) zs.oninput = e => { SUNUM.zum = +e.target.value/100; sunumCiz(); };
     const ps = document.getElementById("perdeSec");
@@ -10363,10 +10386,14 @@ function sekmeCiz(){
             <input type="range" id="capSaydam" min="20" max="100" step="5"
               value="${Math.round((capOge.saydam ?? 1)*100)}" style="padding:0"></div>
           <div class="acts">
-            <button class="pri" onclick="sunumHizalaBaslat(${capIx})">İki Noktayla Hizala</button>
+            <button class="pri" onclick="fotoOturtBaslat(${capIx})">Fotoğraftaki çizgiye oturt</button>
+            <button onclick="sunumHizalaBaslat(${capIx})">İki Noktayla Hizala</button>
             <button onclick="sunumCap(${capIx})">Görünümü Değiştir</button>
             <button class="kirmizi" onclick="capOgeSil(${capIx})">Kaldır</button>
           </div>
+          <p class="ipuc" style="margin:10px 2px 0">Google Earth'ten parselin KML çizgisi görünecek şekilde fotoğraf aldıysan
+            “Fotoğraftaki çizgiye oturt”a bas, sonra fotoğrafta parselin içine bir kez dokun: çap çizginin üstüne birebir oturur,
+            fotoğraf da parsele yakınlaşır. Sonra yakınlaştırma ve kaydırma ayarlarıyla oynasan da çap yerinden kaymaz.</p>
           <p class="ipuc" id="hizalaNot" style="margin:10px 2px 0">
             İki parmakla döndürüp büyütebilirsin. Hizala tuşundan sonra fotoğrafta parselin iki ucuna sırayla dokun.</p>
         </div>`
@@ -10402,6 +10429,7 @@ function sekmeCiz(){
 
   // kutu tur kartlari
   const turler = [
+    { rol:"bant",    ad:"Cam bant", ornek:["PEHLİVANKÖY · KIRKLARELİ", (duzgun(p.mahalle)||"Köy") + " " + (p.ada||"") + "/" + p.parsel], stil: KUTU_STIL.findIndex(k=>k.cam) },
     { rol:"baslik",  ad:"Başlık",   ornek:["KONUM", (duzgun(p.mahalle)||"Köy") + " " + (p.ada||"") + "/" + p.parsel] },
     { rol:"fiyat",   ad:"Fiyat",    ornek:["FİYAT", "1.250.000 ₺"] },
     { rol:"ozellik", ad:"Özellik",  ornek:["ALAN", nf2(gercekAlan(p)) + " m²"] },
@@ -10416,7 +10444,7 @@ function sekmeCiz(){
       <span>${t.ad}</span></button>`).join("");
   turler.forEach((t,i)=>{
     const c = ks.querySelector(`canvas[data-tur="${i}"]`);
-    if(c) kutuOnizleme(c, secili?.stil ?? 0, t.ornek[0], t.ornek[1]);
+    if(c) kutuOnizleme(c, t.stil ?? secili?.stil ?? 0, t.ornek[0], t.ornek[1]);
   });
 
   // tasarim secici
@@ -10583,6 +10611,8 @@ function sunumCap(duzenleIx){
           <div class="field"><label>Dış çizgi</label><input type="color" id="cdis" value="${a.dis||"#FFFFFF"}" style="height:46px"></div>
           <div class="field"><label>Parça çizgisi</label><input type="color" id="cic" value="${a.ic||"#FFFFFF"}" style="height:46px"></div>
         </div>
+        <div class="field"><label>Yazı büyüklüğü</label>
+          <input type="range" id="cyazi" min="50" max="300" value="${Math.round((a.yazi??1)*100)}" style="padding:0"></div>
         <div class="field" style="margin:0"><label>Dolgu koyuluğu</label>
           <input type="range" id="cdolgu" min="0" max="100" value="${Math.round((a.dolgu??.9)*100)}" style="padding:0">
           <p class="ipuc" style="margin:8px 2px 0">Sola çekersen saydam, sağa çekersen parçalar dümdüz renk olur.</p></div>
@@ -10607,7 +10637,7 @@ function sunumCap(duzenleIx){
     kaynak: g("ckaynak").value,
     mod: kayitli ? +(g("cmod")?.value || 3) : 1,
     tema: temaIx, dis: g("cdis").value, ic: g("cic").value,
-    dolgu: (+g("cdolgu").value)/100,
+    dolgu: (+g("cdolgu").value)/100, yazi: (+g("cyazi").value)/100,
     renkler: { ...renkler }
   });
 
@@ -10648,7 +10678,11 @@ function sunumCap(duzenleIx){
       if(c) capTemaOnizleme(c, i);
     });
   };
-  capTemaSec = i => { temaIx = i; temaCiz(); onizle(); };
+  capTemaSec = i => { temaIx = i;
+    const t2 = CAP_TEMA[i]; if(g("cdis")) g("cdis").value = t2.dis; if(g("cic")) g("cic").value = t2.ic;
+    if(g("cdolgu") && t2.uydu) g("cdolgu").value = Math.round(t2.dolgu*100);
+    if(g("cyazi") && t2.uydu && +g("cyazi").value === 100) g("cyazi").value = 160;
+    temaCiz(); onizle(); };
 
   const kaynakGun = () => {
     const k = g("ckaynak").value;
@@ -10662,6 +10696,7 @@ function sunumCap(duzenleIx){
   g("cdis").oninput = onizle;
   g("cic").oninput = onizle;
   g("cdolgu").oninput = onizle;
+  g("cyazi").oninput = onizle;
   temaCiz();
   renkCiz();
   kaynakGun();
@@ -10687,9 +10722,13 @@ function sunumCap(duzenleIx){
         ank = SON_CAP_ANKRAJ;
       }catch(e){ return toast("Çap çizilemedi: " + (e.message||e)); }
     }
-    if(mevcutOge){ mevcutOge.src = src; mevcutOge.ayar = ay; mevcutOge.ank = ank; }
+    const geo = ay.kaynak === "yukle" ? null : SON_CAP_GEO;
+    if(mevcutOge){ mevcutOge.src = src; mevcutOge.ayar = ay; mevcutOge.ank = ank;
+      // fotoya oturtulmus capin gorunumu degisti: ayni yerde kalsin (cizim olcegi degismedi)
+      if(mevcutOge.foto && geo && mevcutOge.geo && Math.abs(geo.olcek - mevcutOge.geo.olcek) > 1e-9) delete mevcutOge.foto;
+      mevcutOge.geo = geo; }
     else{
-      SUNUM.ogeler.push({ tur:"cap", rol:"cap", src, ayar:ay, ank, saydam:1, x:.18, y:.26, w:.64, h:.46, rot:0 });
+      SUNUM.ogeler.push({ tur:"cap", rol:"cap", src, ayar:ay, ank, geo, saydam:1, x:.18, y:.26, w:.64, h:.46, rot:0 });
       SUNUM.secili = SUNUM.ogeler.length-1;
     }
     SUNUM_SEKME = "cap";
@@ -10761,6 +10800,12 @@ function sunumKutuIcerik(rol){
       alt: toplam ? nf(Math.round(toplam)) + " ₺" : (y.toplam_fiyat ? nf(y.toplam_fiyat) + " ₺" : "Fiyat girin"),
       yer: { x:.06, y:.82, w:.46, h:.12 } };
   }
+  if(rol === "bant"){
+    const parca = (p.cap_config && p.cap_config.parcalar?.length) ? p.cap_config.parcalar.length : 0;
+    return { ust: `${duzgun(p.ilce||"")}${p.il ? " · " + duzgun(p.il) : ""}`.toLocaleUpperCase("tr"),
+      alt: `${duzgun(p.mahalle)} · Ada ${p.ada||"—"} / Parsel ${p.parsel}\n${nf2(gercekAlan(p))} m²${parca ? " · " + parca + " parça" : ""}`,
+      yer: { x:.04, y:.03, w:.92, h:.15 }, stil: KUTU_STIL.findIndex(k=>k.cam) };
+  }
   if(rol === "ozellik") return {
     ust:"ÖZELLİKLER",
     alt:(SUNUM.etiketler||[]).slice(0,5).join("\n") || "Özellik ekleyin",
@@ -10773,11 +10818,29 @@ function sunumKutu(rol, ust, alt, altaOdaklan){
   const hazir = sunumKutuIcerik(rol);
   let u = ust ?? "", a = alt ?? "", k = { x:.08, y:.44, w:.55, h:.13 };
   if(hazir){ u = hazir.ust; a = hazir.alt; k = hazir.yer; }
-  SUNUM.ogeler.push({ tur:"kutu", rol, ust:u, alt:a, stil, ...k, rot:0 });
+  SUNUM.ogeler.push({ tur:"kutu", rol, ust:u, alt:a, stil: (hazir && hazir.stil != null && hazir.stil >= 0) ? hazir.stil : stil, ...k, rot:0 });
   SUNUM.secili = SUNUM.ogeler.length-1;
   if(altaOdaklan) SUNUM.odakAlt = true;
   SUNUM_SEKME = "kutu";
   sunumEkran();
+}
+
+// arka plan fotografinin tuvaldeki yeri ("cover" + yakinlastirma + kaydirma). Onizleme ve cikti ayni formulu kullanir.
+function arkaYerlesim(Wt, Ht){
+  const a = SUNUM.arka; const ol = Math.max(Wt/a.w, Ht/a.h) * (SUNUM.zum || 1);
+  const dw = a.w*ol, dh = a.h*ol;
+  return { f: ol, dw, dh, dx: (Wt-dw)*((SUNUM.kaydirX ?? 50)/100), dy: (Ht-dh)*((SUNUM.kaydir ?? 50)/100) };
+}
+// fotografa oturtulmus capin tuvaldeki yerini guncelle (yakinlastirinca da kaymasin)
+function capFotoYerlestir(o, Wt, Ht){
+  if(!o.foto || !o.geo || !SUNUM.arka) return;
+  const { f, dx, dy } = arkaYerlesim(Wt, Ht), F = o.foto;
+  const c = Math.cos(F.aci), sn = Math.sin(F.aci);
+  const hx = o.geo.W*F.k/2, hy = o.geo.H*F.k/2;
+  const cx = F.O[0] + c*hx - sn*hy, cy = F.O[1] + sn*hx + c*hy;
+  const wd = o.geo.W*F.k*f, hd = o.geo.H*F.k*f;
+  o.w = wd/Wt; o.h = hd/Ht; o.x = (dx + cx*f - wd/2)/Wt; o.y = (dy + cy*f - hd/2)/Ht;
+  o.rot = F.aci*180/Math.PI;
 }
 
 function sunumCiz(){
@@ -10791,13 +10854,17 @@ function sunumCiz(){
   const oran = ORANLAR[SUNUM.oranIx];
   const W = t.clientWidth, H = W * (oran.h / oran.w);
   t.style.height = H + "px";
+  const AY = arkaYerlesim(W, H);
+  SUNUM.ogeler.forEach(o=>capFotoYerlestir(o, W, H));
   t.innerHTML = `<div class="arka" style="background-image:url('${SUNUM.arka.url}');
-     background-position:50% ${SUNUM.kaydir}%;background-size:${Math.round((SUNUM.zum||1)*100)}% auto"></div>
+     background-position:${AY.dx}px ${AY.dy}px;background-size:${AY.dw}px ${AY.dh}px"></div>
      <div class="altPerde" style="opacity:${SUNUM.perde ?? .35}"></div>
      <div class="olcu">${oran.w}×${oran.h}</div>
      ${SUNUM.hizala ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,.25);display:grid;place-items:center;
        color:#fff;font-size:13px;font-weight:600;pointer-events:none">
-       ${SUNUM.hizala.noktalar.length ? "Karşı uca dokun" : "Parselin bir ucuna dokun"}</div>` : ""}`;
+       ${SUNUM.hizala.noktalar.length ? "Karşı uca dokun" : "Parselin bir ucuna dokun"}</div>` : ""}
+     ${SUNUM.otoOturt ? `<div style="position:absolute;left:0;right:0;bottom:0;padding:9px;background:rgba(0,0,0,.55);text-align:center;
+       color:#fff;font-size:12.5px;font-weight:600;pointer-events:none">Fotoğrafta parselin İÇİNE bir kez dokun</div>` : ""}`;
 
   SUNUM.ogeler.forEach((o,i)=>{
     const d = document.createElement("div");
@@ -10833,6 +10900,13 @@ function sunumCiz(){
 function sunumOlaylar(t, W, H){
   // hizalama modunda tuvale dokunuslari topla
   t.onpointerdown = e => {
+    if(SUNUM.otoOturt){
+      const bx = t.getBoundingClientRect(), AY = arkaYerlesim(W, H);
+      const px = (e.clientX - bx.left - AY.dx)/AY.f, py = (e.clientY - bx.top - AY.dy)/AY.f;
+      const i = SUNUM.otoOturt.i; SUNUM.otoOturt = null;
+      fotoOturt(i, px, py);
+      return;
+    }
     if(!SUNUM.hizala) return;
     const bx = t.getBoundingClientRect();
     SUNUM.hizala.noktalar.push([e.clientX - bx.left, e.clientY - bx.top]);
@@ -10850,7 +10924,7 @@ function sunumOlaylar(t, W, H){
     let bas = null;
 
     d.onpointerdown = e => {
-      if(SUNUM.hizala) return;                 // hizalama modunda oge surukleme kapali
+      if(SUNUM.hizala || SUNUM.otoOturt) return;   // hizalama modunda oge surukleme kapali
       const i = +d.dataset.i, o = SUNUM.ogeler[i];
       const tut = e.target.dataset?.tut;
       if(tut === "kapat"){ SUNUM.ogeler.splice(i,1); SUNUM.secili = null; sunumEkran(); return; }
@@ -10888,6 +10962,7 @@ function sunumOlaylar(t, W, H){
       if(!bas || !parmaklar.has(ev.pointerId)) return;
       parmaklar.set(ev.pointerId, { x:ev.clientX, y:ev.clientY });
       const i = +d.dataset.i, o = SUNUM.ogeler[i];
+      if(o.foto) delete o.foto;                  // elle oynatildi: fotoya kilit kalkar
 
       if(parmaklar.size === 2){
         const [a,b2] = [...parmaklar.values()];
@@ -10926,6 +11001,168 @@ function sunumOlaylar(t, W, H){
   });
 }
 
+/* ---- fotograftaki KML cizgisine otomatik oturtma ----
+   Kullanici parselin icine dokunur; dokundugu yerden isinlar atilip cizginin rengi bulunur, o renkteki cizginin
+   cevreledigi alan doldurulur ve parsel siniri (metre) bu cizgiye olcek+donme+kaydirma ile oturtulur. */
+function fotoOturtBaslat(i){
+  if(!SUNUM.arka) return toast("Önce arka plan fotoğrafını yükle");
+  const o = SUNUM.ogeler[i];
+  if(!o || o.ayar?.kaynak === "yukle") return toast("Bu çap uygulamanın çizdiği çap değil, otomatik oturtulamaz");
+  SUNUM.secili = i; SUNUM.otoOturt = { i }; SUNUM.hizala = null;
+  toast("Fotoğrafta parselin içine dokun");
+  sunumCiz();
+  document.getElementById("tuval")?.scrollIntoView({ behavior:"smooth", block:"center" });
+}
+function hsv(r, g, b){
+  const mx = Math.max(r,g,b), mn = Math.min(r,g,b), d = mx - mn;
+  let h = 0; if(d){ if(mx === r) h = ((g-b)/d) % 6; else if(mx === g) h = (b-r)/d + 2; else h = (r-g)/d + 4; h *= 60; if(h < 0) h += 360; }
+  return [h, mx ? d/mx : 0, mx/255];
+}
+function cizgiBul(veri, w, h, tx, ty){
+  const P = veri.data, ix = (x,y) => (y*w + x)*4;
+  const canli = (x,y) => { const k = ix(x,y), q = hsv(P[k],P[k+1],P[k+2]); return q[1] > .42 && q[2] > .42 ? q : null; };
+  // 1) isinlarla cizginin rengini bul
+  const tonlar = [];
+  for(let a=0; a<72; a++){ const dx = Math.cos(a/72*2*Math.PI), dy = Math.sin(a/72*2*Math.PI);
+    for(let r=3; r<Math.max(w,h); r++){ const x = Math.round(tx + dx*r), y = Math.round(ty + dy*r);
+      if(x < 0 || y < 0 || x >= w || y >= h) break;
+      const q = canli(x,y); if(q){ tonlar.push(q[0]); break; } } }
+  if(tonlar.length < 30) return { hata:"Parselin etrafında belirgin renkli bir çizgi bulamadım" };
+  tonlar.sort((a,b)=>a-b);
+  const ton = tonlar[Math.floor(tonlar.length/2)];
+  const tonFark = q => { const d = Math.abs(q - ton); return Math.min(d, 360 - d); };
+  // 2) cizgi maskesi ve 2 piksel kalinlastirilmis hali
+  const mask = new Uint8Array(w*h), kalin = new Uint8Array(w*h), liste = [];
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const k = ix(x,y), q = hsv(P[k],P[k+1],P[k+2]);
+    if(q[1] > .3 && q[2] > .35 && tonFark(q[0]) < 22){ mask[y*w+x] = 1; liste.push(y*w+x); } }
+  for(const j of liste){ const x = j % w, y = (j - x)/w;
+    for(let yy=Math.max(0,y-2); yy<=Math.min(h-1,y+2); yy++) for(let xx=Math.max(0,x-2); xx<=Math.min(w-1,x+2); xx++) kalin[yy*w+xx] = 1; }
+  // 3) dokunulan yerden icini doldur
+  if(kalin[ty*w+tx]) return { hata:"Çizginin tam üstüne dokundun; biraz daha içeriye dokun" };
+  const ic = new Uint8Array(w*h), yigin = new Int32Array(w*h); let n = 0, alan = 0;
+  yigin[n++] = ty*w+tx; ic[ty*w+tx] = 1;
+  let x0 = tx, x1 = tx, y0 = ty, y1 = ty;
+  while(n){ const j = yigin[--n], x = j % w, y = (j - x)/w; alan++;
+    if(x === 0 || y === 0 || x === w-1 || y === h-1) return { hata:"Çizgi parseli tam çevrelemiyor ya da fotoğrafın dışına taşıyor" };
+    if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y;
+    for(const k of [j-1, j+1, j-w, j+w]) if(!ic[k] && !kalin[k]){ ic[k] = 1; yigin[n++] = k; } }
+  if(alan > w*h*.6) return { hata:"Çizgi parseli tam çevrelemiyor" };
+  if(alan < 200) return { hata:"Parsel çok küçük kaldı; fotoğrafı biraz daha yakından çek" };
+  // 4) hedef: cizginin ORTASI. Her cizgi pikselinin ice uzakligi olculur, kalinligin yarisindakiler secilir.
+  const aday = [];
+  for(const j of liste){ const x = j % w, y = (j - x)/w;
+    if(x < x0-10 || x > x1+10 || y < y0-10 || y > y1+10) continue;
+    let d = 99;
+    for(let dy=-9; dy<=9; dy++) for(let dx=-9; dx<=9; dx++){ const xx = x+dx, yy = y+dy;
+      if(xx>=0 && yy>=0 && xx<w && yy<h && ic[yy*w+xx]){ const u = Math.hypot(dx, dy); if(u < d) d = u; } }
+    if(d < 99) aday.push([x, y, d]); }
+  if(aday.length < 20) return { hata:"Çizgi seçilemedi" };
+  const ds = aday.map(q=>q[2]).sort((a,b)=>a-b), orta = (ds[Math.floor(ds.length*.1)] + ds[Math.floor(ds.length*.9)])/2;
+  let hedef = aday.filter(q=>Math.abs(q[2] - orta) <= .8).map(q=>[q[0], q[1]]);
+  if(hedef.length < 20) hedef = aday.map(q=>[q[0], q[1]]);
+  return { ic, alan, hedef, kutu:[x0, y0, x1, y1] };
+}
+function nelderMead(f, x0, adim, tur){
+  const n = x0.length; let S = [x0.slice()];
+  for(let i=0;i<n;i++){ const v = x0.slice(); v[i] += adim[i]; S.push(v); }
+  let F = S.map(f);
+  for(let it=0; it<(tur||400); it++){
+    const sira = F.map((v,i)=>i).sort((a,b)=>F[a]-F[b]); S = sira.map(i=>S[i]); F = sira.map(i=>F[i]);
+    const c = Array(n).fill(0); for(let i=0;i<n;i++) for(let j=0;j<n;j++) c[j] += S[i][j]/n;
+    const nok = (k) => c.map((v,j)=>v + k*(S[n][j]-v));
+    const r = nok(-1), fr = f(r);
+    if(fr < F[0]){ const e = nok(-2), fe = f(e); if(fe < fr){ S[n] = e; F[n] = fe; } else { S[n] = r; F[n] = fr; } }
+    else if(fr < F[n-1]){ S[n] = r; F[n] = fr; }
+    else { const k = nok(.5), fk = f(k);
+      if(fk < F[n]){ S[n] = k; F[n] = fk; }
+      else { for(let i=1;i<=n;i++){ S[i] = S[i].map((v,j)=>S[0][j] + .5*(v - S[0][j])); F[i] = f(S[i]); } } }
+  }
+  const en = F.indexOf(Math.min(...F)); return { x:S[en], f:F[en] };
+}
+function poligonOturt(M, B, w, h){
+  const [bx0, by0, bx1, by1] = B.kutu, pay = 40;
+  const X0 = Math.max(0, bx0-pay), Y0 = Math.max(0, by0-pay), X1 = Math.min(w-1, bx1+pay), Y1 = Math.min(h-1, by1+pay);
+  const W2 = X1-X0+1, H2 = Y1-Y0+1, BUYUK = 1e6;
+  // hedef cizgiye mesafe haritasi (iki gecisli yaklasik)
+  const dt = new Float32Array(W2*H2).fill(BUYUK);
+  B.hedef.forEach(([x,y])=>{ if(x>=X0 && x<=X1 && y>=Y0 && y<=Y1) dt[(y-Y0)*W2 + (x-X0)] = 0; });
+  for(let y=0;y<H2;y++) for(let x=0;x<W2;x++){ let v = dt[y*W2+x];
+    if(x>0) v = Math.min(v, dt[y*W2+x-1]+1); if(y>0) v = Math.min(v, dt[(y-1)*W2+x]+1);
+    if(x>0 && y>0) v = Math.min(v, dt[(y-1)*W2+x-1]+1.414); if(x<W2-1 && y>0) v = Math.min(v, dt[(y-1)*W2+x+1]+1.414); dt[y*W2+x] = v; }
+  for(let y=H2-1;y>=0;y--) for(let x=W2-1;x>=0;x--){ let v = dt[y*W2+x];
+    if(x<W2-1) v = Math.min(v, dt[y*W2+x+1]+1); if(y<H2-1) v = Math.min(v, dt[(y+1)*W2+x]+1);
+    if(x<W2-1 && y<H2-1) v = Math.min(v, dt[(y+1)*W2+x+1]+1.414); if(x>0 && y<H2-1) v = Math.min(v, dt[(y+1)*W2+x-1]+1.414); dt[y*W2+x] = v; }
+  const Q = M.map(m=>[m[0], -m[1]]);                         // metre, y asagi
+  const alanM = alanHesap(M), s0 = Math.sqrt(B.alan / alanM);
+  const ort = Q.reduce((t,q)=>[t[0]+q[0]/Q.length, t[1]+q[1]/Q.length], [0,0]);
+  const cx = (bx0+bx1)/2, cy = (by0+by1)/2;
+  // ic alanin agirlik merkezi
+  let sx = 0, sy = 0, sn = 0;
+  for(let y=by0;y<=by1;y+=2) for(let x=bx0;x<=bx1;x+=2) if(B.ic[y*w+x]){ sx += x; sy += y; sn++; }
+  const gx = sn ? sx/sn : cx, gy = sn ? sy/sn : cy;
+  // sinir uzerinde ornek noktalar (metre)
+  const ornek = [], adimM = 1.5 / s0;
+  for(let i=0;i<Q.length;i++){ const a = Q[i], b = Q[(i+1)%Q.length], L = Math.hypot(b[0]-a[0], b[1]-a[1]);
+    for(let t=0; t<L; t+=adimM) ornek.push([a[0]+(b[0]-a[0])*t/L, a[1]+(b[1]-a[1])*t/L]); }
+  const hedefOrnek = B.hedef.filter((_,i)=>i % Math.max(1, Math.floor(B.hedef.length/400)) === 0);
+  const donus = (q, s, t, ox, oy) => { const c = Math.cos(t), sn2 = Math.sin(t), x = (q[0]-ort[0])*s, y = (q[1]-ort[1])*s; return [x*c - y*sn2 + ox, x*sn2 + y*c + oy]; };
+  const maliyet = v => { const [s, t, ox, oy] = v; if(s <= 0) return BUYUK;
+    let a = 0; for(const q of ornek){ const p = donus(q, s, t, ox, oy), x = Math.round(p[0]) - X0, y = Math.round(p[1]) - Y0;
+      a += (x < 0 || y < 0 || x >= W2 || y >= H2) ? 60 : Math.min(60, dt[y*W2+x]); }
+    a /= ornek.length;
+    const T = Q.map(q=>donus(q, s, t, ox, oy)); let b = 0;
+    for(const hp of hedefOrnek){ let m = BUYUK; for(let i=0;i<T.length;i++) m = Math.min(m, segUzaklik(hp, T[i], T[(i+1)%T.length])); b += Math.min(60, m); }
+    return a + b/hedefOrnek.length; };
+  let en = null;
+  for(const d of [-8,-4,0,4,8]){ const r = nelderMead(maliyet, [s0, d*Math.PI/180, gx, gy], [s0*.05, .03, 4, 4], 350);
+    if(!en || r.f < en.f) en = r; }
+  const [s, t, ox, oy] = en.x;
+  // metre -> foto pikseli: p = s*R*([m0,-m1] - ort) + o
+  return { s, t, ox, oy, ort, hata: en.f/2 };
+}
+async function fotoOturt(i, px, py){
+  const o = SUNUM.ogeler[i]; if(!o) return;
+  sunumCiz();
+  if(!o.geo){   // eski eklenmis cap: geometriyi yeniden hesapla
+    try{ const kayitli = (SUNUM.p.cap_config && !Array.isArray(SUNUM.p.cap_config) && SUNUM.p.cap_config.parcalar?.length) ? SUNUM.p.cap_config : null;
+      const ay = o.ayar || {}; capSeffafPng(SUNUM.p, (ay.mod === 1 || !kayitli) ? null : capRenkUygula(kayitli, ay.renkler || {}), ay.mod || 1, ay); o.geo = SON_CAP_GEO; }
+    catch(e){ return toast("Çap geometrisi okunamadı"); }
+  }
+  toast("Çizgi aranıyor…");
+  await new Promise(r=>setTimeout(r, 30));
+  try{
+    const im = await yukleGorsel(SUNUM.arka.url);
+    const nw = im.naturalWidth, nh = im.naturalHeight, k0 = Math.min(1, 2400/Math.max(nw, nh));
+    const w = Math.round(nw*k0), h = Math.round(nh*k0);
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    const x = c.getContext("2d", { willReadFrequently:true }); x.drawImage(im, 0, 0, w, h);
+    const tx = Math.round(px*k0), ty = Math.round(py*k0);
+    if(tx < 1 || ty < 1 || tx >= w-1 || ty >= h-1) return toast("Fotoğrafın içine dokun");
+    const B = cizgiBul(x.getImageData(0, 0, w, h), w, h, tx, ty);
+    if(B.hata) return toast(B.hata);
+    const F = poligonOturt(o.geo.M, B, w, h);
+    // calisma olceginden foto pikseline
+    const s = F.s/k0, ox = F.ox/k0, oy = F.oy/k0, G = o.geo, c2 = Math.cos(F.t), s2 = Math.sin(F.t);
+    const fotoNokta = q => { const a = (q[0]-F.ort[0])*s, b = (q[1]-F.ort[1])*s; return [a*c2 - b*s2 + ox, a*s2 + b*c2 + oy]; };
+    // cap resminin (0,0) noktasi metrede: [minX - pay/olcek, -(maxY + pay/olcek)]
+    o.foto = { k: s/G.olcek, aci: F.t, O: fotoNokta([G.minX - G.pay/G.olcek, -(G.maxY + G.pay/G.olcek)]) };
+    // parseli tuvalin ortasina getir ve okunur buyuklukte yakinlastir
+    const T = G.M.map(m=>fotoNokta([m[0], -m[1]]));
+    const xs = T.map(q=>q[0]), ys = T.map(q=>q[1]);
+    const bw = Math.max(...xs) - Math.min(...xs), bh = Math.max(...ys) - Math.min(...ys);
+    const pcx = (Math.max(...xs) + Math.min(...xs))/2, pcy = (Math.max(...ys) + Math.min(...ys))/2;
+    const oran = ORANLAR[SUNUM.oranIx], W = oran.w, H = oran.h;
+    const ol0 = Math.max(W/nw, H/nh), ol = Math.min(.66*W/bw, .52*H/bh);
+    SUNUM.zum = Math.max(1, Math.min(8, ol/ol0));
+    const ol2 = ol0*SUNUM.zum, dw = nw*ol2, dh = nh*ol2;
+    SUNUM.kaydirX = dw > W ? Math.max(0, Math.min(100, (W*.5 - pcx*ol2)/(W - dw)*100)) : 50;
+    SUNUM.kaydir  = dh > H ? Math.max(0, Math.min(100, (H*.56 - pcy*ol2)/(H - dh)*100)) : 50;
+    SUNUM.secili = i;
+    toast(F.hata < 3 ? "Çap çizgiye oturtuldu" : "Oturttum ama tam örtüşmedi (" + F.hata.toFixed(1) + " px); gerekirse elle düzelt");
+    sunumEkran();
+  }catch(e){ toast("Olmadı: " + (e.message || e)); }
+}
+
 // iki nokta ile capi fotografa oturt
 function hizalamayiUygula(W, H){
   const { i, noktalar } = SUNUM.hizala;
@@ -10953,7 +11190,7 @@ function hizalamayiUygula(W, H){
 
     o.w = wpx/W; o.h = hpx/H;
     o.x = (cx - wpx/2)/W; o.y = (cy - hpx/2)/H;
-    o.rot = Math.round(aci);
+    o.rot = Math.round(aci); delete o.foto;
     toast("Çap hizalandı");
     sunumEkran();
   };
@@ -10970,11 +11207,11 @@ async function sunumUret(){
   const x = c.getContext("2d");
   const arka = await yukleGorsel(SUNUM.arka.url);
 
-  // "cover" kirpma: onizlemedeki background-size:cover ile birebir ayni
-  const ol = Math.max(W/arka.naturalWidth, H/arka.naturalHeight) * (SUNUM.zum || 1);
-  const dw = arka.naturalWidth*ol, dh = arka.naturalHeight*ol;
+  // onizlemedeki yerlesimle birebir ayni
+  const AY = arkaYerlesim(W, H);
   x.fillStyle = "#000"; x.fillRect(0,0,W,H);
-  x.drawImage(arka, (W-dw)/2, (H-dh)*(SUNUM.kaydir/100), dw, dh);
+  x.imageSmoothingQuality = "high";
+  x.drawImage(arka, AY.dx, AY.dy, AY.dw, AY.dh);
 
   // alt karartma: yazilar okunsun
   const perde = SUNUM.perde ?? .35;
@@ -10986,12 +11223,23 @@ async function sunumUret(){
     x.fillStyle = gr; x.fillRect(0, H*0.45, W, H*0.55);
   }
 
+  // cam kutular arkalarindaki goruntuyu bulaniklastirir
+  let bulanik = null;
+  if(SUNUM.ogeler.some(o=>o.tur !== "cap" && KUTU_STIL[o.stil ?? 0]?.cam)){
+    bulanik = document.createElement("canvas"); bulanik.width = W; bulanik.height = H;
+    const bx = bulanik.getContext("2d"); bx.filter = `blur(${Math.round(W*0.022)}px)`; bx.drawImage(c, 0, 0); bx.filter = "none";
+  }
   for(const o of SUNUM.ogeler){
+    capFotoYerlestir(o, W, H);
     const ox = o.x*W, oy = o.y*H, ow = o.w*W, oh = o.h*H;
     x.save();
     x.translate(ox + ow/2, oy + oh/2);
     x.rotate((o.rot||0) * Math.PI/180);
     x.translate(-ow/2, -oh/2);
+    if(o.tur !== "cap" && bulanik && KUTU_STIL[o.stil ?? 0]?.cam){
+      x.save(); kutuYolu(x, ow, oh, KUTU_STIL[o.stil].kose); x.clip();
+      x.setTransform(1,0,0,1,0,0); x.drawImage(bulanik, 0, 0); x.restore();
+    }
     if(o.tur === "cap"){
       const im = await yukleGorsel(o.src);
       x.globalAlpha = o.saydam ?? 1;
