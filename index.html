@@ -2248,7 +2248,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.4.8";
+const SURUM_MORDOR = "v 2.4.9";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -12215,59 +12215,104 @@ function ilanEkYolSil(i){ (ILAN.D.ekYollar || []).splice(i, 1); ilanKaydet(); il
    Cevredeki parseller TKGM'den cekilir; iki parselin arasinda kalan dar bosluklar (<= 2r) kadastro yolu sayilir.
    Yollar parsel sinirlarina birebir oturur; ortalarindan kesik cizgi ve "RESMI YOL" yazisi gecer. */
 
-// polygon-clipping neredeyse cakisan kenarlarda takilabilir: koordinatlari izgaraya yuvarlayip tekrar dener
-function ilPcYuvarla(g, a){ return Array.isArray(g) && typeof g[0] === "number" ? [Math.round(g[0]/a)*a, Math.round(g[1]/a)*a] : g.map(h => ilPcYuvarla(h, a)); }
-function ilPc(islem, ...args){
-  for(const a of [0, .01, .05, .2]){ try{ return polygonClipping[islem](...(a ? args.map(g => ilPcYuvarla(g, a)) : args)); }catch(e){ if(a === .2) throw e; } } }
-// cokgen (metre) -> r kadar sisirilmis hali (polygon-clipping ile: govde + kenar seritleri + kose sekizgenleri)
-function ilSisir(pts, r){
-  const pc = polygonClipping, kapa = a => a.concat([a[0]]), parca = [[kapa(pts.map(q => [q[0], q[1]]))]];
-  for(let i=0;i<pts.length;i++){ const a = pts[i], b = pts[(i+1)%pts.length], L = Math.hypot(b[0]-a[0], b[1]-a[1]); if(L < 1e-6) continue;
-    const nx = -(b[1]-a[1])/L*r, ny = (b[0]-a[0])/L*r;
-    parca.push([kapa([[a[0]+nx, a[1]+ny], [b[0]+nx, b[1]+ny], [b[0]-nx, b[1]-ny], [a[0]-nx, a[1]-ny]])]);
-    const sk = []; for(let k=0;k<8;k++){ const t = (k + .5)*Math.PI/4; sk.push([a[0] + Math.cos(t)*r*1.04, a[1] + Math.sin(t)*r*1.04]); }
-    parca.push([kapa(sk)]); }
-  return ilPc('union', ...parca);
-}
-const ilCokAlan = mp => mp.reduce((t, p) => t + p.reduce((s, h, i) => s + (i ? -1 : 1)*Math.abs(alanHesap(h.slice(0, -1))), 0), 0);
 function ilKutu(pts){ let a = 1e9, b = 1e9, c = -1e9, d = -1e9; pts.forEach(q => { a = Math.min(a, q[0]); b = Math.min(b, q[1]); c = Math.max(c, q[0]); d = Math.max(d, q[1]); }); return [a, b, c, d]; }
 function ilSegYakin(p, a, b){ const sx = b[0]-a[0], sy = b[1]-a[1], L2 = sx*sx + sy*sy || 1; let t = ((p[0]-a[0])*sx + (p[1]-a[1])*sy)/L2; t = Math.max(0, Math.min(1, t)); return [a[0] + sx*t, a[1] + sy*t]; }
 
-// parseller: [{ pts }] metre. disla: cikarilacak cokgenler (orn. asfalt koridoru). Donus: [{ poly:[[halka]...], alan, eksenler:[[p...]] }]
+// ---- bosluk motoru (izgara tabanli: hicbir geometride cokmez) ----
+// parseller izgaraya boyanir; "kapama" (r kadar sisir, sonra r kadar daralt) 2r'den dar bosluklari doldurur.
+// yol = kapanmis alan - parseller - asfalt koridoru. Sonra kontur (cizim icin) ve iskelet (orta cizgi) cikarilir.
+function ilUzaklik(maske, W, H){ // 3-4 chamfer; maske=1 kaynak. donus: piksel cinsinden ~oklid
+  const d = new Float32Array(W*H), INF = 1e9;
+  for(let i=0;i<W*H;i++) d[i] = maske[i] ? 0 : INF;
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const i = y*W+x; let v = d[i]; if(!v) continue;
+    if(x>0) v = Math.min(v, d[i-1]+3); if(y>0){ v = Math.min(v, d[i-W]+3); if(x>0) v = Math.min(v, d[i-W-1]+4); if(x<W-1) v = Math.min(v, d[i-W+1]+4); } d[i] = v; }
+  for(let y=H-1;y>=0;y--) for(let x=W-1;x>=0;x--){ const i = y*W+x; let v = d[i]; if(!v) continue;
+    if(x<W-1) v = Math.min(v, d[i+1]+3); if(y<H-1){ v = Math.min(v, d[i+W]+3); if(x<W-1) v = Math.min(v, d[i+W+1]+4); if(x>0) v = Math.min(v, d[i+W-1]+4); } d[i] = v; }
+  for(let i=0;i<W*H;i++) d[i] /= 3; return d; }
+function ilDP(pts, tol){ if(pts.length < 3) return pts; const keep = new Uint8Array(pts.length); keep[0] = keep[pts.length-1] = 1;
+  const st = [[0, pts.length-1]]; while(st.length){ const [a, b] = st.pop(); let md = -1, mi = -1;
+    for(let i=a+1;i<b;i++){ const z = ilSegYakin(pts[i], pts[a], pts[b]), d = Math.hypot(z[0]-pts[i][0], z[1]-pts[i][1]); if(d > md){ md = d; mi = i; } }
+    if(md > tol){ keep[mi] = 1; st.push([a, mi], [mi, b]); } }
+  return pts.filter((_, i) => keep[i]); }
+// marching squares: maske (0/1) -> kapali halkalar (piksel koordinati)
+function ilKontur(m, W, H){
+  const seg = new Map(), anah = (x, y) => x*2 + "," + y*2, ekle = (a, b) => { const k = anah(a[0], a[1]); (seg.get(k) || seg.set(k, []).get(k)).push([a, b]); };
+  const v = (x, y) => (x >= 0 && y >= 0 && x < W && y < H) ? m[y*W+x] : 0;
+  for(let y=-1;y<H;y++) for(let x=-1;x<W;x++){
+    const a = v(x, y), b = v(x+1, y), c = v(x+1, y+1), d = v(x, y+1), k = a*8 + b*4 + c*2 + d; if(!k || k === 15) continue;
+    const U = [x+.5, y], R = [x+1, y+.5], D = [x+.5, y+1], L = [x, y+.5];
+    // yon: dolu taraf solda kalacak sekilde
+    switch(k){ case 1: ekle(L, D); break; case 2: ekle(D, R); break; case 3: ekle(L, R); break; case 4: ekle(R, U); break;
+      case 5: ekle(L, U); ekle(R, D); break; case 6: ekle(D, U); break; case 7: ekle(L, U); break; case 8: ekle(U, L); break;
+      case 9: ekle(U, D); break; case 10: ekle(U, R); ekle(D, L); break; case 11: ekle(U, R); break; case 12: ekle(R, L); break;
+      case 13: ekle(R, D); break; case 14: ekle(D, L); break; } }
+  const halkalar = [];
+  for(const [k0, l0] of seg){ while(l0.length){ let [a, b] = l0.pop(); const h = [a];
+      for(let g=0; g<1e6; g++){ h.push(b); const l = seg.get(anah(b[0], b[1])); if(!l || !l.length) break; [a, b] = l.pop(); }
+      if(h.length > 3) halkalar.push(h); } }
+  return halkalar; }
+// Zhang-Suen inceltme -> iskelet; dugumler arasi yollar
+function ilIskelet(m, W, H){
+  const s = Uint8Array.from(m), N = (i) => [s[i-W], s[i-W+1], s[i+1], s[i+W+1], s[i+W], s[i+W-1], s[i-1], s[i-W-1]];
+  let degisti = true;
+  while(degisti){ degisti = false;
+    for(const adim of [0, 1]){ const sil = [];
+      for(let y=1;y<H-1;y++) for(let x=1;x<W-1;x++){ const i = y*W+x; if(!s[i]) continue; const p = N(i), B = p.reduce((t, v) => t + v, 0); if(B < 2 || B > 6) continue;
+        let A = 0; for(let k=0;k<8;k++) if(!p[k] && p[(k+1)%8]) A++; if(A !== 1) continue;
+        if(adim === 0 ? (p[0]*p[2]*p[4] || p[2]*p[4]*p[6]) : (p[0]*p[2]*p[6] || p[0]*p[4]*p[6])) continue; sil.push(i); }
+      sil.forEach(i => s[i] = 0); if(sil.length) degisti = true; } }
+  const kom = i => { const o = []; for(const d of [-W-1, -W, -W+1, -1, 1, W-1, W, W+1]) if(s[i+d]) o.push(i+d); return o; };
+  const dugum = i => kom(i).length !== 2, gez = new Set(), yollar = [];
+  for(let i=0;i<W*H;i++){ if(!s[i] || !dugum(i)) continue;
+    for(const n of kom(i)){ const k = Math.min(i, n) + "-" + Math.max(i, n); if(gez.has(k)) continue;
+      const yol = [i]; let o = i, c = n;
+      while(true){ gez.add(Math.min(o, c) + "-" + Math.max(o, c)); yol.push(c); if(dugum(c)) break; const sn = kom(c).find(q => q !== o); if(sn == null) break; o = c; c = sn; }
+      yollar.push(yol); } }
+  // dongu (dugumsuz) yollar
+  for(let i=0;i<W*H;i++){ if(!s[i] || kom(i).length !== 2) continue; const k0 = kom(i); const k = Math.min(i, k0[0]) + "-" + Math.max(i, k0[0]); if(gez.has(k)) continue;
+    const yol = [i]; let o = i, c = k0[0]; while(c !== i){ gez.add(Math.min(o, c) + "-" + Math.max(o, c)); yol.push(c); const sn = kom(c).find(q => q !== o); if(sn == null) break; o = c; c = sn; } yollar.push(yol); }
+  return { yollar, uc: i => kom(i).length === 1 }; }
+
+// parseller: [{ pts }] metre. disla: [{ pts, g }] (asfalt orta cizgisi + yarim genislik)
+// donus: [{ poly:[halka...] (ilki dis), alan, eksenler:[[p...]] }]
 function ilanBosluklar(parseller, r, disla){
-  const pc = polygonClipping, kapa = a => a.concat([a[0]]);
-  const P = parseller.filter(o => o.pts && o.pts.length > 2).map(o => { const pts = o.pts.map(q => [Math.round(q[0]*100)/100, Math.round(q[1]*100)/100]); return { pts, kutu: ilKutu(pts) }; });
-  P.forEach(o => { o.sis = ilSisir(o.pts, r); });
-  const U = ilPc('union', ...P.map(o => [[kapa(o.pts.map(q => [q[0], q[1]]))]]));
-  const ciftler = [], parcalar = [];
-  for(let i=0;i<P.length;i++) for(let j=i+1;j<P.length;j++){ const a = P[i].kutu, b = P[j].kutu;
-    if(a[0] - 2*r > b[2] || b[0] - 2*r > a[2] || a[1] - 2*r > b[3] || b[1] - 2*r > a[3]) continue;
-    let x = []; try{ x = ilPc('intersection', P[i].sis, P[j].sis); }catch(e){} if(x.length){ parcalar.push(x); ciftler.push([i, j]); } }
-  if(!parcalar.length) return [];
-  let G = ilPc('difference', ilPc('union', ...parcalar), U);
-  (disla || []).forEach(d => { try{ G = ilPc('difference', G, d); }catch(e){} });
-  // kirintilari ayikla: yol uzun ve dardir (ortalama genislik = 2*alan/cevre)
-  const cevre = h => { let L = 0; for(let i=1;i<h.length;i++) L += Math.hypot(h[i][0]-h[i-1][0], h[i][1]-h[i-1][1]); return L; };
-  const yollar = G.map(p => ({ poly: p.map(h => h.slice(0, -1)), alan: ilCokAlan([p]), cevre: cevre(p[0]) }))
-    .filter(y => y.alan >= 120 && y.cevre/2 >= 30 && 2*y.alan/y.cevre >= 2.2 && 2*y.alan/y.cevre <= 2*r + 3);
-  // orta cizgiler: her komsu ciftte, birinin sinirindan digerine en yakin noktanin ortasi
-  const icinde = q => yollar.findIndex(y => ilIcinde(q, y.poly[0]) && !y.poly.slice(1).some(h => ilIcinde(q, h)));
-  const eksenler = [];
-  ciftler.forEach(([i, j]) => { const A = P[i].pts, B = P[j].pts; let cizgi = [];
-    const bitir = () => { if(cizgi.length > 2){ let L = 0; for(let k=1;k<cizgi.length;k++) L += Math.hypot(cizgi[k][0]-cizgi[k-1][0], cizgi[k][1]-cizgi[k-1][1]); if(L >= 12) eksenler.push(cizgi); } cizgi = []; };
-    for(let k=0;k<A.length;k++){ const a0 = A[k], a1 = A[(k+1)%A.length], L = Math.hypot(a1[0]-a0[0], a1[1]-a0[1]), n = Math.max(1, Math.ceil(L/2));
-      for(let s=0;s<n;s++){ const p = [a0[0] + (a1[0]-a0[0])*s/n, a0[1] + (a1[1]-a0[1])*s/n];
-        let en = null, ed = 1e9; for(let m=0;m<B.length;m++){ const q = ilSegYakin(p, B[m], B[(m+1)%B.length]), d = Math.hypot(q[0]-p[0], q[1]-p[1]); if(d < ed){ ed = d; en = q; } }
-        const orta = [(p[0]+en[0])/2, (p[1]+en[1])/2];
-        if(ed > 1.2 && ed < 2*r + .5 && icinde(orta) >= 0){
-          if(cizgi.length && Math.hypot(orta[0]-cizgi[cizgi.length-1][0], orta[1]-cizgi[cizgi.length-1][1]) > 8) bitir();
-          cizgi.push(orta); } else bitir(); } }
-    bitir(); });
-  // her eksen hangi yol parcasina ait
-  yollar.forEach(y => { y.eksenler = []; });
-  eksenler.forEach(e => { const k = icinde(e[Math.floor(e.length/2)]); if(k >= 0) yollar[k].eksenler.push(e.map(q => [+q[0].toFixed(2), +q[1].toFixed(2)])); });
-  yollar.forEach(y => { y.poly = y.poly.map(h => h.map(q => [+q[0].toFixed(2), +q[1].toFixed(2)])); });
-  return yollar;
+  const P = parseller.filter(o => o.pts && o.pts.length > 2); if(P.length < 2) return [];
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; P.forEach(o => o.pts.forEach(q => { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }));
+  const pay = 2*r + 4; x0 -= pay; y0 -= pay; x1 += pay; y1 += pay;
+  const res = Math.max(.25, Math.max(x1 - x0, y1 - y0)/2200), W = Math.ceil((x1 - x0)/res), H = Math.ceil((y1 - y0)/res);
+  const px = q => [(q[0] - x0)/res, (q[1] - y0)/res], mt = q => [x0 + q[0]*res, y0 + q[1]*res];
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d", { willReadFrequently:true });
+  g.fillStyle = "#fff"; P.forEach(o => { g.beginPath(); o.pts.forEach((q, i) => { const p = px(q); i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); }); g.closePath(); g.fill(); });
+  let veri = g.getImageData(0, 0, W, H).data; const dolu = new Uint8Array(W*H); for(let i=0;i<W*H;i++) dolu[i] = veri[i*4+3] > 127 ? 1 : 0;
+  g.clearRect(0, 0, W, H); g.strokeStyle = "#fff"; g.lineCap = "round"; g.lineJoin = "round";
+  (disla || []).forEach(d => { g.lineWidth = 2*d.g/res; g.beginPath(); d.pts.forEach((q, i) => { const p = px(q); i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); }); g.stroke(); });
+  veri = g.getImageData(0, 0, W, H).data; const engel = new Uint8Array(W*H); for(let i=0;i<W*H;i++) engel[i] = veri[i*4+3] > 127 ? 1 : 0; veri = null;
+  const rp = r/res, d1 = ilUzaklik(dolu, W, H), dis = new Uint8Array(W*H); for(let i=0;i<W*H;i++) dis[i] = d1[i] > rp ? 1 : 0;
+  const d2 = ilUzaklik(dis, W, H), yol = new Uint8Array(W*H);
+  for(let i=0;i<W*H;i++) yol[i] = (d2[i] > rp && !dolu[i] && !engel[i]) ? 1 : 0;
+  // bilesenler
+  const etk = new Int32Array(W*H), yig = new Int32Array(W*H), bil = []; let n = 0;
+  for(let i=0;i<W*H;i++){ if(!yol[i] || etk[i]) continue; const id = bil.length + 1; let say = 0, sinir = 0, bx0 = W, by0 = H, bx1 = 0, by1 = 0; n = 0; yig[n++] = i; etk[i] = id;
+    while(n){ const j = yig[--n], x = j % W, y = (j - x)/W; say++; if(x < bx0) bx0 = x; if(x > bx1) bx1 = x; if(y < by0) by0 = y; if(y > by1) by1 = y;
+      let kenar = false; for(const k of [j-1, j+1, j-W, j+W]){ const kx = k % W; if(k < 0 || k >= W*H || Math.abs(kx - x) > 1){ kenar = true; continue; } if(!yol[k]){ kenar = true; continue; } if(!etk[k]){ etk[k] = id; yig[n++] = k; } }
+      if(kenar) sinir++; }
+    bil.push({ id, say, sinir, kutu:[bx0, by0, bx1, by1] }); }
+  const sonuc = [];
+  bil.forEach(b => { const alan = b.say*res*res, cevre = b.sinir*res, gen = 2*alan/Math.max(1e-6, cevre);
+    if(alan < 120 || cevre/2 < 30 || gen < 2.2 || gen > 2*r + 3) return;
+    const [bx0, by0, bx1, by1] = b.kutu, w = bx1 - bx0 + 3, h = by1 - by0 + 3, m = new Uint8Array(w*h);
+    for(let y=by0;y<=by1;y++) for(let x=bx0;x<=bx1;x++) if(etk[y*W+x] === b.id) m[(y-by0+1)*w + (x-bx0+1)] = 1;
+    const kay = q => mt([q[0] + bx0 - 1, q[1] + by0 - 1]);
+    let poly = ilKontur(m, w, h).map(hl => ilDP(hl, .3/res).map(q => kay(q).map(v => +v.toFixed(2)))).filter(hl => hl.length > 3)
+      .sort((p, q) => Math.abs(alanHesap(q)) - Math.abs(alanHesap(p)));
+    if(!poly.length) return;
+    const sk = ilIskelet(m, w, h), uzP = q => q.length;
+    const eksenler = sk.yollar.filter(y => !(sk.uc(y[0]) || sk.uc(y[y.length-1])) || y.length*res > 2.2*r)
+      .map(y => y.map(i => kay([i % w + .5, Math.floor(i / w) + .5]))).map(y => ilDP(y, .5).map(q => q.map(v => +v.toFixed(2))))
+      .filter(y => { let L = 0; for(let k=1;k<y.length;k++) L += Math.hypot(y[k][0]-y[k-1][0], y[k][1]-y[k-1][1]); return L >= 12; });
+    sonuc.push({ poly, alan: Math.round(alan), eksenler });
+  });
+  return sonuc.sort((a, b) => b.alan - a.alan);
 }
 
 // ---- TKGM taramasi (uygulama ici) ----
@@ -12323,10 +12368,7 @@ async function ilanAnaYollar(C, R){
     const lat0 = C.y0, pay = R + 60, s2 = lat0 - pay/C.ky, n2 = lat0 + pay/C.ky, w2 = C.x0 - pay/C.kx, e2 = C.x0 + pay/C.kx;
     const q = `[out:json][timeout:20];way[highway~"^(motorway|trunk|primary|secondary|tertiary)(_link)?$"](${s2.toFixed(6)},${w2.toFixed(6)},${n2.toFixed(6)},${e2.toFixed(6)});out geom;`;
     const r = await Promise.any(OVER_SUNUCU.map(s => zamanAsimi(tkgm(s + encodeURIComponent(q)), 12000).then(c => { if(!c || !Array.isArray(c.elements)) throw 0; return c; })));
-    return r.elements.filter(el => el.geometry && el.geometry.length > 1).map(el => { const pts = el.geometry.map(g => C.m(g.lon, g.lat));
-      const parca = []; for(let i=0;i<pts.length-1;i++){ const a = pts[i], b = pts[i+1], L = Math.hypot(b[0]-a[0], b[1]-a[1]) || 1, nx = -(b[1]-a[1])/L*8, ny = (b[0]-a[0])/L*8;
-        parca.push([[[a[0]+nx, a[1]+ny], [b[0]+nx, b[1]+ny], [b[0]-nx, b[1]-ny], [a[0]-nx, a[1]-ny], [a[0]+nx, a[1]+ny]]]); }
-      return ilPc('union', ...parca); });
+    return r.elements.filter(el => el.geometry && el.geometry.length > 1).map(el => ({ pts: el.geometry.map(g => C.m(g.lon, g.lat)), g: 8 }));
   }catch(e){ return []; }
 }
 
