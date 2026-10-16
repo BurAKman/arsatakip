@@ -2248,7 +2248,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.5.1";
+const SURUM_MORDOR = "v 2.5.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11406,11 +11406,51 @@ function ilYogun(pts, adim, kapali){ const out = [], n = pts.length, son = kapal
    F: { H (metre -> foto px), foto:{w,h}, sinir, parcalar:[{no,m2,poly}], yollar:[poly], eksenler:[[p1,p2]], resmiler:[{ic,dis}] }
    Derinlik yerlesimi: uzak satirlar sikisir, parselin oldugu yakin bant buyur (drone perspektifi gibi).
    Parsel kucuk kalirsa "yakin cekim" kutusu capi buyuk ve okunur gosterir; ana gorselde koy + parsel birlikte gorunur. */
-function ilZeminOnbellek(V){
-  if(V._zk && V._zsrc === V.zemin) return V._zk;
-  const c = document.createElement("canvas"); c.width = V.veri.foto.w; c.height = V.veri.foto.h;
-  c.getContext("2d").drawImage(V.zemin, 0, 0, c.width, c.height);
-  V._zk = c; V._zsrc = V.zemin; return c; }
+// fotograftaki ana asfalt yolu: dusuk doygunluk + acik gri, genis ve uzun bilesenler (koy ici dar sokaklar elenir)
+function ilAsfaltMaske(V){
+  if(V._am && V._amsrc === V.zemin) return V._am;
+  const w = V.veri.foto.w, h = V.veri.foto.h, c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d", { willReadFrequently:true }); g.drawImage(V.zemin, 0, 0, w, h);
+  const P = g.getImageData(0, 0, w, h).data, m = new Uint8Array(w*h);
+  for(let i=0;i<w*h;i++){ const r = P[i*4], gg = P[i*4+1], b = P[i*4+2], mx = Math.max(r, gg, b), mn = Math.min(r, gg, b);
+    m[i] = (mx > 135 && mx < 238 && (mx - mn) < Math.max(14, mx*.075)) ? 1 : 0; }
+  const kut = (src, rr, enaz) => { const t = new Uint8Array(w*h), o = new Uint8Array(w*h);   // ayrik kare min/max
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++){ let v = enaz ? 1 : 0; for(let k=-rr;k<=rr;k++){ const xx = x+k; const q = (xx < 0 || xx >= w) ? (enaz ? 0 : 0) : src[y*w+xx]; if(enaz ? !q : q){ v = enaz ? 0 : 1; break; } } t[y*w+x] = v; }
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++){ let v = enaz ? 1 : 0; for(let k=-rr;k<=rr;k++){ const yy = y+k; const q = (yy < 0 || yy >= h) ? 0 : t[yy*w+x]; if(enaz ? !q : q){ v = enaz ? 0 : 1; break; } } o[y*w+x] = v; }
+    return o; };
+  // kapama (kucuk kopukluklari, arabalari doldur) -> ince acma (1 px gurultu gider)
+  const kap = kut(kut(m, 3, false), 3, true), ac = kut(kut(kap, 1, true), 1, false);
+  const etk = new Int32Array(w*h), yig = new Int32Array(w*h), son = new Uint8Array(w*h); let id = 0;
+  for(let i=0;i<w*h;i++){ if(!ac[i] || etk[i]) continue; id++; let n = 0, say = 0, x0 = w, y0 = h, x1 = 0, y1 = 0; const L = []; yig[n++] = i; etk[i] = id;
+    while(n){ const j = yig[--n], x = j % w, y = (j - x)/w; L.push(j); say++; if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y;
+      for(const k of [j-1, j+1, j-w, j+w]) if(k >= 0 && k < w*h && Math.abs((k % w) - x) <= 1 && ac[k] && !etk[k]){ etk[k] = id; yig[n++] = k; } }
+    const boy = Math.hypot(x1 - x0, y1 - y0);
+    // uzun ve ince: ana yol. koy ici sokak agi (yayvan leke) ve kirintilar elenir
+    if(say > w*h*.0006 && boy > Math.max(w, h)*.06 && say/boy < 14) L.forEach(j => son[j] = 1); }
+  V._am = { w, h, m: kut(son, 1, false) }; V._amsrc = V.zemin; return V._am; }
+// zemin onbellegi; istenirse fotograftaki asfalt canlandirilir (koyu doku + kenar seritleri)
+function ilZeminOnbellek(V, D){
+  const canli = !!(D && D.asfaltCanli);
+  if(V._zk && V._zsrc === V.zemin && V._zcanli === canli) return V._zk;
+  const w = V.veri.foto.w, h = V.veri.foto.h, c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d"); g.drawImage(V.zemin, 0, 0, w, h);
+  if(canli){ try{
+    const A = ilAsfaltMaske(V), mk = document.createElement("canvas"); mk.width = w; mk.height = h; const mg = mk.getContext("2d");
+    const id = mg.createImageData(w, h); for(let i=0;i<w*h;i++){ id.data[i*4+3] = A.m[i] ? 255 : 0; } mg.putImageData(id, 0, 0);
+    // asfalt katmani: maske -> yumusak kenar -> doku
+    const ak = document.createElement("canvas"); ak.width = w; ak.height = h; const a = ak.getContext("2d");
+    a.filter = "blur(.8px)"; a.drawImage(mk, 0, 0); a.filter = "none"; a.globalCompositeOperation = "source-in";
+    a.fillStyle = "#3C4045"; a.fillRect(0, 0, w, h);
+    if(V.asfalt){ const pt = a.createPattern(V.asfalt, "repeat"); pt.setTransform(new DOMMatrix().scale(.18)); a.globalAlpha = .55; a.fillStyle = pt; a.fillRect(0, 0, w, h); a.globalAlpha = 1; }
+    g.save(); g.globalAlpha = .88; g.drawImage(ak, 0, 0); g.restore();
+    // kenar seridi: maske sinirinin 1 px icerisi
+    const kn = document.createElement("canvas"); kn.width = w; kn.height = h; const k = kn.getContext("2d");
+    k.drawImage(mk, 0, 0); k.globalCompositeOperation = "destination-out";
+    for(const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) k.drawImage(mk, dx, dy);
+    k.globalCompositeOperation = "source-in"; k.fillStyle = "rgba(255,255,255,.9)"; k.fillRect(0, 0, w, h);
+    g.drawImage(kn, 0, 0);
+  }catch(e){ console.warn("asfalt", e); } }
+  V._zk = c; V._zsrc = V.zemin; V._zcanli = canli; return c; }
 // parselin fotoda kapladigi kutu (foto px)
 function ilSinirKutu(F){ const S = F.sinir.map(m => ilH(F.H, m)), xs = S.map(q=>q[0]), ys = S.map(q=>q[1]);
   return { x0:Math.min(...xs), x1:Math.max(...xs), y0:Math.min(...ys), y1:Math.max(...ys),
@@ -11440,7 +11480,7 @@ function ilPlan(x, D, V, W, Hc){
   const TF = p => [ax + sx(p[1])*(p[0] - uc), Y(p[1])];
 
   // zemin: koyu zumrut + fotografin bulanik kopyasi (bosluk kalirsa)
-  const R = IL_RENK, Z = ilZeminOnbellek(V);
+  const R = IL_RENK, Z = ilZeminOnbellek(V, D);
   let g = x.createLinearGradient(0, 0, 0, Hc); g.addColorStop(0, R.ust); g.addColorStop(1, R.alt); x.fillStyle = g; x.fillRect(0, 0, W, Hc);
   { const kc = Math.max(W/fw, Hc/fh)*1.08; x.save(); x.filter = "blur(22px) brightness(.7)"; x.drawImage(Z, W/2 - fw*kc/2, Hc/2 - fh*kc/2, fw*kc, fh*kc); x.restore(); }
   // fotograf: satir satir
@@ -11481,7 +11521,7 @@ function ilResmiSeritler(F, D){
     const uc = (D.uzatUc || {})[ri] || [];   // [bas, son] metre; elle verildiyse kavsak kuralini ezer
     const b1 = uc[0] != null ? +uc[0] : (yakin(r.ic[0]) ? g2 : U), b2 = uc[1] != null ? +uc[1] : (yakin(r.ic[r.ic.length-1]) ? g2 : U);
     const ic = r.ic.length > 1 && (b1 || b2) ? ilUzat(r.ic, b1, b2) : r.ic, dis = r.dis.length > 1 && (b1 || b2) ? ilUzat(r.dis, b1, b2) : r.dis;
-    return { poly: ic.concat(dis.slice().reverse()), orta: ic.map((q, i) => [(q[0]+dis[i][0])/2, (q[1]+dis[i][1])/2]) };
+    return { poly: ic.concat(dis.slice().reverse()), orta: ic.map((q, i) => [(q[0]+dis[i][0])/2, (q[1]+dis[i][1])/2]), g: g2 };
   });
 }
 
@@ -11491,7 +11531,7 @@ function ilEkYollar(D){
   const L = (D.ekYollar || []).filter(y => y.pts && y.pts.length > 1).map(y => ({ ...y, g: +y.g || 7 }));
   if(D._taslak && D._taslak.pts.length > 1) L.push({ ...D._taslak, taslak:true });
   return L.map(y => { const a = ilOfset(y.pts, y.g/2), b = ilOfset(y.pts, -y.g/2);
-    return { poly: a.concat(b.slice().reverse()), orta: y.pts, ad: y.ad ?? "RESMİ YOL", taslak: !!y.taslak }; });
+    return { poly: a.concat(b.slice().reverse()), orta: y.pts, ad: y.ad ?? "RESMİ YOL", taslak: !!y.taslak, g: y.g }; });
 }
 // resmi yol uclarinin pusula yonu (y yukari metre): 0 bas, 1 son
 function ilUcYonu(r, uc){ const p = uc ? r.ic : r.ic.slice().reverse(), n = p.length, a = p[n-2], b = p[n-1];
@@ -11510,28 +11550,54 @@ function ilCapCiz(x, D, V, TF, sec){
     x.save(); ilYol(x, P); x.fillStyle = "#4A4E52"; x.fill(); if(asfalt){ x.globalAlpha = .55; x.fillStyle = asfalt; x.fill(); x.globalAlpha = 1; }
     x.lineWidth = 3*kc; x.strokeStyle = "rgba(240,240,236,.85)"; x.stroke(); x.restore(); };
   const kesik = ptsM => { x.save(); x.setLineDash([22*kc, 18*kc]); x.lineWidth = 3.2*kc; x.strokeStyle = "rgba(255,255,255,.92)"; ilCizgi(x, TP(ptsM, false)); x.stroke(); x.restore(); };
-  // kadastro yollari: orta cizgi + gercek genislikte duzgun serit (capin resmi yoluyla ayni gorunum)
-  const kad = ilKadSecili(D);
-  const seritler = kad.flatMap(y => (y.eksenler || []).map((e, i) => {
-    const g = (y.genler || [])[i] || 7, au = (y.asfaltUc || [])[i] || [0, 0];
-    return { e, g, au, b1: au[0] ? 0 : g*.5, b2: au[1] ? 0 : g*.5 }; }));   // kavsak uclari ust uste biner, asfalt uclari biner degil kaynar
+  // ---- yollar: kadastro + capin resmi yolu + elle eklenenler, tek katmanli gercekci gorunum ----
+  // banket (toprak omuz + golge) -> asfalt (doku + parlaklik) -> kenar seritleri (kavsakta acilir) -> orta kesik cizgi
+  const kad = ilKadSecili(D), ekYollar = ilEkYollar(D);
+  const Y = [];
+  kad.forEach(y => (y.eksenler || []).forEach((e, i) => { const g = (y.genler || [])[i] || 7, au = (y.asfaltUc || [])[i] || [0, 0];
+    Y.push({ e, g, au, b1: au[0] ? 0 : g*.5, b2: au[1] ? 0 : g*.5 }); }));
+  resmiSeritler.forEach(r => Y.push({ e: r.orta, g: r.g || 7, au: [0, 0], b1: 0, b2: 0 }));
+  ekYollar.forEach(r => Y.push({ e: r.orta, g: r.g || 7, au: [0, 0], b1: 0, b2: 0, taslak: r.taslak }));
   const serit = (o, yari, b1, b2) => { const uz = ilUzat(o.e, b1, b2), a = ilOfset(uz, yari), b = ilOfset(uz, -yari); return TP(a.concat(b.slice().reverse()), true); };
-  // asfalt ucunda kavsak agzi: son 6 m'de genisleyen huni (beyaz kenarsiz)
-  const huni = (o, bas) => { const e = bas ? o.e.slice().reverse() : o.e, n = e.length, uc = e[n-1];
-    let geri = n - 2, L = 0; while(geri > 0 && L < 6){ L += Math.hypot(e[geri+1][0]-e[geri][0], e[geri+1][1]-e[geri][1]); geri--; }
-    const p0 = e[Math.max(0, geri)], dx = uc[0]-p0[0], dy = uc[1]-p0[1], M = Math.hypot(dx, dy) || 1, nx = -dy/M, ny = dx/M, g = o.g/2;
-    return TP([[p0[0]+nx*g, p0[1]+ny*g], [uc[0]+nx*g*1.9, uc[1]+ny*g*1.9], [uc[0]-nx*g*1.9, uc[1]-ny*g*1.9], [p0[0]-nx*g, p0[1]-ny*g]], true); };
-  const asfaltBoya = P => { ilYol(x, P); x.fillStyle = "#4A4E52"; x.fill(); if(asfalt){ x.save(); x.globalAlpha = .55; x.fillStyle = asfalt; x.fill(); x.restore(); } };
-  // 0) yumusak golge, 1) beyaz kenar (asfalt ucunda 3 m once biter), 2) asfalt govde + huniler
-  x.save(); x.shadowColor = "rgba(0,0,0,.38)"; x.shadowBlur = 12; x.shadowOffsetY = 3;
-  seritler.forEach(o => { ilYol(x, serit(o, o.g/2 + .55, o.au[0] ? -3 : o.b1, o.au[1] ? -3 : o.b2)); x.fillStyle = "rgba(244,244,238,.95)"; x.fill(); });
-  x.restore();
-  seritler.forEach(o => { asfaltBoya(serit(o, o.g/2, o.b1, o.b2)); if(o.au[0]) asfaltBoya(huni(o, true)); if(o.au[1]) asfaltBoya(huni(o, false)); });
-  seritler.forEach(o => kesik(o.e));
-  const ekYollar = ilEkYollar(D);
-  ekYollar.forEach(r => { if(r.taslak){ x.save(); x.globalAlpha = .75; } yolBoya(r.poly); if(r.taslak) x.restore(); });
-  resmiSeritler.forEach(r => { yolBoya(r.poly); kesik(r.orta); });
-  ekYollar.forEach(r => kesik(r.orta));
+  const ucB = (o, k) => [o.au[0] ? k : o.b1, o.au[1] ? k : o.b2];
+  const huni = (o, bas, kat) => { const e = bas ? o.e.slice().reverse() : o.e, n = e.length, uc = e[n-1];
+    let geri = n - 2, L = 0; while(geri > 0 && L < 7){ L += Math.hypot(e[geri+1][0]-e[geri][0], e[geri+1][1]-e[geri][1]); geri--; }
+    const p0 = e[Math.max(0, geri)], dx = uc[0]-p0[0], dy = uc[1]-p0[1], M = Math.hypot(dx, dy) || 1, nx = -dy/M, ny = dx/M, g = o.g/2 + (kat || 0);
+    return TP([[p0[0]+nx*g, p0[1]+ny*g], [uc[0]+nx*g*2, uc[1]+ny*g*2], [uc[0]-nx*g*2, uc[1]-ny*g*2], [p0[0]-nx*g, p0[1]-ny*g]], true); };
+  const hunileri = (o, kat) => [o.au[0] ? huni(o, true, kat) : null, o.au[1] ? huni(o, false, kat) : null].filter(Boolean);
+  if(Y.length && D.yolStil === "klasik"){   // capin kendi gorunumu: beyaz kenarli duz asfalt + kesik cizgi
+    Y.forEach(o => { ilYol(x, serit(o, o.g/2 + .45, ...ucB(o, -2))); x.fillStyle = "rgba(240,240,236,.88)"; x.fill(); });
+    Y.forEach(o => { const P = serit(o, o.g/2, o.b1, o.b2); x.save(); ilYol(x, P); x.fillStyle = "#4A4E52"; x.fill(); if(asfalt){ x.globalAlpha = .55; x.fillStyle = asfalt; x.fill(); } x.restore();
+      hunileri(o, 0).forEach(H => { x.save(); ilYol(x, H); x.fillStyle = "#4A4E52"; x.fill(); x.restore(); }); });
+    Y.forEach(o => kesik(o.e));
+  }else if(Y.length){
+    const KW = x.canvas.width, KH = x.canvas.height, katman = () => { const c = document.createElement("canvas"); c.width = KW; c.height = KH; return c; };
+    const doldur = (g, P) => { ilYol(g, P); g.fill(); };
+    // 1) banket
+    const S = katman(), s = S.getContext("2d"); s.fillStyle = "#CBB892";
+    Y.forEach(o => { const [b1, b2] = ucB(o, -2); doldur(s, serit(o, o.g/2 + .9, b1, b2)); hunileri(o, .9).forEach(P => doldur(s, P)); });
+    s.globalCompositeOperation = "source-atop"; s.fillStyle = "rgba(90,70,40,.18)"; s.fillRect(0, 0, KW, KH);
+    x.save(); x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 14; x.shadowOffsetY = 4; x.drawImage(S, 0, 0); x.restore();
+    // 2) asfalt
+    const A = katman(), a = A.getContext("2d"); a.fillStyle = "#363A3F";
+    Y.forEach(o => { doldur(a, serit(o, o.g/2, o.b1, o.b2)); hunileri(o, 0).forEach(P => doldur(a, P)); });
+    a.globalCompositeOperation = "source-atop";
+    if(asfalt){ a.globalAlpha = .62; a.fillStyle = asfalt; a.fillRect(0, 0, KW, KH); a.globalAlpha = 1; }
+    const par = a.createLinearGradient(0, 0, KW, KH); par.addColorStop(0, "rgba(255,255,255,.07)"); par.addColorStop(.5, "rgba(255,255,255,0)"); par.addColorStop(1, "rgba(0,0,0,.08)");
+    a.fillStyle = par; a.fillRect(0, 0, KW, KH);
+    x.drawImage(A, 0, 0);
+    // 3) kenar seritleri: (ic bant) - (daha ic bant); kavsakta ic bantlar birlestigi icin cizgi acilir
+    const Lk = katman(), l = Lk.getContext("2d"); l.fillStyle = "rgba(255,255,255,.93)";
+    const lw = o => { const m = o.e[Math.floor(o.e.length/2)]; return Math.max(.14, 1.4/Math.max(.1, olc(m))); };
+    Y.forEach(o => { const [b1, b2] = ucB(o, -3); doldur(l, serit(o, o.g/2 - .3, b1, b2)); });
+    l.globalCompositeOperation = "destination-out"; l.fillStyle = "#000";
+    Y.forEach(o => { const [b1, b2] = ucB(o, o.g); doldur(l, serit(o, Math.max(.2, o.g/2 - .3 - lw(o)), b1, b2)); hunileri(o, 0).forEach(P => doldur(l, P)); });
+    x.drawImage(Lk, 0, 0);
+    // 4) orta kesik cizgi (perspektife olcekli)
+    Y.forEach(o => { const m = o.e[Math.floor(o.e.length/2)], sc = Math.max(.3, olc(m));
+      x.save(); if(o.taslak) x.globalAlpha = .7; x.setLineDash([Math.max(6, 3*sc), Math.max(5, 2.6*sc)]); x.lineCap = "butt";
+      x.lineWidth = Math.max(1.4, .16*sc); x.strokeStyle = "rgba(255,255,255,.95)"; ilCizgi(x, TP(o.e, false)); x.stroke(); x.restore(); });
+  }
   yollar.forEach(yolBoya); (F.eksenler||[]).forEach(e => kesik(e));
 
   const P0 = TP(F.sinir, true);
@@ -11610,7 +11676,7 @@ function ilTers(H){ const [a,b,c,d,e,f,g,h,i] = H, A = e*i - f*h, B = -(d*i - f*
 function ilYakinCiz(x, e, D, V, P, W, Hc){
   const O = IL_ORAN[D.oran], pos = e.pos[D.oran] || e.pos["916"], s = (typeof e.s === "object" ? e.s[D.oran] : e.s) || 1;
   const bw = Math.round(O.yakinW*s), bh = Math.round(O.yakinH*s), X = pos[0]*W, Yb = pos[1]*Hc, r = 22*s;
-  const F = V.veri, K = ilSinirKutu(F), Z = ilZeminOnbellek(V);
+  const F = V.veri, K = ilSinirKutu(F), Z = ilZeminOnbellek(V, D);
   // kutu ici yerlesim: parsel (+ resmi yol) kutuya sigsin
   const ek = ilResmiSeritler(F, D).flatMap(q => q.poly).concat(F.sinir).map(m => ilH(F.H, m));
   const ex0 = Math.min(...ek.map(q=>q[0])), ex1 = Math.max(...ek.map(q=>q[0])), ey0 = Math.min(...ek.map(q=>q[1])), ey1 = Math.max(...ek.map(q=>q[1]));
@@ -11888,7 +11954,7 @@ async function ilanAfisi(parselId){
   if(!p) return toast("Parsel bulunamadı");
   let F; try{ F = ilanVeriKur(p); }catch(e){ return toast(e.message || String(e)); }
   let D = null; try{ D = JSON.parse(localStorage.getItem("ilan:" + parselId) || "null"); }catch(e){}
-  if(!D) D = { oran:"916", zemin:{}, karart:0, derinlik:true, yolYazi:true, cit:true, yolUzat:0, yolAd:[], pyAd:"PARSEL YOLU", ogeler: ilanOgeler(p), der:{} };
+  if(!D) D = { oran:"916", zemin:{}, karart:0, derinlik:true, yolYazi:true, cit:true, yolUzat:0, asfaltCanli:true, yolStil:"sunum", yolAd:[], pyAd:"PARSEL YOLU", ogeler: ilanOgeler(p), der:{} };
   ilanOgeler(p).forEach((e, i) => { if(!D.ogeler.some(q => q.id === e.id)) D.ogeler.splice(Math.min(i, D.ogeler.length), 0, e); });
   ILAN = { id: parselId, p, F, D, V:{ veri:null }, dokun:false, secili:null };
   const [doku, blob] = await Promise.all([ilanDokuYukle(), ilanZeminOku(parselId)]);
@@ -11938,6 +12004,10 @@ function ilanEkran(){
       <label class="ilTik"><input type="checkbox" ${D.derinlik !== false ? "checked" : ""} onchange="ilanAyar('derinlik', this.checked)"> Derinlik efekti (uzak sıkışır, parsel büyür)</label>
       <label class="ilTik"><input type="checkbox" ${D.cit !== false ? "checked" : ""} onchange="ilanAyar('cit', this.checked)"> Panel çit</label>
       <label class="ilTik"><input type="checkbox" ${D.yolYazi !== false ? "checked" : ""} onchange="ilanAyar('yolYazi', this.checked)"> Yol yazıları</label>
+      <label class="ilTik"><input type="checkbox" ${D.asfaltCanli ? "checked" : ""} onchange="ilanAyar('asfaltCanli', this.checked)"> Resimdeki asfaltı canlandır</label>
+      <div class="field"><label>Yol görünümü</label><select onchange="ilanAyar('yolStil', this.value)">
+        <option value="sunum" ${D.yolStil !== "klasik" ? "selected" : ""}>Sunum (banketli, şeritli)</option>
+        <option value="klasik" ${D.yolStil === "klasik" ? "selected" : ""}>Klasik (çaptaki gibi)</option></select></div>
       ${(ILAN.F.resmiler || []).map((r, i) => `<div class="field"><label>${i+1}. resmi yolun adı</label><input value="${esc((D.yolAd||[])[i] || "RESMİ YOL")}" oninput="ilanYolAd(${i}, this.value)"></div>`).join("")}
       ${(ILAN.F.eksenler || []).length ? `<div class="field"><label>Parsel yolu yazısı</label><input value="${esc(D.pyAd || "PARSEL YOLU")}" oninput="ILAN.D.pyAd=this.value;ilanCizTuval();ilanKaydetGec()"></div>` : ""}
       <button class="btn ghost" style="margin-top:6px" onclick="ilanSifirla()">Yerleşimi Sıfırla</button>
@@ -12452,11 +12522,32 @@ async function ilanKadastroBul(){
         if(temiz.some(z => z.secili && uclar(z).some(p => U.some(q => Math.hypot(p[0]-q[0], p[1]-q[1]) < 14)))){ y.secili = true; degisti = true; } });
       if(!degisti) break; }
     D.kadastro = { yollar: temiz, ad: D.kadastro?.ad ?? "RESMİ YOL", sorgu };
+    try{ ilanFotoBagla(D, ILAN.V); }catch(e){ console.warn(e); }
     ilanKaydet();
     toast(D.kadastro.yollar.length ? `${D.kadastro.yollar.length} yol parçası bulundu` : "Parseller arasında yol boşluğu bulunamadı");
   }catch(e){ console.error(e); toast("Olmadı: " + (e.message || e)); }
   finally{ ILAN.kadastroCalisiyor = false; ilanEkran(); }
 }
+// yolun acik ucunu (kavsak degil) resimdeki gercek asfalta kadar uzatir: uctan ileri yurur, asfalt seridinin ortasina baglar
+function ilanFotoBagla(D, V){
+  if(!V?.veri || !D.kadastro) return 0;
+  const A = ilAsfaltMaske(V), H = V.veri.H, ic = (p) => { const q = ilH(H, p), x = Math.round(q[0]), y = Math.round(q[1]); return x >= 0 && y >= 0 && x < A.w && y < A.h && A.m[y*A.w + x]; };
+  const tum = D.kadastro.yollar.flatMap(y => (y.eksenler || []).map(e => e));
+  const yakinBaska = (u, e) => tum.some(f => f !== e && f.some(q => Math.hypot(q[0]-u[0], q[1]-u[1]) < 5));
+  let n = 0;
+  D.kadastro.yollar.forEach(y => { y.asfaltUc = y.asfaltUc || []; (y.eksenler || []).forEach((e, ei) => { const au = y.asfaltUc[ei] = y.asfaltUc[ei] || [0, 0];
+    [true, false].forEach(bas => { const u = bas ? e[0] : e[e.length-1]; if(yakinBaska(u, e)) return;
+      let j = bas ? 0 : e.length-1, L = 0; const st = bas ? 1 : -1; while(L < 6 && e[j + st]){ L += Math.hypot(e[j+st][0]-e[j][0], e[j+st][1]-e[j][1]); j += st; }
+      const q = e[j], dx = u[0]-q[0], dy = u[1]-q[1], M = Math.hypot(dx, dy); if(M < .5) return;
+      const ux = dx/M, uy = dy/M; let gir = -1, cik = -1;
+      for(let t=0; t<=60; t+=.5){ const p = [u[0]+ux*t, u[1]+uy*t], v = ic(p);
+        if(v && gir < 0) gir = t; if(!v && gir >= 0){ cik = t; break; } if(gir >= 0 && t - gir > 20){ cik = t; break; } }
+      if(gir < 0) return;
+      const hedef = gir + Math.max(1.5, ((cik < 0 ? gir + 8 : cik) - gir)/2 + 1), ek = [];
+      for(let t=1; t<=hedef; t+=1.5) ek.push([+(u[0]+ux*t).toFixed(2), +(u[1]+uy*t).toFixed(2)]);
+      ek.push([+(u[0]+ux*hedef).toFixed(2), +(u[1]+uy*hedef).toFixed(2)]);
+      if(bas){ e.unshift(...ek.reverse()); au[0] = 1; } else { e.push(...ek); au[1] = 1; } n++; }); }); });
+  return n; }
 function ilanKadSec(i){ const y = ILAN.D.kadastro?.yollar?.[i]; if(!y) return; y.secili = !y.secili; ilanKaydet(); ilanEkran(); }
 
 /* ================= KML ve çap ================= */
