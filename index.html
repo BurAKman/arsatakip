@@ -2248,7 +2248,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.5.0";
+const SURUM_MORDOR = "v 2.5.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11513,14 +11513,20 @@ function ilCapCiz(x, D, V, TF, sec){
   // kadastro yollari: orta cizgi + gercek genislikte duzgun serit (capin resmi yoluyla ayni gorunum)
   const kad = ilKadSecili(D);
   const seritler = kad.flatMap(y => (y.eksenler || []).map((e, i) => {
-    const g = (y.genler || [])[i] || 7, uz = ilUzat(e, g*.5, g*.5);   // uclar kavsakta ust uste binsin
-    return { e, g, ic: ilOfset(uz, g/2), dis: ilOfset(uz, -g/2) }; }));
-  const seritYol = (o, ek) => { const a = ek ? ilOfset(ilUzat(o.e, o.g*.5, o.g*.5), o.g/2 + ek) : o.ic, b = ek ? ilOfset(ilUzat(o.e, o.g*.5, o.g*.5), -o.g/2 - ek) : o.dis;
-    return TP(a.concat(b.slice().reverse()), true); };
-  // 1) beyaz kenar (tum seritler), 2) asfalt (tum seritler): kavsaklarda kenar cizgisi yolun ustune binmez
-  seritler.forEach(o => { ilYol(x, seritYol(o, .45)); x.fillStyle = "rgba(240,240,236,.88)"; x.fill(); });
-  seritler.forEach(o => { const P = seritYol(o, 0); x.save(); ilYol(x, P); x.fillStyle = "#4A4E52"; x.fill();
-    if(asfalt){ x.globalAlpha = .55; x.fillStyle = asfalt; x.fill(); } x.restore(); });
+    const g = (y.genler || [])[i] || 7, au = (y.asfaltUc || [])[i] || [0, 0];
+    return { e, g, au, b1: au[0] ? 0 : g*.5, b2: au[1] ? 0 : g*.5 }; }));   // kavsak uclari ust uste biner, asfalt uclari biner degil kaynar
+  const serit = (o, yari, b1, b2) => { const uz = ilUzat(o.e, b1, b2), a = ilOfset(uz, yari), b = ilOfset(uz, -yari); return TP(a.concat(b.slice().reverse()), true); };
+  // asfalt ucunda kavsak agzi: son 6 m'de genisleyen huni (beyaz kenarsiz)
+  const huni = (o, bas) => { const e = bas ? o.e.slice().reverse() : o.e, n = e.length, uc = e[n-1];
+    let geri = n - 2, L = 0; while(geri > 0 && L < 6){ L += Math.hypot(e[geri+1][0]-e[geri][0], e[geri+1][1]-e[geri][1]); geri--; }
+    const p0 = e[Math.max(0, geri)], dx = uc[0]-p0[0], dy = uc[1]-p0[1], M = Math.hypot(dx, dy) || 1, nx = -dy/M, ny = dx/M, g = o.g/2;
+    return TP([[p0[0]+nx*g, p0[1]+ny*g], [uc[0]+nx*g*1.9, uc[1]+ny*g*1.9], [uc[0]-nx*g*1.9, uc[1]-ny*g*1.9], [p0[0]-nx*g, p0[1]-ny*g]], true); };
+  const asfaltBoya = P => { ilYol(x, P); x.fillStyle = "#4A4E52"; x.fill(); if(asfalt){ x.save(); x.globalAlpha = .55; x.fillStyle = asfalt; x.fill(); x.restore(); } };
+  // 0) yumusak golge, 1) beyaz kenar (asfalt ucunda 3 m once biter), 2) asfalt govde + huniler
+  x.save(); x.shadowColor = "rgba(0,0,0,.38)"; x.shadowBlur = 12; x.shadowOffsetY = 3;
+  seritler.forEach(o => { ilYol(x, serit(o, o.g/2 + .55, o.au[0] ? -3 : o.b1, o.au[1] ? -3 : o.b2)); x.fillStyle = "rgba(244,244,238,.95)"; x.fill(); });
+  x.restore();
+  seritler.forEach(o => { asfaltBoya(serit(o, o.g/2, o.b1, o.b2)); if(o.au[0]) asfaltBoya(huni(o, true)); if(o.au[1]) asfaltBoya(huni(o, false)); });
   seritler.forEach(o => kesik(o.e));
   const ekYollar = ilEkYollar(D);
   ekYollar.forEach(r => { if(r.taslak){ x.save(); x.globalAlpha = .75; } yolBoya(r.poly); if(r.taslak) x.restore(); });
@@ -11564,12 +11570,18 @@ function ilCapCiz(x, D, V, TF, sec){
   }
 
   const aciDuz = (A, B) => { let ac = Math.atan2(B[1]-A[1], B[0]-A[0]); if(ac > Math.PI/2) ac -= Math.PI; if(ac < -Math.PI/2) ac += Math.PI; return ac; };
-  const yolYazi = (ptsM, metin, boy) => { const P = ptsM.map(T); let ui = 0, ul = 0;
+  const yerler = [];   // yerlestirilen yazilar: { c:[x,y], r } -- ust uste binmesinler
+  const bos = (c, r) => !yerler.some(q => Math.hypot(q.c[0]-c[0], q.c[1]-c[1]) < (q.r + r)*.92);
+  const yolYazi = (ptsM, metin, boy, kontrol) => { const P = ptsM.map(T); let ui = 0, ul = 0;
     for(let i=0;i<P.length-1;i++){ const l = Math.hypot(P[i+1][0]-P[i][0], P[i+1][1]-P[i][1]); if(l > ul){ ul = l; ui = i; } }
-    if(ul < 60) return; const A = P[ui], B = P[ui+1];
-    x.save(); x.translate((A[0]+B[0])/2, (A[1]+B[1])/2); x.rotate(aciDuz(A, B)); x.textAlign = "center"; x.textBaseline = "middle";
+    if(ul < 60) return false; const A = P[ui], B = P[ui+1], c = [(A[0]+B[0])/2, (A[1]+B[1])/2];
     const harf = metin.split("").join(String.fromCharCode(8202, 8202));
-    ilSigdir(x, harf, IL_FONT.serit, 600, ul*.9, boy, 10); ilYazi(x, harf, 0, 0, "#FFFFFF", "rgba(20,20,20,.85)", 5); x.restore(); };
+    x.save(); ilSigdir(x, harf, IL_FONT.serit, 600, ul*.9, boy, 10); const r = x.measureText(harf).width/2 + 6; x.restore();
+    const cw = x.canvas.width, ch = x.canvas.height;
+    if(kontrol && (!bos(c, r) || c[0] < r + 12 || c[1] < r + 12 || c[0] > cw - r - 12 || c[1] > ch - r - 12)) return false;
+    x.save(); x.translate(c[0], c[1]); x.rotate(aciDuz(A, B)); x.textAlign = "center"; x.textBaseline = "middle";
+    ilSigdir(x, harf, IL_FONT.serit, 600, ul*.9, boy, 10); ilYazi(x, harf, 0, 0, "#FFFFFF", "rgba(20,20,20,.85)", 5); x.restore();
+    yerler.push({ c, r }); return true; };
   const yolYaziInce = (ptsM, metin) => { const A = T(ptsM[0]), B = T(ptsM[ptsM.length-1]), ul = Math.hypot(B[0]-A[0], B[1]-A[1]); if(ul < 70) return;
     x.save(); x.translate((A[0]+B[0])/2, (A[1]+B[1])/2); x.rotate(aciDuz(A, B)); x.textAlign = "center"; x.textBaseline = "middle";
     x.letterSpacing = "1.5px"; ilSigdir(x, metin, IL_FONT.govde, 700, ul*.55, 14, 9);
@@ -11577,17 +11589,15 @@ function ilCapCiz(x, D, V, TF, sec){
     x.fillStyle = "#FFFFFF"; x.fillText(metin, 0, 1); x.letterSpacing = "0px"; x.restore(); };
   if(sec.yolYazi){
     resmiSeritler.forEach((r, i) => yolYazi(r.orta, (D.yolAd||[])[i] || "RESMİ YOL", 24));
-    ekYollar.forEach(r => { if(!r.taslak && r.ad) yolYazi(r.orta, r.ad, 24); });
-    // kadastro yollari: her parcada en uzun eksen(ler)e yazi; capin kendi resmi yolunun dibindekilere yazma (cap zaten yaziyor)
-    const kadAd = D.kadastro?.ad ?? "RESMİ YOL", resmiOrta = resmiSeritler.flatMap(r => r.orta);
+    (F.eksenler||[]).forEach(e => { yolYaziInce(e, D.pyAd || "PARSEL YOLU"); const A = T(e[0]), B = T(e[e.length-1]); yerler.push({ c:[(A[0]+B[0])/2, (A[1]+B[1])/2], r:45 }); });
+    ekYollar.forEach(r => { if(!r.taslak && r.ad) yolYazi(r.orta, r.ad, 24, true); });
+    // kadastro yollari: uzun eksenleri ucte birlik dilimlere bol, digerleriyle carpismayan ilk dilime yaz
+    const kadAd = D.kadastro?.ad ?? "RESMİ YOL";
     const uz = e => { let L = 0; for(let k=1;k<e.length;k++) L += Math.hypot(e[k][0]-e[k-1][0], e[k][1]-e[k-1][1]); return L; };
-    if(kadAd) kad.forEach(y => { const yazili = [];
-      (y.eksenler || []).slice().sort((a, b) => uz(b) - uz(a)).forEach(e => { if(yazili.length >= 3 || uz(e) < 35) return;
-        const o = e[Math.floor(e.length/2)];
-        if(resmiOrta.some(q => Math.hypot(q[0]-o[0], q[1]-o[1]) < 20)) return;
-        if(yazili.some(q => Math.hypot(q[0]-o[0], q[1]-o[1]) < 60)) return;
-        yazili.push(o); yolYazi(e, kadAd, 24); }); });
-    (F.eksenler||[]).forEach(e => yolYaziInce(e, D.pyAd || "PARSEL YOLU")); }
+    if(kadAd) kad.forEach(y => { let n = 0;
+      (y.eksenler || []).slice().sort((a, b) => uz(b) - uz(a)).forEach(e => { if(n >= 2 || uz(e) < 35) return;
+        const m = e.length, dilim = [e.slice(Math.floor(m*.33), Math.ceil(m*.67) + 1), e.slice(Math.floor(m*.55)), e.slice(0, Math.ceil(m*.45) + 1), e];
+        for(const d of dilim) if(d.length > 1 && yolYazi(d, kadAd, 24, true)){ n++; break; } }); }); }
   if(sec.etiket) F.parcalar.forEach(p => ilEtiket(x, p.poly.map(T), String(p.no ?? ""), ilSayi(p.m2) + " m²", D.noBoy || 1));
   // cizilmekte olan yolun noktalari
   if(D._taslak) D._taslak.pts.forEach((q, i) => { const p = T(q); x.beginPath(); x.arc(p[0], p[1], i ? 7 : 9, 0, 7);
@@ -12326,7 +12336,12 @@ function ilanBosluklar(parseller, r, disla){
     const asfaltaBagla = (y, bas) => { const u = bas ? y[0] : y[y.length-1]; let en = null;
       (disla || []).forEach(d => { for(let k=0;k<d.pts.length-1;k++){ const z = ilSegYakin(u, d.pts[k], d.pts[k+1]), e = Math.hypot(z[0]-u[0], z[1]-u[1]);
         if(e <= d.g + 6 && (!en || e < en.e)) en = { e, z }; } });
-      if(en && en.e > .5){ if(bas) y.unshift(en.z); else y.push(en.z); } };
+      if(!en) return false;
+      // asfalt ortasindan 3 m daha icerisi: resimdeki asfalt birkac metre kaysa da yol ona kaynasin
+      const q = bas ? y[1] || y[0] : y[y.length-2] || y[y.length-1], dx = en.z[0] - q[0], dy = en.z[1] - q[1], L = Math.hypot(dx, dy) || 1;
+      const son = [en.z[0] + dx/L*3, en.z[1] + dy/L*3];
+      if(en.e > .5){ if(bas) y.unshift(en.z); else y.push(en.z); }
+      if(bas) y.unshift(son); else y.push(son); return true; };
     // iskelet grafi: kenar = yol (piksel dizisi), dugum = uc pikseller
     const asfaltYakin = q => (disla || []).some(d => { for(let k=0;k<d.pts.length-1;k++){ const z = ilSegYakin(q, d.pts[k], d.pts[k+1]); if(Math.hypot(z[0]-q[0], z[1]-q[1]) <= d.g + 6) return true; } return false; });
     const pm = i => kay([i % w + .5, Math.floor(i / w) + .5]);
@@ -12344,12 +12359,12 @@ function ilanBosluklar(parseller, r, disla){
         const [A, B] = e, a = A.p[0] === u ? A.p.slice().reverse() : A.p, bb = B.p[0] === u ? B.p : B.p.slice().reverse();
         K = K.filter(k => k !== A && k !== B); K.push({ p: a.concat(bb.slice(1)), L: A.L + B.L }); birlesti = true; break; }
       if(!birlesti) break; }
-    const eksenler = [], genler = [];
+    const eksenler = [], genler = [], asfaltUc = [];
     K.forEach(k => { let y = ilDP(k.p.map(pm), .6);
-      asfaltaBagla(y, true); asfaltaBagla(y, false);
+      const ab = asfaltaBagla(y, true), as = asfaltaBagla(y, false);
       y = ilPuruzsuz(y, 2).map(q => q.map(v => +v.toFixed(2)));
-      if(yolL(y) < 8) return; eksenler.push(y); genler.push(+genOl(k.p).toFixed(2)); });
-    sonuc.push({ poly, alan: Math.round(alan), eksenler, genler });
+      if(yolL(y) < 8) return; eksenler.push(y); genler.push(+genOl(k.p).toFixed(2)); asfaltUc.push([ab ? 1 : 0, as ? 1 : 0]); });
+    sonuc.push({ poly, alan: Math.round(alan), eksenler, genler, asfaltUc });
   });
   return sonuc.sort((a, b) => b.alan - a.alan);
 }
