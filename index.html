@@ -2251,7 +2251,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.6.0";
+const SURUM_MORDOR = "v 2.6.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11375,7 +11375,7 @@ function ilKutuIcinde(P, x0, y0, x1, y1, pay){
   const nk = [];
   for(let i=0;i<=4;i++) for(let j=0;j<=2;j++) nk.push([x0 + (x1-x0)*i/4, y0 + (y1-y0)*j/2]);
   return nk.every(q => ilKenarUzak(q, P) >= pay); }
-function ilEtiket(x, P, no, m2, carp, satildi){
+function ilEtiket(x, P, no, m2, carp, satildi, prem){
   let mnx = 1e9, mny = 1e9, mxx = -1e9, mxy = -1e9; P.forEach(q => { mnx = Math.min(mnx, q[0]); mny = Math.min(mny, q[1]); mxx = Math.max(mxx, q[0]); mxy = Math.max(mxy, q[1]); });
   let en = null; const st = Math.max(2, Math.min(mxx-mnx, mxy-mny)/40);
   for(let X=mnx; X<=mxx; X+=st) for(let Y=mny; Y<=mxy; Y+=st){ const d = ilKenarUzak([X, Y], P); if(!en || d > en.d) en = { d, X, Y }; }
@@ -11395,14 +11395,17 @@ function ilEtiket(x, P, no, m2, carp, satildi){
   if(k.tip === "ust"){ nX = cx; nY = cy - (o.mh + g)/2; mX = cx; mY = cy + (o.nh + g)/2; }
   else { const w = o.nw + g*1.6 + o.mw; nX = cx - w/2 + o.nw/2; nY = cy; mX = cx + w/2 - o.mw/2; mY = cy; }
   x.textAlign = "center"; x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 6; x.shadowOffsetY = 2;
-  if(no){ x.font = `400 ${B}px ${IL_FONT.kalin}`; ilYazi(x, no, nX, nY + B*.02, "#FFFFFF", "rgba(8,30,10,.95)", Math.max(3, B*.13)); }
+  if(no && prem){ x.font = `800 ${Math.round(B*1.02)}px ${IL_SERIF}`; x.lineJoin = "round"; x.lineWidth = Math.max(3, B*.14); x.strokeStyle = "rgba(6,22,12,.95)"; x.strokeText(no, nX, nY + B*.04);
+    x.shadowColor = "transparent"; x.fillStyle = satildi ? "#2A2414" : ilAltinDolgu(x, nY - B*.4, nY + B*.4); if(satildi){ x.strokeStyle = "rgba(255,250,235,.9)"; x.strokeText(no, nX, nY + B*.04); } x.fillText(no, nX, nY + B*.04); }
+  else if(no){ x.font = `400 ${B}px ${IL_FONT.kalin}`; ilYazi(x, no, nX, nY + B*.02, "#FFFFFF", "rgba(8,30,10,.95)", Math.max(3, B*.13)); }
   x.shadowColor = "rgba(0,0,0,.35)"; x.shadowBlur = 5;
   ilYuvarlak(x, mX - o.mw/2, mY - o.mh/2, o.mw, o.mh, o.mh/2);
   if(satildi){ const gr = x.createLinearGradient(0, mY - o.mh/2, 0, mY + o.mh/2); gr.addColorStop(0, "#E53935"); gr.addColorStop(1, "#A3161A"); x.fillStyle = gr; }
-  else x.fillStyle = "rgba(255,255,255,.95)";
+  else x.fillStyle = prem ? "rgba(8,22,14,.88)" : "rgba(255,255,255,.95)";
   x.fill(); x.shadowColor = "transparent";
+  if(prem && !satildi){ x.lineWidth = Math.max(1, B*.045); x.strokeStyle = "rgba(247,222,142,.95)"; x.stroke(); }
   if(satildi){ x.lineWidth = Math.max(1, B*.04); x.strokeStyle = "rgba(255,255,255,.85)"; x.stroke(); }
-  x.font = `800 ${Math.round(B*.44)}px ${IL_FONT.govde}`; x.fillStyle = satildi ? "#FFFFFF" : "#123B1E";
+  x.font = `800 ${Math.round(B*.44)}px ${IL_FONT.govde}`; x.fillStyle = satildi ? "#FFFFFF" : prem ? "#F6E3A8" : "#123B1E";
   if(satildi) x.letterSpacing = Math.max(1, B*.04) + "px"; x.fillText(m2, mX, mY + 1); x.letterSpacing = "0px";
   x.restore(); }
 
@@ -11410,6 +11413,9 @@ function ilYogun(pts, adim, kapali){ const out = [], n = pts.length, son = kapal
   for(let i=0;i<son;i++){ const a = pts[i], b = pts[(i+1)%n], L = Math.hypot(b[0]-a[0], b[1]-a[1]), m = Math.max(1, Math.ceil(L/adim));
     for(let j=0;j<m;j++) out.push([a[0]+(b[0]-a[0])*j/m, a[1]+(b[1]-a[1])*j/m]); }
   if(!kapali) out.push(pts[n-1]); return out; }
+// ust katman: hedef tuvalin piksel boyutunda, ayni donusumle; ilBas ile 1:1 geri basilir
+function ilKatman(x){ const c = document.createElement("canvas"); c.width = x.canvas.width; c.height = x.canvas.height; const g = c.getContext("2d"); g.setTransform(x.getTransform()); return [c, g]; }
+function ilBas(x, c){ x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.drawImage(c, 0, 0); x.restore(); }
 /* ---------- parsel plani (uygulama surumu) ----------
    F: { H (metre -> foto px), foto:{w,h}, sinir, parcalar:[{no,m2,poly}], yollar:[poly], eksenler:[[p1,p2]], resmiler:[{ic,dis}] }
    Derinlik yerlesimi: uzak satirlar sikisir, parselin oldugu yakin bant buyur (drone perspektifi gibi).
@@ -11503,11 +11509,11 @@ function ilPlan(x, D, V, W, Hc){
 
   const T = m => TF(ilH(F.H, m));
   if(D.karart > 0){
-    const L = document.createElement("canvas"); L.width = W; L.height = Hc; const l = L.getContext("2d");
+    const [L, l] = ilKatman(x);
     l.fillStyle = `rgba(4,12,8,${D.karart})`; l.fillRect(0, 0, W, Hc);
     l.globalCompositeOperation = "destination-out"; l.filter = "blur(10px)"; l.fillStyle = "#000"; l.strokeStyle = "#000"; l.lineJoin = "round"; l.lineWidth = 26;
     [F.sinir].concat(ilResmiSeritler(F, D).map(r => r.poly), ilEkYollar(D).map(r => r.poly), ilKadSecili(D).map(y => y.poly[0]), F.yollar || []).forEach(pm => { ilYol(l, ilYogun(pm, 1.5, true).map(T)); l.fill(); l.stroke(); });
-    x.drawImage(L, 0, 0); }
+    ilBas(x, L); }
   // alt: dibe dogru hafif gecis (alt kutular okunsun)
   { const alt = (DO.altBant || O.altBant)*Hc, gg = x.createLinearGradient(0, alt, 0, Hc);
     gg.addColorStop(0, "rgba(10,40,32,0)"); gg.addColorStop(.5, "rgba(9,34,28,.32)"); gg.addColorStop(1, "rgba(7,28,22,.72)"); x.fillStyle = gg; x.fillRect(0, alt, W, Hc - alt); }
@@ -11556,8 +11562,9 @@ function ilCapCiz(x, D, V, TF, sec){
   const olc = m => { const p = T(m), b = T([m[0]+1, m[1]]), c = T([m[0], m[1]+1]); return (Math.hypot(b[0]-p[0], b[1]-p[1]) + Math.hypot(c[0]-p[0], c[1]-p[1]))/2; };
   const TP = (pts, kapali) => ilYogun(pts, 1.5, kapali).map(T);
   const resmiSeritler = ilResmiSeritler(F, D), yollar = F.yollar || [];
-  const asfalt = V.asfalt ? x.createPattern(V.asfalt, "repeat") : null; if(asfalt) asfalt.setTransform(new DOMMatrix().scale(.35));
-  const cim = V.cim ? x.createPattern(V.cim, "repeat") : "#5E9E3E"; if(V.cim) cim.setTransform(new DOMMatrix().scale(.32));
+  const asfalt = V.asfalt ? x.createPattern(V.asfalt, "repeat") : null; if(asfalt) asfalt.setTransform(new DOMMatrix().scale(V.asfaltYeni ? .16 : .35));
+  const cim = V.cim ? x.createPattern(V.cim, "repeat") : "#5E9E3E"; if(V.cim) cim.setTransform(new DOMMatrix().scale(V.cimYeni ? .2 : .32));
+  const PREM = D.parselStil !== "yesil";
   const yolBoya = polyM => { const P = TP(polyM, true);
     x.save(); ilYol(x, P); x.fillStyle = "#4A4E52"; x.fill(); if(asfalt){ x.globalAlpha = .55; x.fillStyle = asfalt; x.fill(); x.globalAlpha = 1; }
     x.lineWidth = 3*kc; x.strokeStyle = "rgba(240,240,236,.85)"; x.stroke(); x.restore(); };
@@ -11603,33 +11610,33 @@ function ilCapCiz(x, D, V, TF, sec){
         x.save(); x.filter = "blur(.7px)"; ilYol(x, z.P); x.fillStyle = gr; x.fill(); x.restore(); }); });
     Y.forEach(o => kesik(kirp(o.e, o.au[0] ? AGIZ + 1 : 0, o.au[1] ? AGIZ + 1 : 0)));
   }else if(Y.length){
-    const KW = x.canvas.width, KH = x.canvas.height, katman = () => { const c = document.createElement("canvas"); c.width = KW; c.height = KH; return c; };
+    const TT = x.getTransform(), KW = x.canvas.width/TT.a, KH = x.canvas.height/TT.d, katman = () => { const [c, g] = ilKatman(x); c._g = g; return c; };
     const doldur = (g, P) => { ilYol(g, P); g.fill(); };
     // 1) banket
-    const S = katman(), s = S.getContext("2d"); s.fillStyle = "#CBB892";
+    const S = katman(), s = S._g; s.fillStyle = "#CBB892";
     Y.forEach(o => { const [b1, b2] = ucB(o, -AGIZ); doldur(s, serit(o, o.g/2 + .9, b1, b2)); });
     s.globalCompositeOperation = "source-atop"; s.fillStyle = "rgba(90,70,40,.18)"; s.fillRect(0, 0, KW, KH);
-    x.save(); x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 14; x.shadowOffsetY = 4; x.drawImage(S, 0, 0); x.restore();
+    x.save(); x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 14; x.shadowOffsetY = 4; x.setTransform(1, 0, 0, 1, 0, 0); x.drawImage(S, 0, 0); x.restore();
     // 2) asfalt
-    const A = katman(), a = A.getContext("2d"); a.fillStyle = "#363A3F";
+    const A = katman(), a = A._g; a.fillStyle = "#363A3F";
     Y.forEach(o => { const [b1, b2] = ucB(o, -AGIZ + .3); doldur(a, serit(o, o.g/2, b1, b2)); });
     a.globalCompositeOperation = "source-atop";
     if(asfalt){ a.globalAlpha = .62; a.fillStyle = asfalt; a.fillRect(0, 0, KW, KH); a.globalAlpha = 1; }
     const par = a.createLinearGradient(0, 0, KW, KH); par.addColorStop(0, "rgba(255,255,255,.07)"); par.addColorStop(.5, "rgba(255,255,255,0)"); par.addColorStop(1, "rgba(0,0,0,.08)");
     a.fillStyle = par; a.fillRect(0, 0, KW, KH);
-    x.drawImage(A, 0, 0);
+    ilBas(x, A);
     // 2b) asfalt agizlari: bizim asfalt -> resmin asfalti renk gecisi, hafif yumusak kenar
     Y.forEach(o => agizlari(o).forEach(z => { const gr = x.createLinearGradient(z.A[0], z.A[1], z.B[0], z.B[1]);
       gr.addColorStop(0, "rgba(54,58,63,1)"); gr.addColorStop(.6, "rgba(54,58,63,.45)"); gr.addColorStop(1, "rgba(54,58,63,0)");
       x.save(); x.filter = "blur(.7px)"; ilYol(x, z.P); x.fillStyle = gr; x.fill(); x.restore(); }));
     // 3) kenar seritleri: (ic bant) - (daha ic bant); kavsakta ic bantlar birlestigi icin cizgi acilir
-    const Lk = katman(), l = Lk.getContext("2d"); l.fillStyle = "rgba(255,255,255,.93)";
+    const Lk = katman(), l = Lk._g; l.fillStyle = "rgba(255,255,255,.93)";
     const lw = o => { const m = o.e[Math.floor(o.e.length/2)]; return Math.max(.14, 1.4/Math.max(.1, olc(m))); };
     const genis = o => { const m = o.e[Math.floor(o.e.length/2)]; return o.g*olc(m) >= 11; };
     Y.filter(genis).forEach(o => { const [b1, b2] = ucB(o, -AGIZ); doldur(l, serit(o, o.g/2 - .3, b1, b2)); });
     l.globalCompositeOperation = "destination-out"; l.fillStyle = "#000";
     Y.forEach(o => { const [b1, b2] = ucB(o, o.g); doldur(l, serit(o, Math.max(.2, o.g/2 - .3 - lw(o)), b1, b2)); hunileri(o, 0).forEach(P => doldur(l, P)); });
-    x.drawImage(Lk, 0, 0);
+    ilBas(x, Lk);
     // 4) orta kesik cizgi (perspektife olcekli)
     Y.filter(o => o.g*olc(o.e[Math.floor(o.e.length/2)]) >= 9).forEach(o => { const m = o.e[Math.floor(o.e.length/2)], sc = Math.max(.3, olc(m));
       x.save(); if(o.taslak) x.globalAlpha = .7; x.setLineDash([Math.max(6, 3*sc), Math.max(5, 2.6*sc)]); x.lineCap = "butt";
@@ -11638,14 +11645,32 @@ function ilCapCiz(x, D, V, TF, sec){
   if(!sec.butun){ yollar.forEach(yolBoya); (F.eksenler||[]).forEach(e => kesik(e)); }
 
   const P0 = TP(F.sinir, true);
-  x.save(); ilYol(x, P0); x.shadowColor = "rgba(190,255,150,.75)"; x.shadowBlur = 28; x.lineWidth = 5*kc; x.strokeStyle = "rgba(220,255,200,.9)"; x.stroke(); x.restore();
+  if(PREM){ x.save(); ilYol(x, P0); x.lineJoin = "round"; x.shadowColor = "rgba(255,210,110,.85)"; x.shadowBlur = 24; x.lineWidth = 6*kc; x.strokeStyle = "rgba(247,222,142,.55)"; x.stroke(); x.restore(); }
+  else { x.save(); ilYol(x, P0); x.shadowColor = "rgba(190,255,150,.75)"; x.shadowBlur = 28; x.lineWidth = 5*kc; x.strokeStyle = "rgba(220,255,200,.9)"; x.stroke(); x.restore(); }
 
   const satildi = no => !!(D.satildi && D.satildi[String(no)]);
-  if(sec.butun){   // ana gorsel: parsel tek parca duz yesil
+  let pmx0 = 1e9, pmy0 = 1e9, pmx1 = -1e9, pmy1 = -1e9; P0.forEach(q => { pmx0 = Math.min(pmx0, q[0]); pmy0 = Math.min(pmy0, q[1]); pmx1 = Math.max(pmx1, q[0]); pmy1 = Math.max(pmy1, q[1]); });
+  const altinKenar = () => { const g = x.createLinearGradient(pmx0, pmy0, pmx1, pmy1); g.addColorStop(0, "#FFF0B8"); g.addColorStop(.35, "#E3B23C"); g.addColorStop(.6, "#FFE8A0"); g.addColorStop(1, "#B98A2E"); return g; };
+  const zumrut = Pp => { x.save(); ilYol(x, Pp); x.globalAlpha = .72; x.fillStyle = cim; x.fill(); x.globalAlpha = 1;
+    const g = x.createLinearGradient(pmx0, pmy0, pmx1, pmy1); g.addColorStop(0, "rgba(40,120,60,.10)"); g.addColorStop(1, "rgba(6,52,30,.30)"); x.fillStyle = g; x.fill(); x.restore(); };
+  if(sec.butun && PREM){   // ana gorsel: tek parca zumrut + altin kenar
+    zumrut(P0); x.save(); ilYol(x, P0); x.lineJoin = "round"; x.lineWidth = 3*kc; x.strokeStyle = altinKenar(); x.stroke(); x.restore();
+  }else if(sec.butun){   // ana gorsel: parsel tek parca duz yesil
     x.save(); ilYol(x, P0); x.globalAlpha = .55; x.fillStyle = cim; x.fill(); x.globalAlpha = 1; x.fillStyle = "rgba(120,220,90,.22)"; x.fill();
     x.lineJoin = "round"; x.lineWidth = 2.5*kc; x.strokeStyle = "rgba(235,255,220,.8)"; x.stroke(); x.restore();
   }else F.parcalar.forEach(p => { const P = TP(p.poly, true), c = p.poly.reduce((t,q)=>[t[0]+q[0]/p.poly.length, t[1]+q[1]/p.poly.length],[0,0]);
     const bant = Math.max(5, Math.min(26, (D.kenarSerit ?? 2.2) * olc(c) * 2));
+    if(PREM){
+      if(satildi(p.no)){   // sampanya / sedef
+        let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; P.forEach(q => { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); });
+        const gr = x.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, "rgba(252,246,232,.95)"); gr.addColorStop(.45, "rgba(226,206,160,.93)"); gr.addColorStop(.7, "rgba(246,234,206,.95)"); gr.addColorStop(1, "rgba(200,172,118,.95)");
+        x.save(); ilYol(x, P); x.fillStyle = gr; x.fill(); x.clip();
+        const pr = x.createLinearGradient(x0, y0, x0 + (x1-x0)*.6, y1); pr.addColorStop(0, "rgba(255,255,255,0)"); pr.addColorStop(.48, "rgba(255,255,255,.5)"); pr.addColorStop(.56, "rgba(255,255,255,0)");
+        x.fillStyle = pr; x.fillRect(x0, y0, x1 - x0, y1 - y0); x.restore();
+      }else{ zumrut(P);
+        x.save(); ilYol(x, P); x.clip(); x.lineJoin = "round"; x.lineWidth = bant*1.2; x.strokeStyle = "rgba(2,30,16,.35)"; x.filter = "blur(4px)"; ilYol(x, P); x.stroke(); x.restore(); }
+      x.save(); ilYol(x, P); x.lineJoin = "round"; x.lineWidth = 1.6*kc; x.strokeStyle = "rgba(247,222,142,.9)"; x.stroke(); x.restore();
+      return; }
     if(satildi(p.no)){   // canli cam grisi: parlak, hafif mavimsi, ustten isik vuran
       let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; P.forEach(q => { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); });
       const gr = x.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, "rgba(246,250,253,.96)"); gr.addColorStop(.45, "rgba(196,210,222,.94)"); gr.addColorStop(.7, "rgba(226,234,241,.95)"); gr.addColorStop(1, "rgba(170,186,200,.95)");
@@ -11659,7 +11684,38 @@ function ilCapCiz(x, D, V, TF, sec){
     x.lineWidth = bant*.5; x.strokeStyle = "rgba(170,240,120,.28)"; x.stroke();
     x.lineWidth = 2*kc; x.strokeStyle = "rgba(230,255,215,.5)"; ilYol(x, P); x.stroke(); x.restore(); });
 
-  if(D.cit !== false){
+  if(D.cit !== false && PREM && sec.butun){ /* ana gorselde sade: altin kenar */ }
+  else if(D.cit !== false && PREM && sec.detay){
+    const kenarlar = new Map();
+    F.parcalar.forEach(p => p.poly.forEach((q, i) => { const b = p.poly[(i+1) % p.poly.length];
+      const an = [q, b].map(r=>r.map(v=>Math.round(v*2)/2).join(",")).sort().join("|"); if(!kenarlar.has(an)) kenarlar.set(an, [q, b]); }));
+    const citH = D.citBoy || 1.25, liste = [...kenarlar.values()].map(([q, b]) => ({ q, b, y: (T(q)[1] + T(b)[1])/2 })).sort((u, v) => u.y - v.y);
+    const gold = x.createLinearGradient(pmx0, pmy0, pmx1, pmy1); gold.addColorStop(0, "#FFF0B8"); gold.addColorStop(.5, "#E3B23C"); gold.addColorStop(1, "#B98A2E");
+    // yere dusen golge
+    x.save(); x.filter = "blur(2.5px)"; x.fillStyle = "rgba(0,20,8,.32)";
+    liste.forEach(({ q, b }) => { const A = T(q), B = T(b), h1 = citH*olc(q)*.4, h2 = citH*olc(b)*.4;
+      x.beginPath(); x.moveTo(A[0], A[1]); x.lineTo(B[0], B[1]); x.lineTo(B[0] + h2, B[1] + h2*.5); x.lineTo(A[0] + h1, A[1] + h1*.5); x.closePath(); x.fill(); });
+    x.restore();
+    liste.forEach(({ q, b }) => {
+      const L = Math.hypot(b[0]-q[0], b[1]-q[1]); if(L < .5) return;
+      const M = tt => [q[0] + (b[0]-q[0])*tt, q[1] + (b[1]-q[1])*tt], A = T(q), B = T(b), hA = citH*olc(q), hB = citH*olc(b);
+      // ince siyah parmaklıklar
+      const pxL = Math.hypot(B[0]-A[0], B[1]-A[1]), n = Math.max(2, Math.min(70, Math.round(pxL/4.5)));
+      x.strokeStyle = "rgba(14,16,14,.9)"; x.lineWidth = 1; x.beginPath();
+      for(let k=1;k<n;k++){ const t = k/n, p = [A[0] + (B[0]-A[0])*t, A[1] + (B[1]-A[1])*t], h = hA + (hB - hA)*t; x.moveTo(p[0], p[1]); x.lineTo(p[0], p[1] - h*.92); }
+      x.stroke();
+      // iki altin kusak
+      [[1, 2.2], [.42, 1.4]].forEach(([f, lw]) => { x.beginPath(); x.moveTo(A[0], A[1] - hA*f); x.lineTo(B[0], B[1] - hB*f); x.lineWidth = lw; x.strokeStyle = gold; x.stroke(); });
+      // direkler: siyah govde + altin top
+      const adim = Math.max(1, Math.round(L/3));
+      for(let j=0;j<=adim;j++){ const m = M(j/adim), Pp = T(m), h = citH*olc(m) + 2;
+        x.strokeStyle = "#0E100E"; x.lineWidth = 2.6; x.beginPath(); x.moveTo(Pp[0], Pp[1]); x.lineTo(Pp[0], Pp[1] - h); x.stroke();
+        x.beginPath(); x.arc(Pp[0], Pp[1] - h - 1.5, 2.6, 0, 7); x.fillStyle = gold; x.fill(); x.lineWidth = .7; x.strokeStyle = "rgba(60,40,8,.9)"; x.stroke(); }
+      // zemin cizgisi altin
+      x.strokeStyle = gold; x.lineWidth = 1.4; x.beginPath(); x.moveTo(A[0], A[1]); x.lineTo(B[0], B[1]); x.stroke();
+    });
+  }
+  else if(D.cit !== false){
     const kenarlar = new Map();
     (sec.butun ? [{ poly: F.sinir }] : F.parcalar).forEach(p => p.poly.forEach((q, i) => { const b = p.poly[(i+1) % p.poly.length];
       const an = [q, b].map(r=>r.map(v=>Math.round(v*2)/2).join(",")).sort().join("|");
@@ -11743,7 +11799,7 @@ function ilCapCiz(x, D, V, TF, sec){
       (y.eksenler || []).slice().sort((a, b) => uz(b) - uz(a)).forEach(e => { if(n >= 2 || uz(e) < 35) return;
         const m = e.length, dilim = [e.slice(Math.floor(m*.33), Math.ceil(m*.67) + 1), e.slice(Math.floor(m*.55)), e.slice(0, Math.ceil(m*.45) + 1), e];
         for(const d of dilim) if(d.length > 1 && yolYazi(d, kadAd, 24, true)){ n++; break; } }); }); }
-  if(sec.etiket && !sec.butun) F.parcalar.forEach(p => { const s2 = satildi(p.no); ilEtiket(x, p.poly.map(T), String(p.no ?? ""), s2 ? "SATILDI" : ilSayi(p.m2) + " m²", D.noBoy || 1, s2); });
+  if(sec.etiket && !sec.butun) F.parcalar.forEach(p => { const s2 = satildi(p.no); ilEtiket(x, p.poly.map(T), String(p.no ?? ""), s2 ? "SATILDI" : ilSayi(p.m2) + " m²", D.noBoy || 1, s2, PREM); });
   // cizilmekte olan yolun noktalari
   if(D._taslak) D._taslak.pts.forEach((q, i) => { const p = T(q); x.beginPath(); x.arc(p[0], p[1], i ? 7 : 9, 0, 7);
     x.fillStyle = i ? "#F2D27A" : "#FFFFFF"; x.fill(); x.lineWidth = 2.5; x.strokeStyle = "#1A1206"; x.stroke(); });
@@ -11765,7 +11821,7 @@ function ilYakinCiz(x, e, D, V, P, W, Hc){
   const ex0 = Math.min(...ek.map(q=>q[0])), ex1 = Math.max(...ek.map(q=>q[0])), ey0 = Math.min(...ek.map(q=>q[1])), ey1 = Math.max(...ek.map(q=>q[1]));
   const kin = Math.min(.9*bw/Math.max(1, ex1-ex0), .82*bh/Math.max(1, ey1-ey0)) * (e.zum || 1);
   const pcx = (ex0+ex1)/2 + (e.kx || 0), pcy = (ey0+ey1)/2 + (e.ky || 0);
-  const L = document.createElement("canvas"); L.width = bw; L.height = bh; const l = L.getContext("2d");
+  const kk = Math.max(1, x.getTransform().a), L = document.createElement("canvas"); L.width = Math.round(bw*kk); L.height = Math.round(bh*kk); const l = L.getContext("2d"); l.scale(kk, kk);
   l.imageSmoothingQuality = "high"; l.filter = "saturate(1.08) contrast(1.04)";
   l.drawImage(Z, bw/2 - kin*pcx, bh/2 - kin*pcy, F.foto.w*kin, F.foto.h*kin); l.filter = "none";
   ilCapCiz(l, D, V, p => [bw/2 + kin*(p[0]-pcx), bh/2 + kin*(p[1]-pcy)], { etiket:true, yolYazi: D.yolYazi !== false, cizgi:1, detay:true });
@@ -11785,7 +11841,7 @@ function ilYakinCiz(x, e, D, V, P, W, Hc){
   x.restore();
   if(PR){
     x.save(); x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 40; x.shadowOffsetY = 16; x.fillStyle = "#06100B"; x.fillRect(X + 6, Yb + 6, bw - 12, bh - 12); x.restore();
-    x.save(); ilYuvarlak(x, X, Yb, bw, bh, 30*s); x.clip(); x.drawImage(L, X, Yb);
+    x.save(); ilYuvarlak(x, X, Yb, bw, bh, 30*s); x.clip(); x.drawImage(L, X, Yb, bw, bh);
     x.beginPath(); x.rect(X - 200, Yb - 200, bw + 400, bh + 400); ilYuvarlakEkle(x, X, Yb, bw, bh, 30*s);
     x.shadowColor = "rgba(0,0,0,.5)"; x.shadowBlur = 30*s; x.fillStyle = "#000"; x.fill("evenodd"); x.restore();
     x.drawImage(V.ilYakin, X0, Y0, FW, FH);
@@ -11793,7 +11849,7 @@ function ilYakinCiz(x, e, D, V, P, W, Hc){
   }
   // kutu: golge -> resim (ic golgeyle) -> altin cerceve -> baslik serit
   x.save(); x.shadowColor = "rgba(0,0,0,.6)"; x.shadowBlur = 34; x.shadowOffsetY = 14; ilYuvarlak(x, X, Yb, bw, bh, r); x.fillStyle = "#0B2A20"; x.fill(); x.restore();
-  x.save(); ilYuvarlak(x, X, Yb, bw, bh, r); x.clip(); x.drawImage(L, X, Yb);
+  x.save(); ilYuvarlak(x, X, Yb, bw, bh, r); x.clip(); x.drawImage(L, X, Yb, bw, bh);
   x.beginPath(); x.rect(X - 200, Yb - 200, bw + 400, bh + 400); ilYuvarlakEkle(x, X, Yb, bw, bh, r);
   x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 28*s; x.fillStyle = "#000"; x.fill("evenodd"); x.restore();
   ilAltinCerceve(x, X, Yb, bw, bh, r, s);
@@ -12048,10 +12104,10 @@ const IL_OGE = {
     return [0, 0, w, h]; }
 };
 
-function ilanCiz(cv, D, V){
-  const O = IL_ORAN[D.oran], W = O.W, Hc = O.H;
-  cv.width = W; cv.height = Hc;
-  const x = cv.getContext("2d");
+function ilanCiz(cv, D, V, kat){
+  const O = IL_ORAN[D.oran], W = O.W, Hc = O.H, k = kat || 1;
+  cv.width = W*k; cv.height = Hc*k;
+  const x = cv.getContext("2d"); x.setTransform(k, 0, 0, k, 0, 0);
   const P = ilPlan(x, D, V, W, Hc);
   D.ogeler.forEach(e => {
     if(e.gizli){ e._kutu = null; return; }
@@ -12166,8 +12222,8 @@ function ilanDokuYukle(){
   if(window.__ilanDoku) return window.__ilanDoku;
   const al = ad => new Promise(r => { const i = new Image(); i.onload = () => r(i);
     i.onerror = () => { const j = new Image(); j.onload = () => r(j); j.onerror = () => r(null); j.src = gv(ad + ".webp"); }; i.src = gv("peyzaj/" + ad + ".webp"); });
-  return (window.__ilanDoku = Promise.all(["asfalt", "cim-1", "ilan-bilgi", "ilan-yakin", "ilan-kutu-koyu", "ilan-kutu-krem", "ilan-pusula", "ilan-yol-ikon"].map(al))
-    .then(([a, c, b, y, k1, k2, pu, yi]) => ({ asfalt:a, cim:c, ilBilgi:b, ilYakin:y, ilKoyu:k1, ilKrem:k2, ilPusula:pu, ilYolIkon:yi })));
+  return (window.__ilanDoku = Promise.all(["asfalt", "cim-1", "ilan-bilgi", "ilan-yakin", "ilan-kutu-koyu", "ilan-kutu-krem", "ilan-pusula", "ilan-yol-ikon", "ilan-asfalt", "ilan-cim"].map(al))
+    .then(([a, c, b, y, k1, k2, pu, yi, a2, c2]) => ({ asfalt: a2 || a, asfaltYeni: !!a2, cim: c2 || c, cimYeni: !!c2, ilBilgi:b, ilYakin:y, ilKoyu:k1, ilKrem:k2, ilPusula:pu, ilYolIkon:yi })));
 }
 async function ilanFontlar(){ try{ await Promise.all(["400 40px Anton", "600 30px Oswald", "700 30px Oswald", "700 20px Inter", "800 20px Inter", "800 40px 'Playfair Display'", "600 30px Cinzel", "700 30px Cinzel"].map(f => document.fonts.load(f, "ŞİĞÜÖÇşığüöç0123"))); }catch(e){} }
 
@@ -12271,6 +12327,9 @@ function ilanEkran(){
       <label class="ilTik"><input type="checkbox" ${D.cit !== false ? "checked" : ""} onchange="ilanAyar('cit', this.checked)"> Panel çit</label>
       <label class="ilTik"><input type="checkbox" ${D.yolYazi !== false ? "checked" : ""} onchange="ilanAyar('yolYazi', this.checked)"> Yol yazıları</label>
       ${ilanKaydirici("yolKat", "Yol genişliği (görünüm)", Math.round((D.yolKat || 1)*100), 60, 250, "%")}
+      <div class="field"><label>Parsel görünümü</label><select onchange="ilanAyar('parselStil', this.value)">
+        <option value="premium" ${D.parselStil !== "yesil" ? "selected" : ""}>Premium (zümrüt · altın · ferforje çit)</option>
+        <option value="yesil" ${D.parselStil === "yesil" ? "selected" : ""}>Klasik (yeşil · panel çit)</option></select></div>
       <label class="ilTik"><input type="checkbox" ${D.asfaltCanli ? "checked" : ""} onchange="ilanAyar('asfaltCanli', this.checked)"> Resimdeki asfaltı canlandır</label>
       <div class="field"><label>Yol görünümü</label><select onchange="ilanAyar('yolStil', this.value)">
         <option value="sunum" ${D.yolStil !== "klasik" ? "selected" : ""}>Sunum (banketli, şeritli)</option>
@@ -12551,7 +12610,7 @@ async function ilanUret(){
   toast("Afiş hazırlanıyor…");
   await ilanFontlar();
   const c = document.createElement("canvas"), D = ILAN.D, sec = ILAN.secili; ILAN.secili = null;
-  ilanCiz(c, D, ILAN.V); ILAN.secili = sec; ilanCizTuval();
+  ilanCiz(c, D, ILAN.V, 2); ILAN.secili = sec; ilanCizTuval();
   const blob = await new Promise(r => c.toBlob(r, "image/jpeg", .93));
   const p = ILAN.p, ad2 = `${p.ada || 0}-${p.parsel}-ilan-${D.oran === "45" ? "4x5" : "9x16"}-${Date.now().toString().slice(-5)}.jpg`;
   indirBlob(blob, ad2);
