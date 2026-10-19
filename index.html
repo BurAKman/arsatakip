@@ -2251,7 +2251,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.5.5";
+const SURUM_MORDOR = "v 2.5.6";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11471,7 +11471,7 @@ function ilDerVarsayilan(F, oran, yakin){ const O = IL_ORAN[oran], K = ilSinirKu
   const kap = Math.max(O.W/F.foto.w, O.H/F.foto.h);   // resmin ekrani tam doldurdugu olcek
   // yakin cekim varken: resim oldugu gibi, buyutmeden, ekrana tam sigar (okunurluk kutunun isi)
   if(yakin) return { k1: kap, ax: O.W/2 - kap*(F.foto.w/2 - K.uc), hy: O.H/2 - kap*(F.foto.h/2 - K.vc), uzak: 1, gecis: 1.9*ph, wv: .7*ph, altBant: O.altBant };
-  const k1 = Math.max(.3, Math.min(kap*1.6, (O.pGen*O.W)/pw));   // pikselleşmesin: en fazla 1,6 kat
+  const k1 = Math.max(kap, Math.min(kap*1.6, (O.pGen*O.W)/pw));   // ekrani doldurur, pikselleşmesin: en fazla 1,6 kat
   const ax = yakin ? O.W - 70 - k1*(K.x1 - K.uc) : Math.min(O.W*.62, O.W - 30 - k1*(K.x1 - K.uc));
   return { k1, ax, hy: (yakin ? O.pYYakin : O.pY)*O.H, uzak: .3, gecis: 1.9*ph, wv: .7*ph, altBant: O.altBant }; }
 function ilYakinAcik(D){ return D.ogeler.some(e => e.tip === "yakin" && !e.gizli); }
@@ -11482,7 +11482,7 @@ function ilPlan(x, D, V, W, Hc){
   const sig = t => 1/(1+Math.exp(-t)), yakin = ilYakinAcik(D);
   const DO = (D.der && D.der[D.oran]) || ilDerVarsayilan(F, D.oran, yakin);
   const ax = DO.ax + (z.x||0), hy = DO.hy + (z.y||0), k1 = DO.k1 * (z.zum || 1);
-  const derin = D.derinlik !== false;
+  const derin = false;   // resim asla bukulmez: duz olcek + kaydirma
   const f = derin ? (z.uzak ?? DO.uzak) : 1, v0 = vc - DO.gecis + (z.gecis || 0), wv = DO.wv || 110;
   const k0 = derin ? Math.max(k1*.55, (ax + 4)/Math.max(1, uc), (W - ax + 4)/Math.max(1, fw - uc)) : k1;
   const t = v => sig((v - v0)/wv), sx = v => k0 + (k1 - k0)*t(v), sy = v => sx(v)*(f + (1 - f)*t(v));
@@ -11622,12 +11622,13 @@ function ilCapCiz(x, D, V, TF, sec){
     // 3) kenar seritleri: (ic bant) - (daha ic bant); kavsakta ic bantlar birlestigi icin cizgi acilir
     const Lk = katman(), l = Lk.getContext("2d"); l.fillStyle = "rgba(255,255,255,.93)";
     const lw = o => { const m = o.e[Math.floor(o.e.length/2)]; return Math.max(.14, 1.4/Math.max(.1, olc(m))); };
-    Y.forEach(o => { const [b1, b2] = ucB(o, -AGIZ); doldur(l, serit(o, o.g/2 - .3, b1, b2)); });
+    const genis = o => { const m = o.e[Math.floor(o.e.length/2)]; return o.g*olc(m) >= 11; };
+    Y.filter(genis).forEach(o => { const [b1, b2] = ucB(o, -AGIZ); doldur(l, serit(o, o.g/2 - .3, b1, b2)); });
     l.globalCompositeOperation = "destination-out"; l.fillStyle = "#000";
     Y.forEach(o => { const [b1, b2] = ucB(o, o.g); doldur(l, serit(o, Math.max(.2, o.g/2 - .3 - lw(o)), b1, b2)); hunileri(o, 0).forEach(P => doldur(l, P)); });
     x.drawImage(Lk, 0, 0);
     // 4) orta kesik cizgi (perspektife olcekli)
-    Y.forEach(o => { const m = o.e[Math.floor(o.e.length/2)], sc = Math.max(.3, olc(m));
+    Y.filter(o => o.g*olc(o.e[Math.floor(o.e.length/2)]) >= 9).forEach(o => { const m = o.e[Math.floor(o.e.length/2)], sc = Math.max(.3, olc(m));
       x.save(); if(o.taslak) x.globalAlpha = .7; x.setLineDash([Math.max(6, 3*sc), Math.max(5, 2.6*sc)]); x.lineCap = "butt";
       x.lineWidth = Math.max(1.4, .16*sc); x.strokeStyle = "rgba(255,255,255,.95)"; ilCizgi(x, TP(kirp(o.e, o.au[0] ? AGIZ + 1 : 0, o.au[1] ? AGIZ + 1 : 0), false)); x.stroke(); x.restore(); });
   }
@@ -12120,12 +12121,9 @@ function ilanEkran(){
     ${oturdu ? `<div class="card">
       <div class="bolum"><span class="rz altin">${svg("vector")}</span><b>Görünüm</b></div>
       ${ilanKaydirici("zum", "Yakınlaştır", Math.round((z.zum || 1)*100), 50, 250, "%")}
-      ${ilanKaydirici("uzak", "Uzağı sıkıştır (gökyüzü/tepeler)", Math.round((z.uzak ?? .3)*100), 12, 100, "%")}
-      ${ilanKaydirici("gecis", "Geçiş noktası (yukarı ↔ aşağı)", Math.round(z.gecis || 0), -400, 300, "")}
       ${ilanKaydirici("karart", "Parsel dışını karart", Math.round((D.karart || 0)*100), 0, 75, "%")}
       ${(ILAN.F.resmiler || []).map((rr, i) => [0, 1].map(u => { const v = ((D.uzatUc || {})[i] || [])[u];
         return ilanKaydirici("uc_" + i + "_" + u, `${(ILAN.F.resmiler.length > 1 ? (i+1) + ". " : "")}Resmi yolu ${ilUcYonu(rr, u)} ucundan uzat`, Math.round(+v || 0), 0, 250, " m"); }).join("")).join("")}
-      <label class="ilTik"><input type="checkbox" ${D.derinlik !== false ? "checked" : ""} onchange="ilanAyar('derinlik', this.checked)"> Derinlik efekti (uzak sıkışır, parsel büyür)</label>
       <label class="ilTik"><input type="checkbox" ${D.cit !== false ? "checked" : ""} onchange="ilanAyar('cit', this.checked)"> Panel çit</label>
       <label class="ilTik"><input type="checkbox" ${D.yolYazi !== false ? "checked" : ""} onchange="ilanAyar('yolYazi', this.checked)"> Yol yazıları</label>
       <label class="ilTik"><input type="checkbox" ${D.asfaltCanli ? "checked" : ""} onchange="ilanAyar('asfaltCanli', this.checked)"> Resimdeki asfaltı canlandır</label>
