@@ -2251,7 +2251,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.7.3";
+const SURUM_MORDOR = "v 2.7.4";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11717,7 +11717,7 @@ function ilCapCiz(x, D, V, TF, sec){
   const kad = ilKadSecili(D), ekYollar = ilEkYollar(D);
   const Y = [];
   kad.forEach(y => (y.eksenler || []).forEach((e, i) => { const g = (y.genler || [])[i] || 7, au = (y.asfaltUc || [])[i] || [0, 0];
-    Y.push({ e, g, au, b1: au[0] ? 0 : g*.5, b2: au[1] ? 0 : g*.5 }); }));
+    Y.push({ e, g, au, b1: 0, b2: 0, kad: true }); }));
   resmiSeritler.forEach(r => Y.push({ e: r.orta, g: r.g || 7, au: [0, 0], b1: 0, b2: 0, resmi: true }));
   ekYollar.forEach(r => { const g = r.g || 7, au = r.au || [0, 0]; Y.push({ e: r.orta, g, au, b1: au[0] ? 0 : g*.5, b2: au[1] ? 0 : g*.5, taslak: r.taslak }); });
   // gorunum genisligi: kullanici carpani + kucuk olcekte bile belirgin olsun (ekranda en az 8 px)
@@ -11733,7 +11733,7 @@ function ilCapCiz(x, D, V, TF, sec){
   // cizgiyi asfalt uclarindan L metre kirp
   const kirp = (e, bas, son) => { const kes = (q, L) => { let t = 0; while(q.length > 2){ const d = Math.hypot(q[q.length-1][0]-q[q.length-2][0], q[q.length-1][1]-q[q.length-2][1]); if(t + d > L) break; t += d; q.pop(); } return q; };
     let q = e.slice(); if(son) q = kes(q, son); if(bas) q = kes(q.reverse(), bas).reverse(); return q; };
-  Y.forEach(o => { if(!o.resmi && (o.au[0] || o.au[1])) o.e = kirp(o.e, o.au[0] ? o.g*.6 : 0, o.au[1] ? o.g*.6 : 0); });
+  Y.forEach(o => { if(!o.resmi && (o.au[0] || o.au[1])) o.e = kirp(o.e, o.au[0] ? o.g*.95 : 0, o.au[1] ? o.g*.95 : 0); });
   // resimdeki asfaltin gercek rengi (uc noktasinda, 5x5 ortalama)
   let Zr = null; const fotoRenk = m => { try{ if(!Zr){ const Zc = ilZeminOnbellek(V, D); Zr = Zc.getContext("2d", { willReadFrequently:true }); }
       const q = ilH(F.H, m), d = Zr.getImageData(Math.round(q[0]) - 2, Math.round(q[1]) - 2, 5, 5).data; let rr = 0, gg = 0, bb = 0;
@@ -11863,7 +11863,7 @@ function ilCapCiz(x, D, V, TF, sec){
 
   if(sec.detay && D.agac !== false && PREM) ilAgaclarIc(x, F, Y, T, olc, V, satildi);
   if(D.cit !== false && PREM && sec.butun){ /* ana gorselde sade: altin kenar */ }
-  else if(D.cit !== false && PREM && sec.detay && D.ayirici !== "ferforje"){
+  else if(PREM && sec.detay){   // tek tasarim: dista koyu ferforje, icte beyaz bolmeler (kayitli eski ayarlar yok sayilir)
     const kenarlar = new Map(), dugum = new Map(), an = r => r.map(v => Math.round(v*2)/2).join(",");
     F.parcalar.forEach(p => p.poly.forEach((q, i) => { const b = p.poly[(i+1) % p.poly.length], k2 = [q, b].map(an).sort().join("|");
       if(!kenarlar.has(k2)) kenarlar.set(k2, [q, b]); dugum.set(an(q), q); }));
