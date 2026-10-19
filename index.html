@@ -2251,7 +2251,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.5.4";
+const SURUM_MORDOR = "v 2.5.5";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11468,7 +11468,10 @@ function ilSinirKutu(F){ const S = F.sinir.map(m => ilH(F.H, m)), xs = S.map(q=>
 function ilOkunurOlcek(F, oran){ const O = IL_ORAN[oran], K = ilSinirKutu(F); return .6*O.W/Math.max(1, K.x1 - K.x0); }
 // baslangic yerlesimi. yakin=true: parsel kucuk tutulur, saga yaslanir, koy gorunur; buyuk hali kutuda
 function ilDerVarsayilan(F, oran, yakin){ const O = IL_ORAN[oran], K = ilSinirKutu(F), pw = (K.x1 - K.x0) || 1, ph = (K.y1 - K.y0) || 1;
-  const k1 = Math.max(.3, Math.min(8, (yakin ? O.pGenYakin : O.pGen)*O.W/pw));
+  const kap = Math.max(O.W/F.foto.w, O.H/F.foto.h);   // resmin ekrani tam doldurdugu olcek
+  // yakin cekim varken: resim oldugu gibi, buyutmeden, ekrana tam sigar (okunurluk kutunun isi)
+  if(yakin) return { k1: kap, ax: O.W/2 - kap*(F.foto.w/2 - K.uc), hy: O.H/2 - kap*(F.foto.h/2 - K.vc), uzak: 1, gecis: 1.9*ph, wv: .7*ph, altBant: O.altBant };
+  const k1 = Math.max(.3, Math.min(kap*1.6, (O.pGen*O.W)/pw));   // pikselleşmesin: en fazla 1,6 kat
   const ax = yakin ? O.W - 70 - k1*(K.x1 - K.uc) : Math.min(O.W*.62, O.W - 30 - k1*(K.x1 - K.uc));
   return { k1, ax, hy: (yakin ? O.pYYakin : O.pY)*O.H, uzak: .3, gecis: 1.9*ph, wv: .7*ph, altBant: O.altBant }; }
 function ilYakinAcik(D){ return D.ogeler.some(e => e.tip === "yakin" && !e.gizli); }
@@ -11987,7 +11990,13 @@ function ilanCiz(cv, D, V){
   const P = ilPlan(x, D, V, W, Hc);
   D.ogeler.forEach(e => {
     if(e.gizli){ e._kutu = null; return; }
-    if(e.tip === "yakin"){ e._kutu = ilYakinCiz(x, e, D, V, P, W, Hc); return; }
+    if(e.tip === "yakin"){
+      // elle tasinmadiysa: kutu parseli ortmesin -> ustte (kunye alti) ya da altta, parselin olmadigi yere
+      if(!e.elle){ const O2 = IL_ORAN[D.oran], s = (typeof e.s === "object" ? e.s[D.oran] : e.s) || 1, bh = O2.yakinH*s/Hc, pk = P.parsel;
+        const ust = .205, alt = Math.min(.86 - bh, .555), kes = y0 => !(pk[3] < y0*Hc - 30 || pk[1] > (y0 + bh)*Hc + 30);
+        const y = !kes(ust) ? ust : !kes(alt) ? alt : ((pk[1] + pk[3])/2 > Hc/2 ? ust : alt);
+        e.pos[D.oran] = [(e.pos[D.oran] || e.pos["916"])[0], y]; }
+      e._kutu = ilYakinCiz(x, e, D, V, P, W, Hc); return; }
     const pos = e.pos[D.oran] || e.pos["916"], s = (typeof e.s === "object" ? e.s[D.oran] : e.s) || 1;
     x.save(); x.translate(pos[0]*W, pos[1]*Hc); x.scale(s, s);
     const k = IL_OGE[e.tip](x, e, W, P, V) || [0,0,0,0];
@@ -12178,7 +12187,7 @@ function ilanGoz(i){ const D = ILAN.D, e = D.ogeler[i]; e.gizli = !e.gizli;
   ilanKaydet(); ilanEkran(); }
 function ilanSec(i){ ILAN.secili = ILAN.secili === i ? null : i; ilanEkran(); }
 function ilanSifirla(){ const D = ILAN.D; D.zemin = {}; D.der = {}; if(ILAN.V.veri) D.der[D.oran] = ilDerVarsayilan(ILAN.V.veri, D.oran, ilYakinAcik(D));
-  const yeni = ilanOgeler(ILAN.p); D.ogeler.forEach(e => { const y = yeni.find(q => q.id === e.id); if(y){ e.pos = y.pos; e.s = y.s; } });
+  const yeni = ilanOgeler(ILAN.p); D.ogeler.forEach(e => { const y = yeni.find(q => q.id === e.id); if(y){ e.pos = y.pos; e.s = y.s; delete e.elle; } });
   ilanKaydet(); ilanEkran(); }
 function ilanDuzenCiz(){
   const K = document.getElementById("ilDuzen"); if(!K) return;
@@ -12239,7 +12248,7 @@ function ilanTuvalOlay(){
     else { const z = D.zemin = D.zemin || {}; sur = { zemin:true, px, py, z0:[z.x || 0, z.y || 0] }; } };
   cv.onpointermove = ev => { if(!sur || sur.dokun || sur.yol) return; const [px, py] = nk(ev), D = ILAN.D;
     if(sur.zemin){ D.zemin.x = sur.z0[0] + px - sur.px; D.zemin.y = sur.z0[1] + py - sur.py; }
-    else sur.e.pos[D.oran] = [sur.p0[0] + (px - sur.px)/cv.width, sur.p0[1] + (py - sur.py)/cv.height];
+    else { sur.e.pos[D.oran] = [sur.p0[0] + (px - sur.px)/cv.width, sur.p0[1] + (py - sur.py)/cv.height]; if(sur.e.tip === "yakin") sur.e.elle = true; }
     sur.oynadi = true; if(!ILAN.rafVar){ ILAN.rafVar = true; requestAnimationFrame(() => { ILAN.rafVar = false; ilanCizTuval(); }); } };
   cv.onpointerup = ev => { const s = sur; sur = null; if(!s) return;
     if(s.dokun){ if(ILAN.V.zemin && ILAN.dokun) ilanOturt(s.px, s.py); return; }
@@ -12268,8 +12277,16 @@ function ilanRenkliCizgi(veri, w, h, tx, ty, sMin, tTol){ // canli renkli (sari 
   if(tonlar.length < 40) return { hata:"Renkli çizgi bulunamadı" };
   tonlar.sort((a, b) => a - b); const ton = tonlar[Math.floor(tonlar.length/2)];
   const fark = v => { const d = Math.abs(v - ton); return Math.min(d, 360 - d); };
-  const kalin = new Uint8Array(w*h), liste = [];
+  const kalin = new Uint8Array(w*h); let liste = [];
   for(let i=0;i<w*h;i++){ const c = q(i*4); if(c[1] >= sMin && c[2] > .5 && fark(c[0]) < tTol) liste.push(i); }
+  // cizgi, cevresindeki zeminden belirgin DAHA DOYGUN olmali: sari bugday tarlasi gibi ayni tondaki genis alanlar elenir
+  { const S = new Float32Array(w*h); for(let i=0;i<w*h;i++){ const k = i*4, mx = Math.max(P[k], P[k+1], P[k+2]), mn = Math.min(P[k], P[k+1], P[k+2]); S[i] = mx ? (mx - mn)/mx : 0; }
+    const r = Math.max(5, Math.round(Math.max(w, h)/260)), I = new Float64Array((w+1)*(h+1));
+    for(let y=0;y<h;y++){ let s = 0; for(let x=0;x<w;x++){ s += S[y*w+x]; I[(y+1)*(w+1)+x+1] = I[y*(w+1)+x+1] + s; } }
+    const ort = i => { const x = i % w, y = (i - x)/w, x0 = Math.max(0, x-r), y0 = Math.max(0, y-r), x1 = Math.min(w, x+r+1), y1 = Math.min(h, y+r+1);
+      return (I[y1*(w+1)+x1] - I[y0*(w+1)+x1] - I[y1*(w+1)+x0] + I[y0*(w+1)+x0])/((x1-x0)*(y1-y0)); };
+    const belirgin = liste.filter(i => S[i] - ort(i) >= .07);
+    if(belirgin.length >= 60 && belirgin.length < liste.length*.8) liste = belirgin; }
   for(const j of liste){ const x = j % w, y = (j - x)/w;
     for(let yy=Math.max(0,y-1); yy<=Math.min(h-1,y+1); yy++) for(let xx=Math.max(0,x-1); xx<=Math.min(w-1,x+1); xx++) kalin[yy*w+xx] = 1; }
   // dokunulan nokta cizgiye denk geldiyse en yakin bos noktaya kay
