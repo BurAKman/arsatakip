@@ -2251,7 +2251,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.6.9";
+const SURUM_MORDOR = "v 2.7.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11381,7 +11381,7 @@ function ilEtiket(x, P, no, m2, carp, satildi, prem, ayar){
   for(let X=mnx; X<=mxx; X+=st) for(let Y=mny; Y<=mxy; Y+=st){ const d = ilKenarUzak([X, Y], P); if(!en || d > en.d) en = { d, X, Y }; }
   if(!en || en.d <= 0) return;
   // premium: buyuk altin serif numara USTTE, altinda sade beyaz m² (hap yok); satilanda kirmizi SATILDI hapi
-  const hap = !prem || satildi;
+  const hap = true;
   const olcu = B => { x.font = prem ? `800 ${Math.round(B*1.02)}px ${IL_SERIF}` : `400 ${B}px ${IL_FONT.kalin}`; const nw = no ? x.measureText(no).width : 0, nh = no ? B*.78 : 0;
     if(hap){ x.font = `800 ${Math.round(B*.44)}px ${IL_FONT.govde}`; return { nw, nh, mw: x.measureText(m2).width + B*.42, mh: B*.62 }; }
     x.font = `800 ${Math.round(B*.40)}px ${IL_FONT.govde}`; return { nw, nh, mw: x.measureText(m2).width + B*.1, mh: B*.46 }; };
@@ -11422,10 +11422,10 @@ function ilEtiket(x, P, no, m2, carp, satildi, prem, ayar){
   x.shadowColor = "rgba(0,0,0,.35)"; x.shadowBlur = 5;
   ilYuvarlak(x, mX - o.mw/2, mY - o.mh/2, o.mw, o.mh, o.mh/2);
   if(satildi){ const gr = x.createLinearGradient(0, mY - o.mh/2, 0, mY + o.mh/2); gr.addColorStop(0, "#E53935"); gr.addColorStop(1, "#A3161A"); x.fillStyle = gr; }
-  else x.fillStyle = "rgba(255,255,255,.95)";
+  else x.fillStyle = prem ? "rgba(6,34,16,.78)" : "rgba(255,255,255,.95)";
   x.fill(); x.shadowColor = "transparent";
   if(satildi){ x.lineWidth = Math.max(1, B*.04); x.strokeStyle = "rgba(255,255,255,.85)"; x.stroke(); }
-  x.font = `800 ${Math.round(B*.44)}px ${IL_FONT.govde}`; x.fillStyle = satildi ? "#FFFFFF" : "#123B1E";
+  x.font = `800 ${Math.round(B*.44)}px ${IL_FONT.govde}`; x.fillStyle = satildi || prem ? "#FFFFFF" : "#123B1E";
   if(satildi) x.letterSpacing = Math.max(1, B*.04) + "px"; x.fillText(m2, mX, mY + 1); x.letterSpacing = "0px";
   x.restore(); }
 
@@ -11435,7 +11435,7 @@ function ilEtiket(x, P, no, m2, carp, satildi, prem, ayar){
    Tohumlu rastgele -> her cizimde ayni yer; yollara ve parsel cizgisine binmez. */
 function ilAgacOrtak(x, F, Y, T, V, ic){
   const img = V.agac; if(!img || !F.sinir) return null;
-  if(!V._agacTon){ V._agacTon = [[-6,1.22,1.08],[0,1.15,1.0],[4,1.2,1.08],[-14,1.1,.94]].map(([h, sa, br]) => { const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
+  if(!V._agacTon){ V._agacTon = [[14,1.12,.98],[22,1.06,.88],[8,1.16,1.04],[28,1.0,.8]].map(([h, sa, br]) => { const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
       const g = c.getContext("2d"); g.filter = `hue-rotate(${h}deg) saturate(${sa}) brightness(${br})`; g.drawImage(img, 0, 0); return c; }); }
   const TT = x.getTransform(), KW = x.canvas.width/TT.a, KH = x.canvas.height/TT.d;
   const dSeg = (p, a, b) => { const vx = b[0]-a[0], vy = b[1]-a[1], L2 = vx*vx + vy*vy || 1, t = Math.max(0, Math.min(1, ((p[0]-a[0])*vx + (p[1]-a[1])*vy)/L2)); return Math.hypot(p[0]-a[0]-t*vx, p[1]-a[1]-t*vy); };
@@ -11518,13 +11518,13 @@ function ilAgaclarIc(x, F, Y, T, olc, V, satildi){
     for(let i=0;i<m;i++){ const a = P[i], b = P[(i+1)%m], k = [a, b].map(an).sort().join("|"); if(say.get(k) > 1) continue;   // ortak bolme: agac yok
       const L = Math.hypot(b[0]-a[0], b[1]-a[1]); if(L < 4) continue; const ux = (b[0]-a[0])/L, uy = (b[1]-a[1])/L;
       let nx = -uy, ny = ux; if(!ilIcinde([(a[0]+b[0])/2 + nx*.4, (a[1]+b[1])/2 + ny*.4], P)){ nx = -nx; ny = -ny; }
-      for(let t = 2.2 + rnd()*.8; t < L - 2; t += 2.7 + rnd()*.9){ if(sat && rnd() < .45) continue; if(rnd() < .08) continue;
-        const r = 1.0 + rnd()*.4, d = r*.8 + .35; ekle([a[0] + ux*t + nx*d, a[1] + uy*t + ny*d], r, P); } }
+      for(let t = 3 + rnd(); t < L - 2.5; t += 4.6 + rnd()*1.4){ if(sat && rnd() < .3) continue;
+        const r = 1.35 + rnd()*.4, d = r*.85 + .45; ekle([a[0] + ux*t + nx*d, a[1] + uy*t + ny*d], r, P); } }
     // bolme kesisimlerinde / uclarinda kucuk cali
     if(!sat) for(let i=0;i<m;i++){ const o = P[i], a = P[(i-1+m)%m], b = P[(i+1)%m];
       const k1 = [a, o].map(an).sort().join("|"), k2 = [o, b].map(an).sort().join("|"); if(say.get(k1) < 2 && say.get(k2) < 2) continue;
-      if(rnd() < .35) continue; const bis = birim([(a[0]-o[0])/(Math.hypot(a[0]-o[0], a[1]-o[1]) || 1) + (b[0]-o[0])/(Math.hypot(b[0]-o[0], b[1]-o[1]) || 1), (a[1]-o[1])/(Math.hypot(a[0]-o[0], a[1]-o[1]) || 1) + (b[1]-o[1])/(Math.hypot(b[0]-o[0], b[1]-o[1]) || 1)]);
-      const r = .95 + rnd()*.35; ekle([o[0] + bis[0]*(r*1.5 + .9), o[1] + bis[1]*(r*1.5 + .9)], r, P); } });
+      const bis = birim([(a[0]-o[0])/(Math.hypot(a[0]-o[0], a[1]-o[1]) || 1) + (b[0]-o[0])/(Math.hypot(b[0]-o[0], b[1]-o[1]) || 1), (a[1]-o[1])/(Math.hypot(a[0]-o[0], a[1]-o[1]) || 1) + (b[1]-o[1])/(Math.hypot(b[0]-o[0], b[1]-o[1]) || 1)]);
+      const r = 1.25 + rnd()*.3; ekle([o[0] + bis[0]*(r*1.6 + 1.1), o[1] + bis[1]*(r*1.6 + 1.1)], r, P); } });
   ilAgacBas(x, agac, T, olc, V);
 }
 
@@ -11796,9 +11796,11 @@ function ilCapCiz(x, D, V, TF, sec){
     if(zcim){ x.globalAlpha = .9; x.fillStyle = zcim; x.fill(); x.globalAlpha = 1; }
     else { x.globalAlpha = .8; x.fillStyle = cim; x.fill(); x.globalAlpha = 1; }
     const g = x.createLinearGradient(pmx0, pmy0, pmx1, pmy1);
-    if(zcim){ g.addColorStop(0, "rgba(90,200,110,.10)"); g.addColorStop(.55, "rgba(10,100,50,.12)"); g.addColorStop(1, "rgba(4,60,30,.30)"); }
+    if(zcim){ g.addColorStop(0, "rgba(150,215,80,.16)"); g.addColorStop(.55, "rgba(90,170,50,.08)"); g.addColorStop(1, "rgba(10,70,30,.18)"); }
     else { g.addColorStop(0, "rgba(60,190,95,.42)"); g.addColorStop(.55, "rgba(18,128,62,.46)"); g.addColorStop(1, "rgba(6,82,40,.55)"); }
     x.fillStyle = g; x.fill(); x.clip();
+    if(zcim){ x.save(); x.globalCompositeOperation = "soft-light"; const sg = x.createLinearGradient(pmx0, pmy0, pmx1, pmy1);
+      sg.addColorStop(0, "rgba(255,240,160,.55)"); sg.addColorStop(.5, "rgba(255,230,140,.25)"); sg.addColorStop(1, "rgba(255,220,120,.10)"); x.fillStyle = sg; x.fillRect(pmx0, pmy0, pmx1 - pmx0, pmy1 - pmy0); x.restore(); }
     const pr = x.createLinearGradient(pmx0, pmy0, pmx0 + (pmx1-pmx0)*.7, pmy1); pr.addColorStop(0, "rgba(255,255,255,0)"); pr.addColorStop(.45, "rgba(220,255,210,.16)"); pr.addColorStop(.55, "rgba(255,255,255,0)");
     x.fillStyle = pr; x.fillRect(pmx0, pmy0, pmx1 - pmx0, pmy1 - pmy0); x.restore(); };
   // kalin parlak altin kenar: genis isilti + koyu ayirici + altin govde + beyazimsi ic parlama
@@ -11859,13 +11861,26 @@ function ilCapCiz(x, D, V, TF, sec){
     // ic ayiricilar: ince krem cizgi, altinda yumusak golge
     x.save(); x.lineCap = "round"; x.lineJoin = "round";
     x.shadowColor = "rgba(0,24,10,.55)"; x.shadowBlur = 4; x.shadowOffsetY = 1;
-    x.lineWidth = 3*kc; x.strokeStyle = "rgba(255,240,200,.96)"; x.beginPath();
+    x.lineWidth = 4.4*kc; x.strokeStyle = "rgba(255,238,190,.97)"; x.beginPath();
     kenarlar.forEach(([q, b]) => { const A = T(q), B = T(b); x.moveTo(A[0], A[1]); x.lineTo(B[0], B[1]); }); x.stroke();
-    x.shadowColor = "transparent"; x.lineWidth = 1.2*kc; x.strokeStyle = "rgba(226,180,74,.95)"; x.stroke(); x.restore();
-    // dis sinir: kalin parlak altin
-    altinHale(P0, .8);
+    x.shadowColor = "transparent"; x.lineWidth = 1.6*kc; x.strokeStyle = "rgba(222,176,70,.9)"; x.stroke(); x.restore();
+    // dis sinir: parlak altin + alcak altin korkuluk (ince ray, kucuk direkler)
+    altinHale(P0, .7);
+    { const S = F.sinir, n = S.length, kor = [];
+      for(let i=0;i<n;i++){ const q = S[i], b = S[(i+1)%n], A = T(q), B = T(b), L = Math.hypot(B[0]-A[0], B[1]-A[1]); if(L < 3) continue;
+        const k = Math.max(1, Math.round(L/16)); for(let j=0;j<k;j++){ const t = j/k, m = [q[0] + (b[0]-q[0])*t, q[1] + (b[1]-q[1])*t]; kor.push({ m, p: T(m) }); } }
+      const hh = o => Math.max(6, Math.min(16, .95*olc(o.m)));
+      // ust ray: direk tepelerini birlestir
+      x.save(); x.lineJoin = "round"; x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 3; x.shadowOffsetY = 1;
+      x.beginPath(); kor.forEach((o, i) => { const y = o.p[1] - hh(o); i ? x.lineTo(o.p[0], y) : x.moveTo(o.p[0], y); }); x.closePath();
+      x.lineWidth = 1.8*kc; x.strokeStyle = "#E9C25A"; x.stroke(); x.shadowColor = "transparent"; x.lineWidth = .7*kc; x.strokeStyle = "rgba(255,248,210,.95)"; x.stroke();
+      kor.slice().sort((u, v) => u.p[1] - v.p[1]).forEach(o => { const h = hh(o), X = o.p[0], Yy = o.p[1];
+        x.lineWidth = 2*kc; x.strokeStyle = "#C9962E"; x.beginPath(); x.moveTo(X, Yy); x.lineTo(X, Yy - h); x.stroke();
+        x.lineWidth = .8*kc; x.strokeStyle = "rgba(255,244,200,.95)"; x.beginPath(); x.moveTo(X - .5, Yy - 1); x.lineTo(X - .5, Yy - h + 1); x.stroke();
+        x.beginPath(); x.arc(X, Yy - h - 1, 1.7*kc, 0, 7); x.fillStyle = "#FFE7A0"; x.fill(); });
+      x.restore(); }
     // direk noktalari: kose + kenar boyunca ~ekranda 46 px'de bir
-    const nokta = (m, buyuk) => { const p = T(m), r = (buyuk ? 4.2 : 3.8)*kc; x.save(); x.shadowColor = "rgba(0,0,0,.6)"; x.shadowBlur = 4; x.shadowOffsetY = 1.2;
+    const nokta = (m, buyuk) => { const p = T(m), r = (buyuk ? 5.2 : 4.8)*kc; x.save(); x.shadowColor = "rgba(0,0,0,.6)"; x.shadowBlur = 4; x.shadowOffsetY = 1.2;
       x.beginPath(); x.arc(p[0], p[1], r, 0, 7); const g = x.createRadialGradient(p[0] - r*.35, p[1] - r*.4, r*.1, p[0], p[1], r);
       g.addColorStop(0, "#FFFFFF"); g.addColorStop(.55, buyuk ? "#FFE7A6" : "#FFF6DE"); g.addColorStop(1, buyuk ? "#C8962E" : "#D9B76A"); x.fillStyle = g; x.fill();
       x.shadowColor = "transparent"; x.lineWidth = .8; x.strokeStyle = "rgba(70,48,8,.85)"; x.stroke(); x.restore(); };
