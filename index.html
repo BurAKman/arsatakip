@@ -2251,7 +2251,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.7.4";
+const SURUM_MORDOR = "v 2.7.5";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -12888,7 +12888,7 @@ async function ilanUret(){
   await ilanFontlar();
   const c = document.createElement("canvas"), D = ILAN.D, sec = ILAN.secili; ILAN.secili = null;
   ilanCiz(c, D, ILAN.V, 2); ILAN.secili = sec; ilanCizTuval();
-  const blob = await new Promise(r => c.toBlob(r, "image/jpeg", .93));
+  const blob = await new Promise(r => c.toBlob(r, "image/jpeg", .86));
   const p = ILAN.p, ad2 = `${p.ada || 0}-${p.parsel}-ilan-${D.oran === "45" ? "4x5" : "9x16"}-${Date.now().toString().slice(-5)}.jpg`;
   indirBlob(blob, ad2);
   try{ await dosyaYukle(new File([blob], ad2, { type:"image/jpeg" }), "sunum", ILAN.id); toast("Afiş indirildi ve parselin belgelerine kaydedildi"); }
