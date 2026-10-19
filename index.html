@@ -2251,7 +2251,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.6.1";
+const SURUM_MORDOR = "v 2.6.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11375,19 +11375,26 @@ function ilKutuIcinde(P, x0, y0, x1, y1, pay){
   const nk = [];
   for(let i=0;i<=4;i++) for(let j=0;j<=2;j++) nk.push([x0 + (x1-x0)*i/4, y0 + (y1-y0)*j/2]);
   return nk.every(q => ilKenarUzak(q, P) >= pay); }
-function ilEtiket(x, P, no, m2, carp, satildi, prem){
+function ilEtiket(x, P, no, m2, carp, satildi, prem, ayar){
   let mnx = 1e9, mny = 1e9, mxx = -1e9, mxy = -1e9; P.forEach(q => { mnx = Math.min(mnx, q[0]); mny = Math.min(mny, q[1]); mxx = Math.max(mxx, q[0]); mxy = Math.max(mxy, q[1]); });
   let en = null; const st = Math.max(2, Math.min(mxx-mnx, mxy-mny)/40);
   for(let X=mnx; X<=mxx; X+=st) for(let Y=mny; Y<=mxy; Y+=st){ const d = ilKenarUzak([X, Y], P); if(!en || d > en.d) en = { d, X, Y }; }
   if(!en || en.d <= 0) return;
   const olcu = B => { x.font = `400 ${B}px ${IL_FONT.kalin}`; const nw = no ? x.measureText(no).width : 0, nh = no ? B*.78 : 0;
     x.font = `800 ${Math.round(B*.44)}px ${IL_FONT.govde}`; const mw = x.measureText(m2).width + B*.42, mh = B*.62; return { nw, nh, mw, mh }; };
-  const dene = (cx, cy) => { for(let B = Math.round(60*carp); B >= 18; B--){ const o = olcu(B), g = B*.12;
-      const ust = { tip:"ust", w: Math.max(o.nw, o.mw), h: o.nh + g + o.mh }, yan = { tip:"yan", w: o.nw + g*1.6 + o.mw, h: Math.max(o.nh, o.mh) };
-      for(const k of [ust, yan]) if(ilKutuIcinde(P, cx - k.w/2, cy - k.h/2, cx + k.w/2, cy + k.h/2, 3)) return { B, k, o, g, cx, cy }; } return null; };
+  // dizilim: once YAN (numara solda, m² sagda) -- tum parcalarda ayni duzen; sigmazsa UST
+  const sabit = ayar && ayar.B, ust0 = B => { const o = olcu(B), g = B*.12; return { o, g, ust: { tip:"ust", w: Math.max(o.nw, o.mw), h: o.nh + g + o.mh }, yan: { tip:"yan", w: o.nw + g*1.6 + o.mw, h: Math.max(o.nh, o.mh) } }; };
+  const dene = (cx, cy) => { const bas = sabit ? ayar.B : Math.round(60*carp), alt = sabit ? Math.max(18, Math.round(ayar.B*.8)) : 18;
+    for(const tip of ["yan", "ust"]) for(let B = bas; B >= alt; B--){ const { o, g, ust, yan } = ust0(B), k = tip === "yan" ? yan : ust;
+      if(ilKutuIcinde(P, cx - k.w/2, cy - k.h/2, cx + k.w/2, cy + k.h/2, 3)) return { B, k, o, g, cx, cy }; }
+    if(sabit){ for(let B = alt - 1; B >= 16; B--){ const { o, g, ust, yan } = ust0(B); for(const k of [yan, ust]) if(ilKutuIcinde(P, cx - k.w/2, cy - k.h/2, cx + k.w/2, cy + k.h/2, 2)) return { B, k, o, g, cx, cy }; } }
+    return null; };
+  if(ayar && ayar.olc){ let en2 = 0; [[0,0],[-1,0],[1,0],[0,-1],[0,1]].forEach(([a, b]) => { const cx = en.X + a*en.d*.35, cy = en.Y + b*en.d*.35;
+      for(let B = Math.round(60*carp); B >= 16; B--){ const { yan } = ust0(B); if(ilKutuIcinde(P, cx - yan.w/2, cy - yan.h/2, cx + yan.w/2, cy + yan.h/2, 3)){ en2 = Math.max(en2, B); break; } } }); return en2; }
   // en ic nokta + cevresi denenir, en buyuk sonuc alinir
   let iyi = null;
-  [[0,0],[-1,0],[1,0],[0,-1],[0,1]].forEach(([a, b]) => { const r = dene(en.X + a*en.d*.35, en.Y + b*en.d*.35); if(r && (!iyi || r.B > iyi.B)) iyi = r; });
+  [[0,0],[-1,0],[1,0],[0,-1],[0,1]].forEach(([a, b]) => { const r = dene(en.X + a*en.d*.35, en.Y + b*en.d*.35);
+    if(r && (!iyi || (r.k.tip === "yan" && iyi.k.tip !== "yan") || (r.k.tip === iyi.k.tip && r.B > iyi.B))) iyi = r; });
   if(!iyi) iyi = { B:18, k:{ tip:"yan" }, o: olcu(18), g:2.2, cx: en.X, cy: en.Y };
   const { B, k, o, g, cx, cy } = iyi;
   x.save(); x.textBaseline = "middle";
@@ -11413,6 +11420,9 @@ function ilYogun(pts, adim, kapali){ const out = [], n = pts.length, son = kapal
   for(let i=0;i<son;i++){ const a = pts[i], b = pts[(i+1)%n], L = Math.hypot(b[0]-a[0], b[1]-a[1]), m = Math.max(1, Math.ceil(L/adim));
     for(let j=0;j<m;j++) out.push([a[0]+(b[0]-a[0])*j/m, a[1]+(b[1]-a[1])*j/m]); }
   if(!kapali) out.push(pts[n-1]); return out; }
+// ust katman: hedef tuvalin piksel boyutunda, ayni donusumle; ilBas ile 1:1 geri basilir
+function ilKatman(x){ const c = document.createElement("canvas"); c.width = x.canvas.width; c.height = x.canvas.height; const g = c.getContext("2d"); g.setTransform(x.getTransform()); return [c, g]; }
+function ilBas(x, c){ x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.drawImage(c, 0, 0); x.restore(); }
 // ust katman: hedef tuvalin piksel boyutunda, ayni donusumle; ilBas ile 1:1 geri basilir
 function ilKatman(x){ const c = document.createElement("canvas"); c.width = x.canvas.width; c.height = x.canvas.height; const g = c.getContext("2d"); g.setTransform(x.getTransform()); return [c, g]; }
 function ilBas(x, c){ x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.drawImage(c, 0, 0); x.restore(); }
@@ -11631,14 +11641,14 @@ function ilCapCiz(x, D, V, TF, sec){
       x.save(); x.filter = "blur(.7px)"; ilYol(x, z.P); x.fillStyle = gr; x.fill(); x.restore(); }));
     // 3) kenar seritleri: (ic bant) - (daha ic bant); kavsakta ic bantlar birlestigi icin cizgi acilir
     const Lk = katman(), l = Lk._g; l.fillStyle = "rgba(255,255,255,.93)";
-    const lw = o => { const m = o.e[Math.floor(o.e.length/2)]; return Math.max(.14, 1.4/Math.max(.1, olc(m))); };
-    const genis = o => { const m = o.e[Math.floor(o.e.length/2)]; return o.g*olc(m) >= 11; };
+    const lw = o => { const m = o.e[Math.floor(o.e.length/2)], s0 = Math.max(.05, olc(m)); return Math.max(.14, Math.min(o.g*.12, 1.4/s0), .9/s0); };
+    const genis = o => { const m = o.e[Math.floor(o.e.length/2)]; return o.g*olc(m) >= 5; };
     Y.filter(genis).forEach(o => { const [b1, b2] = ucB(o, -AGIZ); doldur(l, serit(o, o.g/2 - .3, b1, b2)); });
     l.globalCompositeOperation = "destination-out"; l.fillStyle = "#000";
     Y.forEach(o => { const [b1, b2] = ucB(o, o.g); doldur(l, serit(o, Math.max(.2, o.g/2 - .3 - lw(o)), b1, b2)); hunileri(o, 0).forEach(P => doldur(l, P)); });
     ilBas(x, Lk);
     // 4) orta kesik cizgi (perspektife olcekli)
-    Y.filter(o => o.g*olc(o.e[Math.floor(o.e.length/2)]) >= 9).forEach(o => { const m = o.e[Math.floor(o.e.length/2)], sc = Math.max(.3, olc(m));
+    Y.filter(o => o.g*olc(o.e[Math.floor(o.e.length/2)]) >= 5).forEach(o => { const m = o.e[Math.floor(o.e.length/2)], sc = Math.max(.3, olc(m));
       x.save(); if(o.taslak) x.globalAlpha = .7; x.setLineDash([Math.max(6, 3*sc), Math.max(5, 2.6*sc)]); x.lineCap = "butt";
       x.lineWidth = Math.max(1.4, .16*sc); x.strokeStyle = "rgba(255,255,255,.95)"; ilCizgi(x, TP(kirp(o.e, o.au[0] ? AGIZ + 1 : 0, o.au[1] ? AGIZ + 1 : 0), false)); x.stroke(); x.restore(); });
   }
@@ -11799,7 +11809,14 @@ function ilCapCiz(x, D, V, TF, sec){
       (y.eksenler || []).slice().sort((a, b) => uz(b) - uz(a)).forEach(e => { if(n >= 2 || uz(e) < 35) return;
         const m = e.length, dilim = [e.slice(Math.floor(m*.33), Math.ceil(m*.67) + 1), e.slice(Math.floor(m*.55)), e.slice(0, Math.ceil(m*.45) + 1), e];
         for(const d of dilim) if(d.length > 1 && yolYazi(d, kadAd, 24, true)){ n++; break; } }); }); }
-  if(sec.etiket && !sec.butun) F.parcalar.forEach(p => { const s2 = satildi(p.no); ilEtiket(x, p.poly.map(T), String(p.no ?? ""), s2 ? "SATILDI" : ilSayi(p.m2) + " m²", D.noBoy || 1, s2, PREM); });
+  if(sec.etiket && !sec.butun){
+    // nizami yazi: tum parcalarda ayni boy (kucuk parcalar zorlamasin diye medyanin %70'inden kucuk olanlar haric)
+    const L = F.parcalar.map(p => { const s2 = satildi(p.no); return { P: p.poly.map(T), no: String(p.no ?? ""), m2: s2 ? "SATILDI" : ilSayi(p.m2) + " m²", s2 }; });
+    const maks = L.map(o => ilEtiket(x, o.P, o.no, o.m2, D.noBoy || 1, o.s2, PREM, { olc:true }) || 0);
+    const sirali = maks.filter(v => v > 0).sort((a, b) => a - b), med = sirali.length ? sirali[Math.floor(sirali.length/2)] : 30;
+    const ortak = Math.max(18, Math.min(...sirali.filter(v => v >= med*.7), 60));
+    L.forEach((o, i) => ilEtiket(x, o.P, o.no, o.m2, D.noBoy || 1, o.s2, PREM, { B: Math.min(ortak, Math.max(16, maks[i] || ortak)) }));
+  }
   // cizilmekte olan yolun noktalari
   if(D._taslak) D._taslak.pts.forEach((q, i) => { const p = T(q); x.beginPath(); x.arc(p[0], p[1], i ? 7 : 9, 0, 7);
     x.fillStyle = i ? "#F2D27A" : "#FFFFFF"; x.fill(); x.lineWidth = 2.5; x.strokeStyle = "#1A1206"; x.stroke(); });
