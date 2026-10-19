@@ -2251,7 +2251,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.5.6";
+const SURUM_MORDOR = "v 2.5.7";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11568,8 +11568,10 @@ function ilCapCiz(x, D, V, TF, sec){
   const Y = [];
   kad.forEach(y => (y.eksenler || []).forEach((e, i) => { const g = (y.genler || [])[i] || 7, au = (y.asfaltUc || [])[i] || [0, 0];
     Y.push({ e, g, au, b1: au[0] ? 0 : g*.5, b2: au[1] ? 0 : g*.5 }); }));
-  resmiSeritler.forEach(r => Y.push({ e: r.orta, g: r.g || 7, au: [0, 0], b1: 0, b2: 0 }));
+  resmiSeritler.forEach(r => Y.push({ e: r.orta, g: r.g || 7, au: [0, 0], b1: 0, b2: 0, resmi: true }));
   ekYollar.forEach(r => Y.push({ e: r.orta, g: r.g || 7, au: [0, 0], b1: 0, b2: 0, taslak: r.taslak }));
+  // gorunum genisligi: kullanici carpani + kucuk olcekte bile belirgin olsun (ekranda en az 8 px)
+  Y.forEach(o => { const m = o.e[Math.floor(o.e.length/2)], s0 = Math.max(.05, olc(m)); o.g = Math.max(o.g*(D.yolKat || 1), 8/s0); });
   const serit = (o, yari, b1, b2) => { const uz = ilUzat(o.e, b1, b2), a = ilOfset(uz, yari), b = ilOfset(uz, -yari); return TP(a.concat(b.slice().reverse()), true); };
   const ucB = (o, k) => [o.au[0] ? k : o.b1, o.au[1] ? k : o.b2];
   const huni = (o, bas, kat) => { const e = bas ? o.e.slice().reverse() : o.e, n = e.length, uc = e[n-1];
@@ -11776,17 +11778,43 @@ function ilYakinCiz(x, e, D, V, P, W, Hc){
   x.beginPath(); x.moveTo(cx, cy); x.lineTo(k1[0], k1[1]); x.moveTo(cx, cy); x.lineTo(k2[0], k2[1]); x.stroke(); x.setLineDash([]);
   x.beginPath(); x.ellipse(cx, cy, hr*1.05, hr*.8, 0, 0, 7); x.lineWidth = 3; x.strokeStyle = "#F2D27A"; x.shadowColor = "rgba(0,0,0,.5)"; x.shadowBlur = 8; x.stroke();
   x.restore();
-  // kutu
-  x.save(); x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 26; x.shadowOffsetY = 10; ilYuvarlak(x, X, Yb, bw, bh, r); x.fillStyle = "#0B2A20"; x.fill(); x.restore();
-  x.save(); ilYuvarlak(x, X, Yb, bw, bh, r); x.clip(); x.drawImage(L, X, Yb); x.restore();
-  const ga = x.createLinearGradient(X, 0, X + bw, 0); ga.addColorStop(0, "#9C7A22"); ga.addColorStop(.5, "#F5D77E"); ga.addColorStop(1, "#9C7A22");
-  x.lineWidth = 4; x.strokeStyle = ga; ilYuvarlak(x, X, Yb, bw, bh, r); x.stroke();
+  // kutu: golge -> resim (ic golgeyle) -> altin cerceve -> baslik serit
+  x.save(); x.shadowColor = "rgba(0,0,0,.6)"; x.shadowBlur = 34; x.shadowOffsetY = 14; ilYuvarlak(x, X, Yb, bw, bh, r); x.fillStyle = "#0B2A20"; x.fill(); x.restore();
+  x.save(); ilYuvarlak(x, X, Yb, bw, bh, r); x.clip(); x.drawImage(L, X, Yb);
+  x.beginPath(); x.rect(X - 200, Yb - 200, bw + 400, bh + 400); ilYuvarlakEkle(x, X, Yb, bw, bh, r);
+  x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 28*s; x.fillStyle = "#000"; x.fill("evenodd"); x.restore();
+  ilAltinCerceve(x, X, Yb, bw, bh, r, s);
   const bas = (e.alan?.baslik || "").trim();
-  if(bas){ x.save(); x.font = `700 ${Math.round(22*s)}px ${IL_FONT.serit}`; x.letterSpacing = "2px"; const tw = x.measureText(bas).width + 30*s, th = 38*s;
-    ilYuvarlak(x, X + 14*s, Yb + 14*s, tw, th, th/2); x.fillStyle = "rgba(8,22,16,.85)"; x.fill(); x.lineWidth = 1.5; x.strokeStyle = "rgba(242,210,122,.9)"; x.stroke();
-    x.fillStyle = "#F2D27A"; x.textAlign = "left"; x.textBaseline = "middle"; x.fillText(bas, X + 29*s, Yb + 14*s + th/2 + 1); x.letterSpacing = "0px"; x.restore(); }
+  if(bas) ilAltinSerit(x, bas, X + bw/2, Yb, s);
   return [X, Yb, X + bw, Yb + bh];
 }
+
+function ilYuvarlakEkle(x,X,Y,w,h,r){ x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+h,r); x.arcTo(X+w,Y+h,X,Y+h,r); x.arcTo(X,Y+h,X,Y,r); x.arcTo(X,Y,X+w,Y,r); x.closePath(); }
+// metalik altin cerceve: koyu dis kontur + parlak altin bant + ince ic cizgi + kose suslemeleri
+function ilAltinCerceve(x, X, Y, w, h, r, s){
+  s = s || 1; const al = x.createLinearGradient(X, Y, X + w, Y + h);
+  [[0,"#7A5A14"],[.18,"#F7DE8E"],[.36,"#B88A26"],[.55,"#FFF0B8"],[.74,"#A87C1E"],[1,"#E9C66A"]].forEach(([t, c]) => al.addColorStop(t, c));
+  x.save();
+  x.lineWidth = 9*s; x.strokeStyle = "rgba(8,20,12,.85)"; ilYuvarlak(x, X, Y, w, h, r); x.stroke();
+  x.lineWidth = 5*s; x.strokeStyle = al; ilYuvarlak(x, X, Y, w, h, r); x.stroke();
+  x.lineWidth = 1.2*s; x.strokeStyle = "rgba(255,240,190,.7)"; ilYuvarlak(x, X + 7*s, Y + 7*s, w - 14*s, h - 14*s, Math.max(2, r - 7*s)); x.stroke();
+  // koseler: kucuk elmas + iki kisa kol
+  const k = 26*s;
+  [[X, Y, 1, 1], [X + w, Y, -1, 1], [X + w, Y + h, -1, -1], [X, Y + h, 1, -1]].forEach(([cx, cy, dx, dy]) => {
+    const ox = cx + dx*r*.29, oy = cy + dy*r*.29;
+    x.beginPath(); x.moveTo(ox + dx*k, oy); x.lineTo(ox, oy); x.lineTo(ox, oy + dy*k); x.lineWidth = 3*s; x.strokeStyle = al; x.lineCap = "round"; x.stroke();
+    x.beginPath(); x.moveTo(ox, oy - 7*s); x.lineTo(ox + 7*s, oy); x.lineTo(ox, oy + 7*s); x.lineTo(ox - 7*s, oy); x.closePath();
+    x.fillStyle = al; x.fill(); x.lineWidth = 1.2*s; x.strokeStyle = "rgba(8,20,12,.9)"; x.stroke(); });
+  x.restore(); }
+// cercevenin ust kenarina oturan altin serit baslik
+function ilAltinSerit(x, metin, cx, cy, s){
+  s = s || 1; x.save(); x.font = `700 ${Math.round(22*s)}px ${IL_FONT.serit}`; x.letterSpacing = 3*s + "px";
+  const tw = x.measureText(metin).width + 56*s, th = 40*s, X = cx - tw/2, Y = cy - th/2;
+  const al = x.createLinearGradient(0, Y, 0, Y + th); al.addColorStop(0, "#FFF0B8"); al.addColorStop(.45, "#E3B23C"); al.addColorStop(1, "#9C7A22");
+  x.shadowColor = "rgba(0,0,0,.5)"; x.shadowBlur = 12; x.shadowOffsetY = 4;
+  x.beginPath(); x.moveTo(X - 14*s, cy); x.lineTo(X, Y); x.lineTo(X + tw, Y); x.lineTo(X + tw + 14*s, cy); x.lineTo(X + tw, Y + th); x.lineTo(X, Y + th); x.closePath();
+  x.fillStyle = al; x.fill(); x.shadowColor = "transparent"; x.lineWidth = 1.5*s; x.strokeStyle = "rgba(8,20,12,.9)"; x.stroke();
+  x.fillStyle = "#14240F"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(metin, cx + 1.5*s, cy + 1); x.letterSpacing = "0px"; x.restore(); }
 
 /* ---------- ogeler ---------- */
 const IL_IKON = {
@@ -11862,8 +11890,10 @@ const IL_OGE = {
     ilYuvarlak(x, 0, 0, w, h, 22); const gz = x.createLinearGradient(0,0,0,h); gz.addColorStop(0,"rgba(14,32,22,.92)"); gz.addColorStop(1,"rgba(6,16,10,.92)");
     x.fillStyle = gz; x.fill(); x.restore();
     const ga = x.createLinearGradient(0,0,w,0); ga.addColorStop(0,"#8C6A1E"); ga.addColorStop(.5,"#F5D77E"); ga.addColorStop(1,"#8C6A1E");
-    x.lineWidth = 2; x.strokeStyle = ga; ilYuvarlak(x, 0, 0, w, h, 22); x.stroke();
-    x.lineWidth = 1; x.globalAlpha = .45; ilYuvarlak(x, 9, 9, w-18, h-18, 16); x.stroke(); x.globalAlpha = 1;
+    ilAltinCerceve(x, 0, 0, w, h, 22, 1);
+    // ust orta sus: kucuk elmas ve iki yana incelen cizgi
+    { const al = x.createLinearGradient(w/2 - 90, 0, w/2 + 90, 0); al.addColorStop(0, "rgba(227,192,106,0)"); al.addColorStop(.5, "#F7DE8E"); al.addColorStop(1, "rgba(227,192,106,0)");
+      x.fillStyle = al; x.fillRect(w/2 - 90, h - 1.5, 180, 3); }
     // ust satir: il · ilce
     x.textAlign = "center"; x.textBaseline = "middle";
     x.letterSpacing = "7px"; ilSigdir(x, a.ust, IL_FONT.serit, 600, tw - 180, 26, 14); x.fillStyle = "#E3C06A"; x.fillText(a.ust, tc + 3, 50); x.letterSpacing = "0px";
@@ -12126,6 +12156,7 @@ function ilanEkran(){
         return ilanKaydirici("uc_" + i + "_" + u, `${(ILAN.F.resmiler.length > 1 ? (i+1) + ". " : "")}Resmi yolu ${ilUcYonu(rr, u)} ucundan uzat`, Math.round(+v || 0), 0, 250, " m"); }).join("")).join("")}
       <label class="ilTik"><input type="checkbox" ${D.cit !== false ? "checked" : ""} onchange="ilanAyar('cit', this.checked)"> Panel çit</label>
       <label class="ilTik"><input type="checkbox" ${D.yolYazi !== false ? "checked" : ""} onchange="ilanAyar('yolYazi', this.checked)"> Yol yazıları</label>
+      ${ilanKaydirici("yolKat", "Yol genişliği (görünüm)", Math.round((D.yolKat || 1)*100), 60, 250, "%")}
       <label class="ilTik"><input type="checkbox" ${D.asfaltCanli ? "checked" : ""} onchange="ilanAyar('asfaltCanli', this.checked)"> Resimdeki asfaltı canlandır</label>
       <div class="field"><label>Yol görünümü</label><select onchange="ilanAyar('yolStil', this.value)">
         <option value="sunum" ${D.yolStil !== "klasik" ? "selected" : ""}>Sunum (banketli, şeritli)</option>
@@ -12173,7 +12204,7 @@ let ILAN_KAYDET_ZAMAN = null;
 function ilanKaydetGec(){ clearTimeout(ILAN_KAYDET_ZAMAN); ILAN_KAYDET_ZAMAN = setTimeout(ilanKaydet, 400); }
 function ilanKay(ad, v, bir){
   const D = ILAN.D, z = D.zemin = D.zemin || {};
-  if(ad === "zum") z.zum = v/100; else if(ad === "uzak") z.uzak = v/100; else if(ad === "gecis") z.gecis = v; else if(ad === "kadR") D.kadastroR = v; else if(ad === "karart") D.karart = v/100; else if(ad === "uzat") D.yolUzat = v;
+  if(ad === "zum") z.zum = v/100; else if(ad === "uzak") z.uzak = v/100; else if(ad === "gecis") z.gecis = v; else if(ad === "yolKat") D.yolKat = v/100; else if(ad === "kadR") D.kadastroR = v; else if(ad === "karart") D.karart = v/100; else if(ad === "uzat") D.yolUzat = v;
   else if(ad.startsWith("uc_")){ const [, i, u] = ad.split("_"); D.uzatUc = D.uzatUc || {}; const a = D.uzatUc[i] = D.uzatUc[i] || [null, null]; a[+u] = v; }
   const b = document.getElementById("ilk_" + ad); if(b) b.textContent = v + bir;
   ilanCizTuval(); ilanKaydetGec(); }
