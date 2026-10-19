@@ -2251,7 +2251,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.7.0";
+const SURUM_MORDOR = "v 2.7.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11434,8 +11434,12 @@ function ilEtiket(x, P, no, m2, carp, satildi, prem, ayar){
    ic : parsel/yol kenarina yasli cit gibi kucuk agac sirasi + bolme kesisimlerinde calilar
    Tohumlu rastgele -> her cizimde ayni yer; yollara ve parsel cizgisine binmez. */
 function ilAgacOrtak(x, F, Y, T, V, ic){
-  const img = V.agac; if(!img || !F.sinir) return null;
-  if(!V._agacTon){ V._agacTon = [[14,1.12,.98],[22,1.06,.88],[8,1.16,1.04],[28,1.0,.8]].map(([h, sa, br]) => { const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
+  const img = V.agac, PK = V.peyzaj; if((!img && !(PK && PK.agac.length)) || !F.sinir) return null;
+  if(!V._tur){ const ton = (im, h, sa, br) => { const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const g = c.getContext("2d"); g.filter = `hue-rotate(${h}deg) saturate(${sa}) brightness(${br})`; g.drawImage(im, 0, 0); return c; };
+    const eski = img ? [[14,1.12,.98],[22,1.06,.88],[8,1.16,1.04],[28,1.0,.8]].map(([h, sa, br]) => ton(img, h, sa, br)) : [];
+    const kit = (l, ek) => l && l.length ? l.flatMap(im => [im, ton(im, 0, 1.06, ek)]) : eski;
+    V._tur = { agac: kit(PK && PK.agac, .9), cali: kit(PK && PK.cali, .94), koru: kit(PK && PK.koru, .92) }; }
+  if(false){ V._agacTon = [[14,1.12,.98],[22,1.06,.88],[8,1.16,1.04],[28,1.0,.8]].map(([h, sa, br]) => { const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
       const g = c.getContext("2d"); g.filter = `hue-rotate(${h}deg) saturate(${sa}) brightness(${br})`; g.drawImage(img, 0, 0); return c; }); }
   const TT = x.getTransform(), KW = x.canvas.width/TT.a, KH = x.canvas.height/TT.d;
   const dSeg = (p, a, b) => { const vx = b[0]-a[0], vy = b[1]-a[1], L2 = vx*vx + vy*vy || 1, t = Math.max(0, Math.min(1, ((p[0]-a[0])*vx + (p[1]-a[1])*vy)/L2)); return Math.hypot(p[0]-a[0]-t*vx, p[1]-a[1]-t*vy); };
@@ -11453,7 +11457,7 @@ function ilAgacBas(x, agac, T, olc, V){
   agac.forEach(a => { const q = T(a.p), R = boy(a)/2; if(R < 1.5) return;
     x.fillStyle = "rgba(0,12,2,.6)"; x.beginPath(); x.ellipse(q[0] + R*.5, q[1] + R*.45, R*1.02, R*.8, .5, 0, 7); x.fill(); });
   x.restore();
-  agac.forEach(a => { const q = T(a.p), w = boy(a); if(w < 3) return; const im = V._agacTon[a.t % V._agacTon.length], h = w*im.height/im.width;
+  agac.forEach(a => { const q = T(a.p), w = boy(a); if(w < 3) return; const L = V._tur[a.tur || "agac"] || V._tur.agac, im = L[a.t % L.length], h = w*im.height/im.width;
     x.save(); x.translate(q[0], q[1]); x.rotate(a.a); x.drawImage(im, -w/2, -h/2, w, h); x.restore();
     // ustten gunes: sol-ust yarim hafif parlak
     x.save(); x.globalCompositeOperation = "soft-light"; const g = x.createRadialGradient(q[0] - w*.2, q[1] - w*.22, 0, q[0], q[1], w*.55);
@@ -11501,7 +11505,8 @@ function ilAgaclar(x, F, Y, T, olc, V){
   for(let k=0, N = Math.max(3, Math.round(cevre/30)); k<N; k++){ let t = rnd()*cevre, i = 0; while(true){ const L = Math.hypot(S[(i+1)%n][0]-S[i][0], S[(i+1)%n][1]-S[i][1]); if(t <= L || i >= n-1) break; t -= L; i++; }
     const a = S[i], b = S[(i+1)%n], L = Math.hypot(b[0]-a[0], b[1]-a[1]) || 1, nr = disNormal(a, b), d = 9 + rnd()*20;
     const c = [a[0] + (b[0]-a[0])*t/L + nr[0]*d, a[1] + (b[1]-a[1])*t/L + nr[1]*d], adet = 3 + Math.floor(rnd()*4);
-    for(let j=0;j<adet;j++){ const ac = rnd()*Math.PI*2, rr = j ? 2.2 + rnd()*2.6 : 0; ekle([c[0] + Math.cos(ac)*rr, c[1] + Math.sin(ac)*rr], 1.6 + rnd()*1.3); } }
+    if(V._tur.koru !== V._tur.agac && ekle(c, 4.2 + rnd()*2.2)){ agac[agac.length-1].tur = "koru"; if(rnd() < .6){ const ac = rnd()*Math.PI*2; ekle([c[0] + Math.cos(ac)*7, c[1] + Math.sin(ac)*7], 1.8 + rnd()*.8); } }
+    else for(let j=0;j<adet;j++){ const ac = rnd()*Math.PI*2, rr = j ? 2.2 + rnd()*2.6 : 0; ekle([c[0] + Math.cos(ac)*rr, c[1] + Math.sin(ac)*rr], 1.6 + rnd()*1.3); } }
   ilAgacBas(x, agac, T, olc, V);
 }
 function ilAgaclarIc(x, F, Y, T, olc, V, satildi){
@@ -11512,7 +11517,7 @@ function ilAgaclarIc(x, F, Y, T, olc, V, satildi){
   const agac = [];
   const ekle = (p, r, P) => { r = Math.max(r, 5.5/Math.max(.05, olc(p))); if(!ekran(p) || ilKenarUzak(p, P) < r*.75 + .25 || !yoldaDegil(p, r)) return false;
     if(agac.some(a => Math.hypot(a.p[0]-p[0], a.p[1]-p[1]) < (a.r + r)*.85)) return false;
-    agac.push({ p, r, a: rnd()*Math.PI*2, k: .9 + rnd()*.2, t: Math.floor(rnd()*4) }); return true; };
+    agac.push({ p, r, a: rnd()*Math.PI*2, k: .9 + rnd()*.2, t: Math.floor(rnd()*4), tur: "cali" }); return true; };
   F.parcalar.forEach(p => { const P = p.poly, m = P.length, sat = satildi(p.no);
     // ic yon: parcanin icine bakan normal
     for(let i=0;i<m;i++){ const a = P[i], b = P[(i+1)%m], k = [a, b].map(an).sort().join("|"); if(say.get(k) > 1) continue;   // ortak bolme: agac yok
@@ -12487,8 +12492,8 @@ function ilanDokuYukle(){
   if(window.__ilanDoku) return window.__ilanDoku;
   const al = ad => new Promise(r => { const i = new Image(); i.onload = () => r(i);
     i.onerror = () => { const j = new Image(); j.onload = () => r(j); j.onerror = () => r(null); j.src = gv(ad + ".webp"); }; i.src = gv("peyzaj/" + ad + ".webp"); });
-  return (window.__ilanDoku = Promise.all(["asfalt", "cim-1", "ilan-bilgi", "ilan-yakin", "ilan-kutu-koyu", "ilan-kutu-krem", "ilan-pusula", "ilan-yol-ikon", "ilan-asfalt", "ilan-cim", "ilan-cim2", "ilan-kum", "ilan-agac", "ilan-sutun", "ilan-cit", "ilan-cit-panel", "ilan-cit-direk", "ilan-cit-ust"].map(al))
-    .then(([a, c, b, y, k1, k2, pu, yi, a2, c2, zc, kum, ag, su, ci, cp, cd, cu]) => ({ zcim: zc, kum, agac: ag, sutun: su, citImg: ci, citPanel: cp, citDirek: cd, citUst: cu, asfalt: a2 || a, asfaltYeni: !!a2, cim: c2 || c, cimYeni: !!c2, ilBilgi:b, ilYakin:y, ilKoyu:k1, ilKrem:k2, ilPusula:pu, ilYolIkon:yi })));
+  return (window.__ilanDoku = Promise.all(["asfalt", "cim-1", "ilan-bilgi", "ilan-yakin", "ilan-kutu-koyu", "ilan-kutu-krem", "ilan-pusula", "ilan-yol-ikon", "ilan-asfalt", "ilan-cim", "ilan-cim2", "ilan-kum", "ilan-agac", "ilan-sutun", "ilan-cit", "ilan-cit-panel", "ilan-cit-direk", "ilan-cit-ust", "ilan-agac1", "ilan-agac2", "ilan-agac3", "ilan-cali1", "ilan-cali2", "ilan-koru1", "ilan-koru2"].map(al))
+    .then(([a, c, b, y, k1, k2, pu, yi, a2, c2, zc, kum, ag, su, ci, cp, cd, cu, pg1, pg2, pg3, pc1, pc2, pk1, pk2]) => ({ peyzaj: { agac: [pg1, pg2, pg3].filter(Boolean), cali: [pc1, pc2].filter(Boolean), koru: [pk1, pk2].filter(Boolean) }, zcim: zc, kum, agac: ag, sutun: su, citImg: ci, citPanel: cp, citDirek: cd, citUst: cu, asfalt: a2 || a, asfaltYeni: !!a2, cim: c2 || c, cimYeni: !!c2, ilBilgi:b, ilYakin:y, ilKoyu:k1, ilKrem:k2, ilPusula:pu, ilYolIkon:yi })));
 }
 async function ilanFontlar(){ try{ await Promise.all(["400 40px Anton", "600 30px Oswald", "700 30px Oswald", "700 20px Inter", "800 20px Inter", "800 40px 'Playfair Display'", "600 30px Cinzel", "700 30px Cinzel"].map(f => document.fonts.load(f, "ŞİĞÜÖÇşığüöç0123"))); }catch(e){} }
 
