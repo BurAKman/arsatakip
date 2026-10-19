@@ -2251,7 +2251,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.5.7";
+const SURUM_MORDOR = "v 2.5.8";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11543,7 +11543,7 @@ function ilEkYollar(D){
   const L = (D.ekYollar || []).filter(y => y.pts && y.pts.length > 1).map(y => ({ ...y, g: +y.g || 7 }));
   if(D._taslak && D._taslak.pts.length > 1) L.push({ ...D._taslak, taslak:true });
   return L.map(y => { const a = ilOfset(y.pts, y.g/2), b = ilOfset(y.pts, -y.g/2);
-    return { poly: a.concat(b.slice().reverse()), orta: y.pts, ad: y.ad ?? "RESMİ YOL", taslak: !!y.taslak, g: y.g }; });
+    return { poly: a.concat(b.slice().reverse()), orta: y.pts, ad: y.ad ?? "RESMİ YOL", taslak: !!y.taslak, g: y.g, au: y.au || [0, 0] }; });
 }
 // resmi yol uclarinin pusula yonu (y yukari metre): 0 bas, 1 son
 function ilUcYonu(r, uc){ const p = uc ? r.ic : r.ic.slice().reverse(), n = p.length, a = p[n-2], b = p[n-1];
@@ -11569,10 +11569,11 @@ function ilCapCiz(x, D, V, TF, sec){
   kad.forEach(y => (y.eksenler || []).forEach((e, i) => { const g = (y.genler || [])[i] || 7, au = (y.asfaltUc || [])[i] || [0, 0];
     Y.push({ e, g, au, b1: au[0] ? 0 : g*.5, b2: au[1] ? 0 : g*.5 }); }));
   resmiSeritler.forEach(r => Y.push({ e: r.orta, g: r.g || 7, au: [0, 0], b1: 0, b2: 0, resmi: true }));
-  ekYollar.forEach(r => Y.push({ e: r.orta, g: r.g || 7, au: [0, 0], b1: 0, b2: 0, taslak: r.taslak }));
+  ekYollar.forEach(r => { const g = r.g || 7, au = r.au || [0, 0]; Y.push({ e: r.orta, g, au, b1: au[0] ? 0 : g*.5, b2: au[1] ? 0 : g*.5, taslak: r.taslak }); });
   // gorunum genisligi: kullanici carpani + kucuk olcekte bile belirgin olsun (ekranda en az 8 px)
   Y.forEach(o => { const m = o.e[Math.floor(o.e.length/2)], s0 = Math.max(.05, olc(m)); o.g = Math.max(o.g*(D.yolKat || 1), 8/s0); });
-  const serit = (o, yari, b1, b2) => { const uz = ilUzat(o.e, b1, b2), a = ilOfset(uz, yari), b = ilOfset(uz, -yari); return TP(a.concat(b.slice().reverse()), true); };
+  // negatif uzatma = kirpma (kisa son segmentlerde geri katlanip sivri uc yapmasin)
+  const serit = (o, yari, b1, b2) => { const uz = ilUzat(kirp(o.e, b1 < 0 ? -b1 : 0, b2 < 0 ? -b2 : 0), Math.max(0, b1), Math.max(0, b2)), a = ilOfset(uz, yari), b = ilOfset(uz, -yari); return TP(a.concat(b.slice().reverse()), true); };
   const ucB = (o, k) => [o.au[0] ? k : o.b1, o.au[1] ? k : o.b2];
   const huni = (o, bas, kat) => { const e = bas ? o.e.slice().reverse() : o.e, n = e.length, uc = e[n-1];
     let geri = n - 2, L = 0; while(geri > 0 && L < 7){ L += Math.hypot(e[geri+1][0]-e[geri][0], e[geri+1][1]-e[geri][1]); geri--; }
@@ -11591,7 +11592,7 @@ function ilCapCiz(x, D, V, TF, sec){
   const agiz = (o, bas) => { const e = bas ? o.e.slice().reverse() : o.e, n = e.length, uc = e[n-1];
     let geri = n - 2, L = 0; while(geri > 0 && L < AGIZ){ L += Math.hypot(e[geri+1][0]-e[geri][0], e[geri+1][1]-e[geri][1]); geri--; }
     const p0 = e[Math.max(0, geri)], dx = uc[0]-p0[0], dy = uc[1]-p0[1], M = Math.hypot(dx, dy) || 1, ux = dx/M, uy = dy/M, nx = -uy, ny = ux, g = o.g/2;
-    const sol = [], sag = []; for(let i=0;i<=10;i++){ const t = i/10, w = g*(1 + .9*t*t), px = p0[0] + ux*M*t, py = p0[1] + uy*M*t;
+    const sol = [], sag = []; for(let i=0;i<=10;i++){ const t = i/10, w = g*(1 + .12*t), px = p0[0] + ux*M*t, py = p0[1] + uy*M*t;
       sol.push([px + nx*w, py + ny*w]); sag.push([px - nx*w, py - ny*w]); }
     return { P: TP(sol.concat(sag.reverse()), true), A: T(p0), B: T(uc), renk: fotoRenk(uc) }; };
   const agizlari = o => [o.au[0] ? agiz(o, true) : null, o.au[1] ? agiz(o, false) : null].filter(Boolean);
@@ -11619,7 +11620,7 @@ function ilCapCiz(x, D, V, TF, sec){
     x.drawImage(A, 0, 0);
     // 2b) asfalt agizlari: bizim asfalt -> resmin asfalti renk gecisi, hafif yumusak kenar
     Y.forEach(o => agizlari(o).forEach(z => { const gr = x.createLinearGradient(z.A[0], z.A[1], z.B[0], z.B[1]);
-      gr.addColorStop(0, "#43474C"); gr.addColorStop(.55, z.renk); gr.addColorStop(1, z.renk);
+      gr.addColorStop(0, "rgba(54,58,63,1)"); gr.addColorStop(.6, "rgba(54,58,63,.45)"); gr.addColorStop(1, "rgba(54,58,63,0)");
       x.save(); x.filter = "blur(.7px)"; ilYol(x, z.P); x.fillStyle = gr; x.fill(); x.restore(); }));
     // 3) kenar seritleri: (ic bant) - (daha ic bant); kavsakta ic bantlar birlestigi icin cizgi acilir
     const Lk = katman(), l = Lk.getContext("2d"); l.fillStyle = "rgba(255,255,255,.93)";
@@ -12261,6 +12262,7 @@ function ilanCizTuval(){
     return; }
   const D = ILAN.D; D.der = D.der || {};
   if(!D.der[D.oran]) D.der[D.oran] = ilDerVarsayilan(ILAN.V.veri, D.oran, ilYakinAcik(D));
+  try{ if(typeof ilanEkBagla === "function" && ilanEkBagla(D, ILAN.V)) ilanKaydetGec(); }catch(err){}
   ILAN.P = ilanCiz(cv, D, ILAN.V);
 }
 
@@ -12698,24 +12700,33 @@ async function ilanKadastroBul(){
   finally{ ILAN.kadastroCalisiyor = false; ilanEkran(); }
 }
 // yolun acik ucunu (kavsak degil) resimdeki gercek asfalta kadar uzatir: uctan ileri yurur, asfalt seridinin ortasina baglar
+// yolun acik ucunu resimdeki gercek asfalta kadar uzatir; e (metre nokta dizisi) yerinde degisir, au [bas, son] isaretlenir
+function ilanUcBagla(e, au, ic, baskaYakin){ let n = 0;
+  [true, false].forEach(bas => { const u = bas ? e[0] : e[e.length-1]; if(baskaYakin && baskaYakin(u, e)) return;
+    let j = bas ? 0 : e.length-1, L = 0; const st = bas ? 1 : -1; while(L < 6 && e[j + st]){ L += Math.hypot(e[j+st][0]-e[j][0], e[j+st][1]-e[j][1]); j += st; }
+    const q = e[j], dx = u[0]-q[0], dy = u[1]-q[1], M = Math.hypot(dx, dy); if(M < .5) return;
+    const ux = dx/M, uy = dy/M; let gir = -1, cik = -1;
+    for(let t=-4; t<=60; t+=.5){ const p = [u[0]+ux*t, u[1]+uy*t], v = ic(p);
+      if(v && gir < 0) gir = Math.max(0, t); if(!v && gir >= 0 && t > gir){ cik = t; break; } if(gir >= 0 && t - gir > 20){ cik = t; break; } }
+    if(gir < 0) return;
+    const hedef = gir + Math.max(1.5, ((cik < 0 ? gir + 8 : cik) - gir)/2 + 1), ek = [];
+    for(let t=1; t<=hedef; t+=1.5) ek.push([+(u[0]+ux*t).toFixed(2), +(u[1]+uy*t).toFixed(2)]);
+    ek.push([+(u[0]+ux*hedef).toFixed(2), +(u[1]+uy*hedef).toFixed(2)]);
+    if(bas){ e.unshift(...ek.reverse()); au[0] = 1; } else { e.push(...ek); au[1] = 1; } n++; });
+  return n; }
+function ilanAsfaltIc(V){ const A = ilAsfaltMaske(V), H = V.veri.H;
+  return p => { const q = ilH(H, p), x = Math.round(q[0]*A.s), y = Math.round(q[1]*A.s); return x >= 0 && y >= 0 && x < A.w && y < A.h && A.m[y*A.w + x]; }; }
 function ilanFotoBagla(D, V){
   if(!V?.veri || !D.kadastro) return 0;
-  const A = ilAsfaltMaske(V), H = V.veri.H, ic = (p) => { const q = ilH(H, p), x = Math.round(q[0]*A.s), y = Math.round(q[1]*A.s); return x >= 0 && y >= 0 && x < A.w && y < A.h && A.m[y*A.w + x]; };
-  const tum = D.kadastro.yollar.flatMap(y => (y.eksenler || []).map(e => e));
+  const ic = ilanAsfaltIc(V), tum = D.kadastro.yollar.flatMap(y => (y.eksenler || []).map(e => e));
   const yakinBaska = (u, e) => tum.some(f => f !== e && f.some(q => Math.hypot(q[0]-u[0], q[1]-u[1]) < 5));
   let n = 0;
-  D.kadastro.yollar.forEach(y => { y.asfaltUc = y.asfaltUc || []; (y.eksenler || []).forEach((e, ei) => { const au = y.asfaltUc[ei] = y.asfaltUc[ei] || [0, 0];
-    [true, false].forEach(bas => { const u = bas ? e[0] : e[e.length-1]; if(yakinBaska(u, e)) return;
-      let j = bas ? 0 : e.length-1, L = 0; const st = bas ? 1 : -1; while(L < 6 && e[j + st]){ L += Math.hypot(e[j+st][0]-e[j][0], e[j+st][1]-e[j][1]); j += st; }
-      const q = e[j], dx = u[0]-q[0], dy = u[1]-q[1], M = Math.hypot(dx, dy); if(M < .5) return;
-      const ux = dx/M, uy = dy/M; let gir = -1, cik = -1;
-      for(let t=0; t<=60; t+=.5){ const p = [u[0]+ux*t, u[1]+uy*t], v = ic(p);
-        if(v && gir < 0) gir = t; if(!v && gir >= 0){ cik = t; break; } if(gir >= 0 && t - gir > 20){ cik = t; break; } }
-      if(gir < 0) return;
-      const hedef = gir + Math.max(1.5, ((cik < 0 ? gir + 8 : cik) - gir)/2 + 1), ek = [];
-      for(let t=1; t<=hedef; t+=1.5) ek.push([+(u[0]+ux*t).toFixed(2), +(u[1]+uy*t).toFixed(2)]);
-      ek.push([+(u[0]+ux*hedef).toFixed(2), +(u[1]+uy*hedef).toFixed(2)]);
-      if(bas){ e.unshift(...ek.reverse()); au[0] = 1; } else { e.push(...ek); au[1] = 1; } n++; }); }); });
+  D.kadastro.yollar.forEach(y => { y.asfaltUc = y.asfaltUc || []; (y.eksenler || []).forEach((e, ei) => { const au = y.asfaltUc[ei] = y.asfaltUc[ei] || [0, 0]; n += ilanUcBagla(e, au, ic, yakinBaska); }); });
+  return n; }
+// elle cizilen yollar: uclari asfalta kaynasin (bir kez)
+function ilanEkBagla(D, V){
+  if(!V?.veri) return 0; let n = 0, ic = null;
+  (D.ekYollar || []).forEach(y => { if(y.bagli || !y.pts || y.pts.length < 2) return; ic = ic || ilanAsfaltIc(V); y.au = y.au || [0, 0]; n += ilanUcBagla(y.pts, y.au, ic); y.bagli = true; });
   return n; }
 function ilanKadSec(i){ const y = ILAN.D.kadastro?.yollar?.[i]; if(!y) return; y.secili = !y.secili; ilanKaydet(); ilanEkran(); }
 
