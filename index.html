@@ -2251,7 +2251,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.6.7";
+const SURUM_MORDOR = "v 2.6.8";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11385,18 +11385,23 @@ function ilEtiket(x, P, no, m2, carp, satildi, prem, ayar){
   const olcu = B => { x.font = prem ? `800 ${Math.round(B*1.02)}px ${IL_SERIF}` : `400 ${B}px ${IL_FONT.kalin}`; const nw = no ? x.measureText(no).width : 0, nh = no ? B*.78 : 0;
     if(hap){ x.font = `800 ${Math.round(B*.44)}px ${IL_FONT.govde}`; return { nw, nh, mw: x.measureText(m2).width + B*.42, mh: B*.62 }; }
     x.font = `800 ${Math.round(B*.40)}px ${IL_FONT.govde}`; return { nw, nh, mw: x.measureText(m2).width + B*.1, mh: B*.46 }; };
-  const sira = prem ? ["ust", "yan"] : ["yan", "ust"];
+  const sira = prem ? ["ust"] : ["yan", "ust"];
   const sabit = ayar && ayar.B, ust0 = B => { const o = olcu(B), g = prem ? B*.16 : B*.12; return { o, g, ust: { tip:"ust", w: Math.max(o.nw, o.mw), h: o.nh + g + o.mh }, yan: { tip:"yan", w: o.nw + g*1.6 + o.mw, h: Math.max(o.nh, o.mh) } }; };
   const dene = (cx, cy) => { const bas = sabit ? ayar.B : Math.round(60*carp), alt = sabit ? Math.max(18, Math.round(ayar.B*.8)) : 18;
     for(const tip of sira) for(let B = bas; B >= alt; B--){ const u = ust0(B), k = u[tip];
       if(ilKutuIcinde(P, cx - k.w/2, cy - k.h/2, cx + k.w/2, cy + k.h/2, 3)) return { B, k, o: u.o, g: u.g, cx, cy }; }
-    if(sabit){ for(let B = alt - 1; B >= 14; B--){ const u = ust0(B); for(const tip of sira){ const k = u[tip]; if(ilKutuIcinde(P, cx - k.w/2, cy - k.h/2, cx + k.w/2, cy + k.h/2, 2)) return { B, k, o: u.o, g: u.g, cx, cy }; } } }
+    if(sabit){ for(let B = alt - 1; B >= 12; B--){ const u = ust0(B); for(const tip of sira){ const k = u[tip]; if(ilKutuIcinde(P, cx - k.w/2, cy - k.h/2, cx + k.w/2, cy + k.h/2, 2)) return { B, k, o: u.o, g: u.g, cx, cy }; } } }
     return null; };
   if(ayar && ayar.olc){ let en2 = 0; [[0,0],[-1,0],[1,0],[0,-1],[0,1]].forEach(([a, b]) => { const cx = en.X + a*en.d*.35, cy = en.Y + b*en.d*.35;
       for(let B = Math.round(60*carp); B >= 16; B--){ const k = ust0(B)[sira[0]]; if(ilKutuIcinde(P, cx - k.w/2, cy - k.h/2, cx + k.w/2, cy + k.h/2, 3)){ en2 = Math.max(en2, B); break; } } }); return en2; }
   let iyi = null;
-  [[0,0],[-1,0],[1,0],[0,-1],[0,1]].forEach(([a, b]) => { const r = dene(en.X + a*en.d*.35, en.Y + b*en.d*.35);
-    if(r && (!iyi || (r.k.tip === sira[0] && iyi.k.tip !== sira[0]) || (r.k.tip === iyi.k.tip && r.B > iyi.B))) iyi = r; });
+  // alan merkezi (parcanin gozle ortasi)
+  let A2 = 0, gx = 0, gy = 0; for(let i=0;i<P.length;i++){ const a = P[i], b = P[(i+1)%P.length], c = a[0]*b[1] - b[0]*a[1]; A2 += c; gx += (a[0]+b[0])*c; gy += (a[1]+b[1])*c; }
+  const mrk = Math.abs(A2) > 1e-6 ? [gx/(3*A2), gy/(3*A2)] : [en.X, en.Y];
+  const adaylar = [mrk, [en.X, en.Y], [(mrk[0]+en.X)/2, (mrk[1]+en.Y)/2]].concat([[-1,0],[1,0],[0,-1],[0,1]].map(([a, b]) => [en.X + a*en.d*.35, en.Y + b*en.d*.35]));
+  const sonuc = adaylar.map(([X, Yc]) => ilKenarUzak([X, Yc], P) > 0 ? dene(X, Yc) : null).filter(Boolean);
+  if(prem && sonuc.length){ const enB = Math.max(...sonuc.map(r => r.B)); iyi = sonuc.filter(r => r.B >= enB*.92).sort((u, v) => Math.hypot(u.cx-mrk[0], u.cy-mrk[1]) - Math.hypot(v.cx-mrk[0], v.cy-mrk[1]))[0]; }
+  else sonuc.forEach(r => { if(!iyi || (r.k.tip === sira[0] && iyi.k.tip !== sira[0]) || (r.k.tip === iyi.k.tip && r.B > iyi.B)) iyi = r; });
   if(!iyi){ const u = ust0(18); iyi = { B:18, k: u[sira[0]], o: u.o, g: u.g, cx: en.X, cy: en.Y }; }
   const { B, k, o, g, cx, cy } = iyi;
   x.save(); x.textBaseline = "middle";
@@ -11485,13 +11490,15 @@ function ilAgaclar(x, F, Y, T, olc, V){
   const yakin = p => ilKenarUzak(p, S) > -40;
   O.yollar.forEach(o => { const e = o.e; for(let i=1;i<e.length;i++){ const a = e[i-1], b = e[i], L = Math.hypot(b[0]-a[0], b[1]-a[1]); if(L < .5) continue;
     const ux = (b[0]-a[0])/L, uy = (b[1]-a[1])/L;
-    for(let t = rnd()*3; t < L; t += 4.6 + rnd()*2.4){ const m = [a[0] + ux*t, a[1] + uy*t]; if(!yakin(m)) continue;
-      [1, -1].forEach(sn => { if(rnd() < .3) return; const r = 1.5 + rnd()*.9, d = o.g/2 + r*.8 + .9 + rnd()*.6; ekle([m[0] - uy*d*sn, m[1] + ux*d*sn], r); }); } } });
+    for(let t = rnd()*2; t < L; t += 3.4 + rnd()*1.6){ const m = [a[0] + ux*t, a[1] + uy*t]; if(!yakin(m)) continue;
+      [1, -1].forEach(sn => { if(rnd() < .12) return; const r = 1.7 + rnd()*1.0, d = o.g/2 + r*.8 + .8 + rnd()*.5; ekle([m[0] - uy*d*sn, m[1] + ux*d*sn], r); }); } } });
   // 5) cevre tarlalarda seyrek, daginik agaclar (8-30 m uzakta)
   let cevre = 0; for(let i=0;i<n;i++) cevre += Math.hypot(S[(i+1)%n][0]-S[i][0], S[(i+1)%n][1]-S[i][1]);
-  for(let k=0, N = Math.round(cevre/14); k<N; k++){ let t = rnd()*cevre, i = 0; while(true){ const L = Math.hypot(S[(i+1)%n][0]-S[i][0], S[(i+1)%n][1]-S[i][1]); if(t <= L || i >= n-1) break; t -= L; i++; }
-    const a = S[i], b = S[(i+1)%n], L = Math.hypot(b[0]-a[0], b[1]-a[1]) || 1, nr = disNormal(a, b), d = 8 + rnd()*22;
-    ekle([a[0] + (b[0]-a[0])*t/L + nr[0]*d, a[1] + (b[1]-a[1])*t/L + nr[1]*d], 1.8 + rnd()*1.2); }
+  // dogal korulukar: tek tek degil 3-6 agaclik kumeler
+  for(let k=0, N = Math.max(3, Math.round(cevre/30)); k<N; k++){ let t = rnd()*cevre, i = 0; while(true){ const L = Math.hypot(S[(i+1)%n][0]-S[i][0], S[(i+1)%n][1]-S[i][1]); if(t <= L || i >= n-1) break; t -= L; i++; }
+    const a = S[i], b = S[(i+1)%n], L = Math.hypot(b[0]-a[0], b[1]-a[1]) || 1, nr = disNormal(a, b), d = 9 + rnd()*20;
+    const c = [a[0] + (b[0]-a[0])*t/L + nr[0]*d, a[1] + (b[1]-a[1])*t/L + nr[1]*d], adet = 3 + Math.floor(rnd()*4);
+    for(let j=0;j<adet;j++){ const ac = rnd()*Math.PI*2, rr = j ? 2.2 + rnd()*2.6 : 0; ekle([c[0] + Math.cos(ac)*rr, c[1] + Math.sin(ac)*rr], 1.6 + rnd()*1.3); } }
   ilAgacBas(x, agac, T, olc, V);
 }
 function ilAgaclarIc(x, F, Y, T, olc, V, satildi){
@@ -11873,13 +11880,40 @@ function ilCapCiz(x, D, V, TF, sec){
     liste.forEach(({ q, b }) => { const A = T(q), B = T(b), h1 = citH*olc(q)*.4, h2 = citH*olc(b)*.4;
       x.beginPath(); x.moveTo(A[0], A[1]); x.lineTo(B[0], B[1]); x.lineTo(B[0] + h2, B[1] + h2*.5); x.lineTo(A[0] + h1, A[1] + h1*.5); x.closePath(); x.fill(); });
     x.restore();
-    if(V.citImg){   // gercek ferforje PNG: kenar boyunca dikmeler dik kalacak sekilde egilerek doser
+    if(V.citPanel && V.citDirek){   // siyah granit / altin cit kiti: panel (05) + direk (04) + ustten serit (15)
+      altinHale(P0, .7);
+      const pan = V.citPanel, dir = V.citDirek, ust = V.citUst, pOran = pan.width/pan.height;
+      const yuk = m => Math.max(15, Math.min(42, citH*olc(m)*1.75));
+      const direkler = [];
+      liste.forEach(({ q, b }) => { let A = T(q), B = T(b), qa = q, qb = b; if(A[0] > B[0]){ [A, B] = [B, A]; [qa, qb] = [qb, qa]; }
+        const L = Math.hypot(B[0]-A[0], B[1]-A[1]); if(L < 4) return; const ux = (B[0]-A[0])/L, uy = (B[1]-A[1])/L;
+        const m = [(q[0]+b[0])/2, (q[1]+b[1])/2], h = yuk(m);
+        if(ux < .34){   // kameraya yan duran kenar: yandan cit basik durur -> ustten gorunus seridi
+          if(ust){ const th = Math.max(5, h*.3), tw = th*ust.width/ust.height;
+            x.save(); x.translate(A[0], A[1]); x.rotate(Math.atan2(uy, ux));
+            x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 4; x.shadowOffsetY = 1.5;
+            for(let s0 = 0; s0 < L - .5; s0 += tw){ const w = Math.min(tw, L - s0); x.drawImage(ust, 0, 0, ust.width*w/tw, ust.height, s0, -th/2, w, th); }
+            x.restore(); }
+        }else{
+          const tw = h*pOran, n = Math.max(1, Math.round(L/tw)), tw2 = L/n;   // tam sayida panel; hafif esnetme sadece panelde
+          x.save(); x.transform(ux, uy, 0, 1, A[0], A[1]);
+          for(let k=0;k<n;k++) x.drawImage(pan, k*tw2, -h, tw2, h);
+          x.restore();
+          const ara = Math.max(1, Math.round(n/2));   // her iki panelde bir ara direk
+          for(let k=ara; k<n; k+=ara){ const t = k/n; direkler.push({ p: [A[0] + (B[0]-A[0])*t, A[1] + (B[1]-A[1])*t], h }); }
+        }
+        [A, B].forEach(P2 => direkler.push({ p: P2, h })); });
+      // direkler: tekrar edenleri ele, uzaktan yakina diz
+      const tek = []; direkler.forEach(d => { const o = tek.find(t => Math.hypot(t.p[0]-d.p[0], t.p[1]-d.p[1]) < 4); if(o) o.h = Math.max(o.h, d.h); else tek.push(d); });
+      tek.sort((u, v) => u.p[1] - v.p[1]).forEach(({ p, h }) => { const H = h*1.3, w = H*dir.width/dir.height;
+        x.save(); x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 4; x.shadowOffsetX = 2; x.shadowOffsetY = 1; x.drawImage(dir, p[0] - w/2, p[1] - H + w*.16, w, H); x.restore(); });
+    }else if(V.citImg){   // tek parca ferforje PNG (kit yoksa)
       altinHale(P0, .7);
       const im = V.citImg, oran = im.width/im.height;
       liste.forEach(({ q, b }) => { let A = T(q), B = T(b); if(A[0] > B[0]){ const t = A; A = B; B = t; }
         const L = Math.hypot(B[0]-A[0], B[1]-A[1]); if(L < 4) return; const ux = (B[0]-A[0])/L, uy = (B[1]-A[1])/L;
         x.save(); x.strokeStyle = gold; x.lineWidth = 1.6; x.beginPath(); x.moveTo(A[0], A[1]); x.lineTo(B[0], B[1]); x.stroke(); x.restore();
-        if(ux < .32) return;   // kameraya yan duran kenar: cit basik gorunur, sadece altin cizgi kalir
+        if(ux < .32) return;
         const m = [(q[0]+b[0])/2, (q[1]+b[1])/2], h = Math.max(15, Math.min(40, citH*olc(m)*1.7)), tw = h*oran;
         x.save(); x.transform(ux, uy, 0, 1, A[0], A[1]);
         for(let s0 = 0; s0 < L - .5; s0 += tw){ const w = Math.min(tw, L - s0); x.drawImage(im, 0, 0, im.width*w/tw, im.height, s0, -h, w, h); }
@@ -12435,8 +12469,8 @@ function ilanDokuYukle(){
   if(window.__ilanDoku) return window.__ilanDoku;
   const al = ad => new Promise(r => { const i = new Image(); i.onload = () => r(i);
     i.onerror = () => { const j = new Image(); j.onload = () => r(j); j.onerror = () => r(null); j.src = gv(ad + ".webp"); }; i.src = gv("peyzaj/" + ad + ".webp"); });
-  return (window.__ilanDoku = Promise.all(["asfalt", "cim-1", "ilan-bilgi", "ilan-yakin", "ilan-kutu-koyu", "ilan-kutu-krem", "ilan-pusula", "ilan-yol-ikon", "ilan-asfalt", "ilan-cim", "ilan-cim2", "ilan-kum", "ilan-agac", "ilan-sutun", "ilan-cit"].map(al))
-    .then(([a, c, b, y, k1, k2, pu, yi, a2, c2, zc, kum, ag, su, ci]) => ({ zcim: zc, kum, agac: ag, sutun: su, citImg: ci, asfalt: a2 || a, asfaltYeni: !!a2, cim: c2 || c, cimYeni: !!c2, ilBilgi:b, ilYakin:y, ilKoyu:k1, ilKrem:k2, ilPusula:pu, ilYolIkon:yi })));
+  return (window.__ilanDoku = Promise.all(["asfalt", "cim-1", "ilan-bilgi", "ilan-yakin", "ilan-kutu-koyu", "ilan-kutu-krem", "ilan-pusula", "ilan-yol-ikon", "ilan-asfalt", "ilan-cim", "ilan-cim2", "ilan-kum", "ilan-agac", "ilan-sutun", "ilan-cit", "ilan-cit-panel", "ilan-cit-direk", "ilan-cit-ust"].map(al))
+    .then(([a, c, b, y, k1, k2, pu, yi, a2, c2, zc, kum, ag, su, ci, cp, cd, cu]) => ({ zcim: zc, kum, agac: ag, sutun: su, citImg: ci, citPanel: cp, citDirek: cd, citUst: cu, asfalt: a2 || a, asfaltYeni: !!a2, cim: c2 || c, cimYeni: !!c2, ilBilgi:b, ilYakin:y, ilKoyu:k1, ilKrem:k2, ilPusula:pu, ilYolIkon:yi })));
 }
 async function ilanFontlar(){ try{ await Promise.all(["400 40px Anton", "600 30px Oswald", "700 30px Oswald", "700 20px Inter", "800 20px Inter", "800 40px 'Playfair Display'", "600 30px Cinzel", "700 30px Cinzel"].map(f => document.fonts.load(f, "ŞİĞÜÖÇşığüöç0123"))); }catch(e){} }
 
@@ -12548,7 +12582,7 @@ function ilanEkran(){
         <option value="altin" ${D.anaRenk === "altin" ? "selected" : ""}>Altın cam</option></select></div>
       <div class="field"><label>Yakın çekim ayırıcıları</label><select onchange="ilanAyar('citTip', this.value)">
         <option value="nokta" ${D.citTip !== "ferforje" ? "selected" : ""}>İnce altın çizgi + direk noktaları</option>
-        <option value="ferforje" ${D.citTip === "ferforje" ? "selected" : ""}>Ferforje çit</option></select></div>
+        <option value="ferforje" ${D.citTip === "ferforje" ? "selected" : ""}>Siyah granit · altın ferforje çit</option></select></div>
       <div class="field"><label>Köşelerde mermer sütun</label><select onchange="ilanAyar('sutun', this.value === '1')">
         <option value="1" ${D.sutun !== false ? "selected" : ""}>Açık</option><option value="0" ${D.sutun === false ? "selected" : ""}>Kapalı</option></select></div>
       <div class="field"><label>Yakın çekimde ağaçlandırma</label><select onchange="ilanAyar('agac', this.value === '1')">
