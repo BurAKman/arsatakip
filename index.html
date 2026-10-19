@@ -2251,7 +2251,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.6.8";
+const SURUM_MORDOR = "v 2.6.9";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11435,7 +11435,7 @@ function ilEtiket(x, P, no, m2, carp, satildi, prem, ayar){
    Tohumlu rastgele -> her cizimde ayni yer; yollara ve parsel cizgisine binmez. */
 function ilAgacOrtak(x, F, Y, T, V, ic){
   const img = V.agac; if(!img || !F.sinir) return null;
-  if(!V._agacTon){ V._agacTon = [[-12,.86,.88],[0,.95,.95],[10,.9,1.02],[-4,1.02,.84]].map(([h, sa, br]) => { const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
+  if(!V._agacTon){ V._agacTon = [[-6,1.22,1.08],[0,1.15,1.0],[4,1.2,1.08],[-14,1.1,.94]].map(([h, sa, br]) => { const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
       const g = c.getContext("2d"); g.filter = `hue-rotate(${h}deg) saturate(${sa}) brightness(${br})`; g.drawImage(img, 0, 0); return c; }); }
   const TT = x.getTransform(), KW = x.canvas.width/TT.a, KH = x.canvas.height/TT.d;
   const dSeg = (p, a, b) => { const vx = b[0]-a[0], vy = b[1]-a[1], L2 = vx*vx + vy*vy || 1, t = Math.max(0, Math.min(1, ((p[0]-a[0])*vx + (p[1]-a[1])*vy)/L2)); return Math.hypot(p[0]-a[0]-t*vx, p[1]-a[1]-t*vy); };
@@ -11448,13 +11448,16 @@ function ilAgacOrtak(x, F, Y, T, V, ic){
 }
 function ilAgacBas(x, agac, T, olc, V){
   agac.sort((u, v) => T(u.p)[1] - T(v.p)[1]);
-  const boy = a => a.r*2*olc(a.p)*a.k;
+  const boy = a => a.r*2*olc(a.p)*a.k*1.12;
   x.save(); x.filter = "blur(2px)";
   agac.forEach(a => { const q = T(a.p), R = boy(a)/2; if(R < 1.5) return;
-    x.fillStyle = "rgba(0,14,4,.48)"; x.beginPath(); x.ellipse(q[0] + R*.4, q[1] + R*.36, R*1.0, R*.78, .5, 0, 7); x.fill(); });
+    x.fillStyle = "rgba(0,12,2,.6)"; x.beginPath(); x.ellipse(q[0] + R*.5, q[1] + R*.45, R*1.02, R*.8, .5, 0, 7); x.fill(); });
   x.restore();
   agac.forEach(a => { const q = T(a.p), w = boy(a); if(w < 3) return; const im = V._agacTon[a.t % V._agacTon.length], h = w*im.height/im.width;
-    x.save(); x.translate(q[0], q[1]); x.rotate(a.a); x.drawImage(im, -w/2, -h/2, w, h); x.restore(); });
+    x.save(); x.translate(q[0], q[1]); x.rotate(a.a); x.drawImage(im, -w/2, -h/2, w, h); x.restore();
+    // ustten gunes: sol-ust yarim hafif parlak
+    x.save(); x.globalCompositeOperation = "soft-light"; const g = x.createRadialGradient(q[0] - w*.2, q[1] - w*.22, 0, q[0], q[1], w*.55);
+    g.addColorStop(0, "rgba(255,255,200,.55)"); g.addColorStop(1, "rgba(255,255,200,0)"); x.fillStyle = g; x.beginPath(); x.arc(q[0], q[1], w*.5, 0, 7); x.fill(); x.restore(); });
 }
 function ilAgaclar(x, F, Y, T, olc, V){
   const O = ilAgacOrtak(x, F, Y, T, V); if(!O) return;
