@@ -2251,7 +2251,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.7.2";
+const SURUM_MORDOR = "v 2.7.3";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11492,12 +11492,12 @@ function ilAgaclar(x, F, Y, T, olc, V){
   // 3) dis kenar boyunca sik ama kucuk agac sirasi
   for(let i=0;i<n;i++){ const a = S[i], b = S[(i+1)%n], L = Math.hypot(b[0]-a[0], b[1]-a[1]); if(L < 3) continue;
     const nr = disNormal(a, b), ux = (b[0]-a[0])/L, uy = (b[1]-a[1])/L;
-    for(let t = 2 + rnd()*2; t < L - 2; t += 4.2 + rnd()*2.2){ if(rnd() < .2) continue; koy([a[0] + ux*t, a[1] + uy*t], nr, 1.4 + rnd()*.7); } }
+    for(let t = 3 + rnd()*3; t < L - 3; t += 9 + rnd()*5){ if(rnd() < .45) continue; koy([a[0] + ux*t, a[1] + uy*t], nr, 1.6 + rnd()*.7); } }
   // 4) yol kenarlari (parsele yakin kisim): iki yana sira
   const yakin = p => ilKenarUzak(p, S) > -40;
   O.yollar.forEach(o => { const e = o.e; for(let i=1;i<e.length;i++){ const a = e[i-1], b = e[i], L = Math.hypot(b[0]-a[0], b[1]-a[1]); if(L < .5) continue;
     const ux = (b[0]-a[0])/L, uy = (b[1]-a[1])/L;
-    for(let t = rnd()*2; t < L; t += 3.4 + rnd()*1.6){ const m = [a[0] + ux*t, a[1] + uy*t]; if(!yakin(m)) continue;
+    for(let t = rnd()*2; t < L; t += 4.2 + rnd()*2.4){ const m = [a[0] + ux*t, a[1] + uy*t]; if(!yakin(m)) continue;
       [1, -1].forEach(sn => { if(rnd() < .12) return; const r = 1.7 + rnd()*1.0, d = o.g/2 + r*.8 + .8 + rnd()*.5; ekle([m[0] - uy*d*sn, m[1] + ux*d*sn], r); }); } } });
   // 5) cevre tarlalarda seyrek, daginik agaclar (8-30 m uzakta)
   let cevre = 0; for(let i=0;i<n;i++) cevre += Math.hypot(S[(i+1)%n][0]-S[i][0], S[(i+1)%n][1]-S[i][1]);
@@ -11512,7 +11512,7 @@ function ilAgaclar(x, F, Y, T, olc, V){
 function ilAgaclarIc(x, F, Y, T, olc, V, satildi){
   const O = ilAgacOrtak(x, F, Y, T, V, true); if(!O || !F.parcalar) return;
   let tohum = 4242; const rnd = () => { tohum = (tohum*16807) % 2147483647; return tohum/2147483647; };
-  const { yoldaDegil, ekran, birim } = O, an = r => r.map(v => Math.round(v*2)/2).join(",");
+  const { yoldaDegil, ekran, birim } = O; O.yollar = O.yollar || []; const an = r => r.map(v => Math.round(v*2)/2).join(",");
   const say = new Map(); F.parcalar.forEach(p => p.poly.forEach((q, i) => { const k = [q, p.poly[(i+1) % p.poly.length]].map(an).sort().join("|"); say.set(k, (say.get(k) || 0) + 1); }));
   const agac = [];
   const ekle = (p, r, P) => { r = Math.max(r, 5.5/Math.max(.05, olc(p))); if(!ekran(p) || ilKenarUzak(p, P) < r*.75 + .25 || !yoldaDegil(p, r)) return false;
@@ -11522,13 +11522,15 @@ function ilAgaclarIc(x, F, Y, T, olc, V, satildi){
     // ic yon: parcanin icine bakan normal
     for(let i=0;i<m;i++){ const a = P[i], b = P[(i+1)%m], k = [a, b].map(an).sort().join("|"); if(say.get(k) > 1) continue;   // ortak bolme: agac yok
       const L = Math.hypot(b[0]-a[0], b[1]-a[1]); if(L < 4) continue; const ux = (b[0]-a[0])/L, uy = (b[1]-a[1])/L;
+      const md = [(a[0]+b[0])/2, (a[1]+b[1])/2], yolKenari = O.yollar.some(o => O.dCizgi(md, o.e) < o.g/2 + 3.5) || (F.yollar || []).some(Py => ilKenarUzak(md, Py) > -3.5);
+      if(!yolKenari) continue;
       let nx = -uy, ny = ux; if(!ilIcinde([(a[0]+b[0])/2 + nx*.4, (a[1]+b[1])/2 + ny*.4], P)){ nx = -nx; ny = -ny; }
-      for(let t = 3 + rnd(); t < L - 2.5; t += 4.6 + rnd()*1.4){ if(sat && rnd() < .3) continue;
+      for(let t = 3 + rnd()*2; t < L - 2.5; t += 6.5 + rnd()*2.5){ if(sat && rnd() < .4) continue;
         const r = 1.35 + rnd()*.4, d = r*.85 + .45; ekle([a[0] + ux*t + nx*d, a[1] + uy*t + ny*d], r, P); } }
     // bolme kesisimlerinde / uclarinda kucuk cali
     if(!sat) for(let i=0;i<m;i++){ const o = P[i], a = P[(i-1+m)%m], b = P[(i+1)%m];
       const k1 = [a, o].map(an).sort().join("|"), k2 = [o, b].map(an).sort().join("|"); if(say.get(k1) < 2 && say.get(k2) < 2) continue;
-      const bis = birim([(a[0]-o[0])/(Math.hypot(a[0]-o[0], a[1]-o[1]) || 1) + (b[0]-o[0])/(Math.hypot(b[0]-o[0], b[1]-o[1]) || 1), (a[1]-o[1])/(Math.hypot(a[0]-o[0], a[1]-o[1]) || 1) + (b[1]-o[1])/(Math.hypot(b[0]-o[0], b[1]-o[1]) || 1)]);
+      if(rnd() < .5) continue; const bis = birim([(a[0]-o[0])/(Math.hypot(a[0]-o[0], a[1]-o[1]) || 1) + (b[0]-o[0])/(Math.hypot(b[0]-o[0], b[1]-o[1]) || 1), (a[1]-o[1])/(Math.hypot(a[0]-o[0], a[1]-o[1]) || 1) + (b[1]-o[1])/(Math.hypot(b[0]-o[0], b[1]-o[1]) || 1)]);
       const r = 1.25 + rnd()*.3; ekle([o[0] + bis[0]*(r*1.6 + 1.1), o[1] + bis[1]*(r*1.6 + 1.1)], r, P); } });
   ilAgacBas(x, agac, T, olc, V);
 }
@@ -11705,10 +11707,11 @@ function ilCapCiz(x, D, V, TF, sec){
   const asfalt = V.asfalt ? x.createPattern(V.asfalt, "repeat") : null; if(asfalt) asfalt.setTransform(new DOMMatrix().scale(V.asfaltYeni ? .16 : .35));
   const cim = V.cim ? x.createPattern(V.cim, "repeat") : "#5E9E3E"; if(V.cim) cim.setTransform(new DOMMatrix().scale(V.cimYeni ? .2 : .32));
   const PREM = D.parselStil !== "yesil";
+  const kumY = V.kum ? x.createPattern(V.kum, "repeat") : null; if(kumY) kumY.setTransform(new DOMMatrix().scale(.25));
   const yolBoya = polyM => { const P = TP(polyM, true);
-    x.save(); ilYol(x, P); x.fillStyle = "#4A4E52"; x.fill(); if(asfalt){ x.globalAlpha = .55; x.fillStyle = asfalt; x.fill(); x.globalAlpha = 1; }
-    x.lineWidth = 3*kc; x.strokeStyle = "rgba(240,240,236,.85)"; x.stroke(); x.restore(); };
-  const kesik = ptsM => { x.save(); x.setLineDash([22*kc, 18*kc]); x.lineWidth = 3.2*kc; x.strokeStyle = "rgba(255,255,255,.92)"; ilCizgi(x, TP(ptsM, false)); x.stroke(); x.restore(); };
+    x.save(); ilYol(x, P); x.fillStyle = "#B9AD8F"; x.fill(); if(kumY){ x.globalAlpha = .5; x.fillStyle = kumY; x.fill(); x.globalAlpha = 1; } x.fillStyle = "rgba(90,70,40,.12)"; x.fill();
+    x.lineWidth = 2.2*kc; x.strokeStyle = "rgba(255,246,220,.9)"; x.stroke(); x.restore(); };
+  const kesik = ptsM => { x.save(); x.setLineDash([16*kc, 14*kc]); x.lineWidth = 2.2*kc; x.strokeStyle = "rgba(255,255,255,.85)"; ilCizgi(x, TP(ptsM, false)); x.stroke(); x.restore(); };
   // ---- yollar: kadastro + capin resmi yolu + elle eklenenler, tek katmanli gercekci gorunum ----
   // banket (toprak omuz + golge) -> asfalt (doku + parlaklik) -> kenar seritleri (kavsakta acilir) -> orta kesik cizgi
   const kad = ilKadSecili(D), ekYollar = ilEkYollar(D);
@@ -11730,6 +11733,7 @@ function ilCapCiz(x, D, V, TF, sec){
   // cizgiyi asfalt uclarindan L metre kirp
   const kirp = (e, bas, son) => { const kes = (q, L) => { let t = 0; while(q.length > 2){ const d = Math.hypot(q[q.length-1][0]-q[q.length-2][0], q[q.length-1][1]-q[q.length-2][1]); if(t + d > L) break; t += d; q.pop(); } return q; };
     let q = e.slice(); if(son) q = kes(q, son); if(bas) q = kes(q.reverse(), bas).reverse(); return q; };
+  Y.forEach(o => { if(!o.resmi && (o.au[0] || o.au[1])) o.e = kirp(o.e, o.au[0] ? o.g*.6 : 0, o.au[1] ? o.g*.6 : 0); });
   // resimdeki asfaltin gercek rengi (uc noktasinda, 5x5 ortalama)
   let Zr = null; const fotoRenk = m => { try{ if(!Zr){ const Zc = ilZeminOnbellek(V, D); Zr = Zc.getContext("2d", { willReadFrequently:true }); }
       const q = ilH(F.H, m), d = Zr.getImageData(Math.round(q[0]) - 2, Math.round(q[1]) - 2, 5, 5).data; let rr = 0, gg = 0, bb = 0;
@@ -11871,26 +11875,24 @@ function ilCapCiz(x, D, V, TF, sec){
     x.shadowColor = "transparent"; x.lineWidth = 1.6*kc; x.strokeStyle = "rgba(222,176,70,.9)"; x.stroke(); x.restore();
     // dis sinir: parlak altin + alcak altin korkuluk (ince ray, kucuk direkler)
     altinHale(P0, .7);
-    { const S = F.sinir, n = S.length, kor = [];
-      for(let i=0;i<n;i++){ const q = S[i], b = S[(i+1)%n], A = T(q), B = T(b), L = Math.hypot(B[0]-A[0], B[1]-A[1]); if(L < 3) continue;
-        const k = Math.max(1, Math.round(L/16)); for(let j=0;j<k;j++){ const t = j/k, m = [q[0] + (b[0]-q[0])*t, q[1] + (b[1]-q[1])*t]; kor.push({ m, p: T(m) }); } }
-      const hh = o => Math.max(6, Math.min(16, .95*olc(o.m)));
-      // ust ray: direk tepelerini birlestir
-      x.save(); x.lineJoin = "round"; x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 3; x.shadowOffsetY = 1;
-      x.beginPath(); kor.forEach((o, i) => { const y = o.p[1] - hh(o); i ? x.lineTo(o.p[0], y) : x.moveTo(o.p[0], y); }); x.closePath();
-      x.lineWidth = 1.8*kc; x.strokeStyle = "#E9C25A"; x.stroke(); x.shadowColor = "transparent"; x.lineWidth = .7*kc; x.strokeStyle = "rgba(255,248,210,.95)"; x.stroke();
-      kor.slice().sort((u, v) => u.p[1] - v.p[1]).forEach(o => { const h = hh(o), X = o.p[0], Yy = o.p[1];
-        x.lineWidth = 2*kc; x.strokeStyle = "#C9962E"; x.beginPath(); x.moveTo(X, Yy); x.lineTo(X, Yy - h); x.stroke();
-        x.lineWidth = .8*kc; x.strokeStyle = "rgba(255,244,200,.95)"; x.beginPath(); x.moveTo(X - .5, Yy - 1); x.lineTo(X - .5, Yy - h + 1); x.stroke();
-        x.beginPath(); x.arc(X, Yy - h - 1, 1.7*kc, 0, 7); x.fillStyle = "#FFE7A0"; x.fill(); });
-      x.restore(); }
+    if(V.citPanel && V.citDirek){ const S = F.sinir, n = S.length, pan = V.citPanel, dir = V.citDirek, ust = V.citUst, pOran = pan.width/pan.height, dk = [];
+      const kn = []; for(let i=0;i<n;i++) kn.push({ q: S[i], b: S[(i+1)%n], y: (T(S[i])[1] + T(S[(i+1)%n])[1])/2 }); kn.sort((u, v) => u.y - v.y);
+      kn.forEach(({ q, b }) => { let A = T(q), B = T(b); if(A[0] > B[0]){ const t = A; A = B; B = t; }
+        const L = Math.hypot(B[0]-A[0], B[1]-A[1]); if(L < 4) return; const ux = (B[0]-A[0])/L, uy = (B[1]-A[1])/L, h = Math.max(13, Math.min(34, 2.1*olc([(q[0]+b[0])/2, (q[1]+b[1])/2])));
+        if(ux < .34){ if(ust){ const th = Math.max(5, h*.3), tw = th*ust.width/ust.height; x.save(); x.translate(A[0], A[1]); x.rotate(Math.atan2(uy, ux)); x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 4;
+            for(let s0 = 0; s0 < L - .5; s0 += tw){ const w = Math.min(tw, L - s0); x.drawImage(ust, 0, 0, ust.width*w/tw, ust.height, s0, -th/2, w, th); } x.restore(); } }
+        else { const k = Math.max(1, Math.round(L/(h*pOran))), tw = L/k; x.save(); x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 5; x.shadowOffsetY = 2; x.transform(ux, uy, 0, 1, A[0], A[1]);
+          for(let j=0;j<k;j++) x.drawImage(pan, j*tw, -h, tw, h); x.restore(); const ara = Math.max(1, Math.round(k/2)); for(let j=ara;j<k;j+=ara) dk.push({ p: [A[0] + (B[0]-A[0])*j/k, A[1] + (B[1]-A[1])*j/k], h }); }
+        dk.push({ p: A, h }, { p: B, h }); });
+      const tek = []; dk.forEach(d => { if(!tek.some(t => Math.hypot(t.p[0]-d.p[0], t.p[1]-d.p[1]) < 4)) tek.push(d); });
+      tek.sort((u, v) => u.p[1] - v.p[1]).forEach(({ p, h }) => { const H = h*1.3, w = H*dir.width/dir.height; x.save(); x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 4; x.shadowOffsetX = 2; x.drawImage(dir, p[0] - w/2, p[1] - H + w*.16, w, H); x.restore(); }); }
     // direk noktalari: kose + kenar boyunca ~ekranda 46 px'de bir
     const nokta = (m, buyuk) => { const p = T(m), r = (buyuk ? 5.2 : 4.8)*kc; x.save(); x.shadowColor = "rgba(0,0,0,.6)"; x.shadowBlur = 4; x.shadowOffsetY = 1.2;
       x.beginPath(); x.arc(p[0], p[1], r, 0, 7); const g = x.createRadialGradient(p[0] - r*.35, p[1] - r*.4, r*.1, p[0], p[1], r);
       g.addColorStop(0, "#FFFFFF"); g.addColorStop(.55, buyuk ? "#FFE7A6" : "#FFF6DE"); g.addColorStop(1, buyuk ? "#C8962E" : "#D9B76A"); x.fillStyle = g; x.fill();
       x.shadowColor = "transparent"; x.lineWidth = .8; x.strokeStyle = "rgba(70,48,8,.85)"; x.stroke(); x.restore(); };
     const sinirda = m => ilKenarUzak(m, F.sinir) > -.6 && ilKenarUzak(m, F.sinir) < .6;
-    dugum.forEach(m => nokta(m, false));
+    dugum.forEach(m => { if(!sinirda(m)) nokta(m, false); });
   }
   else if(D.cit !== false && PREM && sec.detay){
     const kenarlar = new Map();
@@ -12603,11 +12605,6 @@ function ilanEkran(){
       <div class="field"><label>Ana görselde parsel rengi</label><select onchange="ilanAyar('anaRenk', this.value)">
         <option value="zumrut" ${D.anaRenk !== "altin" ? "selected" : ""}>Zümrüt + parlak altın kenar</option>
         <option value="altin" ${D.anaRenk === "altin" ? "selected" : ""}>Altın cam</option></select></div>
-      <div class="field"><label>Yakın çekim ayırıcıları</label><select onchange="ilanAyar('ayirici', this.value)">
-        <option value="nokta" ${D.ayirici !== "ferforje" ? "selected" : ""}>İnce altın çizgi + direk noktaları</option>
-        <option value="ferforje" ${D.ayirici === "ferforje" ? "selected" : ""}>Siyah granit · altın ferforje çit</option></select></div>
-      <div class="field"><label>Köşelerde mermer sütun</label><select onchange="ilanAyar('sutun', this.value === '1')">
-        <option value="0" ${D.sutun !== true ? "selected" : ""}>Kapalı</option><option value="1" ${D.sutun === true ? "selected" : ""}>Açık</option></select></div>
       <div class="field"><label>Yakın çekimde ağaçlandırma</label><select onchange="ilanAyar('agac', this.value === '1')">
         <option value="1" ${D.agac !== false ? "selected" : ""}>Açık</option><option value="0" ${D.agac === false ? "selected" : ""}>Kapalı</option></select></div>
       <label class="ilTik"><input type="checkbox" ${D.asfaltCanli ? "checked" : ""} onchange="ilanAyar('asfaltCanli', this.checked)"> Resimdeki asfaltı canlandır</label>
