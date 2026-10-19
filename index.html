@@ -2251,7 +2251,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.6.2";
+const SURUM_MORDOR = "v 2.6.3";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11426,6 +11426,9 @@ function ilBas(x, c){ x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.drawImage(c,
 // ust katman: hedef tuvalin piksel boyutunda, ayni donusumle; ilBas ile 1:1 geri basilir
 function ilKatman(x){ const c = document.createElement("canvas"); c.width = x.canvas.width; c.height = x.canvas.height; const g = c.getContext("2d"); g.setTransform(x.getTransform()); return [c, g]; }
 function ilBas(x, c){ x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.drawImage(c, 0, 0); x.restore(); }
+// ust katman: hedef tuvalin piksel boyutunda, ayni donusumle; ilBas ile 1:1 geri basilir
+function ilKatman(x){ const c = document.createElement("canvas"); c.width = x.canvas.width; c.height = x.canvas.height; const g = c.getContext("2d"); g.setTransform(x.getTransform()); return [c, g]; }
+function ilBas(x, c){ x.save(); x.setTransform(1, 0, 0, 1, 0, 0); x.drawImage(c, 0, 0); x.restore(); }
 /* ---------- parsel plani (uygulama surumu) ----------
    F: { H (metre -> foto px), foto:{w,h}, sinir, parcalar:[{no,m2,poly}], yollar:[poly], eksenler:[[p1,p2]], resmiler:[{ic,dis}] }
    Derinlik yerlesimi: uzak satirlar sikisir, parselin oldugu yakin bant buyur (drone perspektifi gibi).
@@ -11663,7 +11666,15 @@ function ilCapCiz(x, D, V, TF, sec){
   const altinKenar = () => { const g = x.createLinearGradient(pmx0, pmy0, pmx1, pmy1); g.addColorStop(0, "#FFF0B8"); g.addColorStop(.35, "#E3B23C"); g.addColorStop(.6, "#FFE8A0"); g.addColorStop(1, "#B98A2E"); return g; };
   const zumrut = Pp => { x.save(); ilYol(x, Pp); x.globalAlpha = .72; x.fillStyle = cim; x.fill(); x.globalAlpha = 1;
     const g = x.createLinearGradient(pmx0, pmy0, pmx1, pmy1); g.addColorStop(0, "rgba(40,120,60,.10)"); g.addColorStop(1, "rgba(6,52,30,.30)"); x.fillStyle = g; x.fill(); x.restore(); };
-  if(sec.butun && PREM){   // ana gorsel: tek parca zumrut + altin kenar
+  if(sec.butun && PREM && D.anaRenk !== "zumrut"){   // ana gorsel: altin cam -- yesil tarlalar arasinda kaybolmaz
+    x.save(); ilYol(x, P0);
+    const gg = x.createLinearGradient(pmx0, pmy0, pmx1, pmy1); gg.addColorStop(0, "rgba(255,236,170,.70)"); gg.addColorStop(.5, "rgba(236,186,72,.62)"); gg.addColorStop(1, "rgba(196,140,40,.66)");
+    x.fillStyle = gg; x.fill(); x.clip();
+    const pr = x.createLinearGradient(pmx0, pmy0, pmx0 + (pmx1-pmx0)*.7, pmy1); pr.addColorStop(0, "rgba(255,255,255,0)"); pr.addColorStop(.45, "rgba(255,255,240,.45)"); pr.addColorStop(.55, "rgba(255,255,255,0)");
+    x.fillStyle = pr; x.fillRect(pmx0, pmy0, pmx1 - pmx0, pmy1 - pmy0); x.restore();
+    x.save(); ilYol(x, P0); x.lineJoin = "round"; x.lineWidth = 4.5*kc; x.strokeStyle = "rgba(20,14,4,.85)"; x.stroke();
+    x.shadowColor = "rgba(255,215,120,.95)"; x.shadowBlur = 14; x.lineWidth = 2.4*kc; x.strokeStyle = "#FFF4C8"; x.stroke(); x.restore();
+  }else if(sec.butun && PREM){   // ana gorsel: tek parca zumrut + altin kenar
     zumrut(P0); x.save(); ilYol(x, P0); x.lineJoin = "round"; x.lineWidth = 3*kc; x.strokeStyle = altinKenar(); x.stroke(); x.restore();
   }else if(sec.butun){   // ana gorsel: parsel tek parca duz yesil
     x.save(); ilYol(x, P0); x.globalAlpha = .55; x.fillStyle = cim; x.fill(); x.globalAlpha = 1; x.fillStyle = "rgba(120,220,90,.22)"; x.fill();
@@ -12167,7 +12178,10 @@ function ilKunyePremium(x, e, V){
   x.fillStyle = ilAltinDolgu(x, by - ust, by); x.fillText(a.ana, tc, by);
   x.lineWidth = 1.5; x.strokeStyle = "rgba(90,60,10,.55)"; x.strokeText(a.ana, tc, by);
   // hucreler (cizgiler gorselde hazir: 577 ve 1057)
-  const H = [["ADA", a.ada, "ada", 110, 577], ["PARSEL", a.parsel, "parsel", 577, 1057], ["YÜZÖLÇÜMÜ", a.alan, "alan", 1057, 1610]];
+  const adaYok = !String(a.ada ?? "").trim() || String(a.ada).trim() === "0";
+  if(adaYok){ x.fillStyle = "#070A07"; x.fillRect(1052, 428, 11, 140); }   // ada yoksa ortadaki ayirici kapanir, iki hucre kalir
+  const H = adaYok ? [["PARSEL", a.parsel, "parsel", 110, 577], ["YÜZÖLÇÜMÜ", a.alan, "alan", 577, 1610]]
+    : [["ADA", a.ada, "ada", 110, 577], ["PARSEL", a.parsel, "parsel", 577, 1057], ["YÜZÖLÇÜMÜ", a.alan, "alan", 1057, 1610]];
   H.forEach(([etk, deg, ik, c0, c1]) => { deg = String(deg ?? "").trim() || "—"; const ix = c0 + 85;
     ilPremiumIkon(x, ik, ix, 532, 52);
     const ax = c0 + 160, aw = c1 - ax - 30, acx = ax + aw/2;
@@ -12347,6 +12361,9 @@ function ilanEkran(){
       <div class="field"><label>Parsel görünümü</label><select onchange="ilanAyar('parselStil', this.value)">
         <option value="premium" ${D.parselStil !== "yesil" ? "selected" : ""}>Premium (zümrüt · altın · ferforje çit)</option>
         <option value="yesil" ${D.parselStil === "yesil" ? "selected" : ""}>Klasik (yeşil · panel çit)</option></select></div>
+      <div class="field"><label>Ana görselde parsel rengi</label><select onchange="ilanAyar('anaRenk', this.value)">
+        <option value="altin" ${D.anaRenk !== "zumrut" ? "selected" : ""}>Altın cam (öne çıkar)</option>
+        <option value="zumrut" ${D.anaRenk === "zumrut" ? "selected" : ""}>Zümrüt yeşili</option></select></div>
       <label class="ilTik"><input type="checkbox" ${D.asfaltCanli ? "checked" : ""} onchange="ilanAyar('asfaltCanli', this.checked)"> Resimdeki asfaltı canlandır</label>
       <div class="field"><label>Yol görünümü</label><select onchange="ilanAyar('yolStil', this.value)">
         <option value="sunum" ${D.yolStil !== "klasik" ? "selected" : ""}>Sunum (banketli, şeritli)</option>
