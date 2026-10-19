@@ -2251,7 +2251,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.7.1";
+const SURUM_MORDOR = "v 2.7.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11859,7 +11859,7 @@ function ilCapCiz(x, D, V, TF, sec){
 
   if(sec.detay && D.agac !== false && PREM) ilAgaclarIc(x, F, Y, T, olc, V, satildi);
   if(D.cit !== false && PREM && sec.butun){ /* ana gorselde sade: altin kenar */ }
-  else if(D.cit !== false && PREM && sec.detay && D.citTip !== "ferforje"){
+  else if(D.cit !== false && PREM && sec.detay && D.ayirici !== "ferforje"){
     const kenarlar = new Map(), dugum = new Map(), an = r => r.map(v => Math.round(v*2)/2).join(",");
     F.parcalar.forEach(p => p.poly.forEach((q, i) => { const b = p.poly[(i+1) % p.poly.length], k2 = [q, b].map(an).sort().join("|");
       if(!kenarlar.has(k2)) kenarlar.set(k2, [q, b]); dugum.set(an(q), q); }));
@@ -12015,7 +12015,7 @@ function ilCapCiz(x, D, V, TF, sec){
     });
   }
 
-  if(sec.detay && PREM && D.sutun !== false && V.sutun){   // dis koselerde mermer + altin sutun
+  if(sec.detay && PREM && D.sutun === true && V.sutun){   // dis koselerde mermer + altin sutun
     const S = F.sinir, n = S.length, im = V.sutun, ks = [];
     for(let i=0;i<n;i++){ const o = S[i], a = S[(i-1+n)%n], b = S[(i+1)%n];
       const l1 = Math.hypot(o[0]-a[0], o[1]-a[1]) || 1, l2 = Math.hypot(b[0]-o[0], b[1]-o[1]) || 1;
@@ -12603,11 +12603,11 @@ function ilanEkran(){
       <div class="field"><label>Ana görselde parsel rengi</label><select onchange="ilanAyar('anaRenk', this.value)">
         <option value="zumrut" ${D.anaRenk !== "altin" ? "selected" : ""}>Zümrüt + parlak altın kenar</option>
         <option value="altin" ${D.anaRenk === "altin" ? "selected" : ""}>Altın cam</option></select></div>
-      <div class="field"><label>Yakın çekim ayırıcıları</label><select onchange="ilanAyar('citTip', this.value)">
-        <option value="nokta" ${D.citTip !== "ferforje" ? "selected" : ""}>İnce altın çizgi + direk noktaları</option>
-        <option value="ferforje" ${D.citTip === "ferforje" ? "selected" : ""}>Siyah granit · altın ferforje çit</option></select></div>
+      <div class="field"><label>Yakın çekim ayırıcıları</label><select onchange="ilanAyar('ayirici', this.value)">
+        <option value="nokta" ${D.ayirici !== "ferforje" ? "selected" : ""}>İnce altın çizgi + direk noktaları</option>
+        <option value="ferforje" ${D.ayirici === "ferforje" ? "selected" : ""}>Siyah granit · altın ferforje çit</option></select></div>
       <div class="field"><label>Köşelerde mermer sütun</label><select onchange="ilanAyar('sutun', this.value === '1')">
-        <option value="1" ${D.sutun !== false ? "selected" : ""}>Açık</option><option value="0" ${D.sutun === false ? "selected" : ""}>Kapalı</option></select></div>
+        <option value="0" ${D.sutun !== true ? "selected" : ""}>Kapalı</option><option value="1" ${D.sutun === true ? "selected" : ""}>Açık</option></select></div>
       <div class="field"><label>Yakın çekimde ağaçlandırma</label><select onchange="ilanAyar('agac', this.value === '1')">
         <option value="1" ${D.agac !== false ? "selected" : ""}>Açık</option><option value="0" ${D.agac === false ? "selected" : ""}>Kapalı</option></select></div>
       <label class="ilTik"><input type="checkbox" ${D.asfaltCanli ? "checked" : ""} onchange="ilanAyar('asfaltCanli', this.checked)"> Resimdeki asfaltı canlandır</label>
