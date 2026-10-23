@@ -2441,7 +2441,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.8.5";
+const SURUM_MORDOR = "v 2.8.6";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -12277,7 +12277,7 @@ function ilYakinCiz(x, e, D, V, P, W, Hc){
   const X0 = pos[0]*W, Y0 = pos[1]*Hc;
   // premium cerceve: gorsel 1448x1086, ic bosluk 74..1375 x 142..987 (cercevenin altina tasmasi icin biraz genis)
   const ifx = PR ? 66/1448 : 0, ify = PR ? 132/1086 : SADE ? .04 : 0, ifw = PR ? 1317/1448 : 1, ifh = PR ? 865/1086 : SADE ? .96 : 1;
-  const SP = 16*s, SH = 64*s;   // sade levha: kenar payi ve ust baslik bandi
+  const SP = 12*s, SH = 34*s;   // sade levha: kenar payi ve ust baslik bandi
   const X = SADE ? X0 + SP : X0 + FW*ifx, Yb = SADE ? Y0 + SH : Y0 + FH*ify, bw = SADE ? Math.round(FW - SP*2) : Math.round(FW*ifw), bh = SADE ? Math.round(FH - SH - SP) : Math.round(FH*ifh), r = 22*s;
   const F = V.veri, K = ilSinirKutu(F), Z = ilZeminOnbellek(V, D);
   // kutu ici yerlesim: parsel (+ resmi yol) kutuya sigsin
@@ -12304,26 +12304,24 @@ function ilYakinCiz(x, e, D, V, P, W, Hc){
   x.beginPath(); x.moveTo(cx, cy); x.lineTo(k1[0], k1[1]); x.moveTo(cx, cy); x.lineTo(k2[0], k2[1]); x.stroke(); x.setLineDash([]); x.restore();
   x.beginPath(); x.ellipse(cx, cy, hr*1.05, hr*.8, 0, 0, 7); x.lineWidth = 3; x.strokeStyle = "#F2D27A"; x.shadowColor = "rgba(0,0,0,.5)"; x.shadowBlur = 8; x.stroke();
   x.restore();
-  if(SADE){   // kunye ile ayni dil: yari saydam koyu levha, ustte baslik bandi, resim levhanin icine gomulu
-    const rr = 16*s, ir = 9*s;
-    x.save(); ilYuvarlak(x, X0, Y0, FW, FH, rr); const g = x.createLinearGradient(0, Y0, 0, Y0 + FH); g.addColorStop(0, "rgba(7,10,8,.80)"); g.addColorStop(1, "rgba(7,10,8,.68)");
+  if(SADE){   // kunye ile ayni dil: koyu levha, ust kenara oturan baslik sekmesi, iki yaninda ince cizgi
+    const rr = 12*s, ir = 6*s;
+    x.save(); ilYuvarlak(x, X0, Y0, FW, FH, rr); const g = x.createLinearGradient(0, Y0, 0, Y0 + FH); g.addColorStop(0, "rgba(7,10,9,.86)"); g.addColorStop(1, "rgba(7,10,9,.76)");
     x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 24; x.shadowOffsetY = 6; x.fillStyle = g; x.fill(); x.shadowColor = "transparent";
-    x.lineWidth = 1.4; x.strokeStyle = "rgba(227,192,106,.6)"; x.stroke();
-    ilYuvarlak(x, X0 + 7*s, Y0 + 7*s, FW - 14*s, FH - 14*s, rr*.7); x.lineWidth = 1; x.strokeStyle = "rgba(227,192,106,.18)"; x.stroke(); x.restore();
-    // baslik: aralikli altin harfler + iki yanda incelen cizgi
-    const bas = (e.alan?.baslik || "").trim().toLocaleUpperCase("tr");
-    if(bas){ x.save(); x.font = `600 ${Math.round(24*s)}px ${IL_CINZEL}`; x.letterSpacing = Math.round(9*s) + "px"; x.textAlign = "center"; x.textBaseline = "middle";
-      const tw = x.measureText(bas).width, cy = Y0 + SH*.52, mx = X0 + FW/2;
-      x.fillStyle = ilAltinDolgu(x, cy - 12*s, cy + 12*s); x.fillText(bas, mx + 4.5*s, cy);
-      [-1, 1].forEach(d => { const a0 = mx + d*(tw/2 + 22*s), a1 = mx + d*(tw/2 + 150*s); const lg = x.createLinearGradient(a0, 0, a1, 0); lg.addColorStop(0, "rgba(247,222,142,.9)"); lg.addColorStop(1, "rgba(227,192,106,0)");
-        x.fillStyle = lg; x.fillRect(Math.min(a0, a1), cy - .7, Math.abs(a1 - a0), 1.4);
-        x.beginPath(); x.moveTo(a0, cy - 4.5*s); x.lineTo(a0 + 4.5*s, cy); x.lineTo(a0, cy + 4.5*s); x.lineTo(a0 - 4.5*s, cy); x.closePath(); x.fillStyle = "#F7DE8E"; x.fill(); });
-      x.restore(); }
-    // resim: levhanin icine gomulu, kenari ince altin
+    x.lineWidth = 1.6; x.strokeStyle = "rgba(214,178,98,.7)"; x.stroke(); x.restore();
+    // resim
     x.save(); ilYuvarlak(x, X, Yb, bw, bh, ir); x.clip(); x.drawImage(L, X, Yb, bw, bh);
-    x.beginPath(); x.rect(X - 200, Yb - 200, bw + 400, bh + 400); ilYuvarlakEkle(x, X, Yb, bw, bh, ir); x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 14*s; x.fillStyle = "#000"; x.fill("evenodd"); x.restore();
-    x.save(); ilYuvarlak(x, X, Yb, bw, bh, ir); x.lineWidth = 1; x.strokeStyle = "rgba(227,192,106,.45)"; x.stroke(); x.restore();
-    return [X0, Y0, X0 + FW, Y0 + FH];
+    x.beginPath(); x.rect(X - 200, Yb - 200, bw + 400, bh + 400); ilYuvarlakEkle(x, X, Yb, bw, bh, ir); x.shadowColor = "rgba(0,0,0,.5)"; x.shadowBlur = 12*s; x.fillStyle = "#000"; x.fill("evenodd"); x.restore();
+    x.save(); ilYuvarlak(x, X, Yb, bw, bh, ir); x.lineWidth = 1; x.strokeStyle = "rgba(214,178,98,.4)"; x.stroke(); x.restore();
+    // baslik sekmesi
+    const bas = (e.alan?.baslik || "").trim().toLocaleUpperCase("tr");
+    if(bas){ x.save(); x.font = `600 ${Math.round(26*s)}px ${IL_CINZEL}`; x.letterSpacing = Math.round(4*s) + "px"; x.textAlign = "center"; x.textBaseline = "middle";
+      const tw = x.measureText(bas).width, pw = tw + 70*s, ph = 50*s, mx = X0 + FW*.46, px = mx - pw/2, py = Y0 - ph*.42, cy = py + ph/2, ly = Y0 + SH*.5;
+      [[X0 + 22*s, px - 12*s], [px + pw + 12*s, X0 + FW - 22*s]].forEach(([a0, a1]) => { if(a1 > a0){ x.fillStyle = "rgba(214,178,98,.65)"; x.fillRect(a0, ly, a1 - a0, 1.3); } });
+      x.beginPath(); x.rect(px, py, pw, ph); x.shadowColor = "rgba(0,0,0,.5)"; x.shadowBlur = 12; const tg = x.createLinearGradient(0, py, 0, py + ph); tg.addColorStop(0, "rgba(16,19,16,.98)"); tg.addColorStop(1, "rgba(7,9,8,.98)"); x.fillStyle = tg; x.fill();
+      x.shadowColor = "transparent"; x.lineWidth = 1.6; x.strokeStyle = "rgba(214,178,98,.85)"; x.stroke();
+      x.fillStyle = "#EAD8A8"; x.fillText(bas, mx + 2*s, cy + 1); x.restore(); }
+    return [X0, Y0 - 24*s, X0 + FW, Y0 + FH];
   }
   if(PR){
     x.save(); x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 40; x.shadowOffsetY = 16; x.fillStyle = "#06100B"; x.fillRect(X + 6, Yb + 6, bw - 12, bh - 12); x.restore();
@@ -12603,7 +12601,7 @@ function ilanCiz(cv, D, V, kat){
     return [y - .03, y + bh + .01]; };
   D.ogeler.forEach(e => {
     if(e.tip === "ozellik" && e.liste && !e.elle && !e.gizli){ const n = (e.alan.maddeler || "").split("\n").filter(t => t.trim()).length, s = (typeof e.s === "object" ? e.s[D.oran] : e.s) || 1;
-      const lh = (Math.ceil(n/(e.duzen === "yan" ? n : e.duzen === "ikili" ? 2 : 1))*64 + 4)*s/Hc, ya = yakinAralik(); let y = D.oran === "45" ? .27 : .235;
+      const lh = (Math.ceil(n/(e.duzen === "yan" ? n : e.duzen === "ikili" ? 2 : 1))*84)*s/Hc, ya = yakinAralik(); let y = D.oran === "45" ? .27 : .235;
       if(ya && y < ya[1] && y + lh > ya[0]) y = ya[1] + lh + .01 < .86 ? ya[1] + .005 : Math.max(.2, ya[0] - lh - .01);
       e.pos[D.oran] = [(e.pos[D.oran] || e.pos["916"])[0], y]; }
     if(e.gizli){ e._kutu = null; return; }
@@ -12668,60 +12666,107 @@ function ilKunyePremium(x, e, V){
   x.restore();
   return [-w/2, 0, w/2, h]; }
 
+/* ---------- ozellik ikon kutuphanesi (24'luk cizgi ikonlar, altin) ---------- */
+const IL_IKON_LIB = {
+  yol:["Asfalt yol","M8.5 3 4.5 21 M15.5 3l4 18 M12 4v2.4 M12 9.4v3 M12 15.6v3.6"],
+  araba:["Araba / ulaşım","M3 16.5V13l2.6-5.6h12.8L21 13v3.5 M3 16.5h18 M5 16.5V19h2.6v-2.5 M16.4 16.5V19H19v-2.5 M3 13h18 M6.3 14.8h1.4 M16.3 14.8h1.4"],
+  otobus:["Otobüs / toplu taşıma","M5.5 3.5h13a1 1 0 0 1 1 1V17h-15V4.5a1 1 0 0 1 1-1z M4.5 11h15 M7.5 17v3 M16.5 17v3 M8 14h.01 M16 14h.01 M8 6.5h8"],
+  tren:["Tren / istasyon","M7 3h10a2 2 0 0 1 2 2v10a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V5a2 2 0 0 1 2-2z M5 10h14 M8.5 14.5h.01 M15.5 14.5h.01 M8 18l-2 3 M16 18l2 3"],
+  ucak:["Havalimanı","M10 4.6a2 2 0 0 1 4 0V9l7 4v2l-7-2v4l2 1.5V20l-4-1-4 1v-1.5L10 17v-4l-7 2v-2l7-4z"],
+  ev:["Köy / yerleşim","M3 11.2 12 4l9 7.2 M5.2 9.6V20h13.6V9.6 M10 20v-5.6h4V20"],
+  bina:["Şehir / ilçe merkezi","M4 21V8l6-4v17 M10 21V10l10 3v8 M2 21h20 M6.5 10h1 M6.5 13h1 M6.5 16h1 M13 15.5h1 M16.5 15.5h1 M13 18.5h1 M16.5 18.5h1"],
+  belge:["Resmî yol / belge","M6 3h9l4 4v14H6z M14.5 3v4.5H19 M9 12h7 M9 15.5h7 M9 19h4.5"],
+  tapu:["Tapu / müstakil","M9 3h6v5l-1.5 3h-3L9 8z M5 14h14v3H5z M4 20.5h16"],
+  imar:["İmar / yapılaşma","M4 21h16 M7 21V9l5-3 5 3v12 M10 21v-4h4v4 M10 12h.01 M14 12h.01 M2 9.5 12 3.5l10 6"],
+  konum:["Konum","M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z M12 7.3a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"],
+  harita:["Harita / bölge","M9 4 3 6.5V20l6-2.5 6 2.5 6-2.5V4l-6 2.5z M9 4v13.5 M15 6.5V20"],
+  simsek:["Elektrik","M13 2 4.5 13.5h6.5l-1 8.5 8.5-11.5h-6.5z"],
+  su:["Su","M12 3s6 6.8 6 11a6 6 0 0 1-12 0c0-4.2 6-11 6-11z M9.2 14.5a2.8 2.8 0 0 0 2.8 2.8"],
+  wifi:["İnternet / altyapı","M2 9a15 15 0 0 1 20 0 M5 12.5a10 10 0 0 1 14 0 M8.5 16a5 5 0 0 1 7 0 M12 19.5h.01"],
+  agac:["Doğa / ağaçlık","M12 21v-5 M12 3 6.5 10.5h3L5 16h14l-4.5-5.5h3z"],
+  bahce:["Bahçe / hobi bahçesi","M12 21v-7 M12 14a4 4 0 0 1-4-4c2 0 4 1 4 4z M12 14a4 4 0 0 0 4-4c-2 0-4 1-4 4z M12 3a3 3 0 0 1 3 3c0 2-3 4-3 4s-3-2-3-4a3 3 0 0 1 3-3z"],
+  tarla:["Tarla / verimli toprak","M3 20 8.5 9.5h7L21 20z M7.5 20l3-10.5 M13.5 9.5l3 10.5 M5 16.2h14 M12 9.5V6 M12 6c-1.5 0-2.5-1-2.5-2.5 1.5 0 2.5 1 2.5 2.5zc1.5 0 2.5-1 2.5-2.5-1.5 0-2.5 1-2.5 2.5z"],
+  dag:["Dağ manzarası","M2 20 9 8l4 6 3-4 6 10z M7.8 10.2 9 8l1.4 2.2"],
+  deniz:["Deniz / göl","M2 9c2.5-2 4.5-2 7 0s4.5 2 7 0 4.5-2 6 0 M2 14c2.5-2 4.5-2 7 0s4.5 2 7 0 4.5-2 6 0 M2 19c2.5-2 4.5-2 7 0s4.5 2 7 0 4.5-2 6 0"],
+  manzara:["Manzara","M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"],
+  gunes:["Güneş / güney cephe","M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z M12 2v2.5 M12 19.5V22 M2 12h2.5 M19.5 12H22 M4.9 4.9l1.8 1.8 M17.3 17.3l1.8 1.8 M4.9 19.1l1.8-1.8 M17.3 6.7l1.8-1.8"],
+  okul:["Okul","M2 9l10-5 10 5-10 5z M6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5 M22 9v6"],
+  saglik:["Sağlık ocağı / hastane","M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"],
+  market:["Market / alışveriş","M3 4h2.5l2.2 11h10.5l2-8H6.5 M9.5 19.6a1.3 1.3 0 1 0 0-.1 M16.5 19.6a1.3 1.3 0 1 0 0-.1"],
+  cami:["Cami","M5 21v-8.5a7 5.5 0 0 1 14 0V21z M3 21h18 M12 7V3 M10.8 4.3h2.4 M9.5 21v-3.8a2.5 2.5 0 0 1 5 0V21"],
+  cit:["Çit / sınır belli","M5 21V6l1.5-2L8 6v15 M11 21V6l1.5-2L14 6v15 M17 21V6l1.5-2L20 6v15 M3 10h18 M3 16h18"],
+  kalkan:["Güvenli yatırım","M12 3l8 3v6c0 5-3.5 8-8 9.5C7.5 20 4 17 4 12V6z M8.5 12l2.5 2.5 4.5-5"],
+  grafik:["Değer artışı","M3 21h18 M5 17l5-5 4 3 6-7 M16 8h4v4"],
+  para:["Uygun fiyat / taksit","M3 7h18v10H3z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z M6 10v4 M18 10v4"],
+  anahtar:["Hemen teslim","M4 15a4 4 0 1 0 8 0 4 4 0 1 0-8 0 M11 12l9-9 M17 6l2.5 2.5 M14.5 8.5l2 2"],
+  saat:["Yakın mesafe / dakika","M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M12 7v5l3.2 2"],
+  yildiz:["Öne çıkan","M12 3l2.8 5.8 6.2.9-4.5 4.4 1.1 6.2L12 17.4 6.4 20.3l1.1-6.2L3 9.7l6.2-.9z"]
+};
+const IL_IKON_PATH = {};
+function ilIkonOto(u){ u = u.toLocaleUpperCase("tr");
+  return /ULAŞIM|ARABA|ARAÇ|OTOYOL|DAKİKA|KM/.test(u) ? "araba" : /OTOBÜS|TOPLU/.test(u) ? "otobus" : /TREN|İSTASYON/.test(u) ? "tren" : /HAVA ?LİMAN|HAVALİMAN/.test(u) ? "ucak"
+    : /RESMİ|BELGE|İZİN/.test(u) ? "belge" : /TAPU|MÜSTAKİL/.test(u) ? "tapu" : /İMAR|YAPI/.test(u) ? "imar" : /YOL|ASFALT|CEPHE/.test(u) ? "yol"
+    : /KÖY|MAHALLE|YERLEŞİM/.test(u) ? "ev" : /MERKEZ|ŞEHİR|İLÇE/.test(u) ? "bina" : /ELEKTR|ENERJ/.test(u) ? "simsek" : /SU\b|SU |KUYU/.test(u) ? "su"
+    : /İNTERNET|ALTYAPI/.test(u) ? "wifi" : /BAHÇE|HOBİ/.test(u) ? "bahce" : /TARLA|TOPRAK|VERİM/.test(u) ? "tarla" : /AĞAÇ|ORMAN|DOĞA/.test(u) ? "agac"
+    : /DAĞ/.test(u) ? "dag" : /DENİZ|GÖL|BARAJ/.test(u) ? "deniz" : /MANZARA/.test(u) ? "manzara" : /GÜNEŞ|GÜNEY/.test(u) ? "gunes" : /OKUL/.test(u) ? "okul"
+    : /HASTANE|SAĞLIK/.test(u) ? "saglik" : /MARKET|ALIŞVERİŞ/.test(u) ? "market" : /CAMİ/.test(u) ? "cami" : /ÇİT|SINIR/.test(u) ? "cit"
+    : /GÜVEN/.test(u) ? "kalkan" : /DEĞER|YATIRIM|ARTI/.test(u) ? "grafik" : /FİYAT|TAKSİT|UYGUN/.test(u) ? "para" : /TESLİM|ANAHTAR/.test(u) ? "anahtar" : "konum"; }
+function ilIkonCiz(x, ad, cx, cy, boy, renk){
+  const d = (IL_IKON_LIB[ad] || IL_IKON_LIB.konum)[1], P = IL_IKON_PATH[d] || (IL_IKON_PATH[d] = new Path2D(d)), k = boy/24;
+  x.save(); x.translate(cx - 12*k, cy - 12*k); x.scale(k, k); x.lineWidth = 2.1; x.lineCap = "round"; x.lineJoin = "round"; x.strokeStyle = renk; x.stroke(P); x.restore(); }
+
 // kunye (sade): ince koyu cam levha, altin harfler, QR yok
 function ilKunyeSade(x, e){
   const a = e.alan, adaYok = !String(a.ada ?? "").trim() || String(a.ada).trim() === "0";
-  const hucre = (adaYok ? [] : [["ADA", a.ada]]).concat([["PARSEL", a.parsel], ["YÜZÖLÇÜMÜ", a.alan]]).map(([k, v]) => [k, String(v ?? "").trim() || "—"]);
+  const hucre = (adaYok ? [] : [["ADA", a.ada, "ada"]]).concat([["PARSEL", a.parsel, "parsel"], ["YÜZÖLÇÜMÜ", a.alan, "alan"]]).map(([k, v, i]) => [k, String(v ?? "").trim() || "—", i]);
   x.save(); x.textAlign = "center"; x.textBaseline = "alphabetic";
-  const bs = ilSigdir(x, a.ana || "", IL_SERIF, 800, 900, 84, 44), aw = x.measureText(a.ana || "").width;
-  // alt satir olcusu
-  const olc = () => { let t = 0; hucre.forEach(([k, v], i) => { x.font = `700 19px ${IL_CINZEL}`; x.letterSpacing = "4px"; const kw = x.measureText(k).width; x.letterSpacing = "0px";
-    x.font = `600 34px ${IL_FONT.serit}`; t += kw + 14 + x.measureText(v).width + (i ? 64 : 0); }); return t; };
-  const sw = olc();
-  const w = Math.max(620, Math.min(1000, Math.max(aw, sw) + 130)), h = 262;
+  ilSigdir(x, a.ana || "", IL_SERIF, 800, 940, 88, 44); const aw = x.measureText(a.ana || "").width;
+  const w = Math.max(820, Math.min(1000, aw + 150)), h = 282, ic = 26;
   // levha
-  ilYuvarlak(x, -w/2, 0, w, h, 16); const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "rgba(7,10,8,.80)"); g.addColorStop(1, "rgba(7,10,8,.66)");
+  ilYuvarlak(x, -w/2, 0, w, h, 14); const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "rgba(7,10,9,.86)"); g.addColorStop(1, "rgba(7,10,9,.74)");
   x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 24; x.shadowOffsetY = 6; x.fillStyle = g; x.fill(); x.shadowColor = "transparent";
-  x.lineWidth = 1.4; x.strokeStyle = "rgba(227,192,106,.6)"; x.stroke();
-  ilYuvarlak(x, -w/2 + 7, 7, w - 14, h - 14, 11); x.lineWidth = 1; x.strokeStyle = "rgba(227,192,106,.18)"; x.stroke();
-  // ust satir: il · ilce
-  x.font = `600 24px ${IL_CINZEL}`; x.letterSpacing = "9px"; x.fillStyle = "rgba(226,204,150,.9)"; x.fillText(a.ust || "", 4, 50); x.letterSpacing = "0px";
+  x.lineWidth = 1.6; x.strokeStyle = "rgba(214,178,98,.7)"; x.stroke();
+  // ust satir: il • ilce, iki yaninda ince cizgi
+  x.font = `600 25px ${IL_CINZEL}`; x.letterSpacing = "8px"; const ust = (a.ust || "").replace(/\s*·\s*/g, "  •  "), uw = x.measureText(ust).width;
+  x.fillStyle = "#E6D3A3"; x.fillText(ust, 4, 52); x.letterSpacing = "0px";
+  [[-uw/2 - 112, -uw/2 - 26], [uw/2 + 26, uw/2 + 112]].forEach(([p0, p1]) => { x.fillStyle = "rgba(214,178,98,.75)"; x.fillRect(p0, 42, p1 - p0, 1.4); });
   // koy adi
-  ilSigdir(x, a.ana || "", IL_SERIF, 800, w - 90, 84, 44); x.fillStyle = ilAltinDolgu(x, 92, 158); x.fillText(a.ana || "", 0, 158);
-  // ince ayirici + elmas
-  const lg = x.createLinearGradient(-w*.36, 0, w*.36, 0); lg.addColorStop(0, "rgba(227,192,106,0)"); lg.addColorStop(.5, "rgba(247,222,142,.9)"); lg.addColorStop(1, "rgba(227,192,106,0)");
-  x.fillStyle = lg; x.fillRect(-w*.36, 184, w*.72, 1.4);
-  x.beginPath(); x.moveTo(0, 179); x.lineTo(5.5, 184.7); x.lineTo(0, 190.4); x.lineTo(-5.5, 184.7); x.closePath(); x.fillStyle = "#F7DE8E"; x.fill();
-  // bilgiler: ADA 161 · PARSEL 14 · YUZOLCUMU 7.257 m2
-  let cx = -sw/2; x.textAlign = "left";
-  hucre.forEach(([k, v], i) => { if(i){ x.fillStyle = "rgba(227,192,106,.55)"; x.beginPath(); x.arc(cx + 32, 228, 2.6, 0, 7); x.fill(); cx += 64; }
-    x.font = `700 19px ${IL_CINZEL}`; x.letterSpacing = "4px"; x.fillStyle = "rgba(226,204,150,.85)"; x.fillText(k, cx, 236); const kw = x.measureText(k).width; x.letterSpacing = "0px"; cx += kw + 14;
-    x.font = `600 34px ${IL_FONT.serit}`; x.fillStyle = "#FFFFFF"; x.fillText(v, cx, 238); cx += x.measureText(v).width; });
+  ilSigdir(x, a.ana || "", IL_SERIF, 800, w - 100, 88, 44); x.fillStyle = ilAltinDolgu(x, 82, 152); x.fillText(a.ana || "", 0, 150);
+  // tam genislik ince cizgi
+  x.fillStyle = "rgba(214,178,98,.55)"; x.fillRect(-w/2 + ic, 178, w - ic*2, 1.2);
+  // hucreler: ikon | etiket ustte, deger altta
+  const n = hucre.length, cw = (w - ic*2)/n;
+  hucre.forEach(([k, v, ik], i) => { const c0 = -w/2 + ic + cw*i;
+    if(i){ x.fillStyle = "rgba(214,178,98,.6)"; x.fillRect(c0, 202, 1.3, 56); }
+    ilPremiumIkon(x, ik, c0 + 48, 232, 30);
+    const tx = c0 + 92 + (cw - 92)/2;
+    x.textAlign = "center"; x.font = `700 20px ${IL_CINZEL}`; x.letterSpacing = "4px"; x.fillStyle = "#D9BE7E"; x.fillText(k, tx + 2, 220); x.letterSpacing = "0px";
+    ilSigdir(x, v, IL_FONT.govde, 700, cw - 100, 34, 20); x.fillStyle = "#FFFFFF"; x.fillText(v, tx, 258); });
   x.restore();
   return [-w/2, 0, w/2, h]; }
 
 // ozellik listesi: sag tarafta, resmi kapatmayan ince koyu cam panel; konum noktasi = sag ust kose
 function ilOzellikListe(x, e){
   const sat = e.alan.maddeler.split("\n").map(t => t.trim().split("|")[0]).filter(Boolean); if(!sat.length) return [0, 0, 0, 0];
-  const RH = 64, F = `700 29px ${IL_CINZEL}`, IR = 19, ara = 18, SA = 54;
+  const RH = 72, ARA = 12, IR = 27, F = `600 27px ${IL_CINZEL}`, TX = IR*2 + 30, KUYRUK = 90;
   const kol = e.duzen === "yan" ? sat.length : e.duzen === "ikili" ? Math.min(2, sat.length) : 1, satir = Math.ceil(sat.length/kol);
-  x.save(); x.font = F; x.letterSpacing = "2.5px"; const tws = sat.map(t => x.measureText(t.toLocaleUpperCase("tr")).width); x.restore();
-  const kw = Array.from({ length:kol }, (_, c) => Math.max(...tws.filter((_, i) => i % kol === c)) + IR*2 + ara);
-  const W2 = kw.reduce((a, b) => a + b, 0) + SA*(kol - 1), X0 = -W2;   // blok sag kenara dayali, sutunlar soldan hizali
-  const kx = c => X0 + kw.slice(0, c).reduce((a, b) => a + b, 0) + SA*c;
-  sat.forEach((t, i) => { const c = i % kol, r = Math.floor(i/kol), cy = RH*r + RH/2, u = t.toLocaleUpperCase("tr"), bx = kx(c);
-    const ad = /KÖY|MAHALLE|MERKEZ/.test(u) ? "ev" : /YOL|ASFALT|CEPHE/.test(u) ? "yol" : /ÇİT/.test(u) ? "cit" : /ELEKTR/.test(u) ? "simsek" : /DOĞA|AĞAÇ/.test(u) ? "agac" : /DEĞER|YATIRIM/.test(u) ? "grafik" : /TREN/.test(u) ? "tren" : "konum";
-    x.save(); x.shadowColor = "rgba(0,0,0,.6)"; x.shadowBlur = 10; x.beginPath(); x.arc(bx + IR, cy, IR, 0, 7); x.fillStyle = "rgba(8,10,7,.82)"; x.fill();
-    x.shadowColor = "transparent"; x.lineWidth = 1.4; x.strokeStyle = "rgba(227,192,106,.85)"; x.stroke();
-    x.translate(bx + IR, cy); x.fillStyle = ilAltinDolgu(x, -10, 10); x.strokeStyle = x.fillStyle; IL_IKON[ad](x, 21); x.restore();
-    x.save(); x.font = F; x.letterSpacing = "2.5px"; x.textAlign = "left"; x.textBaseline = "middle"; const tx = bx + IR*2 + ara;
-    x.shadowColor = "rgba(0,0,0,.95)"; x.shadowBlur = 18; x.fillStyle = "rgba(0,0,0,.6)"; x.fillText(u, tx, cy + 1); x.fillText(u, tx, cy + 1);
-    x.shadowColor = "transparent"; x.lineJoin = "round"; x.lineWidth = 5; x.strokeStyle = "rgba(8,7,4,.92)"; x.strokeText(u, tx, cy + 1);
-    x.fillStyle = ilAltinDolgu(x, cy - 15, cy + 15); x.fillText(u, tx, cy + 1);
-    x.shadowColor = "rgba(0,0,0,.8)"; x.shadowBlur = 6; const ex = bx + kw[c];
-    const g = x.createLinearGradient(tx, 0, ex, 0); g.addColorStop(0, "rgba(247,222,142,.9)"); g.addColorStop(1, "rgba(227,192,106,.15)");
-    x.fillStyle = g; x.fillRect(tx, cy + 22, ex - tx, 1.5); x.restore(); });
-  return [X0 - 6, 0, 6, satir*RH + 4]; }
+  x.save(); x.font = F; x.letterSpacing = "1.5px"; const tw = Math.max(...sat.map(t => x.measureText(t.toLocaleUpperCase("tr")).width)); x.restore();
+  const BW = 14 + TX + tw + KUYRUK, SA = 18;   // butun bantlar ayni boy, soldan hizali
+  sat.forEach((t, i) => { const c = i % kol, r = Math.floor(i/kol), bx = c*(BW + SA), by = r*(RH + ARA), cy = by + RH/2, u = t.toLocaleUpperCase("tr");
+    // bant: soldan koyu, saga dogru erir
+    const g = x.createLinearGradient(bx, 0, bx + BW, 0); g.addColorStop(0, "rgba(6,9,8,.86)"); g.addColorStop(.62, "rgba(6,9,8,.74)"); g.addColorStop(1, "rgba(6,9,8,0)");
+    x.save(); x.beginPath(); x.moveTo(bx + 8, by); x.lineTo(bx + BW, by); x.lineTo(bx + BW, by + RH); x.lineTo(bx + 8, by + RH); x.arcTo(bx, by + RH, bx, by + RH - 8, 8); x.lineTo(bx, by + 8); x.arcTo(bx, by, bx + 8, by, 8); x.closePath();
+    x.fillStyle = g; x.fill();
+    const lg = x.createLinearGradient(bx, 0, bx + BW, 0); lg.addColorStop(0, "rgba(214,178,98,.45)"); lg.addColorStop(.7, "rgba(214,178,98,.2)"); lg.addColorStop(1, "rgba(214,178,98,0)");
+    x.fillStyle = lg; x.fillRect(bx + 8, by + RH - 1, BW - 8, 1.2); x.fillRect(bx + 8, by, BW - 8, 1); x.restore();
+    // ikon halkasi
+    const ix = bx + 14 + IR; x.save(); x.beginPath(); x.arc(ix, cy, IR, 0, 7); x.fillStyle = "rgba(10,12,10,.9)"; x.fill();
+    x.lineWidth = 2; x.strokeStyle = ilAltinDolgu(x, cy - IR, cy + IR); x.stroke(); x.restore();
+    x.save(); x.shadowColor = "rgba(233,201,119,.35)"; x.shadowBlur = 6; ilIkonCiz(x, (e.ikonlar || [])[i] || ilIkonOto(u), ix, cy, 31, "#ECCB78"); x.restore();
+    // yazi: krem, zarif serif
+    x.save(); x.font = F; x.letterSpacing = "1.5px"; x.textAlign = "left"; x.textBaseline = "middle"; x.shadowColor = "rgba(0,0,0,.8)"; x.shadowBlur = 6;
+    x.fillStyle = "#F3EBD8"; x.fillText(u, bx + 14 + TX, cy + 1); x.restore(); });
+  return [0, 0, kol*BW + (kol - 1)*SA, satir*(RH + ARA) - ARA]; }
 
 // ozellik kartlari: sirayla koyu / krem cerceve
 function ilOzellikPremium(x, e, V){
@@ -12814,7 +12859,7 @@ function ilanOgeler(p){
     { id:"kunye", tip:"kunye", alan:{ ust:[U(p.il), U(p.ilce)].filter(Boolean).join("  ·  "), ana, ada:String(p.ada ?? ""), parsel:String(p.parsel ?? ""), alan: p.alan_m2 ? ilSayi(p.alan_m2) + " m²" : "", link: ilanKonumLink(p), qrYazi:"HARİTADA AÇ" },
       pos:{ "916":[.5,.022], "45":[.5,.022] }, s:{ "916":1, "45":.82 } },
         { id:"pusula", tip:"pusula", alan:{ metin:"K" }, pos:{ "916":[.885,.892], "45":[.888,.872] }, s:{ "916":1, "45":.85 } },
-        { id:"ozellik", tip:"ozellik", yatay:true, liste:true, alan:{ maddeler:"ASFALT YOLA CEPHE\nKÖY MERKEZİNE YAKIN" }, pos:{ "916":[.965,.235], "45":[.965,.27] }, s:{ "916":1, "45":.9 } },
+        { id:"ozellik", tip:"ozellik", yatay:true, liste:true, bant:true, alan:{ maddeler:"ASFALT YOLA CEPHE\nKÖY MERKEZİNE YAKIN" }, pos:{ "916":[.03,.235], "45":[.03,.27] }, s:{ "916":1, "45":.85 } },
     { id:"satilik", tip:"parselSay", gizli:true, alan:{ ust:"SATILIK", alt:"" }, pos:{ "916":[.6,.7], "45":[.68,.665] }, s:{ "916":.7, "45":.52 } },
     { id:"konum", tip:"konum", gizli:true, alan:{ baslik:"KONUM & MESAFELER", satirlar:"Köy merkezi|~300 m|koy\nİlçe merkezi|~6 km|ilce\nHızlı tren|~15 km|tren" },
       pos:{ "916":[.55,.7], "45":[.6,.66] }, s:{ "916":.9, "45":.66 } },
@@ -12833,6 +12878,7 @@ async function ilanAfisi(parselId){
   if(!D) D = { oran:"916", zemin:{}, karart:0, derinlik:true, yolYazi:true, cit:true, yolUzat:0, asfaltCanli:true, yolStil:"sunum", yolAd:[], pyAd:"PARSEL YOLU", ogeler: ilanOgeler(p), der:{} };
   ilanOgeler(p).forEach((e, i) => { if(!D.ogeler.some(q => q.id === e.id)) D.ogeler.splice(Math.min(i, D.ogeler.length), 0, e); });
   D.ogeler = D.ogeler.filter(q => q.id !== "qr");
+  { const oz = D.ogeler.find(q => q.id === "ozellik"); if(oz && !oz.bant){ oz.liste = true; oz.bant = true; oz.pos = { "916":[.03,.235], "45":[.03,.27] }; oz.s = { "916":1, "45":.85 }; delete oz.elle; } }
   { const oz = D.ogeler.find(q => q.id === "ozellik"); if(oz && !oz.liste){ oz.liste = true; oz.pos = { "916":[.965,.235], "45":[.965,.27] }; oz.s = { "916":1, "45":.9 }; delete oz.elle; } }
   { const k = D.ogeler.find(q => q.id === "kunye"); if(k && k.alan.link === undefined){ k.alan.link = ilanKonumLink(p); k.alan.qrYazi = "HARİTADA AÇ"; } }
   ILAN = { id: parselId, p, F, D, V:{ veri:null }, dokun:false, secili:null };
@@ -12963,10 +13009,14 @@ function ilanDuzenCiz(){
       <option value="sade" ${e.stil !== "cerceve" ? "selected" : ""}>Sade levha</option><option value="cerceve" ${e.stil === "cerceve" ? "selected" : ""}>Süslü çerçeve</option></select></div>` : "")
     + (e.tip === "ozellik" ? `<div class="field"><label>Dizilim</label><select onchange="const o=ILAN.D.ogeler[ILAN.secili];o.duzen=this.value;delete o.elle;ilanCizTuval();ilanKaydetGec()">
       <option value="alt" ${!e.duzen || e.duzen === "alt" ? "selected" : ""}>Alt alta</option><option value="ikili" ${e.duzen === "ikili" ? "selected" : ""}>İkişer yan yana</option><option value="yan" ${e.duzen === "yan" ? "selected" : ""}>Hepsi yan yana</option></select></div>` : "")
+    + (e.tip === "ozellik" ? (() => { const sat = (e.alan.maddeler || "").split("\n").map(t => t.trim().split("|")[0]).filter(Boolean);
+        const sec = (i, oto) => Object.keys(IL_IKON_LIB).map(k => `<option value="${k}" ${((e.ikonlar || [])[i] || oto) === k ? "selected" : ""}>${IL_IKON_LIB[k][0]}</option>`).join("");
+        return sat.map((t, i) => { const oto = ilIkonOto(t);
+          return `<div class="field"><label>${esc(t)} · ikon</label><select onchange="const o=ILAN.D.ogeler[ILAN.secili];(o.ikonlar=o.ikonlar||[])[${i}]=this.value;ilanCizTuval();ilanKaydetGec()">${sec(i, oto)}</select></div>`; }).join(""); })() : "")
     + (e.tip === "kunye" ? `<div class="field"><label>Künye görünümü</label><select onchange="ILAN.D.ogeler[ILAN.secili].stil=this.value;ilanCizTuval();ilanKaydetGec()">
       <option value="sade" ${e.stil !== "cerceve" ? "selected" : ""}>Sade levha</option><option value="cerceve" ${e.stil === "cerceve" ? "selected" : ""}>Süslü çerçeve (QR'lı)</option></select></div>` : "") + Object.keys(e.alan).map(k => { const cok = /maddeler|satirlar|^alt$/.test(k);
       return `<div class="field"><label>${ILAN_ALAN[k] || k}</label>${cok
-        ? `<textarea rows="3" oninput="ilanAlan('${k}', this.value)">${esc(e.alan[k])}</textarea>`
+        ? `<textarea rows="3" oninput="ilanAlan('${k}', this.value)" onchange="ilanDuzenCiz()">${esc(e.alan[k])}</textarea>`
         : `<input value="${esc(e.alan[k])}" oninput="ilanAlan('${k}', this.value)">`}</div>`; }).join("") +
     ilanKaydirici("boyut", "Boyut", sv, 30, 170, "%").replace(`ilanKay('boyut'`, `ilanBoyut(`).replace(`, +this.value, '%')`, `+this.value)`) +
     (e.tip === "yakin" ? ilanKaydirici("yzum", "Kutu içi yakınlaştırma", Math.round((e.zum || 1)*100), 50, 250, "%").replace(`ilanKay('yzum'`, `ilanYakinZum(`).replace(`, +this.value, '%')`, `+this.value)`) : "");
