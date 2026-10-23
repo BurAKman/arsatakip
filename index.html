@@ -2441,7 +2441,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.8.3";
+const SURUM_MORDOR = "v 2.8.5";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -12273,11 +12273,12 @@ function ilTers(H){ const [a,b,c,d,e,f,g,h,i] = H, A = e*i - f*h, B = -(d*i - f*
 // yakin cekim kutusu: capi kendi icinde buyuk cizer; ana gorseldeki parsele ince bir isikla baglanir
 function ilYakinCiz(x, e, D, V, P, W, Hc){
   const O = IL_ORAN[D.oran], pos = e.pos[D.oran] || e.pos["916"], s = (typeof e.s === "object" ? e.s[D.oran] : e.s) || 1;
-  const PR = !!V.ilYakin, FW = Math.round(O.yakinW*s), FH = PR ? Math.round(FW*1086/1448) : Math.round(O.yakinH*s);
+  const SADE = e.stil !== "cerceve", PR = !SADE && !!V.ilYakin, FW = Math.round(O.yakinW*s), FH = (PR || SADE) ? Math.round(FW*1086/1448) : Math.round(O.yakinH*s);
   const X0 = pos[0]*W, Y0 = pos[1]*Hc;
   // premium cerceve: gorsel 1448x1086, ic bosluk 74..1375 x 142..987 (cercevenin altina tasmasi icin biraz genis)
-  const ifx = PR ? 66/1448 : 0, ify = PR ? 132/1086 : 0, ifw = PR ? 1317/1448 : 1, ifh = PR ? 865/1086 : 1;
-  const X = X0 + FW*ifx, Yb = Y0 + FH*ify, bw = Math.round(FW*ifw), bh = Math.round(FH*ifh), r = 22*s;
+  const ifx = PR ? 66/1448 : 0, ify = PR ? 132/1086 : SADE ? .04 : 0, ifw = PR ? 1317/1448 : 1, ifh = PR ? 865/1086 : SADE ? .96 : 1;
+  const SP = 16*s, SH = 64*s;   // sade levha: kenar payi ve ust baslik bandi
+  const X = SADE ? X0 + SP : X0 + FW*ifx, Yb = SADE ? Y0 + SH : Y0 + FH*ify, bw = SADE ? Math.round(FW - SP*2) : Math.round(FW*ifw), bh = SADE ? Math.round(FH - SH - SP) : Math.round(FH*ifh), r = 22*s;
   const F = V.veri, K = ilSinirKutu(F), Z = ilZeminOnbellek(V, D);
   // kutu ici yerlesim: parsel (+ resmi yol) kutuya sigsin
   const ek = ilResmiSeritler(F, D).flatMap(q => q.poly).concat(F.sinir).map(m => ilH(F.H, m));
@@ -12303,6 +12304,27 @@ function ilYakinCiz(x, e, D, V, P, W, Hc){
   x.beginPath(); x.moveTo(cx, cy); x.lineTo(k1[0], k1[1]); x.moveTo(cx, cy); x.lineTo(k2[0], k2[1]); x.stroke(); x.setLineDash([]); x.restore();
   x.beginPath(); x.ellipse(cx, cy, hr*1.05, hr*.8, 0, 0, 7); x.lineWidth = 3; x.strokeStyle = "#F2D27A"; x.shadowColor = "rgba(0,0,0,.5)"; x.shadowBlur = 8; x.stroke();
   x.restore();
+  if(SADE){   // kunye ile ayni dil: yari saydam koyu levha, ustte baslik bandi, resim levhanin icine gomulu
+    const rr = 16*s, ir = 9*s;
+    x.save(); ilYuvarlak(x, X0, Y0, FW, FH, rr); const g = x.createLinearGradient(0, Y0, 0, Y0 + FH); g.addColorStop(0, "rgba(7,10,8,.80)"); g.addColorStop(1, "rgba(7,10,8,.68)");
+    x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 24; x.shadowOffsetY = 6; x.fillStyle = g; x.fill(); x.shadowColor = "transparent";
+    x.lineWidth = 1.4; x.strokeStyle = "rgba(227,192,106,.6)"; x.stroke();
+    ilYuvarlak(x, X0 + 7*s, Y0 + 7*s, FW - 14*s, FH - 14*s, rr*.7); x.lineWidth = 1; x.strokeStyle = "rgba(227,192,106,.18)"; x.stroke(); x.restore();
+    // baslik: aralikli altin harfler + iki yanda incelen cizgi
+    const bas = (e.alan?.baslik || "").trim().toLocaleUpperCase("tr");
+    if(bas){ x.save(); x.font = `600 ${Math.round(24*s)}px ${IL_CINZEL}`; x.letterSpacing = Math.round(9*s) + "px"; x.textAlign = "center"; x.textBaseline = "middle";
+      const tw = x.measureText(bas).width, cy = Y0 + SH*.52, mx = X0 + FW/2;
+      x.fillStyle = ilAltinDolgu(x, cy - 12*s, cy + 12*s); x.fillText(bas, mx + 4.5*s, cy);
+      [-1, 1].forEach(d => { const a0 = mx + d*(tw/2 + 22*s), a1 = mx + d*(tw/2 + 150*s); const lg = x.createLinearGradient(a0, 0, a1, 0); lg.addColorStop(0, "rgba(247,222,142,.9)"); lg.addColorStop(1, "rgba(227,192,106,0)");
+        x.fillStyle = lg; x.fillRect(Math.min(a0, a1), cy - .7, Math.abs(a1 - a0), 1.4);
+        x.beginPath(); x.moveTo(a0, cy - 4.5*s); x.lineTo(a0 + 4.5*s, cy); x.lineTo(a0, cy + 4.5*s); x.lineTo(a0 - 4.5*s, cy); x.closePath(); x.fillStyle = "#F7DE8E"; x.fill(); });
+      x.restore(); }
+    // resim: levhanin icine gomulu, kenari ince altin
+    x.save(); ilYuvarlak(x, X, Yb, bw, bh, ir); x.clip(); x.drawImage(L, X, Yb, bw, bh);
+    x.beginPath(); x.rect(X - 200, Yb - 200, bw + 400, bh + 400); ilYuvarlakEkle(x, X, Yb, bw, bh, ir); x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 14*s; x.fillStyle = "#000"; x.fill("evenodd"); x.restore();
+    x.save(); ilYuvarlak(x, X, Yb, bw, bh, ir); x.lineWidth = 1; x.strokeStyle = "rgba(227,192,106,.45)"; x.stroke(); x.restore();
+    return [X0, Y0, X0 + FW, Y0 + FH];
+  }
   if(PR){
     x.save(); x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 40; x.shadowOffsetY = 16; x.fillStyle = "#06100B"; x.fillRect(X + 6, Yb + 6, bw - 12, bh - 12); x.restore();
     x.save(); ilYuvarlak(x, X, Yb, bw, bh, 30*s); x.clip(); x.drawImage(L, X, Yb, bw, bh);
@@ -12575,19 +12597,19 @@ function ilanCiz(cv, D, V, kat){
   const P = ilPlan(x, D, V, W, Hc);
   // yakin cekim kutusunun dikey araligi (otomatik yerlesim ayni hesapla) -> ozellik listesi ona carpmasin
   const yakinAralik = () => { const e = D.ogeler.find(q => q.tip === "yakin" && !q.gizli); if(!e) return null;
-    const O2 = IL_ORAN[D.oran], s = (typeof e.s === "object" ? e.s[D.oran] : e.s) || 1, bh = (V.ilYakin ? O2.yakinW*s*1086/1448 : O2.yakinH*s)/Hc, pk = P.parsel;
+    const O2 = IL_ORAN[D.oran], s = (typeof e.s === "object" ? e.s[D.oran] : e.s) || 1, bh = ((V.ilYakin || e.stil !== "cerceve") ? O2.yakinW*s*1086/1448 : O2.yakinH*s)/Hc, pk = P.parsel;
     let y = (e.pos[D.oran] || e.pos["916"])[1];
     if(!e.elle){ const ust = .205, alt = Math.min(.86 - bh, .555), kes = y0 => !(pk[3] < y0*Hc - 30 || pk[1] > (y0 + bh)*Hc + 30); y = !kes(ust) ? ust : !kes(alt) ? alt : ((pk[1] + pk[3])/2 > Hc/2 ? ust : alt); }
     return [y - .03, y + bh + .01]; };
   D.ogeler.forEach(e => {
     if(e.tip === "ozellik" && e.liste && !e.elle && !e.gizli){ const n = (e.alan.maddeler || "").split("\n").filter(t => t.trim()).length, s = (typeof e.s === "object" ? e.s[D.oran] : e.s) || 1;
-      const lh = (n*64 + 4)*s/Hc, ya = yakinAralik(); let y = D.oran === "45" ? .27 : .235;
+      const lh = (Math.ceil(n/(e.duzen === "yan" ? n : e.duzen === "ikili" ? 2 : 1))*64 + 4)*s/Hc, ya = yakinAralik(); let y = D.oran === "45" ? .27 : .235;
       if(ya && y < ya[1] && y + lh > ya[0]) y = ya[1] + lh + .01 < .86 ? ya[1] + .005 : Math.max(.2, ya[0] - lh - .01);
       e.pos[D.oran] = [(e.pos[D.oran] || e.pos["916"])[0], y]; }
     if(e.gizli){ e._kutu = null; return; }
     if(e.tip === "yakin"){
       // elle tasinmadiysa: kutu parseli ortmesin -> ustte (kunye alti) ya da altta, parselin olmadigi yere
-      if(!e.elle){ const O2 = IL_ORAN[D.oran], s = (typeof e.s === "object" ? e.s[D.oran] : e.s) || 1, bh = (V.ilYakin ? O2.yakinW*s*1086/1448 : O2.yakinH*s)/Hc, pk = P.parsel;
+      if(!e.elle){ const O2 = IL_ORAN[D.oran], s = (typeof e.s === "object" ? e.s[D.oran] : e.s) || 1, bh = ((V.ilYakin || e.stil !== "cerceve") ? O2.yakinW*s*1086/1448 : O2.yakinH*s)/Hc, pk = P.parsel;
         const ust = .205, alt = Math.min(.86 - bh, .555), kes = y0 => !(pk[3] < y0*Hc - 30 || pk[1] > (y0 + bh)*Hc + 30);
         const y = !kes(ust) ? ust : !kes(alt) ? alt : ((pk[1] + pk[3])/2 > Hc/2 ? ust : alt);
         e.pos[D.oran] = [(e.pos[D.oran] || e.pos["916"])[0], y]; }
@@ -12681,25 +12703,25 @@ function ilKunyeSade(x, e){
 // ozellik listesi: sag tarafta, resmi kapatmayan ince koyu cam panel; konum noktasi = sag ust kose
 function ilOzellikListe(x, e){
   const sat = e.alan.maddeler.split("\n").map(t => t.trim().split("|")[0]).filter(Boolean); if(!sat.length) return [0, 0, 0, 0];
-  const RH = 64, F = `700 29px ${IL_CINZEL}`, IR = 19, ara = 18;
-  x.save(); x.font = F; x.letterSpacing = "2.5px"; const tw = Math.max(...sat.map(t => x.measureText(t.toLocaleUpperCase("tr")).width)); x.restore();
-  const W2 = IR*2 + ara + tw, X0 = -W2;   // blok sag kenara dayali, satirlar soldan hizali
-  sat.forEach((t, i) => { const cy = RH*i + RH/2, u = t.toLocaleUpperCase("tr");
+  const RH = 64, F = `700 29px ${IL_CINZEL}`, IR = 19, ara = 18, SA = 54;
+  const kol = e.duzen === "yan" ? sat.length : e.duzen === "ikili" ? Math.min(2, sat.length) : 1, satir = Math.ceil(sat.length/kol);
+  x.save(); x.font = F; x.letterSpacing = "2.5px"; const tws = sat.map(t => x.measureText(t.toLocaleUpperCase("tr")).width); x.restore();
+  const kw = Array.from({ length:kol }, (_, c) => Math.max(...tws.filter((_, i) => i % kol === c)) + IR*2 + ara);
+  const W2 = kw.reduce((a, b) => a + b, 0) + SA*(kol - 1), X0 = -W2;   // blok sag kenara dayali, sutunlar soldan hizali
+  const kx = c => X0 + kw.slice(0, c).reduce((a, b) => a + b, 0) + SA*c;
+  sat.forEach((t, i) => { const c = i % kol, r = Math.floor(i/kol), cy = RH*r + RH/2, u = t.toLocaleUpperCase("tr"), bx = kx(c);
     const ad = /KÖY|MAHALLE|MERKEZ/.test(u) ? "ev" : /YOL|ASFALT|CEPHE/.test(u) ? "yol" : /ÇİT/.test(u) ? "cit" : /ELEKTR/.test(u) ? "simsek" : /DOĞA|AĞAÇ/.test(u) ? "agac" : /DEĞER|YATIRIM/.test(u) ? "grafik" : /TREN/.test(u) ? "tren" : "konum";
-    // ikon madalyonu: koyu ici, ince altin kenar -> her zeminde gorunur
-    x.save(); x.shadowColor = "rgba(0,0,0,.6)"; x.shadowBlur = 10; x.beginPath(); x.arc(X0 + IR, cy, IR, 0, 7); x.fillStyle = "rgba(8,10,7,.82)"; x.fill();
+    x.save(); x.shadowColor = "rgba(0,0,0,.6)"; x.shadowBlur = 10; x.beginPath(); x.arc(bx + IR, cy, IR, 0, 7); x.fillStyle = "rgba(8,10,7,.82)"; x.fill();
     x.shadowColor = "transparent"; x.lineWidth = 1.4; x.strokeStyle = "rgba(227,192,106,.85)"; x.stroke();
-    x.translate(X0 + IR, cy); x.fillStyle = ilAltinDolgu(x, -10, 10); x.strokeStyle = x.fillStyle; IL_IKON[ad](x, 21); x.restore();
-    // yazi
-    x.save(); x.font = F; x.letterSpacing = "2.5px"; x.textAlign = "left"; x.textBaseline = "middle"; const tx = X0 + IR*2 + ara;
+    x.translate(bx + IR, cy); x.fillStyle = ilAltinDolgu(x, -10, 10); x.strokeStyle = x.fillStyle; IL_IKON[ad](x, 21); x.restore();
+    x.save(); x.font = F; x.letterSpacing = "2.5px"; x.textAlign = "left"; x.textBaseline = "middle"; const tx = bx + IR*2 + ara;
     x.shadowColor = "rgba(0,0,0,.95)"; x.shadowBlur = 18; x.fillStyle = "rgba(0,0,0,.6)"; x.fillText(u, tx, cy + 1); x.fillText(u, tx, cy + 1);
     x.shadowColor = "transparent"; x.lineJoin = "round"; x.lineWidth = 5; x.strokeStyle = "rgba(8,7,4,.92)"; x.strokeText(u, tx, cy + 1);
     x.fillStyle = ilAltinDolgu(x, cy - 15, cy + 15); x.fillText(u, tx, cy + 1);
-    // ince altin alt cizgi: yazi altindan saga kadar, hepsi ayni boy
-    x.shadowColor = "rgba(0,0,0,.8)"; x.shadowBlur = 6;
-    const g = x.createLinearGradient(tx, 0, 0, 0); g.addColorStop(0, "rgba(247,222,142,.9)"); g.addColorStop(1, "rgba(227,192,106,.15)");
-    x.fillStyle = g; x.fillRect(tx, cy + 22, -tx, 1.5); x.restore(); });
-  return [X0 - 6, 0, 6, sat.length*RH + 4]; }
+    x.shadowColor = "rgba(0,0,0,.8)"; x.shadowBlur = 6; const ex = bx + kw[c];
+    const g = x.createLinearGradient(tx, 0, ex, 0); g.addColorStop(0, "rgba(247,222,142,.9)"); g.addColorStop(1, "rgba(227,192,106,.15)");
+    x.fillStyle = g; x.fillRect(tx, cy + 22, ex - tx, 1.5); x.restore(); });
+  return [X0 - 6, 0, 6, satir*RH + 4]; }
 
 // ozellik kartlari: sirayla koyu / krem cerceve
 function ilOzellikPremium(x, e, V){
@@ -12937,7 +12959,11 @@ function ilanDuzenCiz(){
   const e = ILAN.secili != null ? ILAN.D.ogeler[ILAN.secili] : null;
   if(!e){ K.innerHTML = `<div class="ilNot">Düzenlemek için bir öğeye dokun. Yazılar her zaman değiştirilebilir.</div>`; return; }
   const o = ILAN.D.oran, sv = Math.round(((typeof e.s === "object" ? e.s[o] : e.s) || 1)*100);
-  K.innerHTML = (e.tip === "kunye" ? `<div class="field"><label>Künye görünümü</label><select onchange="ILAN.D.ogeler[ILAN.secili].stil=this.value;ilanCizTuval();ilanKaydetGec()">
+  K.innerHTML = (e.tip === "yakin" ? `<div class="field"><label>Çerçeve</label><select onchange="ILAN.D.ogeler[ILAN.secili].stil=this.value;ilanCizTuval();ilanKaydetGec()">
+      <option value="sade" ${e.stil !== "cerceve" ? "selected" : ""}>Sade levha</option><option value="cerceve" ${e.stil === "cerceve" ? "selected" : ""}>Süslü çerçeve</option></select></div>` : "")
+    + (e.tip === "ozellik" ? `<div class="field"><label>Dizilim</label><select onchange="const o=ILAN.D.ogeler[ILAN.secili];o.duzen=this.value;delete o.elle;ilanCizTuval();ilanKaydetGec()">
+      <option value="alt" ${!e.duzen || e.duzen === "alt" ? "selected" : ""}>Alt alta</option><option value="ikili" ${e.duzen === "ikili" ? "selected" : ""}>İkişer yan yana</option><option value="yan" ${e.duzen === "yan" ? "selected" : ""}>Hepsi yan yana</option></select></div>` : "")
+    + (e.tip === "kunye" ? `<div class="field"><label>Künye görünümü</label><select onchange="ILAN.D.ogeler[ILAN.secili].stil=this.value;ilanCizTuval();ilanKaydetGec()">
       <option value="sade" ${e.stil !== "cerceve" ? "selected" : ""}>Sade levha</option><option value="cerceve" ${e.stil === "cerceve" ? "selected" : ""}>Süslü çerçeve (QR'lı)</option></select></div>` : "") + Object.keys(e.alan).map(k => { const cok = /maddeler|satirlar|^alt$/.test(k);
       return `<div class="field"><label>${ILAN_ALAN[k] || k}</label>${cok
         ? `<textarea rows="3" oninput="ilanAlan('${k}', this.value)">${esc(e.alan[k])}</textarea>`
