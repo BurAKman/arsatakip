@@ -2292,6 +2292,14 @@ h3{letter-spacing:.02em}
 .ekSahaOrtala{padding:0 16px;border-radius:11px;background:rgba(12,12,15,.86);color:#fff;font-size:12.5px}
 .ekKose{background:#FFD25A;color:#111;border-radius:50%;font:700 12px/24px Inter,system-ui,sans-serif;text-align:center;border:2px solid #111;box-shadow:0 1px 4px rgba(0,0,0,.6)}
 .ekKoseNo{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#FFD25A;color:#111;font-size:11px;margin-right:4px}
+.ekGptTus{width:100%;margin:8px 0 2px!important;background:linear-gradient(180deg,#1f1f25,#141418)!important;color:#fff!important;border:1px solid rgba(255,90,99,.45)!important;box-shadow:0 0 14px rgba(224,49,60,.18)!important}
+.ekGpt{width:min(760px,100%)}
+.ekGptKaynak{display:flex;gap:18px;flex-wrap:wrap;margin:4px 0 10px;font-size:13px;color:var(--ink-2)}
+.ekGptKaynak label{display:flex;align-items:center;gap:7px;cursor:pointer;letter-spacing:0;text-transform:none}
+.ekGpt textarea{width:100%;box-sizing:border-box;font:12.5px/1.5 "IBM Plex Mono",monospace;padding:12px!important;min-height:260px;resize:vertical}
+.ekGptKaynak label{font-size:13px!important;color:var(--ink)!important;font-weight:500;margin:0!important}
+.ekGptKaynak input{width:16px!important;height:16px!important;min-height:0!important;margin:0!important;padding:0!important;box-shadow:none!important;flex:0 0 16px}
+.ekGpt .pcModalAlt .btn{width:auto!important;white-space:nowrap}
 
 /* ================= PC SURUMU · premium kizil (siyah · grafit · yakut) ================= */
 body.pc[data-tema]{
@@ -2724,7 +2732,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.9.6";
+const SURUM_MORDOR = "v 2.9.8";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -17008,90 +17016,98 @@ function ekHalka(geo){ const g = geo?.geometry || geo; if(!g) return []; const h
 function ekIcinde(p, H){ let c = false; for(let i = 0, j = H.length - 1; i < H.length; j = i++){ const a = H[i], b = H[j]; if((a.lat > p.lat) !== (b.lat > p.lat) && p.lng < (b.lng - a.lng)*(p.lat - a.lat)/(b.lat - a.lat) + a.lng) c = !c; } return c; }
 
 /* ---------- 1) cevre raporu + arazi karnesi ---------- */
-// uc hafif sorgu: tek dev sorgu Overpass'ta zaman asimina dusup BOS cevap donuyordu
+// Cevre raporu v3: sorgular paralel, sunucular yaristirilir (ilk gelen kazanir), her sey en fazla ~40 sn.
+// Havalimani ve hizli tren istasyonlari Overpass'a sorulmaz (agir sorgu): sabit listeden hesaplanir.
+const HAVALIMANI_TR = [["İstanbul Havalimanı",41.2753,28.7519],["Sabiha Gökçen",40.8986,29.3092],["Tekirdağ Çorlu",41.1382,27.9191],["Çanakkale",40.1377,26.4268],
+  ["Bursa Yenişehir",40.2552,29.5626],["Balıkesir Koca Seyit",39.5546,27.0138],["Kocaeli Cengiz Topel",40.7350,30.0833],["Ankara Esenboğa",40.1281,32.9951],
+  ["İzmir Adnan Menderes",38.2924,27.1570],["Antalya",36.8987,30.8005],["Dalaman",36.7131,28.7925],["Bodrum Milas",37.2506,27.6643],["Denizli Çardak",37.7856,29.7013],
+  ["Konya",37.9790,32.5619],["Kayseri",38.7704,35.4954],["Samsun Çarşamba",41.2545,36.5671],["Trabzon",40.9951,39.7897],["Adana",36.9822,35.2804],
+  ["Gaziantep",36.9472,37.4787],["Diyarbakır",37.8939,40.2010],["Malatya",38.4353,38.0910],["Erzurum",39.9565,41.1702],["Van Ferit Melen",38.4682,43.3323],["Hatay",36.3628,36.2823]];
+const YHT_TR = [["Ankara Gar",39.9364,32.8436],["Eryaman YHT",39.9790,32.6365],["Polatlı YHT",39.5853,32.1452],["Eskişehir",39.7767,30.5206],["Bozüyük",39.9077,30.0370],
+  ["Bilecik YHT",40.1450,29.9750],["Arifiye",40.7130,30.3690],["İzmit",40.7650,29.9200],["Gebze",40.7980,29.4320],["Pendik",40.8770,29.2350],["Bostancı",40.9520,29.0950],
+  ["Söğütlüçeşme",40.9910,29.0370],["Halkalı",41.0030,28.7850],["Konya",37.8720,32.4930],["Karaman",37.1810,33.2220],["Kırıkkale YHT",39.8460,33.5140],
+  ["Yerköy",39.6380,34.4670],["Sivas",39.7570,37.0170]];
 function cevreSorgulari(lat, lng){
   const a = `${lat},${lng}`;
   return [
     { ad:"yakın çevre", zorunlu:true, q:`[out:json][timeout:25];(
-      way(around:1500,${a})[highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|track)$"];
-      way(around:3000,${a})[waterway~"^(river|stream|canal)$"];
-      way(around:3000,${a})[natural=water];
-      way(around:2500,${a})[landuse~"^(forest|industrial|quarry|landfill)$"];
-      way(around:2500,${a})[natural=wood];
-      way(around:2500,${a})[power=line];
-      node(around:2500,${a})[power~"^(transformer|substation)$"];
-      node(around:4000,${a})[highway=bus_stop];
-    );out center tags;` },
+      way(around:1500,${a})[highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential)$"];
+      way(around:2000,${a})[waterway~"^(river|stream|canal)$"];
+      way(around:2000,${a})[natural=water];
+      way(around:2000,${a})[landuse~"^(forest|industrial|quarry|landfill)$"];
+      way(around:1500,${a})[power=line];
+      node(around:3000,${a})[highway=bus_stop];
+    );out center tags qt;` },
     { ad:"yerleşimler", zorunlu:true, q:`[out:json][timeout:25];(
-      node(around:30000,${a})[place~"^(city|town|village|hamlet)$"];
-      nwr(around:12000,${a})[amenity~"^(school|hospital|clinic|doctors|pharmacy|place_of_worship|fuel)$"];
-      nwr(around:12000,${a})[shop~"^(supermarket|convenience)$"];
-    );out center tags;` },
+      node(around:90000,${a})[place~"^(city|town)$"];
+      node(around:12000,${a})[place~"^(village|hamlet)$"];
+      nwr(around:10000,${a})[amenity~"^(school|hospital|clinic|doctors|pharmacy|place_of_worship|fuel)$"];
+      nwr(around:10000,${a})[shop~"^(supermarket|convenience)$"];
+    );out center tags qt;` },
     { ad:"ulaşım", zorunlu:false, q:`[out:json][timeout:25];(
-      node(around:25000,${a})[highway=motorway_junction];
-      node(around:25000,${a})[railway~"^(station|halt)$"];
-      nwr(around:120000,${a})[aeroway=aerodrome][iata];
-    );out center tags;` }
+      node(around:30000,${a})[highway=motorway_junction];
+      node(around:40000,${a})[railway~"^(station|halt)$"];
+    );out center tags qt;` }
   ];
 }
-// Turkiye'yi kapsayan Overpass sunuculari (osm.ch sadece Isvicre: Turkiye icin BOS donuyordu, sorunun kaynagi buydu)
+// Turkiye'yi kapsayan Overpass sunuculari (osm.ch sadece Isvicre: Turkiye icin BOS donuyordu)
 const OVER_TR = ["https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
-async function cevreTekSorgu(q, bildir, ad){
-  let son = null;
-  const dene = async yol => {
-    const r = await yol();
+// tek sorgu: butun sunuculara ayni anda sor, ilk dolu cevap kazanir
+function cevreTekSorgu(q){
+  const tek = async yol => { const r = await yol();
     if(r?.remark && /error|timed out|out of memory/i.test(r.remark)) throw new Error(r.remark);
-    if(r?.elements?.length) return r.elements;
-    throw new Error("boş cevap");
-  };
-  for(let tur = 0; tur < 2; tur++) for(const s of OVER_TR){
-    bildir && bildir(`Çevre taranıyor · ${ad}${tur ? " (tekrar)" : ""}…`);
-    // once dogrudan (Overpass tarayiciya acik), olmazsa uygulamanin araci fonksiyonu uzerinden
-    try{ return await dene(() => zamanAsimi(fetch(s, { method:"POST", body:"data=" + encodeURIComponent(q) }).then(x => x.json()), 35000)); }catch(e){ son = e; }
-    try{ return await dene(() => zamanAsimi(tkgm(s + "?data=" + encodeURIComponent(q)), 35000)); }catch(e){ son = e; }
-    await new Promise(ok => setTimeout(ok, 600)); }
-  throw son || new Error("çevre verisi alınamadı");
+    if(!r?.elements?.length) throw new Error("boş cevap"); return r.elements; };
+  const enc = encodeURIComponent(q);
+  const yollar = OVER_TR.map(s => () => fetch(s + "?data=" + enc).then(x => { if(!x.ok) throw new Error("HTTP " + x.status); return x.json(); }))
+    .concat([() => tkgm(OVER_TR[0] + "?data=" + enc), () => tkgm(OVER_TR[1] + "?data=" + enc)]);
+  return zamanAsimi(Promise.any(yollar.map(y => tek(y))), 32000).catch(e => { throw new Error((e?.errors?.[0]?.message) || e?.message || "sunuculara ulaşılamadı"); });
 }
 async function cevreRaporuUret(p, bildir){
   const M = { lat:+p.lat, lng:+p.lng }; if(!isFinite(M.lat)) throw new Error("Parselin konumu yok");
   const H = ekHalka(p.geojson);
-  // parselin kenarina en yakin mesafe (merkez degil): kucuk parsellerde fark etmez, buyuklerde onemli
   const kenarUz = nk => { if(!H.length) return uzaklik(M, nk); if(ekIcinde(nk, H)) return 0; let d = 1e9; H.forEach(h => d = Math.min(d, uzaklik(h, nk))); return Math.min(d, uzaklik(M, nk)); };
-  const elemanlar = [], olmayan = [];
-  for(const S of cevreSorgulari(M.lat, M.lng)){
-    try{ elemanlar.push(...await cevreTekSorgu(S.q, bildir, S.ad)); }catch(e){ if(S.zorunlu) olmayan.push(S.ad); } }
-  if(olmayan.length === 2 || !elemanlar.length) throw new Error("harita sunucuları şu an meşgul, birkaç dakika sonra tekrar dene");
-  const veri = { elements: elemanlar };
-  const og = veri.elements.map(e => { const nk = e.center ? { lat:e.center.lat, lng:e.center.lon } : { lat:e.lat, lng:e.lon }; return isFinite(nk.lat) ? { t:e.tags || {}, nk, u: kenarUz(nk) } : null; }).filter(Boolean).sort((a, b) => a.u - b.u);
+  const S = cevreSorgulari(M.lat, M.lng); let biten = 0;
+  bildir && bildir(`Çevre taranıyor… (0/${S.length})`);
+  const sonuc = await Promise.all(S.map(x => cevreTekSorgu(x.q).then(r => { bildir && bildir(`Çevre taranıyor… (${++biten}/${S.length})`); return r; }, () => { bildir && bildir(`Çevre taranıyor… (${++biten}/${S.length})`); return null; })));
+  const olmayan = S.filter((x, i) => !sonuc[i] && x.zorunlu).map(x => x.ad);
+  const elemanlar = sonuc.filter(Boolean).flat();
+  if(olmayan.length === 2 || !elemanlar.length) throw new Error("harita sunucuları şu an cevap vermiyor, birkaç dakika sonra tekrar dene");
+  const og = elemanlar.map(e => { const nk = e.center ? { lat:e.center.lat, lng:e.center.lon } : { lat:e.lat, lng:e.lon }; return isFinite(nk.lat) ? { t:e.tags || {}, nk, u: kenarUz(nk) } : null; }).filter(Boolean).sort((a, b) => a.u - b.u);
   const ilk = f => og.find(f);
   const ad = o => o?.t?.name || "";
+  const nrm = x => String(x || "").toLocaleLowerCase("tr").replace(/[ıi̇]/g, "i").replace(/ş/g, "s").replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ö/g, "o").replace(/ç/g, "c").replace(/\s+/g, " ").trim().replace(/ (koyu|mahallesi|merkez)$/, "");
   const sat = [];
   const ekle = (anahtar, baslik, o, ozel) => { if(o) sat.push({ k:anahtar, b:baslik, ad:ad(o), m:o.u, nk:o.nk, ...(ozel || {}) }); else sat.push({ k:anahtar, b:baslik, yok:true }); };
+  const sabitEn = L => L.map(([n, la, ln]) => ({ t:{ name:n }, nk:{ lat:la, lng:ln }, u: uzaklik(M, { lat:la, lng:ln }) })).sort((a, b) => a.u - b.u)[0];
   const asfalt = ilk(o => /^(motorway|trunk|primary|secondary|tertiary)$/.test(o.t.highway || ""));
   const koyYolu = ilk(o => /^(unclassified|residential)$/.test(o.t.highway || ""));
+  // parselin kendi ilcesi ve ili: isimle eslestir, bulamazsa en yakin kasaba / sehir
+  const ilceO = ilk(o => /^(town|city)$/.test(o.t.place || "") && nrm(o.t.name) === nrm(p.ilce)) || ilk(o => o.t.place === "town");
+  const ilO = ilk(o => /^(city|town)$/.test(o.t.place || "") && nrm(o.t.name) === nrm(p.il)) || ilk(o => o.t.place === "city");
   ekle("asfalt", "Asfalt yol", asfalt, asfalt ? { ek: YOL_AD[asfalt.t.highway] } : null);
   ekle("koyyolu", "Köy / yerleşim yolu", koyYolu);
   ekle("koy", "Köy / yerleşim", ilk(o => /^(village|hamlet)$/.test(o.t.place || "") && o.t.name));
-  ekle("ilce", "İlçe / kasaba merkezi", ilk(o => o.t.place === "town" && o.t.name));
-  ekle("sehir", "Şehir merkezi", ilk(o => o.t.place === "city" && o.t.name));
+  ekle("ilce", "İlçe merkezi", ilceO);
+  ekle("sehir", "İl merkezi", ilO);
   ekle("otoyol", "Otoyol bağlantısı", ilk(o => o.t.highway === "motorway_junction"));
   ekle("durak", "Otobüs durağı", ilk(o => o.t.highway === "bus_stop"));
   ekle("tren", "Tren istasyonu", ilk(o => /^(station|halt)$/.test(o.t.railway || "")));
+  ekle("yht", "Hızlı tren (YHT) istasyonu", sabitEn(YHT_TR));
   ekle("okul", "Okul", ilk(o => o.t.amenity === "school"));
   ekle("saglik", "Sağlık (hastane / ocak / eczane)", ilk(o => /^(hospital|clinic|doctors|pharmacy)$/.test(o.t.amenity || "")));
   ekle("cami", "Cami", ilk(o => o.t.amenity === "place_of_worship"));
   ekle("market", "Market", ilk(o => /^(supermarket|convenience)$/.test(o.t.shop || "")));
   ekle("akaryakit", "Akaryakıt", ilk(o => o.t.amenity === "fuel"));
   ekle("su", "Dere / göl / baraj", ilk(o => o.t.waterway || o.t.natural === "water"));
-  ekle("orman", "Orman", ilk(o => o.t.landuse === "forest" || o.t.natural === "wood"));
-  ekle("elektrik", "Elektrik hattı / trafo", ilk(o => o.t.power));
+  ekle("orman", "Orman", ilk(o => o.t.landuse === "forest"));
+  ekle("elektrik", "Elektrik hattı", ilk(o => o.t.power));
   ekle("sanayi", "Sanayi / taş ocağı / çöp", ilk(o => /^(industrial|quarry|landfill)$/.test(o.t.landuse || "")), { uyari:true });
-  ekle("havalimani", "Havalimanı", ilk(o => o.t.aeroway === "aerodrome"));
+  ekle("havalimani", "Havalimanı", sabitEn(HAVALIMANI_TR));
   // gercek yol mesafesi + suresi (OSRM, tek istek)
-  const hedef = sat.filter(s => !s.yok && s.m > 300 && /^(koy|ilce|sehir|otoyol|tren|okul|saglik|market|havalimani)$/.test(s.k));
+  const hedef = sat.filter(s => !s.yok && s.m > 300 && /^(koy|ilce|sehir|otoyol|tren|yht|okul|saglik|market|havalimani)$/.test(s.k));
   if(hedef.length){ bildir && bildir("Yol mesafeleri hesaplanıyor…");
     try{ const kord = [M].concat(hedef.map(s => s.nk)).map(n => `${n.lng.toFixed(5)},${n.lat.toFixed(5)}`).join(";");
-      const r = await zamanAsimi(fetch(`${OSRM}/table/v1/driving/${kord}?sources=0&annotations=distance,duration`).then(x => x.json()), 20000);
+      const r = await zamanAsimi(fetch(`${OSRM}/table/v1/driving/${kord}?sources=0&annotations=distance,duration`).then(x => x.json()), 15000);
       hedef.forEach((s, i) => { const d = r?.distances?.[0]?.[i+1], t = r?.durations?.[0]?.[i+1]; if(d != null){ s.yolM = Math.round(d); s.dk = Math.max(1, Math.round(t/60)); } }); }catch(e){} }
   return { tarih: new Date().toISOString(), eksik: olmayan, satirlar: sat.map(s => { const { nk, ...r } = s; return r; }) };
 }
@@ -17552,6 +17568,66 @@ async function ilanDuzenleTuslari(id){
       ? `<button class="ekIlanDuz" aria-label="Düzenle" title="Bu afişi düzenle" onclick="go('ilan','${id}|${b.id}')">${svg("kalem")}</button>`
       : `<button class="ekIlanDuz" aria-label="Düzenle" title="Eski afiş: tasarımı kayıtlı değil" style="opacity:.35" onclick="toast('Bu afiş eski usulle kaydedilmiş, tasarımı yok. Hazırlandığı cihazda İlan Afişi menüsünü bir kez açarsan düzenlenebilir hale gelir.')">${svg("kalem")}</button>`);
   });
+}
+
+/* ---------- 10) ChatGPT ile duzenle (sadece masaustu programi) ----------
+   Ilan afisinde zeminden once: foto + hazir prompt ChatGPT penceresine yapistirilir (kullanicinin kendi Pro hesabi),
+   cikan gorsel sag tik > "Ilan zemini yap" ile geri gelir ve o afisin zemini olur. */
+const GPT_ILAN_VARSAYILAN = `Turn this oblique aerial photo into a tall vertical (9:16 portrait) real-estate drone shot.
+
+1) EXTEND UPWARD (outpaint): add a realistic sky and a distant horizon ABOVE the existing scene so the final image is vertical. Clear, sunny late-spring day, soft natural light, a few gentle white clouds, distant soft green hills and tree lines at the horizon. It must blend seamlessly into the existing fields — no visible seam.
+
+2) KEEP THE EXISTING SCENE EXACTLY IN PLACE: do not move, rotate, crop, rescale or re-compose anything. Every road, field boundary, building and tree must keep its exact shape and relative position. Same camera angle and perspective.
+
+3) KEEP the thin yellow parcel outline exactly as it is (same position and shape). Do not remove or redraw it.
+
+4) ENHANCE: sharpen everything as if shot with a high-end drone. Village on the left: crisp red-tiled roofs, clear walls, tidy streets, healthy green trees. Asphalt road clean dark grey, dirt roads neat light brown. Fields: rich natural colors (fresh green / warm ploughed earth) with visible texture. Remove haze.
+
+5) Photorealistic only — NOT a painting, NOT cartoon, no over-saturation. Do NOT add any text, logos, people, cars, new houses, pools or fences.
+
+Output: highest possible resolution, vertical 9:16.`;
+const gptPrompt = () => { try{ return localStorage.getItem("gptIlanPrompt") || GPT_ILAN_VARSAYILAN; }catch(e){ return GPT_ILAN_VARSAYILAN; } };
+const blobDataUrl = b => new Promise(ok => { const r = new FileReader(); r.onload = () => ok(r.result); r.readAsDataURL(b); });
+async function gptIlanAc(){
+  if(!window.arsaPC?.gptAc) return toast("Bu özellik masaüstü programında çalışır");
+  if(typeof ILAN === "undefined" || !ILAN) return;
+  const zeminVar = !!ILAN.V?.zemin;
+  const k = document.createElement("div"); k.className = "ekOnizle"; k.onclick = e => { if(e.target === k) k.remove(); };
+  k.innerHTML = `<div class="pcModal ekGpt"><div class="pcModalB"><b>ChatGPT ile düzenle</b><small>Fotoğraf ve prompt ChatGPT penceresine kendiliğinden yapıştırılır, sen sadece Gönder'e basarsın. Çıkan görselin üstüne sağ tıklayıp “İlan zemini yap” de.</small></div>
+    <div class="ekGptKaynak">${zeminVar ? `<label><input type="radio" name="gptK" value="zemin" checked> Şu anki zemin fotoğrafı</label>` : ""}
+      <label><input type="radio" name="gptK" value="dosya" ${zeminVar ? "" : "checked"}> Bilgisayardan fotoğraf seç</label></div>
+    <textarea id="gptMetin" rows="12">${esc(gptPrompt())}</textarea>
+    <div class="pcModalAlt"><button class="btn ghost" id="gptVars" style="margin-right:auto">Varsayılan prompt</button><button class="btn ghost" onclick="this.closest('.ekOnizle').remove()">Vazgeç</button><button class="btn" id="gptGit">ChatGPT'de aç</button></div></div>`;
+  document.body.appendChild(k);
+  k.querySelector("#gptVars").onclick = () => { k.querySelector("#gptMetin").value = GPT_ILAN_VARSAYILAN; };
+  k.querySelector("#gptGit").onclick = async () => {
+    const metin = k.querySelector("#gptMetin").value.trim(), kaynak = k.querySelector('input[name="gptK"]:checked')?.value;
+    try{ localStorage.setItem("gptIlanPrompt", metin === GPT_ILAN_VARSAYILAN ? "" : metin); }catch(e){}
+    let blob = null;
+    if(kaynak === "zemin"){ try{ blob = await ilanZeminOku(ILAN.id); }catch(e){} }
+    if(!blob){ blob = await dosyaSec("image/*"); if(!blob) return; }
+    k.remove(); window.__gptHedef = ILAN.id;
+    toast("ChatGPT açılıyor… Giriş yapılı değilse bir kere giriş yap.");
+    const ok = await window.arsaPC.gptAc(await blobDataUrl(blob), metin);
+    if(ok === false) toast("ChatGPT'nin yazma kutusu bulunamadı: giriş yapıp tekrar dene");
+  };
+}
+async function gptGorselGeldi(veri){
+  const hedef = window.__gptHedef || (typeof ILAN !== "undefined" && ILAN?.id); if(!hedef) return toast("Önce bir ilan afişi aç");
+  const b = await (await fetch(veri)).blob();
+  if(!(app.dataset.ekran === "ilan" && typeof ILAN !== "undefined" && ILAN?.id === hedef)){ await go("ilan", hedef); await new Promise(r => setTimeout(r, 900)); }
+  try{ ILAN.V.zemin = await ilanResim(b); }catch(e){ return toast("Görsel açılamadı"); }
+  await ilanZeminYaz(ILAN.id, b); ILAN.V._zk = null; ilanVeriBagla();
+  if(!ILAN.V.veri){ ILAN.dokun = true; toast("ChatGPT görseli zemin oldu ✓ Şimdi fotoğrafta parselin içine tıkla"); } else toast("ChatGPT görseli zemin oldu ✓");
+  ilanEkran();
+}
+if(window.arsaPC?.gptGorsel) window.arsaPC.gptGorsel(veri => gptGorselGeldi(veri));
+{
+  const eskiIlanEkran = ilanEkran;
+  ilanEkran = function(){ const r = eskiIlanEkran.apply(this, arguments);
+    if(window.arsaPC?.gptAc){ const t = app.querySelector('button[onclick="ilanZeminSec()"]')?.closest(".ilIki");
+      if(t && !t.parentElement.querySelector(".ekGptTus")) t.insertAdjacentHTML("afterend", `<button class="btn ekGptTus" onclick="gptIlanAc()">✦ ChatGPT ile düzenle</button>`); }
+    return r; };
 }
 
 /* ================= PC SURUMU (masaustu duzeni) =================
