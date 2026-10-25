@@ -2724,7 +2724,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.9.4";
+const SURUM_MORDOR = "v 2.9.5";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -17241,16 +17241,34 @@ async function eplanAc(id){
 
 /* ---------- 6) sokak gorunumu: Google (exe'de kendi penceresi + goruntu yakalama) ---------- */
 window.__sokakGorsel = window.__sokakGorsel || [];   // kaydedilmeyi bekleyen gorseller: { ad, blob, onizleme }
-function sokakAc(ev, lat, lng){
+function sokakAc(ev, lat, lng, parselId){
   const url = gsvUrl(lat, lng);
-  if(window.arsaPC?.sokakAc){ ev && ev.preventDefault(); window.arsaPC.sokakAc(url); toast("Sokak görünümü açıldı. Pencerenin menüsünden “Görüntüyü al” ile parsele kaydedebilirsin."); return false; }
+  window.__sokakParsel = parselId || null;   // parsel sayfasindan acildiysa alinan goruntu dogrudan o parsele gider
+  if(window.arsaPC?.sokakAc){ ev && ev.preventDefault(); window.arsaPC.sokakAc(url);
+    toast(parselId ? "Sokak görünümü açıldı. Menüden “Görüntüyü al” dediğin her kare bu parselin belgelerine eklenir." : "Sokak görünümü açıldı. Menüden “Görüntüyü al” ile görüntü alabilirsin."); return false; }
   return true;   // telefonda Google Haritalar uygulamasi, bilgisayarda tarayici acilir
 }
-if(window.arsaPC?.sokakGoruntu) window.arsaPC.sokakGoruntu(async veri => {
-  const b = await (await fetch(veri)).blob();
-  window.__sokakGorsel.push({ ad:`sokak-gorunumu-${Date.now()}.png`, blob:b, onizleme:veri, kaynak:"Google" });
-  toast("Sokak görüntüsü alındı · " + window.__sokakGorsel.length + " görsel kaydedilmeyi bekliyor"); haritaGorselTazele();
-});
+// ekran goruntusunu JPEG'e cevir (PNG cok buyuk)
+async function sokakJpeg(veri){
+  const im = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = veri; });
+  const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d").drawImage(im, 0, 0);
+  return await new Promise(r => c.toBlob(r, "image/jpeg", .9));
+}
+async function sokakGoruntuGeldi(veri){
+  let b; try{ b = await sokakJpeg(veri); }catch(e){ b = await (await fetch(veri)).blob(); }
+  const t = new Date(), iki = n => String(n).padStart(2, "0"), ad = `sokak-gorunumu-${t.getFullYear()}-${iki(t.getMonth() + 1)}-${iki(t.getDate())}-${iki(t.getHours())}${iki(t.getMinutes())}${iki(t.getSeconds())}.jpg`;
+  const hedef = window.__sokakParsel || window.__haritaKayitli || null;
+  if(hedef && ME?.role !== "uye"){
+    try{ await dosyaYukle(new File([b], ad, { type:"image/jpeg" }), "resim", hedef);
+      await sb.from("activity_log").insert({ team_id:ME.team_id, user_id:ME.id, action:"görsel eklendi", entity:"parcels", entity_id:hedef, detail:"sokak görünümü (Google)" });
+      toast("Sokak görüntüsü parselin belgelerine eklendi ✓");
+      if(app.dataset.ekran === "parsel" && app.dataset.pid === String(hedef)) ekraniCiz("parsel", hedef);
+      return; }catch(e){ toast("Kaydedilemedi: " + (e.message || e) + " · bekleyenlere eklendi"); }
+  }
+  window.__sokakGorsel.push({ ad, blob:b, onizleme:veri, kaynak:"Google" });
+  toast("Sokak görüntüsü alındı · parseli kaydedince belgelerine eklenecek"); haritaGorselTazele();
+}
+if(window.arsaPC?.sokakGoruntu) window.arsaPC.sokakGoruntu(veri => sokakGoruntuGeldi(veri));
 
 /* ---------- 7) harita: komsu parseller, 3D, Mapillary, kayitli parsele gorsel kaydet ---------- */
 let KOMSU_KATMAN = null, MAPI_KUTU = null;
@@ -17788,7 +17806,7 @@ async function pcOzCiz(){
     if(p._parca) h += blok("Parçalar", kv("Satılık", p._satilik, 1) + kv("Satıldı", p._satildi, 1) + kv("Toplam", p._parca, 1), p._parca);
     if(a.karne) h += blok("Arazi karnesi", a.karne.notlar.slice(0, 6).map(n => kv(esc(n.b), esc(n.deger))).join(""), a.karne.genel != null ? String(a.karne.genel).replace(".", ",") + " / 5" : "");
     if(a.cevre) h += blok("Yakın çevre", (a.cevre.satirlar || []).filter(s => !s.yok).slice(0, 8).map(s => kv(esc(s.b.split(" (")[0]), s.m === 0 ? "bitişik" : km(s.yolM || s.m), 1)).join(""));
-    h += `<div class="pcOzTus">${p.lat ? `<a class="btn ghost" href="${gsvUrl(p.lat, p.lng)}" target="_blank" rel="noopener" onclick="return sokakAc(event, ${p.lat}, ${p.lng})">Sokak görünümü</a>` : ""}
+    h += `<div class="pcOzTus">${p.lat ? `<a class="btn ghost" href="${gsvUrl(p.lat, p.lng)}" target="_blank" rel="noopener" onclick="return sokakAc(event, ${p.lat}, ${p.lng}, '${pid}')">Sokak görünümü</a>` : ""}
       <button class="btn ghost" onclick="eplanAc('${pid}')">İmar (e-Plan)</button>${p.geojson ? `<button class="btn ghost" onclick="go('saha','${pid}')">Saha modu</button>` : ""}</div>`;
     k.innerHTML = h; return;
   }
