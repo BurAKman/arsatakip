@@ -2696,7 +2696,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.9.2";
+const SURUM_MORDOR = "v 2.9.3";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -16980,33 +16980,53 @@ function ekHalka(geo){ const g = geo?.geometry || geo; if(!g) return []; const h
 function ekIcinde(p, H){ let c = false; for(let i = 0, j = H.length - 1; i < H.length; j = i++){ const a = H[i], b = H[j]; if((a.lat > p.lat) !== (b.lat > p.lat) && p.lng < (b.lng - a.lng)*(p.lat - a.lat)/(b.lat - a.lat) + a.lng) c = !c; } return c; }
 
 /* ---------- 1) cevre raporu + arazi karnesi ---------- */
-function cevreSorgusuGenis(lat, lng){
-  return `[out:json][timeout:40];(
-    node(around:30000,${lat},${lng})[place~"^(city|town|village|hamlet)$"];
-    way(around:1500,${lat},${lng})[highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|track)$"];
-    node(around:25000,${lat},${lng})[highway=motorway_junction];
-    node(around:4000,${lat},${lng})[highway=bus_stop];
-    node(around:25000,${lat},${lng})[railway~"^(station|halt)$"];
-    nwr(around:12000,${lat},${lng})[amenity~"^(school|hospital|clinic|doctors|pharmacy|place_of_worship|fuel)$"];
-    nwr(around:12000,${lat},${lng})[shop~"^(supermarket|convenience)$"];
-    way(around:4000,${lat},${lng})[waterway~"^(river|stream|canal)$"];
-    nwr(around:8000,${lat},${lng})[natural=water];
-    way(around:3000,${lat},${lng})[landuse~"^(forest|industrial|quarry|landfill)$"];
-    way(around:3000,${lat},${lng})[natural=wood];
-    way(around:3000,${lat},${lng})[power=line];
-    node(around:3000,${lat},${lng})[power~"^(transformer|substation)$"];
-    nwr(around:150000,${lat},${lng})[aeroway=aerodrome][iata];
-  );out center tags;`;
+// uc hafif sorgu: tek dev sorgu Overpass'ta zaman asimina dusup BOS cevap donuyordu
+function cevreSorgulari(lat, lng){
+  const a = `${lat},${lng}`;
+  return [
+    { ad:"yakın çevre", zorunlu:true, q:`[out:json][timeout:25];(
+      way(around:1500,${a})[highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|track)$"];
+      way(around:3000,${a})[waterway~"^(river|stream|canal)$"];
+      way(around:3000,${a})[natural=water];
+      way(around:2500,${a})[landuse~"^(forest|industrial|quarry|landfill)$"];
+      way(around:2500,${a})[natural=wood];
+      way(around:2500,${a})[power=line];
+      node(around:2500,${a})[power~"^(transformer|substation)$"];
+      node(around:4000,${a})[highway=bus_stop];
+    );out center tags;` },
+    { ad:"yerleşimler", zorunlu:true, q:`[out:json][timeout:25];(
+      node(around:30000,${a})[place~"^(city|town|village|hamlet)$"];
+      nwr(around:12000,${a})[amenity~"^(school|hospital|clinic|doctors|pharmacy|place_of_worship|fuel)$"];
+      nwr(around:12000,${a})[shop~"^(supermarket|convenience)$"];
+    );out center tags;` },
+    { ad:"ulaşım", zorunlu:false, q:`[out:json][timeout:25];(
+      node(around:25000,${a})[highway=motorway_junction];
+      node(around:25000,${a})[railway~"^(station|halt)$"];
+      nwr(around:120000,${a})[aeroway=aerodrome][iata];
+    );out center tags;` }
+  ];
+}
+async function cevreTekSorgu(q, bildir, ad){
+  let son = null;
+  for(let tur = 0; tur < 2; tur++) for(const s of OVER_SUNUCU){
+    bildir && bildir(`Çevre taranıyor · ${ad}…`);
+    try{ const r = await zamanAsimi(tkgm(s + encodeURIComponent(q)), 35000);
+      if(r?.remark && /error|timed out|out of memory/i.test(r.remark)) throw new Error(r.remark);
+      if(r?.elements?.length) return r.elements;
+      son = new Error("boş cevap"); }catch(e){ son = e; }
+    await new Promise(ok => setTimeout(ok, 700)); }
+  throw son || new Error("çevre verisi alınamadı");
 }
 async function cevreRaporuUret(p, bildir){
   const M = { lat:+p.lat, lng:+p.lng }; if(!isFinite(M.lat)) throw new Error("Parselin konumu yok");
   const H = ekHalka(p.geojson);
   // parselin kenarina en yakin mesafe (merkez degil): kucuk parsellerde fark etmez, buyuklerde onemli
   const kenarUz = nk => { if(!H.length) return uzaklik(M, nk); if(ekIcinde(nk, H)) return 0; let d = 1e9; H.forEach(h => d = Math.min(d, uzaklik(h, nk))); return Math.min(d, uzaklik(M, nk)); };
-  let veri = null, sonHata = null;
-  for(const s of OVER_SUNUCU){ bildir && bildir("Çevre taranıyor…");
-    try{ const r = await zamanAsimi(tkgm(s + encodeURIComponent(cevreSorgusuGenis(M.lat, M.lng))), 45000); if(r?.elements){ veri = r; break; } }catch(e){ sonHata = e; } }
-  if(!veri) throw sonHata || new Error("çevre verisi alınamadı");
+  const elemanlar = [], olmayan = [];
+  for(const S of cevreSorgulari(M.lat, M.lng)){
+    try{ elemanlar.push(...await cevreTekSorgu(S.q, bildir, S.ad)); }catch(e){ if(S.zorunlu) olmayan.push(S.ad); } }
+  if(olmayan.length === 2 || !elemanlar.length) throw new Error("harita sunucuları şu an meşgul, birkaç dakika sonra tekrar dene");
+  const veri = { elements: elemanlar };
   const og = veri.elements.map(e => { const nk = e.center ? { lat:e.center.lat, lng:e.center.lon } : { lat:e.lat, lng:e.lon }; return isFinite(nk.lat) ? { t:e.tags || {}, nk, u: kenarUz(nk) } : null; }).filter(Boolean).sort((a, b) => a.u - b.u);
   const ilk = f => og.find(f);
   const ad = o => o?.t?.name || "";
@@ -17038,7 +17058,7 @@ async function cevreRaporuUret(p, bildir){
     try{ const kord = [M].concat(hedef.map(s => s.nk)).map(n => `${n.lng.toFixed(5)},${n.lat.toFixed(5)}`).join(";");
       const r = await zamanAsimi(fetch(`${OSRM}/table/v1/driving/${kord}?sources=0&annotations=distance,duration`).then(x => x.json()), 20000);
       hedef.forEach((s, i) => { const d = r?.distances?.[0]?.[i+1], t = r?.durations?.[0]?.[i+1]; if(d != null){ s.yolM = Math.round(d); s.dk = Math.max(1, Math.round(t/60)); } }); }catch(e){} }
-  return { tarih: new Date().toISOString(), satirlar: sat.map(s => { const { nk, ...r } = s; return r; }) };
+  return { tarih: new Date().toISOString(), eksik: olmayan, satirlar: sat.map(s => { const { nk, ...r } = s; return r; }) };
 }
 // arazi karnesi: yukseklik izgarasindan egim/baki/rakim + cevre raporundan risk ve erisim notlari
 async function araziKarnesi(p, cevre, bildir){
@@ -17082,6 +17102,7 @@ function araziKartiHtml(id, a){
   return `<div class="card" id="ekArazi">
     <div class="bolum"><span class="rz altin">${svg("pusula")}</span><b>Arazi Bilgileri</b>${k?.genel != null ? `<span class="sayi">${yildizHtml(k.genel)}</span>` : ""}</div>
     ${k ? `<div class="ekKarne">${k.notlar.map(n => `<div class="ekNot"><span>${esc(n.b)}</span><b>${esc(n.deger)}</b>${n.puan != null ? yildizHtml(n.puan) : "<em></em>"}${n.ac ? `<small>${esc(n.ac)}</small>` : ""}</div>`).join("")}</div>` : ""}
+    ${c?.eksik?.length ? `<div class="ekOnay" style="margin:4px 0 8px"><span>⚠ ${esc(c.eksik.join(", "))} taranamadı (sunucu meşguldü). “Raporu Yenile” ile tekrar dene.</span></div>` : ""}
     ${c ? `<details class="ekCevre" ${ozet.length ? "" : "open"}><summary>Çevre ve mesafeler · ${(c.satirlar || []).filter(s => !s.yok).length} yer</summary>${(c.satirlar || []).map(cevreSatirHtml).join("")}</details>` : ""}
     ${!c && !k ? `<p class="ipuc" style="margin:2px 0 10px">Parselin çevresi taranır: asfalt, köy, ilçe, okul, sağlık, dere, elektrik… Gerçek yol mesafesi ve süresi hesaplanır; eğim, bakı ve risklerle arazi karnesi çıkar. Sonucu görüp istersen parsel bilgilerine kaydedersin.</p>` : ""}
     <div class="ekTuslar">
