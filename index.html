@@ -2634,9 +2634,9 @@ body.pc[data-tema] .pcTurSat select{width:150px!important;padding:6px 8px!import
 .pcOnUst{display:flex;align-items:center;gap:8px;padding:10px 12px 10px 18px;border-bottom:1px solid var(--pc-cizgi);background:linear-gradient(180deg,#18181C,#101013)}
 .pcOnUst b{flex:1;font-size:13px;font-weight:500;color:var(--pc-yazi);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 body.pc[data-tema] .pcOnUst .btn{margin:0;padding:7px 14px;font-size:12px;text-decoration:none}
-.pcOnGovde{flex:1;min-height:0;display:grid;place-items:center;background:#060607}
-.pcOnGovde img,.pcOnGovde video{max-width:100%;max-height:100%;object-fit:contain}
-.pcOnGovde iframe{width:100%;height:100%;border:none;background:#fff}
+.pcOnGovde{flex:1;min-height:0;position:relative;background:#060607}
+.pcOnGovde img,.pcOnGovde video,.pcOnGovde iframe{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;border:none}
+.pcOnGovde iframe{background:#fff}
 
 /* saha modu PC'de: harita genis */
 body.pc #sahaHarita{height:calc(var(--pcAppH) - 200px)}
@@ -2696,7 +2696,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.9.1";
+const SURUM_MORDOR = "v 2.9.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -17380,6 +17380,57 @@ function sahaKoseCiz(){
 }
 ekranlar.saha = sahaEkran; UST_EKRAN.saha = "parsel";
 { const eskiC = ekraniCiz; ekraniCiz = function(r, arg){ if(r !== "saha") sahaKapat(); app.dataset.ekran = r || "ana"; app.dataset.pid = arg == null ? "" : String(arg); return eskiC(r, arg); }; }
+
+/* ---------- 9) ilan afisi bulut esitleme ----------
+   Tasarim (localStorage) ve zemin fotografi (IndexedDB) sadece hazirlandigi cihazda duruyordu:
+   telefonda yapilan afis PC'de "zemin yukle" diyordu. Artik ikisi de Supabase'e yazilir (parcels.analiz.ilan +
+   depolama), hangi cihazda acilirsa en yenisi gelir. */
+const ilanLS = (k, v) => { try{ if(v === undefined) return localStorage.getItem(k); if(v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); }catch(e){ return null; } };
+let __ilanBulutSaat = null;
+let __ilanBulutSira = Promise.resolve();
+function ilanBulutYaz(id, zeminBlob){ return (__ilanBulutSira = __ilanBulutSira.then(() => ilanBulutYazIc(id, zeminBlob))); }   // sirayla: biri digerinin zeminini ezmesin
+async function ilanBulutYazIc(id, zeminBlob){
+  try{
+    const a = await analizOku(id), eski = a.ilan || {}, t = Date.now();
+    const yeni = { ...eski, t };
+    const D = ilanLS("ilan:" + id); if(D) yeni.D = JSON.parse(D);
+    if(zeminBlob){
+      const uz = /png/.test(zeminBlob.type || "") ? "png" : /webp/.test(zeminBlob.type || "") ? "webp" : "jpg";
+      const yol = `${ME.team_id}/${id}/ilan-zemin-${t}.${uz}`;
+      const { error } = await sb.storage.from("arsatakip").upload(yol, zeminBlob, { contentType: zeminBlob.type || "image/jpeg" });
+      if(error) throw error;
+      if(eski.zeminYol && eski.zeminYol !== yol) sb.storage.from("arsatakip").remove([eski.zeminYol]).catch(() => {});
+      yeni.zeminYol = yol; ilanLS("ilanZY:" + id, yol);
+    }
+    await analizYaz(id, { ilan: yeni });
+    ilanLS("ilanT:" + id, String(t));
+  }catch(e){ console.log("ilan bulut", e); }
+}
+{
+  const eskiKaydet = ilanKaydet;
+  ilanKaydet = function(){ eskiKaydet(); if(!ILAN?.id || !ILAN.V?.zemin) return; const id = ILAN.id; clearTimeout(__ilanBulutSaat); __ilanBulutSaat = setTimeout(() => ilanBulutYaz(id), 2500); };
+  const eskiZeminYaz = ilanZeminYaz;
+  ilanZeminYaz = async function(id, blob){ await eskiZeminYaz(id, blob); if(blob) ilanBulutYaz(id, blob); };
+  const eskiAfis = ilanAfisi;
+  const yeniAfis = async function(parselId){
+    let bulut = null; try{ bulut = (await analizOku(parselId)).ilan || null; }catch(e){}
+    const yerelT = +(ilanLS("ilanT:" + parselId) || 0), yerelD = ilanLS("ilan:" + parselId);
+    let yerelZ = null; try{ yerelZ = await ilanZeminOku(parselId); }catch(e){}
+    if(bulut && !bulut.zeminYol && yerelZ) bulut = null;   // buluttaki zeminsiz bos taslak, buradaki gercek afisi ezmesin
+    if(bulut && (bulut.t || 0) > yerelT){
+      // baska cihazda daha yeni hali var: onu al
+      if(bulut.D) ilanLS("ilan:" + parselId, JSON.stringify(bulut.D));
+      if(bulut.zeminYol && bulut.zeminYol !== ilanLS("ilanZY:" + parselId)){
+        try{ const { data } = await sb.storage.from("arsatakip").createSignedUrl(bulut.zeminYol, 600);
+          const b = await (await fetch(data.signedUrl)).blob(); await eskiZeminYaz(parselId, b); ilanLS("ilanZY:" + parselId, bulut.zeminYol); }catch(e){ console.log("ilan zemin indir", e); } }
+      ilanLS("ilanT:" + parselId, String(bulut.t || Date.now()));
+    }
+    await eskiAfis(parselId);
+    // bu cihazda hazirlanmis ama buluta hic gitmemis eski afis: bir kere yukle
+    if(!bulut && yerelZ && ME.role !== "uye") ilanBulutYaz(parselId, yerelZ);
+  };
+  ilanAfisi = yeniAfis; ekranlar.ilan = yeniAfis;
+}
 
 /* ================= PC SURUMU (masaustu duzeni) =================
    Ayni uygulama, ayni veritabani. Genis ekranda (ya da Arsa Takip masaustu programinda) acilinca
