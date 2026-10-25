@@ -2309,6 +2309,25 @@ h3{letter-spacing:.02em}
 .ekImarOn img{max-width:100%;max-height:256px;object-fit:contain}
 .ekImarMetin{white-space:pre-wrap;font-size:13px;line-height:1.55;max-height:60vh;overflow:auto;padding:12px 14px;border-radius:9px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.07)}
 .ekTapuKart .kv b{font-weight:500}
+.ekEmsalOzet{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 10px}
+.ekEmsalOzet div{padding:10px 12px;border-radius:10px;background:var(--cam,rgba(255,255,255,.05));border:1px solid var(--cizgi,rgba(255,255,255,.08))}
+.ekEmsalOzet small{display:block;font-size:10.5px;letter-spacing:.06em;color:var(--ink-3);margin-bottom:4px}
+.ekEmsalOzet b{font-size:14px;color:var(--ink);white-space:nowrap}
+@media (max-width:520px){ .ekEmsalOzet{grid-template-columns:1fr} }
+.ekEmsalSvg{width:100%;height:auto;display:block;margin:2px 0 6px}
+.ekEmsalSvg .bant{fill:var(--gold-soft,rgba(224,49,60,.15));stroke:var(--gold);stroke-width:1}
+.ekEmsalSvg .n{fill:var(--ink)}
+.ekEmsalSvg .a{fill:none;stroke:var(--ink-3);stroke-width:1.5}
+.ekEmsalSvg .k{stroke:var(--gold);stroke-width:3}
+.ekEmsalSvg .kt,.ekEmsalSvg .t{font:11px Inter,sans-serif;fill:var(--ink-3)}
+.ekEmsalSvg .kt{fill:var(--gold);text-anchor:middle}
+.ekEmsalNot{font-size:12.5px;color:var(--ink-2);margin:4px 0}
+.ekEmsalNot.uy{color:#FF8A90}
+.ekEmsalSat{align-items:center}
+.ekEmsalSat a{color:var(--ink);text-decoration:none}
+.ekEmsalSat a:hover{color:var(--gold)}
+.ekEmsalSat button{margin-left:8px;width:24px;height:24px;border-radius:6px;color:var(--ink-3);flex:0 0 24px}
+.ekEmsalSat button:hover{color:#FF7078;background:rgba(224,49,60,.12)}
 
 /* ================= PC SURUMU · premium kizil (siyah · grafit · yakut) ================= */
 body.pc[data-tema]{
@@ -2689,10 +2708,15 @@ body.pc[data-tema] .pcOnUst .btn{margin:0;padding:7px 14px;font-size:12px;text-d
 /* saha modu PC'de: harita genis */
 body.pc #sahaHarita{height:calc(var(--pcAppH) - 200px)}
 body.pc #app[data-ekran="saha"]{columns:auto!important}
+
+/* acilis: sadece isikli BA */
+.baAcilis{position:fixed;inset:0;display:grid;place-items:center;background:#060607;z-index:5}
+.baAcilis b{font:600 74px Cinzel,Georgia,serif;letter-spacing:.04em;color:#fff;text-shadow:0 0 6px #fff,0 0 18px #FF4752,0 0 42px #E0313C,0 0 80px rgba(224,49,60,.6);animation:baNefes 1.6s ease-in-out infinite}
+@keyframes baNefes{50%{text-shadow:0 0 4px #fff,0 0 12px #FF4752,0 0 28px #E0313C,0 0 54px rgba(224,49,60,.4)}}
 </style>
 </head>
 <body>
-<div class="wrap" id="app"><div class="spin"></div></div>
+<div class="wrap" id="app"><div class="baAcilis"><b>BA</b></div></div>
 <div id="toast"></div>
 
 <script>
@@ -2726,7 +2750,7 @@ body.pc #app[data-ekran="saha"]{columns:auto!important}
     if(window.__acildi) return;
     if(typeof window.supabase === "undefined") return yaz("Supabase kütüphanesi gelmedi", "cdn.jsdelivr.net adresine ulaşılamıyor olabilir.");
     if(typeof window.L === "undefined") return yaz("Harita kütüphanesi gelmedi", "cdnjs.cloudflare.com adresine ulaşılamıyor olabilir.");
-    if(kutu && kutu.querySelector(".spin")) yaz("Sunucu cevap vermedi", "Supabase'e ulaşılamadı ya da açılış kodu takıldı.");
+    if(kutu && kutu.querySelector(".spin, .baAcilis")) yaz("Sunucu cevap vermedi", "Supabase'e ulaşılamadı ya da açılış kodu takıldı.");
   }, 12000);
 })();
 </script>
@@ -2741,7 +2765,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.9.9";
+const SURUM_MORDOR = "v 3.0.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -17036,51 +17060,49 @@ const YHT_TR = [["Ankara Gar",39.9364,32.8436],["Eryaman YHT",39.9790,32.6365],[
   ["Bilecik YHT",40.1450,29.9750],["Arifiye",40.7130,30.3690],["İzmit",40.7650,29.9200],["Gebze",40.7980,29.4320],["Pendik",40.8770,29.2350],["Bostancı",40.9520,29.0950],
   ["Söğütlüçeşme",40.9910,29.0370],["Halkalı",41.0030,28.7850],["Konya",37.8720,32.4930],["Karaman",37.1810,33.2220],["Kırıkkale YHT",39.8460,33.5140],
   ["Yerköy",39.6380,34.4670],["Sivas",39.7570,37.0170]];
+// Turkiye'yi kapsayan Overpass sunuculari
+const OVER_TR = ["https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
+// ek sorgular (temel veri uygulamanin eski, calistigi bilinen cevreVerisi() fonksiyonundan gelir)
 function cevreSorgulari(lat, lng){
   const a = `${lat},${lng}`;
   return [
-    { ad:"yakın çevre", zorunlu:true, q:`[out:json][timeout:25];(
-      way(around:1500,${a})[highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential)$"];
-      way(around:2000,${a})[waterway~"^(river|stream|canal)$"];
-      way(around:2000,${a})[natural=water];
-      way(around:2000,${a})[landuse~"^(forest|industrial|quarry|landfill)$"];
-      way(around:1500,${a})[power=line];
-      node(around:3000,${a})[highway=bus_stop];
-    );out center tags qt;` },
-    { ad:"yerleşimler", zorunlu:true, q:`[out:json][timeout:25];(
+    { ad:"yerleşimler", q:`[out:json][timeout:25];(
       node(around:90000,${a})[place~"^(city|town)$"];
       node(around:12000,${a})[place~"^(village|hamlet)$"];
-      nwr(around:10000,${a})[amenity~"^(school|hospital|clinic|doctors|pharmacy|place_of_worship|fuel)$"];
-      nwr(around:10000,${a})[shop~"^(supermarket|convenience)$"];
-    );out center tags qt;` },
-    { ad:"ulaşım", zorunlu:false, q:`[out:json][timeout:25];(
+      nwr(around:8000,${a})[amenity~"^(place_of_worship|clinic|doctors)$"];
+      nwr(around:8000,${a})[shop~"^(supermarket|convenience)$"];
+    );out center tags;` },
+    { ad:"ulaşım", q:`[out:json][timeout:25];(
+      node(around:4000,${a})[highway=bus_stop];
       node(around:30000,${a})[highway=motorway_junction];
       node(around:40000,${a})[railway~"^(station|halt)$"];
-    );out center tags qt;` }
+    );out center tags;` }
   ];
 }
-// Turkiye'yi kapsayan Overpass sunuculari (osm.ch sadece Isvicre: Turkiye icin BOS donuyordu)
-const OVER_TR = ["https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
-// tek sorgu: butun sunuculara ayni anda sor, ilk dolu cevap kazanir
+// tek sorgu: butun yollar ayni anda denenir, ilk dolu cevap kazanir; hatalar toplanir ki ne oldugu gorulsun
 function cevreTekSorgu(q){
-  const tek = async yol => { const r = await yol();
-    if(r?.remark && /error|timed out|out of memory/i.test(r.remark)) throw new Error(r.remark);
-    if(!r?.elements?.length) throw new Error("boş cevap"); return r.elements; };
+  const tek = async (ad, yol) => { try{ const r = await yol();
+      if(r?.remark && /error|timed out|out of memory/i.test(r.remark)) throw new Error(r.remark.slice(0, 80));
+      if(!r?.elements?.length) throw new Error("boş cevap"); return r.elements; }catch(e){ throw new Error(ad + ": " + (e.message || e)); } };
   const enc = encodeURIComponent(q);
-  const yollar = OVER_TR.map(s => () => fetch(s + "?data=" + enc).then(x => { if(!x.ok) throw new Error("HTTP " + x.status); return x.json(); }))
-    .concat([() => tkgm(OVER_TR[0] + "?data=" + enc), () => tkgm(OVER_TR[1] + "?data=" + enc)]);
-  return zamanAsimi(Promise.any(yollar.map(y => tek(y))), 32000).catch(e => { throw new Error((e?.errors?.[0]?.message) || e?.message || "sunuculara ulaşılamadı"); });
+  const yollar = [["araç/de", () => tkgm(OVER_TR[0] + "?data=" + enc)], ["araç/coffee", () => tkgm(OVER_TR[1] + "?data=" + enc)]]
+    .concat(OVER_TR.map(s => [new URL(s).hostname.split(".").slice(-2)[0], () => fetch(s + "?data=" + enc).then(x => { if(!x.ok) throw new Error("HTTP " + x.status); return x.json(); })]));
+  return zamanAsimi(Promise.any(yollar.map(([ad, y]) => tek(ad, y))), 40000).catch(e => { throw new Error((e?.errors || []).map(z => z.message).join(" · ") || e?.message || "sunuculara ulaşılamadı"); });
 }
 async function cevreRaporuUret(p, bildir){
   const M = { lat:+p.lat, lng:+p.lng }; if(!isFinite(M.lat)) throw new Error("Parselin konumu yok");
   const H = ekHalka(p.geojson);
   const kenarUz = nk => { if(!H.length) return uzaklik(M, nk); if(ekIcinde(nk, H)) return 0; let d = 1e9; H.forEach(h => d = Math.min(d, uzaklik(h, nk))); return Math.min(d, uzaklik(M, nk)); };
-  const S = cevreSorgulari(M.lat, M.lng); let biten = 0;
-  bildir && bildir(`Çevre taranıyor… (0/${S.length})`);
-  const sonuc = await Promise.all(S.map(x => cevreTekSorgu(x.q).then(r => { bildir && bildir(`Çevre taranıyor… (${++biten}/${S.length})`); return r; }, () => { bildir && bildir(`Çevre taranıyor… (${++biten}/${S.length})`); return null; })));
-  const olmayan = S.filter((x, i) => !sonuc[i] && x.zorunlu).map(x => x.ad);
-  const elemanlar = sonuc.filter(Boolean).flat();
-  if(olmayan.length === 2 || !elemanlar.length) throw new Error("harita sunucuları şu an cevap vermiyor, birkaç dakika sonra tekrar dene");
+  // 1) temel veri: uygulamanin eski cevre fonksiyonu (yollar, su, arazi kullanimi, okul, saglik, akaryakit, elektrik, koyler)
+  const elemanlar = [], hatalar = [], olmayan = [];
+  try{ const v = await zamanAsimi(cevreVerisi(M.lat, M.lng, t => bildir && bildir(t)), 75000); elemanlar.push(...(v?.elements || [])); }
+  catch(e){ hatalar.push("temel: " + (e.message || e)); olmayan.push("yakın çevre"); }
+  // 2) ek veri: ilce/il merkezleri, cami, market, durak, tren (sirayla, sunuculari bogmadan)
+  for(const S of cevreSorgulari(M.lat, M.lng)){
+    bildir && bildir(`Çevre taranıyor · ${S.ad}…`);
+    try{ elemanlar.push(...await cevreTekSorgu(S.q)); }catch(e){ hatalar.push(S.ad + " → " + e.message); olmayan.push(S.ad); } }
+  console.log("cevre raporu hatalari", hatalar);
+  if(!elemanlar.length) throw new Error("harita sunucularından veri gelmedi. Ayrıntı: " + hatalar.join(" | ").slice(0, 400));
   const og = elemanlar.map(e => { const nk = e.center ? { lat:e.center.lat, lng:e.center.lon } : { lat:e.lat, lng:e.lon }; return isFinite(nk.lat) ? { t:e.tags || {}, nk, u: kenarUz(nk) } : null; }).filter(Boolean).sort((a, b) => a.u - b.u);
   const ilk = f => og.find(f);
   const ad = o => o?.t?.name || "";
@@ -17759,6 +17781,284 @@ async function imarCevabi(t, M){
   k.innerHTML = `<div class="pcModal ekGpt"><div class="pcModalB"><b>İmar yorumu</b><small>ChatGPT yorumudur, resmi imar durumu belgesi yerine geçmez.</small></div><div class="ekImarMetin">${esc(t)}</div>
     <div class="pcModalAlt"><button class="btn" onclick="this.closest('.ekOnizle').remove();go('parsel','${M.id}')">Tamam</button></div></div>`;
   document.body.appendChild(k);
+}
+
+/* ---------- 12) Emsal toplayici + denetimli emsal raporu (PDF) ----------
+   Ilanlar sahibinden'den kullanicinin kendi gezintisiyle tek tikla alinir (elle giris yok).
+   Fiyat bandini uygulamanin kendi hesap motoru cikarir (aykiri ayiklama, buyukluk duzeltmesi, ayni koy agirligi);
+   ChatGPT yorumu ayri bolumdur ve hesaplanan bantla karsilastirilip denetlenir. */
+const sayiTr = x => { const s = String(x || "").replace(/[^\d.,]/g, ""); if(!s) return NaN;
+  if(/,\d{1,2}$/.test(s)) return +s.replace(/\./g, "").replace(",", ".");
+  return +s.replace(/[.,]/g, ""); };
+const trSlug = x => trNrm(x).replace(/ /g, "-");
+function emsalSahibindenUrl(p){
+  const tur = /arsa/i.test(p.nitelik || "") ? "arsa" : /bag|bağ|bahçe|bahce/i.test(p.nitelik || "") ? "bag-bahce" : "tarla";
+  return `https://www.sahibinden.com/satilik-${tur}/${trSlug(p.il)}-${trSlug(p.ilce)}`;
+}
+function emsalAyikla(r){
+  // sutun basliklarindan m2 sutununu bul (ilan basligi, fiyat, tarih, konum disindaki sutunlar ilan ozellikleridir)
+  const ozB = (r.basliklar || []).filter(h => h && !/ilan başlığı|ilan basligi|^fiyat$|ilan tarihi|il\s*\/\s*ilçe|^\s*$/i.test(h));
+  const m2Ix = ozB.findIndex(h => /^m\s*(²|2)\s*(\(brüt\)|\(net\))?$/i.test(h.trim())), bfIx = ozB.findIndex(h => /m\s*(²|2).*fiyat/i.test(h));
+  return (r.ilanlar || []).map(x => {
+    const fiyat = sayiTr(x.fiyat), ham = (x.attrs || []).map(sayiTr), nums = ham.filter(v => isFinite(v) && v > 0);
+    let m2 = NaN;
+    if(m2Ix >= 0 && ozB.length === ham.length) m2 = ham[m2Ix];
+    else if(bfIx >= 0 && ozB.length === ham.length && ham[bfIx] > 0) m2 = fiyat/ham[bfIx];
+    // baslik yoksa: en buyuk sayi m2 kabul edilir (tarla/arsada m2 genelde m2 fiyatindan buyuktur)
+    if(!isFinite(m2)) m2 = nums.filter(v => isFinite(fiyat/v) && fiyat/v >= 1 && fiyat/v <= 1e6).sort((a, b) => b - a)[0];
+    const birim = fiyat/m2;
+    return { id:String(x.id), baslik:x.baslik || "", url:x.url || "", fiyat, m2, birim:isFinite(birim) ? Math.round(birim) : null, yer:x.yer || "", tarih:x.tarih || "", alindi:new Date().toISOString().slice(0, 10) };
+  }).filter(x => isFinite(x.fiyat) && x.fiyat > 0 && isFinite(x.m2) && x.m2 > 0);
+}
+const yuzdelik = (L, q) => { if(!L.length) return NaN; const s = [...L].sort((a, b) => a - b), i = (s.length - 1)*q, a = Math.floor(i), b = Math.ceil(i); return s[a] + (s[b] - s[a])*(i - a); };
+function emsalAnaliz(p, E, kendiFiyat){
+  const hepsi = (E?.ilanlar || []).filter(x => !x.haric && x.birim > 0);
+  if(!hepsi.length) return null;
+  const B = hepsi.map(x => x.birim), q1 = yuzdelik(B, .25), q3 = yuzdelik(B, .75), iqr = q3 - q1;
+  const alt = q1 - 1.5*iqr, ust = q3 + 1.5*iqr;
+  const gecerli = hepsi.filter(x => x.birim >= alt && x.birim <= ust), aykiri = hepsi.filter(x => !(x.birim >= alt && x.birim <= ust));
+  const G = gecerli.map(x => x.birim), med = yuzdelik(G, .5);
+  const koy = trNrm(p.mahalle), ayniKoy = gecerli.filter(x => koy && trNrm(x.yer).includes(koy));
+  // buyukluk duzeltmesi: kucuk parsellerin m2 fiyati yuksek olur -> ln(birim) = a + b ln(m2)
+  let tahmin = null, egim = null;
+  if(gecerli.length >= 6){ const X = gecerli.map(x => Math.log(x.m2)), Y = gecerli.map(x => Math.log(x.birim)), n = X.length;
+    const mx = X.reduce((a, b) => a + b)/n, my = Y.reduce((a, b) => a + b)/n;
+    let sxy = 0, sxx = 0; X.forEach((x, i) => { sxy += (x - mx)*(Y[i] - my); sxx += (x - mx)**2; });
+    egim = sxx ? Math.max(-.8, Math.min(.2, sxy/sxx)) : 0;
+    tahmin = Math.exp(my + egim*(Math.log(+p.alan_m2 || Math.exp(mx)) - mx)); }
+  const koyMed = ayniKoy.length >= 3 ? yuzdelik(ayniKoy.map(x => x.birim), .5) : null;
+  const parcalar = [[med, 1], [tahmin, tahmin ? 1 : 0], [koyMed, koyMed ? 1.5 : 0]].filter(x => x[0] && x[1]);
+  const merkez = parcalar.reduce((t, x) => t + x[0]*x[1], 0)/parcalar.reduce((t, x) => t + x[1], 0);
+  const gq1 = yuzdelik(G, .25), gq3 = yuzdelik(G, .75);
+  const bant = [Math.round(merkez*(gq1/med || .9)), Math.round(merkez*(gq3/med || 1.1))];
+  const alan = +p.alan_m2 || 0;
+  const konum = kendiFiyat ? (kendiFiyat < bant[0] ? "altında" : kendiFiyat > bant[1] ? "üstünde" : "içinde") : null;
+  return { n:hepsi.length, gecerli, aykiri, ayniKoy, min:Math.min(...G), max:Math.max(...G), q1:gq1, q3:gq3, med, ort:G.reduce((a, b) => a + b, 0)/G.length,
+    tahmin, egim, koyMed, merkez:Math.round(merkez), bant, toplam:[bant[0]*alan, bant[1]*alan], kendiFiyat, konum };
+}
+const tl = n => isFinite(n) ? nf(Math.round(n)) + " ₺" : "—";
+function emsalNoktaSvg(A, kendi){
+  const L = A.gecerli.map(x => x.birim).concat(A.aykiri.map(x => x.birim)), mn = Math.min(...L, A.bant[0], kendi || Infinity), mx = Math.max(...L, A.bant[1], kendi || 0);
+  const X = v => 10 + (v - mn)/((mx - mn) || 1)*580;
+  return `<svg class="ekEmsalSvg" viewBox="0 0 600 70"><rect x="${X(A.bant[0])}" y="14" width="${Math.max(3, X(A.bant[1]) - X(A.bant[0]))}" height="34" rx="6" class="bant"/>
+    ${A.gecerli.map(x => `<circle cx="${X(x.birim)}" cy="31" r="4.5" class="n"/>`).join("")}${A.aykiri.map(x => `<circle cx="${X(x.birim)}" cy="31" r="4" class="a"/>`).join("")}
+    ${kendi ? `<line x1="${X(kendi)}" x2="${X(kendi)}" y1="6" y2="56" class="k"/><text x="${X(kendi)}" y="68" class="kt">senin fiyatın</text>` : ""}
+    <text x="10" y="68" class="t">${nf(Math.round(mn))} ₺/m²</text><text x="590" y="68" class="t" text-anchor="end">${nf(Math.round(mx))} ₺/m²</text></svg>`;
+}
+async function emsalKartiHtml(id, p, a){
+  const E = a.emsal; const pc = !!window.arsaPC?.emsalAc;
+  if(!E?.ilanlar?.length) return pc ? `<div class="card" id="ekEmsal"><div class="bolum"><span class="rz altin">${svg("money")}</span><b>Emsal Fiyatlar</b></div>
+    <p class="ipuc" style="margin:2px 0 10px">Sahibinden programın içinde açılır, parselin ilçesindeki satılık ilanlar hazır gelir. İstediğin sayfada menüden “Sayfadaki ilanları emsale al” de; ilanlar tek tıkla buraya düşer, elle hiçbir şey yazmazsın.</p>
+    <button class="btn" onclick="emsalTopla('${id}')">📊 Emsal Topla</button></div>` : "";
+  const { data:yy } = await sb.from("parcel_years").select("m2_fiyat").eq("parcel_id", id).eq("yil", YEAR);
+  const A = emsalAnaliz(p, E, +yy?.[0]?.m2_fiyat || null); if(!A) return "";
+  const g = E.gpt, gd = g?.bant ? (g.bant[1] < A.bant[0]*.85 || g.bant[0] > A.bant[1]*1.15 ? "uyusmuyor" : "tutarli") : null;
+  return `<div class="card" id="ekEmsal"><div class="bolum"><span class="rz altin">${svg("money")}</span><b>Emsal Fiyatlar</b><span class="sayi">${A.n} ilan</span></div>
+    <div class="ekEmsalOzet"><div><small>Önerilen m² bandı</small><b>${nf(A.bant[0])} – ${nf(A.bant[1])} ₺</b></div><div><small>Parsel değeri (${nf2(+p.alan_m2 || 0)} m²)</small><b>${kisaPara(A.toplam[0])} – ${kisaPara(A.toplam[1])}</b></div>
+      <div><small>Medyan · aynı köy</small><b>${nf(Math.round(A.med))} ₺${A.koyMed ? " · " + nf(Math.round(A.koyMed)) + " ₺" : ""}</b></div></div>
+    ${emsalNoktaSvg(A, A.kendiFiyat)}
+    ${A.kendiFiyat ? `<div class="ekEmsalNot">Senin m² fiyatın (${nf(A.kendiFiyat)} ₺) emsal bandının <b>${A.konum}</b>.</div>` : ""}
+    ${g ? `<div class="ekEmsalNot ${gd === "uyusmuyor" ? "uy" : ""}">ChatGPT yorumu: ${g.bant ? nf(g.bant[0]) + " – " + nf(g.bant[1]) + " ₺/m²" : "bant belirtmedi"} · ${gd === "tutarli" ? "hesapla tutarlı ✓" : gd === "uyusmuyor" ? "hesapla uyuşmuyor ⚠ (rapor hesaplanan bandı esas alır)" : ""}</div>` : ""}
+    <details class="ekCevre"><summary>İlanlar · ${A.n} (${A.aykiri.length} aykırı ayıklandı)</summary>
+      ${E.ilanlar.map(x => `<div class="kv ekEmsalSat ${x.haric ? "ekSoluk" : ""} ${A.aykiri.some(z => z.id === x.id) ? "ekUyari" : ""}"><span><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.baslik || "ilan")}</a><small>${esc(x.yer)} · ${nf(Math.round(x.m2))} m² · ${tl(x.fiyat)} · ${esc(x.tarih)}</small></span>
+        <b class="mono">${nf(x.birim)} ₺/m²</b>${ME.role !== "uye" ? `<button title="${x.haric ? "Geri al" : "Hesaptan çıkar"}" onclick="emsalHaric('${id}','${x.id}')">${x.haric ? "↺" : "✕"}</button>` : ""}</div>`).join("")}</details>
+    <div class="ekTuslar">${pc ? `<button class="btn ghost" onclick="emsalTopla('${id}')">📊 Emsal Topla</button><button class="btn ghost" onclick="emsalGpt('${id}')">✦ ChatGPT'ye yorumlat</button>` : ""}<button class="btn" onclick="emsalPdf('${id}')">Emsal Raporu (PDF)</button></div>
+    <p class="ipuc" style="margin:8px 0 0">Son toplama: ${esc(E.son || "")}${(E.gecmis || []).length > 1 ? " · " + E.gecmis.length + " ölçüm geçmişi" : ""}</p></div>`;
+}
+const kisaPara = n => !isFinite(n) ? "—" : n >= 1e6 ? (n/1e6).toFixed(n >= 1e7 ? 1 : 2).replace(".", ",") + " Mn ₺" : nf(Math.round(n/1000)*1000) + " ₺";
+async function emsalTopla(id){
+  if(!window.arsaPC?.emsalAc) return toast("Emsal toplama masaüstü programında çalışır");
+  const { data:p } = await sb.from("parcels").select("*").eq("id", id).single();
+  window.__emsalHedef = id; await window.arsaPC.emsalAc(emsalSahibindenUrl(p));
+  toast("Sahibinden açıldı. İstersen filtrele; sonra menüden “Sayfadaki ilanları emsale al”.");
+}
+async function emsalKaydet(id, yeniler, kaynak){
+  const a = await analizOku(id).catch(() => ({})), E = { ilanlar:[], gecmis:[], ...(a.emsal || {}) };
+  const var_ = new Map(E.ilanlar.map(x => [x.id, x])); let eklenen = 0;
+  yeniler.forEach(x => { if(var_.has(x.id)){ const o = var_.get(x.id); Object.assign(o, { ...x, haric:o.haric }); } else { var_.set(x.id, x); eklenen++; } });
+  E.ilanlar = [...var_.values()]; E.son = new Date().toLocaleDateString("tr-TR"); E.kaynak = kaynak || E.kaynak;
+  const { data:p } = await sb.from("parcels").select("*").eq("id", id).single(); const A = emsalAnaliz(p, E, null);
+  if(A){ const bugun = new Date().toISOString().slice(0, 10); E.gecmis = (E.gecmis || []).filter(g => g.tarih !== bugun).concat([{ tarih:bugun, n:A.n, medyan:Math.round(A.med), bant:A.bant }]); }
+  await analizYaz(id, { emsal:E }); return eklenen;
+}
+async function emsalIlanlarGeldi(r){
+  const id = window.__emsalHedef; if(!id) return toast("Önce bir parselde “Emsal Topla”ya bas");
+  const L = emsalAyikla(r);
+  if(!L.length){
+    if(r.metin && window.arsaPC?.gptAc){ if(!confirm("Bu sayfada ilan tablosu okunamadı. Sayfa metnini ChatGPT'ye verip ilanları ayıklatalım mı?")) return;
+      GPT_MOD = { tur:"emsalMetin", id, kaynak:r.url }; gptBekleBar("İlanlar ChatGPT'de ayıklanıyor · cevap bitince “Cevabı al”a bas");
+      return window.arsaPC.gptAc(null, `Aşağıda sahibinden.com arama sonuç sayfasının metni var. İçindeki her satılık ilanı çıkar ve SADECE JSON dizi döndür, başka hiçbir şey yazma:
+[{"baslik":"","m2":0,"fiyat_tl":0,"konum":"","tarih":""}]
+Sayfada olmayan ilan ekleme, sayıları uydurma; m2 ya da fiyatı olmayan ilanı atla.
+
+${r.metin}`); }
+    return toast("Bu sayfada ilan bulunamadı");
+  }
+  try{ const n = await emsalKaydet(id, L, r.url); toast(`${L.length} ilan alındı · ${n} yeni emsal eklendi ✓`); try{ PC_P_ZAMAN = 0; }catch(x){}
+    if(app.dataset.ekran === "parsel" && app.dataset.pid === String(id)) ekraniCiz("parsel", id); }catch(e){ toast("Kaydedilemedi: " + (e.message || e)); }
+}
+if(window.arsaPC?.emsalIlanlar) window.arsaPC.emsalIlanlar(r => emsalIlanlarGeldi(r));
+async function emsalHaric(id, ilanId){
+  const a = await analizOku(id).catch(() => ({})), E = a.emsal; if(!E) return;
+  const x = E.ilanlar.find(z => z.id === ilanId); if(x) x.haric = !x.haric;
+  await analizYaz(id, { emsal:E }); ekraniCiz("parsel", id);
+}
+async function emsalGpt(id){
+  if(!window.arsaPC?.gptAc) return;
+  const { data:p } = await sb.from("parcels").select("*").eq("id", id).single(); const a = p.analiz || {}, E = a.emsal; if(!E?.ilanlar?.length) return toast("Önce emsal topla");
+  const cevre = (a.cevre?.satirlar || []).filter(s => !s.yok).slice(0, 10).map(s => `${s.b}: ${s.m === 0 ? "bitişik" : km(s.yolM || s.m)}`).join("; ");
+  const liste = E.ilanlar.filter(x => !x.haric).map((x, i) => `${i + 1}. ${x.yer} | ${Math.round(x.m2)} m² | ${Math.round(x.fiyat)} TL | ${x.birim} TL/m² | ${x.baslik}`).join("\n");
+  GPT_MOD = { tur:"emsalGpt", id }; gptBekleBar("Emsal yorumu hazırlanıyor · cevap bitince “Cevabı al”a bas");
+  await window.arsaPC.gptAc(null, `Türkiye'de satılık bir ${p.nitelik || "arazi"} için emsal değerlendirmesi yapmanı istiyorum. Sadece aşağıdaki verilere dayan, internetten başka rakam ekleme.
+DEĞERLENDİRİLEN PARSEL: ${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)}, Ada ${p.ada || "-"} Parsel ${p.parsel}, ${nf2(+p.alan_m2 || 0)} m², nitelik: ${p.nitelik || "-"}.
+Çevre: ${cevre || "bilgi yok"}${a.karne?.genel != null ? `; arazi karnesi ${a.karne.genel}/5` : ""}.
+EMSAL İLANLAR (sahibinden, ilan fiyatlarıdır, satış fiyatı değildir):
+${liste}
+Lütfen Türkçe ve maddeler halinde: 1) hangi emsallerin bu parsele en çok benzediği ve neden, 2) aykırı / güvenilmez görünen ilanlar, 3) büyüklük, konum ve yol durumu farklarının fiyata etkisi, 4) pazarlık payı dahil gerçekçi m² fiyat bandı, 5) tek cümle satış stratejisi önerisi.
+En son satıra tam olarak şu biçimde yaz: BANT: [en düşük] - [en yüksek] TL/m²`);
+}
+async function emsalGptCevabi(t, M){
+  const m = t.match(/BANT:\s*([\d.,]+)\s*[-–]\s*([\d.,]+)/i), bant = m ? [sayiTr(m[1]), sayiTr(m[2])] : null;
+  const a = await analizOku(M.id).catch(() => ({})); if(!a.emsal) return;
+  a.emsal.gpt = { metin:t, bant, tarih:new Date().toLocaleDateString("tr-TR") };
+  await analizYaz(M.id, { emsal:a.emsal }); toast("ChatGPT emsal yorumu kaydedildi"); ekraniCiz("parsel", M.id);
+}
+async function emsalMetinCevabi(t, M){
+  const a0 = t.indexOf("["), b0 = t.lastIndexOf("]"); let L = []; try{ L = JSON.parse(t.slice(a0, b0 + 1)); }catch(e){}
+  const yeni = L.map((x, i) => ({ id:"g" + trSlug(x.baslik || "").slice(0, 40) + "-" + Math.round(+x.m2 || 0), baslik:x.baslik || "", url:M.kaynak || "", fiyat:+x.fiyat_tl, m2:+x.m2, birim:Math.round(+x.fiyat_tl/+x.m2), yer:x.konum || "", tarih:x.tarih || "", alindi:new Date().toISOString().slice(0, 10), gpt:true }))
+    .filter(x => x.fiyat > 0 && x.m2 > 0);
+  if(!yeni.length) return toast("ChatGPT cevabından ilan çıkarılamadı");
+  const n = await emsalKaydet(M.id, yeni, M.kaynak); toast(`${n} emsal eklendi (ChatGPT ayıkladı, kontrol et)`); ekraniCiz("parsel", M.id);
+}
+{
+  const eskiCG = gptCevapGeldi;
+  gptCevapGeldi = async function(t){
+    if(GPT_MOD?.tur === "emsalGpt" || GPT_MOD?.tur === "emsalMetin"){ const M = GPT_MOD; GPT_MOD = null; document.getElementById("ekGptBar")?.remove();
+      return M.tur === "emsalGpt" ? emsalGptCevabi(t, M) : emsalMetinCevabi(t, M); }
+    return eskiCG(t);
+  };
+  if(window.arsaPC?.gptCevap) window.arsaPC.gptCevap(t => gptCevapGeldi(t));
+}
+// parsel sayfasina emsal kartini ekle
+{
+  const eskiE = parselEklentileri;
+  parselEklentileri = async function(id){ await eskiE(id);
+    try{ const yer = document.getElementById("ekEklenti"); if(!yer || document.getElementById("ekEmsal")) return;
+      const { data:p } = await sb.from("parcels").select("*").eq("id", id).single();
+      const h = await emsalKartiHtml(id, p, p.analiz || {}); if(h){ const arazi = document.getElementById("ekArazi"); (arazi || yer.firstElementChild)?.insertAdjacentHTML("afterend", h); } }catch(e){ console.log("emsal kart", e); } };
+}
+
+/* --- emsal raporu PDF: sayfalar tuvalde cizilir (Turkce harfler sorunsuz), jsPDF ile birlestirilir --- */
+async function emsalPdf(id){
+  toast("Emsal raporu hazırlanıyor…");
+  const { data:p } = await sb.from("parcels").select("*").eq("id", id).single(); const a = p.analiz || {}, E = a.emsal;
+  const { data:yy } = await sb.from("parcel_years").select("m2_fiyat").eq("parcel_id", id).eq("yil", YEAR);
+  const A = emsalAnaliz(p, E, +yy?.[0]?.m2_fiyat || null); if(!A) return toast("Önce emsal topla");
+  const W = 1240, H = 1754, M = 90, KR = "#C41F2B", KOYU = "#17171B", GRI = "#6E6C73", CIZ = "#E4E2E6";
+  const sayfalar = [];
+  const yeni = () => { const c = document.createElement("canvas"); c.width = W; c.height = H; const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, W, H); sayfalar.push(c);
+    x.fillStyle = KOYU; x.fillRect(0, 0, W, 118); x.fillStyle = KR; x.fillRect(0, 118, W, 5);
+    x.fillStyle = "#fff"; x.font = "600 30px Cinzel, Georgia, serif"; x.fillText("ARSA TAKİP", M, 62); x.font = "500 17px Inter, Arial"; x.fillStyle = "#B9B7BC"; x.fillText("EMSAL DEĞERLEME RAPORU · by Melkor", M, 92);
+    x.textAlign = "right"; x.fillStyle = "#fff"; x.font = "600 20px Inter, Arial"; x.fillText(`${duzgun(p.mahalle)} · ${p.ada || "—"}/${p.parsel}`, W - M, 62);
+    x.fillStyle = "#B9B7BC"; x.font = "16px Inter, Arial"; x.fillText(new Date().toLocaleDateString("tr-TR", { day:"2-digit", month:"long", year:"numeric" }), W - M, 92); x.textAlign = "left";
+    x.fillStyle = GRI; x.font = "14px Inter, Arial"; x.fillText(`Sayfa ${sayfalar.length}`, W - M - 50, H - 40); x.fillText("İlan fiyatlarına dayalı tahmindir; resmî ekspertiz yerine geçmez.", M, H - 40);
+    return x; };
+  const baslik = (x, t, y) => { x.fillStyle = KR; x.fillRect(M, y - 20, 6, 26); x.fillStyle = KOYU; x.font = "700 24px Inter, Arial"; x.fillText(t, M + 18, y); return y + 26; };
+  const sar = (x, metin, y, gen, sat = 26, fnt = "17px Inter, Arial", renk = "#2A2A30", yBitis = H - 90) => { x.font = fnt; x.fillStyle = renk;
+    for(const par of String(metin).split("\n")){ let s = ""; for(const k of par.split(" ")){ const d = s ? s + " " + k : k; if(x.measureText(d).width > gen && s){ if(y > yBitis) return { y, kalan:true }; x.fillText(s, M, y); y += sat; s = k; } else s = d; }
+      if(y > yBitis) return { y, kalan:true }; x.fillText(s, M, y); y += sat; } return { y, kalan:false }; };
+  // --- sayfa 1: ozet ---
+  let x = yeni(), y = 190;
+  y = baslik(x, "Değerlendirilen parsel", y) + 12;
+  x.fillStyle = GRI; x.font = "16px Inter, Arial"; x.fillText("Konum", M, y); x.fillStyle = KOYU; x.font = "600 18px Inter, Arial"; x.fillText(`${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)}`, M + 190, y); y += 44;
+  [["Ada / Parsel", `${p.ada || "—"} / ${p.parsel}`], ["Yüzölçümü", nf2(+p.alan_m2 || 0) + " m²"], ["Nitelik", p.nitelik || "—"],
+   ["Mevcut m² fiyatı", A.kendiFiyat ? tl(A.kendiFiyat) : "girilmemiş"], ["Arazi karnesi", a.karne?.genel != null ? a.karne.genel + " / 5" : "—"]].forEach(([k, v], i) => {
+    const cx = M + (i % 2)*530, cy = y + Math.floor(i/2)*44; x.fillStyle = GRI; x.font = "16px Inter, Arial"; x.fillText(k, cx, cy); x.fillStyle = KOYU; x.font = "600 18px Inter, Arial"; x.fillText(v, cx + 190, cy); });
+  y += 150;
+  // sonuc kutusu
+  x.fillStyle = "#FBF3F3"; x.strokeStyle = "#E9B7BA"; x.lineWidth = 2; x.beginPath(); x.roundRect(M, y, W - 2*M, 190, 16); x.fill(); x.stroke();
+  x.fillStyle = KR; x.font = "700 16px Inter, Arial"; x.fillText("SONUÇ · ÖNERİLEN FİYAT BANDI", M + 30, y + 44);
+  x.fillStyle = KOYU; x.font = "700 46px Inter, Arial"; x.fillText(`${nf(A.bant[0])} – ${nf(A.bant[1])} ₺ / m²`, M + 30, y + 106);
+  x.font = "500 22px Inter, Arial"; x.fillStyle = "#3A3A40"; x.fillText(`Parsel toplamı: ${kisaPara(A.toplam[0])} – ${kisaPara(A.toplam[1])}`, M + 30, y + 150);
+  if(A.kendiFiyat){ x.textAlign = "right"; x.font = "600 18px Inter, Arial"; x.fillStyle = A.konum === "içinde" ? "#2E7D4F" : KR; x.fillText(`Mevcut fiyat bandın ${A.konum}`, W - M - 30, y + 150); x.textAlign = "left"; }
+  y += 250;
+  y = baslik(x, "Emsal istatistikleri", y) + 16;
+  [["Toplanan ilan", A.n], ["Hesaba giren", A.gecerli.length], ["Ayıklanan aykırı", A.aykiri.length], ["Aynı köyden", A.ayniKoy.length],
+   ["En düşük", tl(A.min) + "/m²"], ["Medyan", tl(A.med) + "/m²"], ["Ortalama", tl(A.ort) + "/m²"], ["En yüksek", tl(A.max) + "/m²"]].forEach(([k, v], i) => {
+    const cx = M + (i % 4)*265, cy = y + Math.floor(i/4)*86; x.fillStyle = "#F5F4F6"; x.beginPath(); x.roundRect(cx, cy, 250, 72, 10); x.fill();
+    x.fillStyle = GRI; x.font = "14px Inter, Arial"; x.fillText(k.toLocaleUpperCase("tr"), cx + 16, cy + 26); x.fillStyle = KOYU; x.font = "700 22px Inter, Arial"; x.fillText(String(v), cx + 16, cy + 56); });
+  y += 200;
+  // dagilim grafigi: m2 (x) - m2 fiyati (y)
+  y = baslik(x, "Dağılım: büyüklük ve m² fiyatı", y) + 20;
+  const gx = M + 70, gy = y, gw = W - 2*M - 90, gh = 360, T = A.gecerli.concat(A.aykiri), lmx = Math.log(Math.max(...T.map(t => t.m2), +p.alan_m2 || 1)), lmn = Math.log(Math.min(...T.map(t => t.m2), +p.alan_m2 || 1e9));
+  const ymax = Math.max(...T.map(t => t.birim), A.bant[1], A.kendiFiyat || 0)*1.08, ymn = 0;
+  const PX = m => gx + (Math.log(m) - lmn)/((lmx - lmn) || 1)*gw, PY = v => gy + gh - (v - ymn)/(ymax - ymn)*gh;
+  x.fillStyle = "rgba(196,31,43,.08)"; x.fillRect(gx, PY(A.bant[1]), gw, PY(A.bant[0]) - PY(A.bant[1]));
+  x.strokeStyle = CIZ; x.lineWidth = 1; for(let i = 0; i <= 4; i++){ const v = ymax*i/4, yy2 = PY(v); x.beginPath(); x.moveTo(gx, yy2); x.lineTo(gx + gw, yy2); x.stroke(); x.fillStyle = GRI; x.font = "13px Inter, Arial"; x.textAlign = "right"; x.fillText(nf(Math.round(v)), gx - 10, yy2 + 4); x.textAlign = "left"; }
+  A.gecerli.forEach(t => { x.fillStyle = "#3A3A40"; x.beginPath(); x.arc(PX(t.m2), PY(t.birim), 7, 0, 7); x.fill(); });
+  A.aykiri.forEach(t => { x.strokeStyle = "#B0AEB4"; x.lineWidth = 2; x.beginPath(); x.arc(PX(t.m2), PY(t.birim), 7, 0, 7); x.stroke(); });
+  if(A.tahmin && A.egim != null){ x.strokeStyle = "#8E8C93"; x.setLineDash([8, 6]); x.lineWidth = 2; x.beginPath(); const mx = Math.exp((lmx + lmn)/2);
+    [Math.exp(lmn), Math.exp(lmx)].forEach((m, i) => { const v = A.tahmin*Math.pow(m/(+p.alan_m2 || mx), A.egim); i ? x.lineTo(PX(m), PY(v)) : x.moveTo(PX(m), PY(v)); }); x.stroke(); x.setLineDash([]); }
+  if(+p.alan_m2){ const sx = PX(+p.alan_m2); x.strokeStyle = KR; x.lineWidth = 3; x.beginPath(); x.moveTo(sx, gy); x.lineTo(sx, gy + gh); x.stroke(); x.fillStyle = KR; x.font = "700 14px Inter, Arial"; x.fillText("BU PARSEL", sx + 8, gy + 16);
+    if(A.kendiFiyat){ x.beginPath(); x.arc(sx, PY(A.kendiFiyat), 9, 0, 7); x.fill(); } }
+  x.fillStyle = GRI; x.font = "13px Inter, Arial"; x.fillText("yatay: parsel büyüklüğü (logaritmik, m²) · dikey: m² fiyatı (₺) · kırmızı şerit: önerilen bant · içi boş nokta: ayıklanan aykırı ilan · kesik çizgi: büyüklük eğilimi", gx - 70, gy + gh + 34);
+  // --- sayfa 2+: ilan tablosu ---
+  x = yeni(); y = 190; y = baslik(x, `Emsal ilanlar (${A.n})`, y) + 22;
+  const sut = [[M, "#"], [M + 40, "Konum"], [M + 330, "Başlık"], [M + 690, "m²"], [M + 800, "Fiyat"], [M + 950, "₺/m²"]];
+  const tbas = () => { x.fillStyle = "#F5F4F6"; x.fillRect(M - 10, y - 24, W - 2*M + 20, 36); x.fillStyle = GRI; x.font = "700 14px Inter, Arial"; sut.forEach(([cx, t]) => x.fillText(t.toLocaleUpperCase("tr"), cx, y)); y += 34; };
+  tbas();
+  const sirali = [...E.ilanlar].sort((a2, b2) => (a2.birim || 0) - (b2.birim || 0));
+  sirali.forEach((t, i) => {
+    if(y > H - 110){ x = yeni(); y = 190; tbas(); }
+    const ayk = A.aykiri.some(z => z.id === t.id), har = t.haric;
+    x.fillStyle = har || ayk ? "#A9A7AC" : "#2A2A30"; x.font = "15px Inter, Arial";
+    const kes = (s, w) => { s = String(s || ""); while(x.measureText(s).width > w && s.length > 3) s = s.slice(0, -2); return s; };
+    x.fillText(String(i + 1), M, y); x.fillText(kes(t.yer, 280), M + 40, y); x.fillText(kes(t.baslik, 350), M + 330, y);
+    x.fillText(nf(Math.round(t.m2)), M + 690, y); x.fillText(nf(Math.round(t.fiyat)), M + 800, y); x.font = "700 15px Inter, Arial"; x.fillText(nf(t.birim) + (ayk ? " (aykırı)" : har ? " (çıkarıldı)" : ""), M + 950, y);
+    x.strokeStyle = "#EFEEF0"; x.beginPath(); x.moveTo(M - 10, y + 12); x.lineTo(W - M + 10, y + 12); x.stroke(); y += 34; });
+  // --- son sayfa: degerlendirme + denetim ---
+  x = yeni(); y = 190; y = baslik(x, "Değerlendirme", y) + 20;
+  const cev = a.cevre?.satirlar || [], C = k => cev.find(s => s.k === k && !s.yok);
+  const art = [], eks = [];
+  if(C("asfalt") && C("asfalt").m <= 100) art.push(`asfalta ${km(C("asfalt").m)} (cephe / çok yakın)`); else if(C("asfalt") && C("asfalt").m > 1000) eks.push(`asfalta uzak (${km(C("asfalt").m)})`);
+  if(C("koy") && C("koy").m <= 1000) art.push(`köye ${km(C("koy").m)}`);
+  if(C("elektrik") && C("elektrik").m <= 300) art.push("elektrik hattı yakın");
+  if(C("sanayi") && C("sanayi").m <= 1000) eks.push("sanayi / ocak / çöp sahası yakın");
+  if(C("su") && C("su").m <= 150) eks.push("dereye çok yakın (taşkın riski sorulmalı)");
+  const egm = (a.karne?.notlar || []).find(n => n.b === "Eğim"); if(egm && egm.puan >= 4) art.push("düz / hafif eğimli"); else if(egm && egm.puan <= 2) eks.push("eğimli arazi");
+  const yon = A.egim != null ? (A.egim < -.15 ? "Bu bölgede küçük parsellerin m² fiyatı belirgin şekilde daha yüksek; büyüklük farkı hesaba katıldı." : "Bu bölgede parsel büyüklüğü m² fiyatını çok az etkiliyor.") : "İlan sayısı az olduğu için büyüklük düzeltmesi yapılmadı.";
+  const metin = [
+    `${A.n} ilan toplandı; ${A.aykiri.length ? A.aykiri.length + " tanesi diğerlerinden aşırı saptığı için (çeyrekler arası açıklık kuralı) hesaptan çıkarıldı" : "aşırı sapan (aykırı) ilan çıkmadı"}${(E.ilanlar || []).some(t => t.haric) ? ", bazıları da elle çıkarıldı" : ""}. Kalan ${A.gecerli.length} emsalin m² fiyatı ${tl(A.min)} ile ${tl(A.max)} arasında, medyanı ${tl(A.med)}.`,
+    yon + (A.tahmin ? ` Parselin büyüklüğüne (${nf2(+p.alan_m2 || 0)} m²) göre beklenen m² fiyatı ${tl(A.tahmin)}.` : ""),
+    A.koyMed ? `Aynı köyden ${A.ayniKoy.length} emsal var; medyanları ${tl(A.koyMed)} ve hesapta daha yüksek ağırlıkla kullanıldı.` : "Aynı köyden yeterli emsal (en az 3) bulunamadı; bölge geneli kullanıldı.",
+    `Bu üç göstergenin ağırlıklı ortalaması ${tl(A.merkez)}/m²; emsallerin orta yarısının yayılımıyla önerilen bant ${nf(A.bant[0])} – ${nf(A.bant[1])} ₺/m², parsel toplamı ${kisaPara(A.toplam[0])} – ${kisaPara(A.toplam[1])}.`,
+    art.length ? `Fiyatı destekleyen özellikler: ${art.join(", ")}.` : "", eks.length ? `Fiyatı aşağı çekebilecek özellikler: ${eks.join(", ")}.` : "",
+    A.kendiFiyat ? `Parselin kayıtlı m² fiyatı ${tl(A.kendiFiyat)}; bu, önerilen bandın ${A.konum}.${A.konum === "üstünde" ? " Pazarlık payı bırakılarak ilan edilebilir ama satış süresi uzayabilir." : A.konum === "altında" ? " Fiyat emsallerin altında; değerin altında satma riski var." : " Fiyat emsallerle uyumlu."}` : "",
+    "Not: Sahibinden fiyatları ilan (istenen) fiyatlarıdır; gerçek satış fiyatları genelde %5–15 daha düşük gerçekleşir."
+  ].filter(Boolean).join("\n\n");
+  ({ y } = sar(x, metin, y, W - 2*M));
+  y += 20;
+  if(E.gpt){
+    y = baslik(x, "ChatGPT yorumu ve denetimi", y) + 18;
+    const gb = E.gpt.bant, uy = gb && (gb[1] < A.bant[0]*.85 || gb[0] > A.bant[1]*1.15);
+    x.fillStyle = uy ? "#FBF3F3" : "#F1F8F3"; x.beginPath(); x.roundRect(M, y - 4, W - 2*M, 64, 10); x.fill();
+    x.fillStyle = uy ? KR : "#2E7D4F"; x.font = "700 17px Inter, Arial";
+    x.fillText(gb ? (uy ? `⚠ ChatGPT bandı (${nf(gb[0])} – ${nf(gb[1])} ₺/m²) hesaplanan bantla uyuşmuyor; rapor hesaplanan bandı esas alır.` : `✓ ChatGPT bandı (${nf(gb[0])} – ${nf(gb[1])} ₺/m²) hesaplanan bantla tutarlı.`) : "ChatGPT net bir bant vermedi; yalnızca yorum olarak eklendi.", M + 18, y + 36);
+    y += 90;
+    let r2 = sar(x, E.gpt.metin.replace(/\*\*/g, ""), y, W - 2*M, 23, "15px Inter, Arial", "#3A3A40");
+    let kalanMetin = null;
+    if(r2.kalan){ x = yeni(); y = 190; r2 = sar(x, "(devam) " + E.gpt.metin.replace(/\*\*/g, "").slice(-2500), y, W - 2*M, 23, "15px Inter, Arial", "#3A3A40"); }
+    y = r2.y + 10;
+  }
+  if(y > H - 330){ x = yeni(); y = 190; }
+  y = baslik(x, "Yöntem", y + 10) + 18;
+  sar(x, "Emsaller sahibinden.com arama sonuçlarından, kullanıcının seçtiği filtrelerle ve sayfa sayfa toplanmıştır. Her ilan için m² fiyatı = ilan fiyatı ÷ m² hesaplanmış, çeyrekler arası açıklığın 1,5 katı dışında kalan ilanlar aykırı sayılmıştır. Önerilen merkez fiyat; emsal medyanı, büyüklük eğilimine göre düzeltilmiş tahmin (ln m² fiyatı ~ ln m²) ve aynı köy medyanının (1,5 ağırlıkla) ağırlıklı ortalamasıdır. Bant genişliği emsallerin 25.–75. yüzdelik aralığından gelir. ChatGPT yorumu bağımsız ikinci görüş olarak eklenir ve hesaplanan bantla otomatik karşılaştırılır.", y, W - 2*M, 24, "15px Inter, Arial", "#3A3A40");
+  // --- pdf ---
+  const { jsPDF } = window.jspdf; const pdf = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
+  sayfalar.forEach((c, i) => { if(i) pdf.addPage(); pdf.addImage(c.toDataURL("image/jpeg", .9), "JPEG", 0, 0, 210, 297); });
+  const blob = pdf.output("blob"), ad2 = `${p.ada || 0}-${p.parsel}-emsal-raporu-${new Date().toISOString().slice(0, 10)}.pdf`;
+  indirBlob(blob, ad2);
+  if(ME.role !== "uye"){ try{ await dosyaYukle(new File([blob], ad2, { type:"application/pdf" }), "arastirma", id); toast("Emsal raporu indirildi ve parselin belgelerine eklendi ✓"); }catch(e){ toast("İndirildi ama belgelere eklenemedi"); } }
 }
 
 /* ================= PC SURUMU (masaustu duzeni) =================
