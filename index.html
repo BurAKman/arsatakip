@@ -2696,7 +2696,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.9.0";
+const SURUM_MORDOR = "v 2.9.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -8068,7 +8068,7 @@ async function haritadanKaydet(){
 
   const { data:var_ } = await sb.from("parcels").select("id")
     .eq("mahalle", p.mahalleAd||"").eq("parsel", String(p.parselNo||""))
-    .eq("ada", p.adaNo||null).limit(1);
+    [p.adaNo ? "eq" : "is"]("ada", p.adaNo || null).limit(1);   // adasiz parselde eq(null) hic eslesmez, cift kayit acardi
 
   let kayitId = var_?.[0]?.id;
   if(!kayitId){
@@ -17196,6 +17196,7 @@ if(window.arsaPC?.sokakGoruntu) window.arsaPC.sokakGoruntu(async veri => {
 
 /* ---------- 7) harita: komsu parseller, 3D, Mapillary, kayitli parsele gorsel kaydet ---------- */
 let KOMSU_KATMAN = null, MAPI_KUTU = null;
+const MAPI_ANAHTAR = "MLY|29406376602382403|062f50faa4294459146613fdad4e381f";   // Mapillary istemci anahtari (sadece okuma)
 {
   const eskiCiz = ciz;
   ciz = function(f){
@@ -17276,7 +17277,7 @@ async function mapillaryKutu(m){
   const harita = document.getElementById("map"); if(!harita) return;
   MAPI_KUTU?.remove(); MAPI_KUTU = document.createElement("div"); MAPI_KUTU.className = "ekMapi"; harita.appendChild(MAPI_KUTU);
   L.DomEvent && L.DomEvent.disableClickPropagation(MAPI_KUTU); L.DomEvent && L.DomEvent.disableScrollPropagation(MAPI_KUTU);
-  const tok = localStorage.getItem("mapillaryToken");
+  const tok = localStorage.getItem("mapillaryToken") || MAPI_ANAHTAR;
   if(!tok){ MAPI_KUTU.innerHTML = `<button class="ekMapiBagla" onclick="mapillaryBagla()">${svg("photo")} Mapillary sokak fotoğrafları</button>`; return; }
   MAPI_KUTU.innerHTML = `<div class="ekMapiB">Mapillary · aranıyor…</div>`;
   try{ const d = 0.0025, bb = [m.lng - d, m.lat - d, m.lng + d, m.lat + d].map(v => v.toFixed(6)).join(",");
@@ -17285,7 +17286,7 @@ async function mapillaryKutu(m){
     if(!L2.length){ MAPI_KUTU.innerHTML = `<div class="ekMapiB">Mapillary · bu çevrede fotoğraf yok</div>`; return; }
     window.__mapi = L2;
     MAPI_KUTU.innerHTML = `<div class="ekMapiB">Mapillary · ${L2.length} fotoğraf</div><div class="ekMapiL">${L2.map((o, i) => `<button onclick="mapillaryBuyut(${i})"><img src="${o.thumb_256_url}" alt=""><em>${km(Math.round(o.u))}</em></button>`).join("")}</div>`;
-  }catch(e){ MAPI_KUTU.innerHTML = `<div class="ekMapiB">Mapillary'ye ulaşılamadı <button onclick="localStorage.removeItem('mapillaryToken');mapillaryKutu(merkez(SONPARSEL))">anahtarı sil</button></div>`; }
+  }catch(e){ MAPI_KUTU.innerHTML = `<div class="ekMapiB">Mapillary'ye ulaşılamadı <button onclick="mapillaryBagla()">anahtarı değiştir</button></div>`; }
 }
 function mapillaryBagla(){
   const t = prompt("Mapillary erişim anahtarı (ücretsiz: mapillary.com/dashboard/developers → yeni uygulama → Client Token):");
