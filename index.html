@@ -2724,7 +2724,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.9.5";
+const SURUM_MORDOR = "v 2.9.6";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -17701,19 +17701,26 @@ function pcAgacCiz(){
   const L = yil.filter(fn).filter(p => !q || `${p.ilce} ${p.mahalle} ${p.mevkii || ""} ${p.ada || ""}/${p.parsel}`.toLocaleLowerCase("tr").includes(q));
   if(!L.length){ k.innerHTML = `<div class="pcBos" style="padding:14px">${PC_P.length ? "Bu süzgeçte parsel yok" : "Henüz parsel yok"}</div>`; return; }
   // il > koy/mahalle > parsel; il ve koy basliklari acilip kapanir
-  const iller = {}; L.forEach(p => { const il = (p.il || "—").toLocaleUpperCase("tr"), m = duzgun(p.mahalle) || "—"; ((iller[il] = iller[il] || {})[m] = iller[il][m] || []).push(p); });
+  // ayni il/koy farkli yazilmis olabilir (KIRKLARELİ / Kırklareli / Kirklareli, "Kuştepe" / "Kuştepe Köyü", bosluklar): normalize edip tek basliga topla
+  const nrm = x => String(x || "").toLocaleLowerCase("tr").replace(/[ıi̇]/g, "i").replace(/ş/g, "s").replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ö/g, "o").replace(/ç/g, "c").replace(/â/g, "a")
+    .replace(/\s+/g, " ").trim().replace(/ (koyu|mahallesi|mah\.?|mh\.?)$/, "");
+  const iller = {}, ilAd = {}, mAd = {};
+  L.forEach(p => { const ik = nrm(p.il) || "—", mk = nrm(p.mahalle) || "—";
+    ilAd[ik] = ilAd[ik] || (duzgun(p.il) || "—").toLocaleUpperCase("tr");
+    if(!mAd[ik + "|" + mk] || /köyü|mahalle/i.test(p.mahalle || "")) mAd[ik + "|" + mk] = duzgun(p.mahalle) || "—";
+    ((iller[ik] = iller[ik] || {})[mk] = iller[ik][mk] || []).push(p); });
   const pid = pcParselId(PC_SIMDI.r, PC_SIMDI.arg);
   const ac = k => `PC_KAPALI[${JSON.stringify(k).replace(/"/g, "&quot;")}]=!PC_KAPALI[${JSON.stringify(k).replace(/"/g, "&quot;")}];pcLS('pcAgac',JSON.stringify(PC_KAPALI));pcAgacCiz()`;
   const prs = p => `<button class="pcPrs ${p.id === pid ? "on" : ""}" data-id="${p.id}" onclick="go('parsel','${p.id}')"
         onmouseenter="pcKartGoster(this,'${p.id}')" onmouseleave="pcKartGizle()" oncontextmenu="pcSagMenu(event,'${p.id}')">
         <span class="pcNokta ${p._satildi && p._satildi === p._parca ? "satildi" : p._satilik ? "satilik" : p._y?.aktif ? "aktif" : ""}"></span><span>${esc(p.ada || "—")} / ${esc(p.parsel)}</span><small class="mono">${nf(Math.round(+p.alan_m2 || 0))} m²</small></button>`;
   const sirala = G => G.sort((a, b) => ((+a.ada || 0) - (+b.ada || 0)) || ((+a.parsel || 0) - (+b.parsel || 0)));
-  k.innerHTML = Object.keys(iller).sort((a, b) => a.localeCompare(b, "tr")).map(il => {
-    const M = iller[il], kIl = "il:" + il, top = Object.values(M).reduce((t, g) => t + g.length, 0), ilKapali = PC_KAPALI[kIl] && !q;
+  k.innerHTML = Object.keys(iller).sort((a, b) => a.localeCompare(b, "tr")).map(ik => {
+    const il = ilAd[ik], M = iller[ik], kIl = "il:" + ik, top = Object.values(M).reduce((t, g) => t + g.length, 0), ilKapali = PC_KAPALI[kIl] && !q;
     return `<div class="pcIl ${ilKapali ? "kapali" : ""}"><button class="pcIlB" onclick="${ac(kIl)}"><i>▾</i>${esc(il)}<em>${top}</em></button>
-      <div class="pcIlL">${Object.keys(M).sort((a, b) => a.localeCompare(b, "tr")).map(m => { const kM = "m:" + il + "|" + m, kap = PC_KAPALI[kM] && !q;
-        return `<div class="pcDugum ${kap ? "kapali" : ""}"><button class="pcDB" onclick="${ac(kM)}"><i>▾</i>${esc(m)}<em>${M[m].length}</em></button>
-          <div class="pcDL">${sirala(M[m]).map(prs).join("")}</div></div>`; }).join("")}</div></div>`; }).join("");
+      <div class="pcIlL">${Object.keys(M).sort((a, b) => a.localeCompare(b, "tr")).map(mk => { const kM = "m:" + ik + "|" + mk, kap = PC_KAPALI[kM] && !q;
+        return `<div class="pcDugum ${kap ? "kapali" : ""}"><button class="pcDB" onclick="${ac(kM)}"><i>▾</i>${esc(mAd[ik + "|" + mk])}<em>${M[mk].length}</em></button>
+          <div class="pcDL">${sirala(M[mk]).map(prs).join("")}</div></div>`; }).join("")}</div></div>`; }).join("");
   // acik parselin ili/koyu kapaliysa ac
   const sec = k.querySelector(".pcPrs.on"); if(sec){ sec.closest(".pcIl")?.classList.remove("kapali"); sec.closest(".pcDugum")?.classList.remove("kapali"); }
 }
