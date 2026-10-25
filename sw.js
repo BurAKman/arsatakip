@@ -3,7 +3,7 @@
 // Strateji: HTML her zaman once agdan (guncelleme aninda gelsin),
 // gorseller ve kutuphaneler once onbellekten (hizli acilsin).
 
-const SURUM = "cc-v123";
+const SURUM = "cc-v124";
 const TEMEL = [
   "./",
   "./index.html",
@@ -40,7 +40,12 @@ self.addEventListener("fetch", (e) => {
       url.hostname.includes("tkgm.gov.tr") ||
       url.hostname.includes("arcgisonline.com") ||
       url.hostname.includes("overpass") ||
-      url.hostname.includes("openstreetmap")) return;
+      url.hostname.includes("openstreetmap") ||
+      url.hostname.includes("project-osrm") ||
+      url.hostname.includes("open-meteo") ||
+      url.hostname.includes("mapillary") ||
+      url.hostname.includes("amazonaws.com") ||
+      url.hostname.includes("google.")) return;
 
   const htmlMi = istek.mode === "navigate" ||
     (istek.headers.get("accept") || "").includes("text/html");
