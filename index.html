@@ -2300,6 +2300,15 @@ h3{letter-spacing:.02em}
 .ekGptKaynak label{font-size:13px!important;color:var(--ink)!important;font-weight:500;margin:0!important}
 .ekGptKaynak input{width:16px!important;height:16px!important;min-height:0!important;margin:0!important;padding:0!important;box-shadow:none!important;flex:0 0 16px}
 .ekGpt .pcModalAlt .btn{width:auto!important;white-space:nowrap}
+#ekGptBar{position:fixed;left:50%;bottom:36px;transform:translateX(-50%);z-index:9600;display:flex;align-items:center;gap:10px;padding:10px 12px 10px 16px;border-radius:12px;
+  background:linear-gradient(180deg,rgba(30,30,36,.97),rgba(16,16,20,.97));border:1px solid rgba(255,90,99,.45);box-shadow:0 0 24px rgba(224,49,60,.3),0 14px 36px rgba(0,0,0,.6);color:#eee;font-size:12.5px;max-width:min(760px,94vw)}
+#ekGptBar span{flex:1}
+#ekGptBar .btn{width:auto!important;margin:0!important;padding:8px 14px!important;white-space:nowrap}
+.ekGptTus2{margin-top:6px!important}
+.ekImarOn{min-height:90px;max-height:260px;overflow:hidden;border-radius:9px;border:1px dashed rgba(255,255,255,.15);display:grid;place-items:center;color:var(--ink-3);font-size:12.5px;margin-bottom:10px}
+.ekImarOn img{max-width:100%;max-height:256px;object-fit:contain}
+.ekImarMetin{white-space:pre-wrap;font-size:13px;line-height:1.55;max-height:60vh;overflow:auto;padding:12px 14px;border-radius:9px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.07)}
+.ekTapuKart .kv b{font-weight:500}
 
 /* ================= PC SURUMU · premium kizil (siyah · grafit · yakut) ================= */
 body.pc[data-tema]{
@@ -2732,7 +2741,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.9.8";
+const SURUM_MORDOR = "v 2.9.9";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -17234,7 +17243,7 @@ async function parselEklentileri(id){
     acts.querySelectorAll("a.dis").forEach(x => { if(/Sokak/.test(x.textContent)){ x.textContent = "Sokak (Yandex)"; } });
     acts.insertAdjacentHTML("beforeend", `<a class="dis yesilb" href="${gsvUrl(p.lat, p.lng)}" target="_blank" rel="noopener" onclick="return sokakAc(event, ${p.lat}, ${p.lng}, '${id}')">Sokak (Google)</a>
       <button class="mavib" onclick="go('saha','${id}')">Saha modu</button>
-      <button class="mavib" onclick="eplanAc('${id}')">İmar (e-Plan)</button>`);
+      <button class="mavib" onclick="eplanAc('${id}')">İmar (e-Plan)</button>${window.arsaPC?.gptAc ? `<button class="mavib" onclick="imarYorumAc('${id}')">✦ İmar yorumu</button>` : ""}`);
   }
   const yer = document.createElement("div"); yer.id = "ekEklenti";
   yer.innerHTML = araziKartiHtml(id, a) + huniKartiHtml(id, parcalar, a) + await zamanCizelgesi(id, p, belgeler, parcalar);
@@ -17630,6 +17639,128 @@ if(window.arsaPC?.gptGorsel) window.arsaPC.gptGorsel(veri => gptGorselGeldi(veri
     return r; };
 }
 
+/* ---------- 11) ChatGPT ile tapu okuma (opsiyonel kayit yolu) ve imar yorumu (sadece masaustu) ---------- */
+const trNrm = x => String(x || "").toLocaleLowerCase("tr").replace(/[ıi̇]/g, "i").replace(/ş/g, "s").replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ö/g, "o").replace(/ç/g, "c").replace(/â/g, "a")
+  .replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim().replace(/ (koyu|mahallesi|mah|mh|merkez)$/, "");
+const TAPU_PROMPT = `Bu bir Türkiye tapu senedi (ya da tapu kaydı) fotoğrafı. Üzerindeki bilgileri oku ve SADECE aşağıdaki JSON'u döndür; açıklama, yorum ya da başka hiçbir şey yazma.
+Okuyamadığın ya da emin olmadığın alanı boş bırak, kesinlikle tahmin etme. Sayıları tapuda yazdığı gibi yaz.
+{"il":"","ilce":"","mahalle":"","mevkii":"","ada":"","parsel":"","yuzolcum_m2":"","nitelik":"","malikler":[{"ad":"","hisse":""}],"edinme_sebebi":"","tarih":"","yevmiye":"","cilt":"","sayfa":""}`;
+const imarPrompt = p => `Ekteki görüntü Türkiye'de Çevre, Şehircilik Bakanlığı e-Plan sisteminden alınmış bir imar planı ekran görüntüsü.
+Parsel: ${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)}, Ada ${p.ada || "-"}, Parsel ${p.parsel}, tapu alanı ${nf2(+p.alan_m2 || 0)} m², niteliği ${p.nitelik || "-"}.
+Lütfen Türkçe, sade ve maddeler halinde şunları yaz:
+1) Parselin üzerindeki plan fonksiyonu / lejant rengi neye karşılık geliyor (konut, tarım, ticaret, sanayi, yeşil alan, yol vb.)
+2) Görüntüde okunabiliyorsa yapılaşma şartları: E (emsal/KAKS), TAKS, Hmax / kat adedi, çekme mesafeleri, varsa özel hükümler
+3) Bu parselin ${nf2(+p.alan_m2 || 0)} m² alanına göre yaklaşık ne kadar inşaat alanı çıkabileceği (hesabını göster)
+4) Yola cephe, yola terk ya da kamulaştırma ihtimali gibi dikkat edilmesi gereken noktalar
+5) Alıcıya tek cümlelik özet
+Görüntüden okuyamadığın değerleri uydurma, "okunamadı" yaz. En sonda bunun resmi imar durumu belgesi yerine geçmediğini belirt.`;
+let GPT_MOD = null;   // { tur:"tapu"|"imar", ... }
+function gptBekleBar(metin){
+  document.getElementById("ekGptBar")?.remove();
+  const d = document.createElement("div"); d.id = "ekGptBar";
+  d.innerHTML = `<span>✦ ${esc(metin)}</span><button class="btn" onclick="gptCevapAl()">Cevabı al</button><button class="btn ghost" onclick="GPT_MOD=null;this.parentElement.remove()">Vazgeç</button>`;
+  document.body.appendChild(d);
+}
+async function gptCevapAl(){ const t = await window.arsaPC?.gptCevapOku?.(); if(!t) return toast("Henüz ChatGPT cevabı yok, bitince tekrar bas"); gptCevapGeldi(t); }
+async function gptCevapGeldi(t){
+  if(!GPT_MOD) return toast("ChatGPT cevabı geldi ama bekleyen bir iş yok");
+  const M = GPT_MOD; GPT_MOD = null; document.getElementById("ekGptBar")?.remove();
+  if(M.tur === "tapu") return tapuCevabi(t, M);
+  if(M.tur === "imar") return imarCevabi(t, M);
+}
+if(window.arsaPC?.gptCevap) window.arsaPC.gptCevap(t => gptCevapGeldi(t));
+// --- tapu ---
+async function tapuIleEkle(){
+  if(!window.arsaPC?.gptAc) return toast("Bu özellik masaüstü programında çalışır");
+  const f = await dosyaSec("image/*"); if(!f) return;
+  GPT_MOD = { tur:"tapu", foto:f };
+  gptBekleBar("Tapu ChatGPT'de okunuyor · cevap bitince “Cevabı al”a bas (ya da ChatGPT menüsünden gönder)");
+  const ok = await window.arsaPC.gptAc(await blobDataUrl(f), TAPU_PROMPT);
+  if(ok === false) toast("ChatGPT'nin yazma kutusu bulunamadı: giriş yapıp tekrar dene");
+}
+function jsonCikar(t){ const a = t.indexOf("{"), b = t.lastIndexOf("}"); if(a < 0 || b <= a) return null; try{ return JSON.parse(t.slice(a, b + 1)); }catch(e){ return null; } }
+async function secenekSec(id, ad){
+  if(!ad) return false;
+  for(let i = 0; i < 40; i++){
+    const el = document.getElementById(id); if(!el) return false;
+    if(el.tagName === "INPUT"){ el.value = ad; return true; }
+    const L = [...el.options].filter(o => o.value);
+    if(L.length && !el.disabled){
+      const n = trNrm(ad), o = L.find(x => trNrm(x.textContent) === n) || L.find(x => trNrm(x.textContent).startsWith(n) || n.startsWith(trNrm(x.textContent))) || L.find(x => trNrm(x.textContent).includes(n));
+      if(!o) return false; el.value = o.value; el.dispatchEvent(new Event("change")); return true; }
+    await new Promise(r => setTimeout(r, 400)); }
+  return false;
+}
+async function tapuCevabi(t, M){
+  const J = jsonCikar(t); if(!J) return toast("ChatGPT cevabından tapu bilgisi çıkarılamadı");
+  window.__tapuBekleyen = { J, foto:M.foto };
+  if(app.dataset.ekran !== "harita"){ go("harita"); await new Promise(r => setTimeout(r, 800)); }
+  const kutu = document.getElementById("tani");
+  const satir = (a, b) => b ? `<div class="kv"><span>${a}</span><b>${esc(b)}</b></div>` : "";
+  if(kutu) kutu.innerHTML = `<div class="card ekTapuKart"><div class="bolum"><span class="rz altin">${svg("muhur")}</span><b>Tapudan okunan</b></div>
+    ${satir("İl / İlçe", [J.il, J.ilce].filter(Boolean).join(" / "))}${satir("Mahalle / köy", J.mahalle)}${satir("Mevkii", J.mevkii)}${satir("Ada / Parsel", `${J.ada || "-"} / ${J.parsel || "-"}`)}
+    ${satir("Yüzölçümü", J.yuzolcum_m2 && J.yuzolcum_m2 + " m²")}${satir("Nitelik", J.nitelik)}
+    ${(J.malikler || []).filter(m => m.ad).map(m => satir("Malik", m.ad + (m.hisse ? " · " + m.hisse : ""))).join("")}
+    ${satir("Edinme", J.edinme_sebebi)}${satir("Tarih / yevmiye", [J.tarih, J.yevmiye].filter(Boolean).join(" · "))}${satir("Cilt / sayfa", [J.cilt, J.sayfa].filter(Boolean).join(" / "))}
+    <p class="ipuc" style="margin:8px 0 0">Form dolduruldu, parsel TKGM'den sorgulanıyor. Bilgileri kontrol et; <b>Kaydet</b> deyince tapu fotoğrafı ve bu bilgiler parselin belgelerine ve notlarına eklenecek.</p></div>`;
+  const ok1 = await secenekSec("hil", J.il), ok2 = ok1 && await secenekSec("hilce", J.ilce), ok3 = ok2 && await secenekSec("hmah", J.mahalle);
+  const ada = document.getElementById("hada"), par = document.getElementById("hpar");
+  if(ada) ada.value = String(J.ada || "").replace(/\D/g, ""); if(par) par.value = String(J.parsel || "").replace(/\D/g, "");
+  if(ok3 && par?.value){ document.getElementById("sor")?.click(); }
+  else toast("İl / ilçe / köy listeden tam eşleşmedi, eksik olanı elle seçip Sorgula'ya bas");
+}
+async function tapuBilgisiniParseleYaz(id){
+  const T = window.__tapuBekleyen; if(!T || !id) return; window.__tapuBekleyen = null;
+  const J = T.J;
+  try{ await dosyaYukle(T.foto, "tapu", id); }catch(e){ toast("Tapu fotoğrafı yüklenemedi: " + (e.message || e)); }
+  const not = ["Tapudan okunan (ChatGPT):", J.mevkii && "Mevkii: " + J.mevkii, J.yuzolcum_m2 && "Yüzölçümü: " + J.yuzolcum_m2 + " m²", J.nitelik && "Nitelik: " + J.nitelik,
+    ...(J.malikler || []).filter(m => m.ad).map(m => "Malik: " + m.ad + (m.hisse ? " (hisse " + m.hisse + ")" : "")), J.edinme_sebebi && "Edinme: " + J.edinme_sebebi,
+    (J.tarih || J.yevmiye) && "Tarih / yevmiye: " + [J.tarih, J.yevmiye].filter(Boolean).join(" · "), (J.cilt || J.sayfa) && "Cilt / sayfa: " + [J.cilt, J.sayfa].filter(Boolean).join(" / ")].filter(Boolean).join("\n");
+  try{ await sb.from("notes").insert({ team_id:ME.team_id, parcel_id:id, user_id:ME.id, content:not }); toast("Tapu fotoğrafı ve bilgileri parsele eklendi ✓"); }catch(e){}
+}
+{
+  const eskiK = haritadanKaydet;
+  haritadanKaydet = async function(){ await eskiK(); try{ if(window.__tapuBekleyen && SONPARSEL){ const id = await haritaKayitliMi(SONPARSEL); if(id) await tapuBilgisiniParseleYaz(id); } }catch(e){} };
+  const eskiHarita = harita;
+  const yeniHarita = async function(){ const r = await eskiHarita.apply(this, arguments);
+    if(window.arsaPC?.gptAc && ME.role === "admin"){ const s = document.getElementById("sor"); s?.insertAdjacentHTML("afterend", `<button class="btn ghost full ekGptTus2" onclick="tapuIleEkle()">✦ Tapu fotoğrafından doldur (ChatGPT)</button>`); }
+    return r; };
+  harita = yeniHarita; ekranlar.harita = yeniHarita;
+}
+// --- imar ---
+async function imarYorumAc(id){
+  if(!window.arsaPC?.gptAc) return toast("Bu özellik masaüstü programında çalışır");
+  const { data:p } = await sb.from("parcels").select("*").eq("id", id).single(); if(!p) return;
+  const k = document.createElement("div"); k.className = "ekOnizle"; k.onclick = e => { if(e.target === k) k.remove(); };
+  k.innerHTML = `<div class="pcModal ekGpt"><div class="pcModalB"><b>İmar yorumu (ChatGPT)</b><small>e-Plan'da parseli bulup ekran görüntüsünü al (Windows: Win+Shift+S). Sonra aşağıdan panodan yapıştır ya da dosya seç. Yorum parselin notlarına kaydedilir.</small></div>
+    <div class="pcModalAlt" style="justify-content:flex-start;margin:0 0 10px"><button class="btn ghost" id="imE">e-Plan'ı aç</button><button class="btn ghost" id="imP">Panodan yapıştır</button><button class="btn ghost" id="imD">Dosya seç</button></div>
+    <div id="imOn" class="ekImarOn">Henüz görüntü yok</div>
+    <textarea id="imM" rows="9">${esc(imarPrompt(p))}</textarea>
+    <div class="pcModalAlt"><button class="btn ghost" onclick="this.closest('.ekOnizle').remove()">Vazgeç</button><button class="btn" id="imG">ChatGPT'de yorumlat</button></div></div>`;
+  document.body.appendChild(k);
+  let blob = null; const goster = b => { blob = b; k.querySelector("#imOn").innerHTML = `<img src="${URL.createObjectURL(b)}" alt="">`; };
+  k.querySelector("#imE").onclick = () => eplanAc(id);
+  k.querySelector("#imD").onclick = async () => { const f = await dosyaSec("image/*"); if(f) goster(f); };
+  k.querySelector("#imP").onclick = async () => { try{ const L = await navigator.clipboard.read(); for(const it of L){ const t = it.types.find(x => x.startsWith("image/")); if(t){ goster(await it.getType(t)); return; } } toast("Panoda görüntü yok"); }catch(e){ toast("Panoya erişilemedi: dosya seç ile dene"); } };
+  k.querySelector("#imG").onclick = async () => {
+    if(!blob) return toast("Önce imar ekran görüntüsünü ekle");
+    const metin = k.querySelector("#imM").value; k.remove();
+    GPT_MOD = { tur:"imar", id, foto:blob };
+    gptBekleBar("İmar yorumu hazırlanıyor · cevap bitince “Cevabı al”a bas");
+    const ok = await window.arsaPC.gptAc(await blobDataUrl(blob), metin); if(ok === false) toast("ChatGPT'nin yazma kutusu bulunamadı: giriş yapıp tekrar dene");
+  };
+}
+async function imarCevabi(t, M){
+  const tarih = new Date().toLocaleDateString("tr-TR");
+  try{ await sb.from("notes").insert({ team_id:ME.team_id, parcel_id:M.id, user_id:ME.id, content:`İmar yorumu (ChatGPT · ${tarih}):\n${t}` });
+    try{ await dosyaYukle(new File([M.foto], `imar-eplan-${Date.now()}.png`, { type:M.foto.type || "image/png" }), "arastirma", M.id); }catch(e){}
+    toast("İmar yorumu parselin notlarına kaydedildi ✓"); }catch(e){ toast("Not kaydedilemedi: " + (e.message || e)); }
+  const k = document.createElement("div"); k.className = "ekOnizle"; k.onclick = e => { if(e.target === k) k.remove(); };
+  k.innerHTML = `<div class="pcModal ekGpt"><div class="pcModalB"><b>İmar yorumu</b><small>ChatGPT yorumudur, resmi imar durumu belgesi yerine geçmez.</small></div><div class="ekImarMetin">${esc(t)}</div>
+    <div class="pcModalAlt"><button class="btn" onclick="this.closest('.ekOnizle').remove();go('parsel','${M.id}')">Tamam</button></div></div>`;
+  document.body.appendChild(k);
+}
+
 /* ================= PC SURUMU (masaustu duzeni) =================
    Ayni uygulama, ayni veritabani. Genis ekranda (ya da Arsa Takip masaustu programinda) acilinca
    Adobe tarzi kabuk: ust menu, komut cubugu (yol + arama), sol simge rayi, parsel gezgini, belge sekmeleri,
@@ -17719,8 +17850,8 @@ function pcMenuAc(btn, k){
   const acik = btn.classList.contains("on"); pcMenuKapat(); if(acik) return;
   const pid = pcParselId(PC_SIMDI.r, PC_SIMDI.arg), adm = ME.role === "admin";
   const M = {
-    dosya:[ adm && ["Yeni parsel", "go('yeni')"], ["Haritadan parsel sorgula", "pcGit('harita')"], "-", ["Yedek al / geri yükle", "pcGit('yedek')"], window.arsaPC?.yedekKlasor && ["Yedek klasörünü aç", "arsaPC.yedekKlasor()"], "-", ["Çıkış", "cikisSor()"] ],
-    parsel: pid ? [ ...PC_ALT.map(([r, a]) => [a, `pcAltGit('${r}','${pid}')`]), "-", ["İmar durumu (e-Plan)", `eplanAc('${pid}')`], ["KML indir", `kmlIndirParsel('${pid}')`] ] : [ ["Önce bir parsel aç", ""] ],
+    dosya:[ adm && ["Yeni parsel", "go('yeni')"], ["Haritadan parsel sorgula", "pcGit('harita')"], adm && window.arsaPC?.gptAc && ["✦ Tapu fotoğrafından parsel ekle", "tapuIleEkle()"], "-", ["Yedek al / geri yükle", "pcGit('yedek')"], window.arsaPC?.yedekKlasor && ["Yedek klasörünü aç", "arsaPC.yedekKlasor()"], "-", ["Çıkış", "cikisSor()"] ],
+    parsel: pid ? [ ...PC_ALT.map(([r, a]) => [a, `pcAltGit('${r}','${pid}')`]), "-", ["İmar durumu (e-Plan)", `eplanAc('${pid}')`], window.arsaPC?.gptAc && ["✦ İmar yorumu (ChatGPT)", `imarYorumAc('${pid}')`], ["KML indir", `kmlIndirParsel('${pid}')`] ] : [ ["Önce bir parsel aç", ""] ],
     gorunum:[ [(document.body.classList.contains("pcGezKapali") ? "Parsel gezginini göster" : "Parsel gezginini gizle"), "pcPanel('pcGez')"], [(document.body.classList.contains("pcOzKapali") ? "Özellikler panelini göster" : "Özellikler panelini gizle"), "pcPanel('pcOz')"], "-", PC_EXE ? null : ["Telefon görünümüne geç", "localStorage.setItem('pcKapali','1');location.reload()"], ["Tema", "go('tema')"] ],
     araclar:[ ["Yaklaşanlar", "pcGit('yaklasan')"], ["Hesap - Kitap", "pcGit('hesap')"], ["Ekler", "pcGit('ekler')"], ["Tapu bilgileri", "pcGit('fiyat')"], ["KML", "pcGit('kml')"], ["İdrak Makamı", "pcGit('yz')"], adm && ["Ayarlar", "pcGit('ayarlar')"] ],
     yardim:[ [surumYazi() + " · masaüstü", ""], ["Veriler telefonla ortak (Supabase)", ""], PC_SON_YEDEK && ["Son otomatik yedek: " + new Date(PC_SON_YEDEK).toLocaleString("tr-TR"), ""] ]
