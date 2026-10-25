@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0B0F0D">
-<title>Parsel Parsel</title>
+<title>Arsa Takip</title>
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon.png">
-<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png?v=ba1">
+<link rel="apple-touch-icon" href="icon.png?v=ba1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Cinzel:wght@500;600;700&family=Playfair+Display:wght@700;800&family=Anton&family=Oswald:wght@500;600;700&family=Inter:wght@600;700;800&display=swap" rel="stylesheet">
@@ -2324,6 +2324,8 @@ body:not(.pc) .pcKabuk{display:none!important}
 .pcLogo{display:flex;align-items:center;gap:10px;padding-right:16px;margin-right:6px;border-right:1px solid var(--pc-cizgi);height:18px}
 .pcLogo b{font-family:Cinzel,serif;font-size:11.5px;letter-spacing:.38em;font-weight:600;background:linear-gradient(180deg,#FFFFFF,#9B9AA0);-webkit-background-clip:text;background-clip:text;color:transparent}
 .pcLogo i{width:22px;height:2px;background:linear-gradient(90deg,#FF5A63,#8E1018);box-shadow:0 0 10px rgba(255,60,70,.8)}
+.pcLogo small{font-size:10px;letter-spacing:.14em;color:var(--pc-yazi3);margin-left:-2px}
+.pcLogo small{font-size:10px;letter-spacing:.14em;color:var(--pc-yazi3);margin-left:-2px}
 .pcMenuler{display:flex}
 .pcMenuler button{padding:5px 11px;font-size:12.5px;color:var(--pc-yazi2);border-radius:5px}
 .pcMenuler button:hover,.pcMenuler button.on{background:rgba(255,255,255,.06);color:var(--pc-yazi)}
@@ -2392,6 +2394,14 @@ body.pc.pcGezKapali #pcGezgin{border:none}
 .pcGezAra{padding:4px 12px 8px}
 body.pc[data-tema] .pcGezAra input{height:28px;padding:0 10px!important;font-size:12px!important;min-height:0;background:#0A0A0D!important;border-color:rgba(255,255,255,.08)!important}
 .pcAgac{flex:1;overflow-y:auto;padding:2px 6px 14px}
+.pcIlB{display:flex;align-items:center;gap:7px;width:100%;padding:8px 8px 7px;font-size:11px;font-weight:700;letter-spacing:.16em;color:#E9E7EA;text-align:left;border-radius:6px;margin-top:4px;
+  border-bottom:1px solid rgba(255,90,99,.16);background:linear-gradient(90deg,rgba(224,49,60,.08),transparent 70%)}
+.pcIlB:hover{background:linear-gradient(90deg,rgba(224,49,60,.16),transparent 80%)}
+.pcIlB i{font-style:normal;font-size:10px;color:#FF5A63;transition:transform .15s}
+.pcIlB em{margin-left:auto;font-style:normal;font-size:11px;color:var(--pc-yazi3);letter-spacing:0;font-weight:500}
+.pcIl.kapali .pcIlB i{transform:rotate(-90deg)}
+.pcIl.kapali .pcIlL{display:none}
+.pcIlL{padding:3px 0 6px 6px}
 .pcDB{display:flex;align-items:center;gap:6px;width:100%;padding:6px 8px;font-size:12.5px;color:var(--pc-yazi);text-align:left;border-radius:6px}
 .pcDB:hover{background:rgba(255,255,255,.04)}
 .pcDB i{font-style:normal;font-size:10px;color:var(--pc-yazi3);transition:transform .15s}
@@ -2571,22 +2581,44 @@ body.pc[data-tema] .pcAracAlt .card{background:none!important;border:none!import
 .pcAracAlt .card span span{display:none}
 .pcAracAlt .ipuc{display:none}
 
-/* genel bakis */
-.pcKpi{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px}
-.pcK{background:var(--pc-cam);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px 18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06);position:relative;overflow:hidden}
-.pcK::after{content:"";position:absolute;left:18px;right:60%;bottom:0;height:2px;background:linear-gradient(90deg,#FF5A63,transparent);opacity:.7}
-.pcK span{display:block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--pc-yazi3)}
-.pcK b{display:block;font-size:22px;font-weight:600;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:linear-gradient(180deg,#FFFFFF,#B4B2B8);-webkit-background-clip:text;background-clip:text;color:transparent}
-.pcPanoIzgara{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;align-items:start}
-.pcPanoIzgara .card{margin:0}
-.pcKb{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.pcKb b{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#C9C7CC;font-weight:600}
+/* genel bakis: ince, sik cerceveli kutular */
+body.pc #app[data-ekran="ana"] > .top.pcBaslik{display:none!important}
+.pcHero{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin:2px 0 18px;padding:20px 22px;border-radius:12px;
+  background:linear-gradient(120deg,rgba(224,49,60,.10),rgba(255,255,255,.015) 45%,rgba(255,255,255,.01));border:1px solid rgba(255,90,99,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.pcHero small{font-size:11.5px;color:var(--pc-yazi3);font-family:"IBM Plex Mono",monospace}
+.pcHero h2{margin:4px 0 2px;font-size:22px;font-weight:600;letter-spacing:-.01em;color:#fff}
+.pcHero p{margin:0;font-size:12.5px;color:var(--pc-yazi2)}
+.pcHeroTus{display:flex;gap:8px;flex-wrap:wrap}
+body.pc[data-tema] .pcHeroTus .btn{width:auto;margin:0;padding:9px 14px;font-size:12px;display:inline-flex;align-items:center;gap:8px;letter-spacing:.03em}
+.pcHeroTus .btn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pcKpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:12px;margin-bottom:18px}
+.pcK{position:relative;padding:14px 16px 13px;border-radius:10px;background:linear-gradient(180deg,#141418,#0E0E11);border:1px solid rgba(255,255,255,.07);overflow:hidden;min-width:0}
+.pcK::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,rgba(255,90,99,.75),rgba(255,90,99,.12) 60%,transparent)}
+.pcK span{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--pc-yazi3)}
+.pcK b{display:block;font-size:21px;font-weight:600;margin:7px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.pcK small{display:block;font-size:11px;color:var(--pc-yazi3)}
+.pcPanoIzgara{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr);gap:16px;align-items:start}
+.pcSagSutun{display:flex;flex-direction:column;gap:16px;min-width:0}
+.pcBox{border-radius:12px;background:linear-gradient(180deg,#131317,#0D0D10);border:1px solid rgba(255,255,255,.075);box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 8px 24px rgba(0,0,0,.3);min-width:0;overflow:hidden}
+.pcBox > header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06);background:linear-gradient(90deg,rgba(224,49,60,.07),transparent 55%)}
+.pcBox > header b{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#D6D4D9;font-weight:600;display:flex;align-items:center;gap:9px}
+.pcBox > header b::before{content:"";width:3px;height:12px;border-radius:2px;background:linear-gradient(180deg,#FF5A63,#8E1018);box-shadow:0 0 6px rgba(255,60,70,.6)}
+.pcBox > header .pcLink{margin-left:auto}
+.pcBoxIc{padding:10px 16px 14px}
+.pcBoxGenis .pcBoxIc{padding:4px 8px 8px}
+.pcBoxPiyasa .pcBoxIc{display:grid!important;grid-template-columns:1fr 1fr;gap:8px;padding:12px 14px 14px}
+.pcBoxPiyasa .rate{padding:10px 12px!important;border-radius:8px!important;background:#0B0B0E!important;border:1px solid rgba(255,255,255,.06)!important;box-shadow:none!important;margin:0!important}
+.pcBoxPiyasa .rate .k{font-size:10px!important;letter-spacing:.14em;text-transform:uppercase;color:var(--pc-yazi3)!important}
+.pcBoxPiyasa .rate .v{font-size:15px!important;color:#fff!important;font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+@media (max-width:1250px){ .pcPanoIzgara{grid-template-columns:1fr} }
 .pcLink{color:var(--pc-altin2);font-size:12.5px}
 .pcLink:hover{color:#fff}
 .pcTablo{width:100%;border-collapse:collapse;font-size:13.5px}
 .pcTablo th{text-align:left;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--pc-yazi3);font-weight:600;padding:0 10px 10px;border-bottom:1px solid var(--pc-cizgi)}
 .pcTablo td{padding:11px 10px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--pc-yazi)}
 .pcTablo td small{display:block;color:var(--pc-yazi3);font-size:11.5px}
+.pcTablo td b{font-weight:500}
+.pcTablo .nw{white-space:nowrap}
 .pcTablo tbody tr{cursor:pointer;transition:background .12s}
 .pcTablo tbody tr:hover{background:linear-gradient(90deg,rgba(224,49,60,.12),rgba(224,49,60,.02))}
 .pcTablo .sag{text-align:right}
@@ -2600,7 +2632,6 @@ body.pc[data-tema] .pcAracAlt .card{background:none!important;border:none!import
   color:var(--pc-yazi);font-size:13px;text-align:left;transition:border-color .15s,box-shadow .15s}
 .pcHizli button:hover{border-color:rgba(255,90,99,.55);box-shadow:0 0 14px rgba(224,49,60,.2)}
 .pcHizli svg{width:18px;height:18px;fill:none;stroke:#FF5A63;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:0 0 18px}
-.pcSagSutun{display:flex;flex-direction:column;gap:18px}
 .pcYakListe{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
 .pcYakListe button{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:9px;background:linear-gradient(180deg,#1C1C21,#141418);border:1px solid rgba(255,255,255,.07);text-align:left;font-size:13px;color:var(--pc-yazi)}
 .pcYakListe button:hover{border-color:rgba(255,90,99,.5)}
@@ -2644,9 +2675,6 @@ body.pc #app[data-ekran="saha"]{columns:auto!important}
 </style>
 </head>
 <body>
-<div id="acilis" onclick="try{acilisiKapat()}catch(e){this.remove()}">
-  <div id="acilisIc"></div>
-</div>
 <div class="wrap" id="app"><div class="spin"></div></div>
 <div id="toast"></div>
 
@@ -2696,7 +2724,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.9.3";
+const SURUM_MORDOR = "v 2.9.4";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -2782,8 +2810,8 @@ function girisEkrani(){
     <div style="min-height:78vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:6px">
       <span style="width:104px;height:104px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.5);
         box-shadow:0 6px 26px rgba(0,0,0,.6);margin-bottom:20px">
-        <img src="logo.png?v=4" alt="" style="width:100%;height:100%;object-fit:cover;display:block"></span>
-      <h1 style="font-size:27px;font-weight:700;color:#fff;letter-spacing:-.02em">Parsel Parsel</h1>
+        <img src="logo.png?v=ba1" alt="" style="width:100%;height:100%;object-fit:cover;display:block"></span>
+      <h1 style="font-size:27px;font-weight:700;color:#fff;letter-spacing:-.02em">Arsa Takip</h1><p style="margin:-2px 0 0;color:rgba(255,255,255,.6);font-size:12px;letter-spacing:.2em">by Melkor</p>
       <p style="margin:2px 0 32px;color:rgba(255,255,255,.75);font-size:14px">Kullanıcı girişi</p>
       <button class="btn" id="ggl" style="max-width:320px;display:flex;align-items:center;justify-content:center;gap:10px">
         <svg viewBox="0 0 24 24" style="width:19px;height:19px"><path fill="#1A1403" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.9h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.4z"/><path fill="#1A1403" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.7-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22z"/><path fill="#1A1403" d="M6.4 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V7.4H3.1A10 10 0 0 0 2 12c0 1.6.4 3.2 1.1 4.6L6.4 14z"/><path fill="#1A1403" d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.8-2.8C16.9 2.9 14.7 2 12 2a10 10 0 0 0-8.9 5.4L6.4 10c.8-2.4 3-4.1 5.6-4.1z"/></svg>
@@ -2814,9 +2842,9 @@ function head(title, back){
         stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`:""}
     ${title
       ? `<h1>${esc(title)}</h1>`
-      : `<div class="logo">${anaTema()==="loca" ? "" : `<span class="mark"><img src="${gv('logo.png')}" alt=""></span>`}
-           <span><b>${anaTema()==="loca" ? "Kahramanın Yolu" : "Parsel Parsel"}</b>
-             <span>${anaTema()==="loca" ? "Yürüyen değil, arınan varır!" : "çapımız alayınıza yeter"}</span>
+      : `<div class="logo">${anaTema()==="loca" ? "" : `<span class="mark"><img src="${gv('logo.png')}&ba=1" alt=""></span>`}
+           <span><b>${anaTema()==="loca" ? "Kahramanın Yolu" : "Arsa Takip"}</b>
+             <span>${anaTema()==="loca" ? "Yürüyen değil, arınan varır!" : "by Melkor"}</span>
              ${kullaniciRozetHtml()}</span></div>`}
     ${sag}
   </div>`;
@@ -17006,15 +17034,22 @@ function cevreSorgulari(lat, lng){
     );out center tags;` }
   ];
 }
+// Turkiye'yi kapsayan Overpass sunuculari (osm.ch sadece Isvicre: Turkiye icin BOS donuyordu, sorunun kaynagi buydu)
+const OVER_TR = ["https://overpass-api.de/api/interpreter", "https://overpass.private.coffee/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
 async function cevreTekSorgu(q, bildir, ad){
   let son = null;
-  for(let tur = 0; tur < 2; tur++) for(const s of OVER_SUNUCU){
-    bildir && bildir(`Çevre taranıyor · ${ad}…`);
-    try{ const r = await zamanAsimi(tkgm(s + encodeURIComponent(q)), 35000);
-      if(r?.remark && /error|timed out|out of memory/i.test(r.remark)) throw new Error(r.remark);
-      if(r?.elements?.length) return r.elements;
-      son = new Error("boş cevap"); }catch(e){ son = e; }
-    await new Promise(ok => setTimeout(ok, 700)); }
+  const dene = async yol => {
+    const r = await yol();
+    if(r?.remark && /error|timed out|out of memory/i.test(r.remark)) throw new Error(r.remark);
+    if(r?.elements?.length) return r.elements;
+    throw new Error("boş cevap");
+  };
+  for(let tur = 0; tur < 2; tur++) for(const s of OVER_TR){
+    bildir && bildir(`Çevre taranıyor · ${ad}${tur ? " (tekrar)" : ""}…`);
+    // once dogrudan (Overpass tarayiciya acik), olmazsa uygulamanin araci fonksiyonu uzerinden
+    try{ return await dene(() => zamanAsimi(fetch(s, { method:"POST", body:"data=" + encodeURIComponent(q) }).then(x => x.json()), 35000)); }catch(e){ son = e; }
+    try{ return await dene(() => zamanAsimi(tkgm(s + "?data=" + encodeURIComponent(q)), 35000)); }catch(e){ son = e; }
+    await new Promise(ok => setTimeout(ok, 600)); }
   throw son || new Error("çevre verisi alınamadı");
 }
 async function cevreRaporuUret(p, bildir){
@@ -17097,7 +17132,8 @@ function cevreSatirHtml(s){
   return `<div class="kv ${s.uyari ? "ekUyari" : ""}"><span>${esc(s.b)}${s.ad ? ` <small>${esc(s.ad)}</small>` : ""}</span><b class="mono">${s.m === 0 ? "bitişik" : km(s.m)}${yol}</b></div>`;
 }
 function araziKartiHtml(id, a){
-  const c = a?.cevre, k = a?.karne;
+  let c = a?.cevre, k = a?.karne;
+  if(c && !(c.satirlar || []).some(x => !x.yok)){ c = null; k = null; }   // eski hatadan kalan bos rapor
   const ozet = c ? (c.satirlar || []).filter(s => !s.yok && !s.uyari).slice(0, 8) : [];
   return `<div class="card" id="ekArazi">
     <div class="bolum"><span class="rz altin">${svg("pusula")}</span><b>Arazi Bilgileri</b>${k?.genel != null ? `<span class="sayi">${yildizHtml(k.genel)}</span>` : ""}</div>
@@ -17187,6 +17223,7 @@ async function parselEklentileri(id){
   const yer = document.createElement("div"); yer.id = "ekEklenti";
   yer.innerHTML = araziKartiHtml(id, a) + huniKartiHtml(id, parcalar, a) + await zamanCizelgesi(id, p, belgeler, parcalar);
   ilk.after(yer);
+  try{ await ilanDuzenleTuslari(id); }catch(e){}
 }
 {
   const eski = parselDetay;
@@ -17402,55 +17439,101 @@ function sahaKoseCiz(){
 ekranlar.saha = sahaEkran; UST_EKRAN.saha = "parsel";
 { const eskiC = ekraniCiz; ekraniCiz = function(r, arg){ if(r !== "saha") sahaKapat(); app.dataset.ekran = r || "ana"; app.dataset.pid = arg == null ? "" : String(arg); return eskiC(r, arg); }; }
 
-/* ---------- 9) ilan afisi bulut esitleme ----------
-   Tasarim (localStorage) ve zemin fotografi (IndexedDB) sadece hazirlandigi cihazda duruyordu:
-   telefonda yapilan afis PC'de "zemin yukle" diyordu. Artik ikisi de Supabase'e yazilir (parcels.analiz.ilan +
-   depolama), hangi cihazda acilirsa en yenisi gelir. */
+/* ---------- 9) ilan afisleri: her afis kendi tasarimiyla kaydedilir, "Duzenle" ile geri acilir ----------
+   - Ilan Afisi menusu her zaman yeni afisle acilir (yarim kalan taslak varsa o durur, afis uretilince sifirlanir).
+   - Uretilen her afisin tasarimi (D) + zemin fotografi documents.cap_config.ilan icinde saklanir.
+   - Belgelerdeki afisin yanindaki kalem: go('ilan', 'parselId|belgeId') -> o afis acilir, kaydedince o belge guncellenir. */
 const ilanLS = (k, v) => { try{ if(v === undefined) return localStorage.getItem(k); if(v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); }catch(e){ return null; } };
-let __ilanBulutSaat = null;
-let __ilanBulutSira = Promise.resolve();
-function ilanBulutYaz(id, zeminBlob){ return (__ilanBulutSira = __ilanBulutSira.then(() => ilanBulutYazIc(id, zeminBlob))); }   // sirayla: biri digerinin zeminini ezmesin
-async function ilanBulutYazIc(id, zeminBlob){
-  try{
-    const a = await analizOku(id), eski = a.ilan || {}, t = Date.now();
-    const yeni = { ...eski, t };
-    const D = ilanLS("ilan:" + id); if(D) yeni.D = JSON.parse(D);
-    if(zeminBlob){
-      const uz = /png/.test(zeminBlob.type || "") ? "png" : /webp/.test(zeminBlob.type || "") ? "webp" : "jpg";
-      const yol = `${ME.team_id}/${id}/ilan-zemin-${t}.${uz}`;
-      const { error } = await sb.storage.from("arsatakip").upload(yol, zeminBlob, { contentType: zeminBlob.type || "image/jpeg" });
-      if(error) throw error;
-      if(eski.zeminYol && eski.zeminYol !== yol) sb.storage.from("arsatakip").remove([eski.zeminYol]).catch(() => {});
-      yeni.zeminYol = yol; ilanLS("ilanZY:" + id, yol);
-    }
-    await analizYaz(id, { ilan: yeni });
-    ilanLS("ilanT:" + id, String(t));
-  }catch(e){ console.log("ilan bulut", e); }
+async function ilanZeminSil(id){ try{ const db = await ilanDb(); await new Promise(ok => { const t = db.transaction("zemin", "readwrite"); t.objectStore("zemin").delete(id); t.oncomplete = ok; t.onerror = ok; }); }catch(e){} }
+async function ilanZeminBuluta(id, blob){
+  const uz = /png/.test(blob.type || "") ? "png" : /webp/.test(blob.type || "") ? "webp" : "jpg";
+  const yol = `${ME.team_id}/${id}/ilan-zemin-${Date.now()}.${uz}`;
+  const { error } = await sb.storage.from("arsatakip").upload(yol, blob, { contentType: blob.type || "image/jpeg" });
+  if(error) throw error; return yol;
+}
+async function ilanBelgedenYukle(pid, belgeId){
+  const { data:b } = await sb.from("documents").select("id,file_name,cap_config").eq("id", belgeId).single();
+  const k = b?.cap_config?.ilan; if(!k?.D) return null;
+  ilanLS("ilan:" + pid, JSON.stringify(k.D));
+  await ilanZeminSil(pid);
+  if(k.zeminYol){ try{ const { data } = await sb.storage.from("arsatakip").createSignedUrl(k.zeminYol, 600);
+    const blob = await (await fetch(data.signedUrl)).blob(); const db = await ilanDb();
+    await new Promise(ok => { const t = db.transaction("zemin", "readwrite"); t.objectStore("zemin").put(blob, pid); t.oncomplete = ok; t.onerror = ok; }); }catch(e){ toast("Afişin zemin fotoğrafı indirilemedi"); } }
+  return { belgeId, zeminYol:k.zeminYol || null, oran:k.D.oran, ad:b.file_name };
+}
+// bu surume ilk geciste cihazda duran taslaklar "eski" diye isaretlenir (sonradan acilan yeni taslaklar karismasin)
+try{ if(!ilanLS("ilanV2")){ Object.keys(localStorage).filter(k => /^ilan:/.test(k)).forEach(k => ilanLS("ilanEski:" + k.slice(5), "1")); ilanLS("ilanV2", "1"); } }catch(e){}
+// eski usul (tasarimi kaydedilmemis) afis: bu cihazda kalan son taslagi en son afis belgesine bagla
+async function ilanEskiGoc(pid){
+  if(!ilanLS("ilanEski:" + pid) || ME.role === "uye") return;
+  const D = ilanLS("ilan:" + pid); let z = null; try{ z = await ilanZeminOku(pid); }catch(e){}
+  if(!D || !z) return;
+  const { data:L } = await sb.from("documents").select("id,file_name,cap_config,created_at").eq("parcel_id", pid).eq("kind", "sunum").order("created_at", { ascending:false });
+  const hedef = (L || []).find(b => /-ilan-/.test(b.file_name || "") && !b.cap_config?.ilan); if(!hedef) return;
+  try{ const zy = await ilanZeminBuluta(pid, z);
+    await sb.from("documents").update({ cap_config:{ ...(hedef.cap_config || {}), ilan:{ D:JSON.parse(D), zeminYol:zy, v:1 } } }).eq("id", hedef.id);
+    ilanLS("ilanEski:" + pid, null); ilanLS("ilanBitti:" + pid, "1"); }catch(e){ console.log("ilan goc", e); }
 }
 {
-  const eskiKaydet = ilanKaydet;
-  ilanKaydet = function(){ eskiKaydet(); if(!ILAN?.id || !ILAN.V?.zemin) return; const id = ILAN.id; clearTimeout(__ilanBulutSaat); __ilanBulutSaat = setTimeout(() => ilanBulutYaz(id), 2500); };
   const eskiZeminYaz = ilanZeminYaz;
-  ilanZeminYaz = async function(id, blob){ await eskiZeminYaz(id, blob); if(blob) ilanBulutYaz(id, blob); };
+  ilanZeminYaz = async function(id, blob){ await eskiZeminYaz(id, blob); if(typeof ILAN !== "undefined" && ILAN && ILAN.id === id) ILAN._zeminYol = null; };
   const eskiAfis = ilanAfisi;
-  const yeniAfis = async function(parselId){
-    let bulut = null; try{ bulut = (await analizOku(parselId)).ilan || null; }catch(e){}
-    const yerelT = +(ilanLS("ilanT:" + parselId) || 0), yerelD = ilanLS("ilan:" + parselId);
-    let yerelZ = null; try{ yerelZ = await ilanZeminOku(parselId); }catch(e){}
-    if(bulut && !bulut.zeminYol && yerelZ) bulut = null;   // buluttaki zeminsiz bos taslak, buradaki gercek afisi ezmesin
-    if(bulut && (bulut.t || 0) > yerelT){
-      // baska cihazda daha yeni hali var: onu al
-      if(bulut.D) ilanLS("ilan:" + parselId, JSON.stringify(bulut.D));
-      if(bulut.zeminYol && bulut.zeminYol !== ilanLS("ilanZY:" + parselId)){
-        try{ const { data } = await sb.storage.from("arsatakip").createSignedUrl(bulut.zeminYol, 600);
-          const b = await (await fetch(data.signedUrl)).blob(); await eskiZeminYaz(parselId, b); ilanLS("ilanZY:" + parselId, bulut.zeminYol); }catch(e){ console.log("ilan zemin indir", e); } }
-      ilanLS("ilanT:" + parselId, String(bulut.t || Date.now()));
+  const yeniAfis = async function(arg){
+    const [pid, belgeId] = String(arg || "").split("|");
+    let duzen = null;
+    if(belgeId){ duzen = await ilanBelgedenYukle(pid, belgeId); if(!duzen) toast("Bu afişin tasarımı kayıtlı değil, yeni afiş açıldı"); else ilanLS("ilanBitti:" + pid, "1"); }
+    else{
+      await ilanEskiGoc(pid);
+      if(ilanLS("ilanBitti:" + pid)){ ilanLS("ilan:" + pid, null); await ilanZeminSil(pid); ilanLS("ilanBitti:" + pid, null); }   // yeni afis
     }
-    await eskiAfis(parselId);
-    // bu cihazda hazirlanmis ama buluta hic gitmemis eski afis: bir kere yukle
-    if(!bulut && yerelZ && ME.role !== "uye") ilanBulutYaz(parselId, yerelZ);
+    await eskiAfis(pid);
+    if(ILAN && ILAN.id === pid){ ILAN.belgeId = duzen?.belgeId || null; ILAN._zeminYol = duzen?.zeminYol || null; ILAN._oran0 = duzen?.oran || null;
+      if(duzen){ toast("Düzenleniyor: " + (duzen.ad || "afiş")); const h = app.querySelector(".top h1"); if(h) h.textContent = "İlan Afişi · düzenleme"; } }
   };
   ilanAfisi = yeniAfis; ekranlar.ilan = yeniAfis;
+  ilanUret = async function(){
+    if(!ILAN?.V.veri) return toast("Önce çapı zemine oturt");
+    toast("Afiş hazırlanıyor…");
+    await ilanFontlar();
+    const c = document.createElement("canvas"), D = ILAN.D, sec = ILAN.secili; ILAN.secili = null;
+    ilanCiz(c, D, ILAN.V, 2); ILAN.secili = sec; ilanCizTuval();
+    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", .86));
+    const p = ILAN.p, ad2 = `${p.ada || 0}-${p.parsel}-ilan-${D.oran === "45" ? "4x5" : "9x16"}-${Date.now().toString().slice(-5)}.jpg`;
+    indirBlob(blob, ad2);
+    try{
+      ilanKaydet();
+      const tasarim = JSON.parse(ilanLS("ilan:" + ILAN.id) || "null");
+      if(!ILAN._zeminYol){ const zb = await ilanZeminOku(ILAN.id); if(zb) ILAN._zeminYol = await ilanZeminBuluta(ILAN.id, zb); }
+      const ilan = { D:tasarim, zeminYol:ILAN._zeminYol, v:1 };
+      const dosya = new File([blob], ad2, { type:"image/jpeg" });
+      // duzenlenen afis ayni oranda kaldiysa o belge guncellenir; oran degistiyse yeni afis olarak eklenir
+      if(ILAN.belgeId && (!ILAN._oran0 || ILAN._oran0 === D.oran)){
+        const { data:b2 } = await sb.from("documents").select("file_path,cap_config").eq("id", ILAN.belgeId).single();
+        await sb.storage.from("arsatakip").remove([b2.file_path]);
+        const { error } = await sb.storage.from("arsatakip").upload(b2.file_path, dosya); if(error) throw error;
+        const { error:e2 } = await sb.from("documents").update({ size_bytes:dosya.size, cap_config:{ ...(b2.cap_config || {}), ilan } }).eq("id", ILAN.belgeId); if(e2) throw e2;
+        toast("Afiş indirildi ve belgedeki afiş güncellendi");
+      }else{
+        const b = await dosyaYukle(dosya, "sunum", ILAN.id, { ilan });
+        if(ILAN.belgeId){ ILAN.belgeId = b.id; ILAN._oran0 = D.oran; }
+        toast("Afiş indirildi ve parselin belgelerine kaydedildi");
+      }
+      if(!ILAN.belgeId) ilanLS("ilanBitti:" + ILAN.id, "1");   // bir dahaki acilista yeni afis
+    }catch(e){ toast("İndirildi ama kaydedilemedi: " + (e.message || e)); }
+  };
+}
+// parsel belgelerinde tasarimi kayitli afislerin yanina "Duzenle"
+async function ilanDuzenleTuslari(id){
+  if(ME.role !== "admin") return;
+  const { data:L } = await sb.from("documents").select("id,file_path,file_name,cap_config").eq("parcel_id", id).eq("kind", "sunum");
+  (L || []).forEach(b => {
+    const ilanMi = b.cap_config?.ilan || /-ilan-/.test(b.file_name || ""); if(!ilanMi) return;
+    const kutu = [...document.querySelectorAll(".dosyaSec")].find(x => x.dataset.yol === b.file_path)?.closest(".dosya")?.querySelector(".ops");
+    if(!kutu || kutu.querySelector(".ekIlanDuz")) return;
+    kutu.insertAdjacentHTML("afterbegin", b.cap_config?.ilan
+      ? `<button class="ekIlanDuz" aria-label="Düzenle" title="Bu afişi düzenle" onclick="go('ilan','${id}|${b.id}')">${svg("kalem")}</button>`
+      : `<button class="ekIlanDuz" aria-label="Düzenle" title="Eski afiş: tasarımı kayıtlı değil" style="opacity:.35" onclick="toast('Bu afiş eski usulle kaydedilmiş, tasarımı yok. Hazırlandığı cihazda İlan Afişi menüsünü bir kez açarsan düzenlenebilir hale gelir.')">${svg("kalem")}</button>`);
+  });
 }
 
 /* ================= PC SURUMU (masaustu duzeni) =================
@@ -17496,7 +17579,7 @@ function pcKur(){
   document.body.classList.toggle("pcOzKapali", pcLS("pcOz") === "0");
   if(document.getElementById("pcMenuCubuk")) return;
   const ek = (id, tag, html) => { const e = document.createElement(tag); e.id = id; e.className = "pcKabuk"; e.innerHTML = html; document.body.appendChild(e); return e; };
-  ek("pcMenuCubuk", "header", `<div class="pcLogo"><i></i><b>ARSA TAKİP</b></div>
+  ek("pcMenuCubuk", "header", `<div class="pcLogo"><i></i><b>ARSA TAKİP</b><small>by Melkor</small></div>
     <nav class="pcMenuler">${[["Dosya","dosya"],["Parsel","parsel"],["Görünüm","gorunum"],["Araçlar","araclar"],["Yardım","yardim"]].map(([a, k]) => `<button data-m="${k}" onclick="pcMenuAc(this,'${k}')">${a}</button>`).join("")}</nav>
     <div class="pcMenuSag"><span>${esc(ME?.full_name || "")}</span></div>`);
   ek("pcKomut", "div", `<button class="pcGeri" title="Geri" onclick="pcGeri()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
@@ -17599,13 +17682,22 @@ function pcAgacCiz(){
   const fn = (PC_FILTRELER.find(x => x[0] === PC_FILTRE) || PC_FILTRELER[0])[2], q = PC_ARA.toLocaleLowerCase("tr").trim();
   const L = yil.filter(fn).filter(p => !q || `${p.ilce} ${p.mahalle} ${p.mevkii || ""} ${p.ada || ""}/${p.parsel}`.toLocaleLowerCase("tr").includes(q));
   if(!L.length){ k.innerHTML = `<div class="pcBos" style="padding:14px">${PC_P.length ? "Bu süzgeçte parsel yok" : "Henüz parsel yok"}</div>`; return; }
-  const grup = {}; L.forEach(p => { const g = duzgun(p.mahalle) || "—"; (grup[g] = grup[g] || []).push(p); });
+  // il > koy/mahalle > parsel; il ve koy basliklari acilip kapanir
+  const iller = {}; L.forEach(p => { const il = (p.il || "—").toLocaleUpperCase("tr"), m = duzgun(p.mahalle) || "—"; ((iller[il] = iller[il] || {})[m] = iller[il][m] || []).push(p); });
   const pid = pcParselId(PC_SIMDI.r, PC_SIMDI.arg);
-  k.innerHTML = Object.keys(grup).sort((a, b) => a.localeCompare(b, "tr")).map(g => { const kap = PC_KAPALI[g], G = grup[g].sort((a, b) => ((+a.ada || 0) - (+b.ada || 0)) || ((+a.parsel || 0) - (+b.parsel || 0)));
-    return `<div class="pcDugum ${kap ? "kapali" : ""}"><button class="pcDB" onclick="PC_KAPALI['${esc(g)}']=!PC_KAPALI['${esc(g)}'];pcLS('pcAgac',JSON.stringify(PC_KAPALI));pcAgacCiz()"><i>▾</i>${esc(g)}<em>${G.length}</em></button>
-      <div class="pcDL">${G.map(p => `<button class="pcPrs ${p.id === pid ? "on" : ""}" data-id="${p.id}" draggable="false" onclick="go('parsel','${p.id}')"
+  const ac = k => `PC_KAPALI[${JSON.stringify(k).replace(/"/g, "&quot;")}]=!PC_KAPALI[${JSON.stringify(k).replace(/"/g, "&quot;")}];pcLS('pcAgac',JSON.stringify(PC_KAPALI));pcAgacCiz()`;
+  const prs = p => `<button class="pcPrs ${p.id === pid ? "on" : ""}" data-id="${p.id}" onclick="go('parsel','${p.id}')"
         onmouseenter="pcKartGoster(this,'${p.id}')" onmouseleave="pcKartGizle()" oncontextmenu="pcSagMenu(event,'${p.id}')">
-        <span class="pcNokta ${p._satildi && p._satildi === p._parca ? "satildi" : p._satilik ? "satilik" : p._y?.aktif ? "aktif" : ""}"></span><span>${esc(p.ada || "—")} / ${esc(p.parsel)}</span><small class="mono">${nf(Math.round(+p.alan_m2 || 0))} m²</small></button>`).join("")}</div></div>`; }).join("");
+        <span class="pcNokta ${p._satildi && p._satildi === p._parca ? "satildi" : p._satilik ? "satilik" : p._y?.aktif ? "aktif" : ""}"></span><span>${esc(p.ada || "—")} / ${esc(p.parsel)}</span><small class="mono">${nf(Math.round(+p.alan_m2 || 0))} m²</small></button>`;
+  const sirala = G => G.sort((a, b) => ((+a.ada || 0) - (+b.ada || 0)) || ((+a.parsel || 0) - (+b.parsel || 0)));
+  k.innerHTML = Object.keys(iller).sort((a, b) => a.localeCompare(b, "tr")).map(il => {
+    const M = iller[il], kIl = "il:" + il, top = Object.values(M).reduce((t, g) => t + g.length, 0), ilKapali = PC_KAPALI[kIl] && !q;
+    return `<div class="pcIl ${ilKapali ? "kapali" : ""}"><button class="pcIlB" onclick="${ac(kIl)}"><i>▾</i>${esc(il)}<em>${top}</em></button>
+      <div class="pcIlL">${Object.keys(M).sort((a, b) => a.localeCompare(b, "tr")).map(m => { const kM = "m:" + il + "|" + m, kap = PC_KAPALI[kM] && !q;
+        return `<div class="pcDugum ${kap ? "kapali" : ""}"><button class="pcDB" onclick="${ac(kM)}"><i>▾</i>${esc(m)}<em>${M[m].length}</em></button>
+          <div class="pcDL">${sirala(M[m]).map(prs).join("")}</div></div>`; }).join("")}</div></div>`; }).join("");
+  // acik parselin ili/koyu kapaliysa ac
+  const sec = k.querySelector(".pcPrs.on"); if(sec){ sec.closest(".pcIl")?.classList.remove("kapali"); sec.closest(".pcDugum")?.classList.remove("kapali"); }
 }
 // akilli kart: parselin uzerine gelince
 let __pcKartSaat = null;
@@ -17683,7 +17775,7 @@ function pcSekmeKapat(i){
 async function pcOzCiz(){
   const k = document.getElementById("pcOzIc"); if(!k) return;
   const pid = pcParselId(PC_SIMDI.r, PC_SIMDI.arg);
-  document.body.classList.toggle("pcOzGizli", PC_SIMDI.r === "capAyar" || PC_SIMDI.r === "ilan" || PC_SIMDI.r === "sunum" || PC_SIMDI.r === "harita");
+  document.body.classList.toggle("pcOzGizli", PC_SIMDI.r === "ana" || PC_SIMDI.r === "capAyar" || PC_SIMDI.r === "ilan" || PC_SIMDI.r === "sunum" || PC_SIMDI.r === "harita");
   const blok = (ad, ic, sag) => `<details class="pcAkord" open><summary>${ad}${sag != null ? `<em>${sag}</em>` : ""}</summary>${ic}</details>`;
   const kv = (a, b, m) => `<div class="pcKv"><span>${a}</span><b class="${m ? "mono" : ""}">${b}</b></div>`;
   if(pid){
@@ -17784,21 +17876,25 @@ function pcBelgeTuruSor(pid, dosyalar){
 
 /* ---- Genel Bakis: PC'de ana menu yerine pano ---- */
 async function pcPano(){
-  const yil = new Date().getFullYear();
-  app.innerHTML = `<div class="top pcBaslik"><h1>Genel Bakış</h1><div class="pcTarih" id="stamp"></div></div>
+  const yil = new Date().getFullYear(), saat = new Date().getHours();
+  const selam = saat < 6 ? "İyi geceler" : saat < 12 ? "Günaydın" : saat < 18 ? "İyi günler" : "İyi akşamlar";
+  const ad = (ME?.full_name || "").split(" ")[0];
+  const kutu = (id, baslik, sag, ic, ek) => `<section class="pcBox ${ek || ""}"><header><b>${baslik}</b>${sag || ""}</header><div class="pcBoxIc" id="${id}">${ic || `<div class="spin"></div>`}</div></section>`;
+  app.innerHTML = `<div class="top pcBaslik"><h1>Genel Bakış</h1></div>
+    <div class="pcHero"><div><small id="stamp"></small><h2>${selam}${ad ? ", " + esc(ad) : ""}</h2><p>Portföyün ${yil} özeti</p></div>
+      <div class="pcHeroTus">${ME.role === "admin" ? `<button class="btn" onclick="go('yeni')">${svg("pin")}Yeni parsel</button>` : ""}
+        <button class="btn ghost" onclick="pcGit('harita')">${svg("pusula")}Parsel sorgula</button>
+        <button class="btn ghost" onclick="pcGit('cap')">${svg("cetvel")}Çap çiz</button>
+        <button class="btn ghost" onclick="pcGit('hesap')">${svg("money")}Hesap - Kitap</button></div></div>
     <div class="pcKpi" id="pcKpi">${"<div class='pcK'><span>—</span><b>…</b></div>".repeat(5)}</div>
     <div class="pcPanoIzgara">
-      <div class="card pcKart"><div class="pcKb"><b>Son güncellenen araziler</b><button class="pcLink" onclick="pcGit('araziler')">Tümü →</button></div><div id="pcSon"><div class="spin"></div></div></div>
-      <div class="pcSagSutun"><div class="card pcKart"><div class="pcKb"><b>Piyasa</b></div><div id="rates" class="rates pcRates"></div></div>
-      <div class="card pcKart"><div class="pcKb"><b>Hızlı işlemler</b></div>
-        <div class="pcHizli">
-          ${ME.role === "admin" ? `<button onclick="go('yeni')">${svg("pin")}<span>Yeni parsel</span></button>` : ""}
-          <button onclick="pcGit('harita')">${svg("pusula")}<span>Parsel sorgula</span></button>
-          <button onclick="pcGit('cap')">${svg("cetvel")}<span>Çap çiz</span></button>
-          <button onclick="pcGit('hesap')">${svg("money")}<span>Hesap - Kitap</span></button>
-        </div></div></div>
-      <div class="card pcKart" style="grid-column:span 2"><div class="pcKb"><b>Yaklaşanlar · 30 gün</b><button class="pcLink" onclick="pcGit('yaklasan')">Tümü →</button></div><div id="pcYak"><div class="spin"></div></div></div>
+      ${kutu("pcSon", "Son güncellenen araziler", `<button class="pcLink" onclick="pcGit('araziler')">Tümü →</button>`, "", "pcBoxGenis")}
+      <div class="pcSagSutun">
+        ${kutu("pcYak", "Yaklaşanlar · 30 gün", `<button class="pcLink" onclick="pcGit('yaklasan')">Tümü →</button>`)}
+        ${kutu("rates", "Piyasa", "", "", "pcBoxPiyasa")}
+      </div>
     </div>`;
+  document.getElementById("rates").classList.add("rates", "pcRates");
   try{ kurlar(); }catch(e){}
   const [{ data:parseller }, { data:yillar }, { data:parcalar }] = await Promise.all([
     sb.from("parcels").select("*"), sb.from("parcel_years").select("*").eq("yil", yil), sb.from("parca").select("m2,satilik,satildi,m2_fiyat") ]);
@@ -17806,21 +17902,23 @@ async function pcPano(){
   const toplamM2 = P.reduce((t, p) => t + (+p.alan_m2 || 0), 0), aktif = Y.filter(y => y.aktif).length;
   const satildi = PC.filter(p => p.satildi), satilik = PC.filter(p => p.satilik && !p.satildi);
   const ciro = satildi.reduce((t, p) => t + (+p.m2 || 0)*(+p.m2_fiyat || 0), 0);
-  const kpi = [["Parsel", nf(P.length)], [yil + " aktif", nf(aktif)], ["Toplam alan", nf(Math.round(toplamM2)) + " m²"], ["Satılık parça", nf(satilik.length)], ["Satılan", nf(satildi.length) + (ciro ? " · " + nf(Math.round(ciro)) + " ₺" : "")]];
+  const kisaTl = n => n >= 1e6 ? (n/1e6).toFixed(n >= 1e7 ? 0 : 1).replace(".", ",") + " Mn ₺" : nf(Math.round(n)) + " ₺";
+  const kpi = [["Parsel", nf(P.length), `${aktif} aktif`], ["Toplam alan", nf(Math.round(toplamM2)), "m²"], ["Satılık parça", nf(satilik.length), "satışta"],
+    ["Satılan parça", nf(satildi.length), "toplam"], ["Satış bedeli", ciro ? kisaTl(ciro) : "—", "satılan parçalar"]];
   const kk = document.getElementById("pcKpi"); if(!kk) return;
-  kk.innerHTML = kpi.map(([a, b]) => `<div class="pcK"><span>${a}</span><b class="mono">${b}</b></div>`).join("");
-  const son = P.slice().sort((a, b) => String(b.updated_at || b.created_at).localeCompare(String(a.updated_at || a.created_at))).slice(0, 9);
+  kk.innerHTML = kpi.map(([a, b, c]) => `<div class="pcK"><span>${a}</span><b class="mono">${b}</b><small>${c}</small></div>`).join("");
+  const son = P.slice().sort((a, b) => String(b.updated_at || b.created_at).localeCompare(String(a.updated_at || a.created_at))).slice(0, 8);
   document.getElementById("pcSon").innerHTML = son.length ? `<table class="pcTablo"><thead><tr><th>Yer</th><th>Ada / Parsel</th><th class="sag">Alan</th><th class="sag">${yil}</th></tr></thead><tbody>${son.map(p => {
       const y = Y.find(q => q.parcel_id === p.id);
-      return `<tr onclick="go('parsel','${p.id}')" oncontextmenu="pcSagMenu(event,'${p.id}')"><td>${esc(duzgun(p.mahalle))}<small>${esc(p.ilce || "")}</small></td><td class="mono">${esc(p.ada || "—")} / ${esc(p.parsel)}</td>
-        <td class="sag mono">${nf(Math.round(+p.alan_m2 || 0))} m²</td><td class="sag">${y ? `<span class="pcDurum ${y.aktif ? "on" : ""}">${y.aktif ? "aktif" : "pasif"}</span>` : "—"}</td></tr>`; }).join("")}</tbody></table>`
-    : `<div class="empty"><b>Henüz parsel yok</b></div>`;
+      return `<tr onclick="go('parsel','${p.id}')" oncontextmenu="pcSagMenu(event,'${p.id}')"><td><b>${esc(duzgun(p.mahalle))}</b><small>${esc(duzgun(p.il))} · ${esc(duzgun(p.ilce))}</small></td><td class="mono">${esc(p.ada || "—")} / ${esc(p.parsel)}</td>
+        <td class="sag mono nw">${nf(Math.round(+p.alan_m2 || 0))} m²</td><td class="sag">${y ? `<span class="pcDurum ${y.aktif ? "on" : ""}">${y.aktif ? "aktif" : "pasif"}</span>` : "—"}</td></tr>`; }).join("")}</tbody></table>`
+    : `<div class="pcBos">Henüz parsel yok.</div>`;
   const bugun = new Date(); bugun.setHours(0,0,0,0); const gun = t => Math.round((new Date(t) - bugun)/86400000);
   const [{ data:ekler }, { data:vadeler }] = await Promise.all([ sb.from("ekler").select("*"), sb.from("hesap_vade").select("*, hesap(kisi,tip,kapandi)").eq("odendi", false) ]);
   const s = [];
-  (ekler||[]).forEach(k => { if(!k.suresiz && k.gecerlilik_tarihi) s.push({ tur:"Vekalet", b:k.ad_soyad, g:gun(k.gecerlilik_tarihi), t:k.gecerlilik_tarihi, git:"go('ekler')" }); });
-  (vadeler||[]).forEach(v => { if(!v.hesap?.kapandi) s.push({ tur: v.hesap?.tip === "borc" ? "Borç" : "Alacak", b:(v.hesap?.kisi || "—") + " · " + nf(Math.round(+v.tutar || 0)) + " ₺", g:gun(v.tarih), t:v.tarih, git:`hesapAc('${v.hesap_id}')` }); });
-  const yak = s.filter(o => o.g <= 30).sort((a, b) => a.g - b.g).slice(0, 8);
+  (ekler||[]).forEach(k => { if(!k.suresiz && k.gecerlilik_tarihi) s.push({ tur:"Vekalet", b:k.ad_soyad, g:gun(k.gecerlilik_tarihi), git:"go('ekler')" }); });
+  (vadeler||[]).forEach(v => { if(!v.hesap?.kapandi) s.push({ tur: v.hesap?.tip === "borc" ? "Borç" : "Alacak", b:(v.hesap?.kisi || "—") + " · " + nf(Math.round(+v.tutar || 0)) + " ₺", g:gun(v.tarih), git:`hesapAc('${v.hesap_id}')` }); });
+  const yak = s.filter(o => o.g <= 30).sort((a, b) => a.g - b.g).slice(0, 6);
   const yk = document.getElementById("pcYak"); if(!yk) return;
   yk.innerHTML = yak.length ? `<div class="pcYakListe">${yak.map(o => `<button onclick="${o.git}"><span class="pcTur">${o.tur}</span><b>${esc(o.b)}</b>
       <span class="pcGun ${o.g < 0 ? "gecti" : o.g <= 7 ? "yakin" : ""}">${o.g < 0 ? -o.g + " gün geçti" : o.g === 0 ? "bugün" : o.g + " gün"}</span></button>`).join("")}</div>`

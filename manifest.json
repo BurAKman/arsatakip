@@ -1,6 +1,6 @@
 {
-  "name": "Çapsız Çapçı",
-  "short_name": "Çapsız Çapçı",
+  "name": "Arsa Takip by Melkor",
+  "short_name": "Arsa Takip",
   "description": "Tarla ve arsa portföy takibi",
   "start_url": "./",
   "scope": "./",
@@ -9,7 +9,17 @@
   "background_color": "#05070A",
   "theme_color": "#05070A",
   "icons": [
-    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
