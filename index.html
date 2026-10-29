@@ -2777,7 +2777,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.1.3";
+const SURUM_MORDOR = "v 3.1.4";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -14321,13 +14321,13 @@ function capYerlesimAgac(M, cfg, hizli){
   const yapr = yapraklar(kok);
   const kalanlar = yapr.filter(y=>y.kalan), sabitTop = yapr.filter(y=>!y.kalan).reduce((t,y)=>t+Math.max(.01,+y.hedef||0), 0);
   let net = tum - (C.resmiler.length ? 0 : 0);
-  let yollar, kesimler, bolgeler, gercek, bosluklar = [], Lambda = 1, eDeg;
+  let yollar, kesimler, bolgeler, gercek, bosluklar = [], Lambda = 1, eDeg, SON_ORAN = 1;
   const ITER = hizli ? 3 : 12;
   for(let it=0; it<ITER; it++){
     eDeg = new Map();
     // otomatik kirpma: fazlalik, kilitsiz butun parcalardan ayni oranda dusulur
     let oran = 1;
-    if(cfg.kirpOto && it > 0){
+    if(it > 0){
       const kilitTop = yapr.filter(y=>!y.kalan && y.kilit).reduce((t,y)=>t+Math.max(.01,+y.hedef||0), 0);
       const serbestTop = sabitTop - kilitTop, yer2 = net - kilitTop - (kalanlar.length ? kalanlar.length : 0);
       if(serbestTop > 0 && sabitTop > net) oran = Math.max(.01, Math.min(1, yer2 / serbestTop));
@@ -14412,7 +14412,8 @@ function capYerlesimAgac(M, cfg, hizli){
       });
     };
     duzelt(kok);
-    if(hata < 2e-4 && ((!kalanlar.length && !cfg.kirpOto) || Math.abs(net - netOnce) < .01) && it > 0) break;
+    SON_ORAN = oran;
+    if(hata < 2e-4 && ((!kalanlar.length && sabitTop <= net) || Math.abs(net - netOnce) < .01) && it > 0) break;
   }
   if(EY){ yollar = EY.seritler.map(r=>({ ...r, g: Math.max(...EY.eksenler.map(e=>e.g), 0) })); }
   const yolAlan = EY ? EY.alan : yollar.reduce((t,y)=>t + polyAlan(y.poly), 0);
@@ -14431,7 +14432,7 @@ function capYerlesimAgac(M, cfg, hizli){
     const ger = Math.round((gercek.get(y.id)||0)*100)/100;
     // kirpma kapaliysa kagitta yazilan metrekare gorunur; kalani alan parca hep olculeni yazar
     const yaz = (!cfg.kirpOto && !y.kalan) ? Math.round((+y.hedef||0)*100)/100 : ger;
-    return { poly, ekPoly, id:y.id, bilgi:{ no: y.no || String(i+1), m2: yaz, olculen: ger, renk:y.renk, hedef:+y.hedef||0, kalan:!!y.kalan } };
+    return { poly, ekPoly, id:y.id, bilgi:{ no: y.no || String(i+1), m2: yaz, olculen: ger, renk:y.renk, hedef:+y.hedef||0, kalan:!!y.kalan, oranli: !cfg.kirpOto && !y.kalan && !y.kilit && SON_ORAN < .9999 } };
   }).filter(o=>o.poly && o.poly.length > 2);
   const ilk = C.resmiler[0] || null;
   return { agacMi:true, parcalar, yol: yollar.map(y=>y.poly), elle: !!EY, kutuphaneYok,
@@ -14495,9 +14496,9 @@ function capDenetim(yer){
   if(yer.bosAlan > .5) uyari.push({ tur:"bilgi", metin:`${nf2(yer.bosAlan)} m² ayrılmamış alan var · boş alana dokunup parça yapabilirsin` });
   const fazla = (yer.girilen || 0) - (yer.net || 0);
   if(fazla > .5) uyari.push({ tur:"hata", metin:`Yazılan toplam parselin kullanılabilir alanını ${nf2(fazla)} m² aşıyor. ` +
-    (PARCA.kirpOto ? "Otomatik kırpma açık: fazlalık kilitsiz bütün parçalardan aynı oranda düşüldü." : "Kırpma kapalı: kâğıda senin yazdığın metrekareler yazılacak.") });
+    (PARCA.kirpOto ? "Otomatik kırpma açık: fazlalık kilitsiz bütün parçalardan aynı oranda düşüldü." : "Kırpma kapalı: kâğıda senin yazdığın metrekareler yazılacak, çizim parsele sığacak şekilde orantılı ayarlandı.") });
   (yer.parcalar||[]).forEach(o=>{ const d = Math.abs((o.bilgi.olculen ?? o.bilgi.m2) - o.bilgi.hedef);
-    if(d > 1 && !o.bilgi.kalan && !(PARCA.kirpOto && fazla > .5)) uyari.push({ tur:"dikkat", id:o.id, metin:`${o.bilgi.no} nolu parça çizimde ${nf2(o.bilgi.olculen ?? o.bilgi.m2)} m², yazılan ${nf2(o.bilgi.hedef)} m²` }); });
+    if(d > 1 && !o.bilgi.kalan && !o.bilgi.oranli && !(PARCA.kirpOto && fazla > .5)) uyari.push({ tur:"dikkat", id:o.id, metin:`${o.bilgi.no} nolu parça çizimde ${nf2(o.bilgi.olculen ?? o.bilgi.m2)} m², yazılan ${nf2(o.bilgi.hedef)} m²` }); });
   return { uyari, cephe, bagli };
 }
 
@@ -15148,7 +15149,7 @@ function editorCiz(){
     x.textAlign = "center"; x.textBaseline = "middle"; x.fillStyle = "#14170F";
     x.font = "700 13px Arial"; x.fillText(String(o.bilgi.no) + (d?.kilit ? " 🔒" : "") + (d?.kalan ? " ∗" : ""), m[0], m[1]-7);
     x.font = "400 10.5px Arial"; x.fillText(nfAkilli(o.bilgi.m2) + " m²", m[0], m[1]+7);
-    if(Math.abs((o.bilgi.olculen ?? o.bilgi.m2) - o.bilgi.m2) > 1){ x.font = "400 9px Arial"; x.fillStyle = "#B03030";
+    if(!o.bilgi.oranli && Math.abs((o.bilgi.olculen ?? o.bilgi.m2) - o.bilgi.m2) > 1){ x.font = "400 9px Arial"; x.fillStyle = "#B03030";
       x.fillText("çizimde " + nfAkilli(o.bilgi.olculen) , m[0], m[1]+19); }
   });
   // tutamaklar
