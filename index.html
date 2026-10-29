@@ -2777,7 +2777,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.1.0";
+const SURUM_MORDOR = "v 3.1.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -14770,6 +14770,7 @@ function secimCiz(){
     if(PARCA.elleYol?.aktif){ k.innerHTML = `<div class="card" style="border-color:var(--gold)">
       <div class="bolum"><b>Kesim · ${esc(a1)} ile ${esc(a2)} arası</b></div>
       <p class="ipuc" style="margin:0 2px 10px">Elle yol modundasın; kesimlere otomatik yol konmaz. Tutamağı sürükleyip sınırı kaydırabilirsin.</p>
+      <button class="pill gold" style="margin:0 6px 6px 0" onclick="elleModu(false)">Otomatik yollara geç</button>
       <button class="pill sade" onclick="parcaSec(${b.d.id})">Bu grubu seç</button></div>`; return; }
     k.innerHTML = `<div class="card" style="border-color:var(--gold)">
       <div class="bolum"><b>Kesim · ${esc(a1)} ile ${esc(a2)} arası</b></div>
@@ -14843,7 +14844,7 @@ function secimCiz(){
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
       <button class="pill ${PARCA.bolAcik ? "on" : "sade"}" onclick="PARCA.bolAcik=!PARCA.bolAcik;PARCA.yolAcik=false;PARCA.ekAcik=false;secimCiz()">${yaprak ? "Böl" : "Yeniden böl"}</button>
       <button class="pill ${PARCA.ekAcik ? "on" : "sade"}" onclick="PARCA.ekAcik=!PARCA.ekAcik;PARCA.bolAcik=false;PARCA.yolAcik=false;secimCiz()">Yanına parça ekle</button>
-      ${PARCA.elleYol?.aktif ? "" : `<button class="pill ${PARCA.yolAcik ? "on" : "sade"}" onclick="PARCA.yolAcik=!PARCA.yolAcik;PARCA.bolAcik=false;PARCA.ekAcik=false;secimCiz()">Kenarına yol</button>`}
+      ${PARCA.elleYol?.aktif ? `<button class="pill sade" style="opacity:.75" onclick="if(confirm('Şu an ELLE ÇİZ modundasın: otomatik parsel yolları (kenar, kesim, aralar) kapalı. Otomatik moda geçilsin mi? Elle çizdiğin yollar silinmez, Elle çiz moduna dönünce geri gelir.')) elleModu(false)">Kenarına yol (elle moddasın)</button>` : `<button class="pill ${PARCA.yolAcik ? "on" : "sade"}" onclick="PARCA.yolAcik=!PARCA.yolAcik;PARCA.bolAcik=false;PARCA.ekAcik=false;secimCiz()">Kenarına yol</button>`}
       ${!yaprak ? `<button class="pill sade" onclick="esitDagit(${d.id})">Grubu eşit dağıt</button>
         <button class="pill sade" onclick="bolmeyiKaldir(${d.id})">Bölmeyi kaldır</button>` : ""}
       ${b.ebeveyn ? `<button class="pill sade" onclick="grupSec()">Üst grubu seç</button>
@@ -18531,6 +18532,8 @@ const PC_IKI_PANEL = {
 };
 /* arac paneli: sagdaki uzun kart yigini yerine Photoshop gibi arac cubugu + tek panel */
 const PC_ARAC = new Set(["capAyar", "ilan"]);
+const PC_ACIK_PANEL = {}, PC_KAYDIR = {}; let PC_CIZIM_TIK = 0;
+window.addEventListener("pointerdown", e => { if(e.target.closest && e.target.closest("#capEditor, #ilTuval")) PC_CIZIM_TIK = Date.now(); }, true);
 const PC_SEKME = (() => { try{ return JSON.parse(localStorage.getItem("pcSekme") || "{}"); }catch(e){ return {}; } })();
 const PC_IKON_ESLE = [[/seçim/i,"kalem"],[/parsel yolu/i,"vector"],[/resm[iî] yol|ek yol|yol/i,"kure"],[/parça|satılan/i,"cetvel"],[/özet/i,"note"],[/ayar|görünüm/i,"gear"],
   [/parsel|bilgi/i,"pin"],[/zemin/i,"photo"],[/yazı|öğe/i,"tag"]];
@@ -18561,18 +18564,22 @@ function pcAracPaneli(R, r){
   const icerik = document.createElement("div"); icerik.className = "pcAracIcerik";
   sahne.append(baslik, icerik, alt);
   R.append(cubuk, sahne);
-  const sec = (i, kaydet) => { const p = paneller[i]; if(!p) return;
+  const sec = (i, kaydet, kaydirmaKalsin) => { const p = paneller[i]; if(!p) return;
     cubuk.querySelectorAll("button").forEach((b, j) => b.classList.toggle("on", j === i));
-    baslik.textContent = p.ad; paneller.forEach(q => q.govde.style.display = q === p ? "" : "none"); icerik.scrollTop = 0;
+    baslik.textContent = p.ad; paneller.forEach(q => q.govde.style.display = q === p ? "" : "none"); if(!kaydirmaKalsin) icerik.scrollTop = 0;
+    PC_ACIK_PANEL[r] = p.ad;   // ekran yeniden cizilse de en son bakilan panel geri gelsin
     if(kaydet !== false){ PC_SEKME[r] = p.ad; try{ localStorage.setItem("pcSekme", JSON.stringify(PC_SEKME)); }catch(e){} } };
+  icerik.addEventListener("scroll", () => { PC_KAYDIR[r + ":" + baslik.textContent] = icerik.scrollTop; }, { passive:true });
   paneller.forEach(p => icerik.appendChild(p.govde));
   paneller.forEach((p, i) => { const b = document.createElement("button"); b.title = p.ad;
     b.innerHTML = `${svg(ikon(p.ad))}<span>${esc(kisa(p.ad))}</span>`; b.onclick = () => sec(i); cubuk.appendChild(b);
     if(p.secim){ b.classList.add("pcSecimTus");
+      // secim paneline sadece cizimde bir parcaya/kesime/yola tiklayinca gec; baska panelde calisirken (tablo, ayar) yerinden oynatma
       new MutationObserver(() => { const dolu = (p.govde.firstElementChild?.innerHTML || "").trim().length > 0; b.classList.toggle("dolu", dolu);
-        if(dolu && !b.classList.contains("on") && document.body.contains(b)) sec(i, false); }).observe(p.govde.firstElementChild, { childList:true, subtree:true }); } });
-  const hedef = paneller.findIndex(p => p.ad === PC_SEKME[r]);
-  sec(hedef >= 0 ? hedef : Math.max(0, paneller.findIndex(p => !p.secim)), false);
+        if(dolu && !b.classList.contains("on") && document.body.contains(b) && Date.now() - PC_CIZIM_TIK < 900) sec(i, false); }).observe(p.govde.firstElementChild, { childList:true, subtree:true }); } });
+  const sonAcik = paneller.findIndex(p => p.ad === PC_ACIK_PANEL[r]), hedef = paneller.findIndex(p => p.ad === PC_SEKME[r]);
+  const ilk = sonAcik >= 0 ? sonAcik : hedef >= 0 ? hedef : Math.max(0, paneller.findIndex(p => !p.secim));
+  sec(ilk, false); const kay = PC_KAYDIR[r + ":" + paneller[ilk]?.ad]; if(kay) requestAnimationFrame(() => { icerik.scrollTop = kay; });
   if(!alt.children.length) alt.remove();
 }
 const PC_TEK_SUTUN = new Set(["yz", "ayarlar", "marka", "yedek", "tema", "yeni", "fiyatDuzen"]);
