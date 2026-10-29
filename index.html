@@ -2328,6 +2328,18 @@ h3{letter-spacing:.02em}
 .ekEmsalSat a:hover{color:var(--gold)}
 .ekEmsalSat button{margin-left:8px;width:24px;height:24px;border-radius:6px;color:var(--ink-3);flex:0 0 24px}
 .ekEmsalSat button:hover{color:#FF7078;background:rgba(224,49,60,.12)}
+.ilYakinOturt{margin:12px 0 4px;padding:12px;border-radius:11px;border:1px solid var(--cizgi-2,rgba(255,255,255,.12));background:var(--cam,rgba(255,255,255,.04))}
+.ilYakinOturt > b{display:block;font-size:13px;color:var(--ink)}
+.ilYakinOturt > span{display:block;font-size:11.5px;color:var(--ink-3);margin:3px 0 10px;line-height:1.45}
+.ilYakinOturt .btn{width:100%;margin:4px 0!important}
+.ilRenkSat{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin:8px 0 12px}
+.ilRenkSat label{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);margin:0;letter-spacing:0;text-transform:none}
+.ilRenkSat input[type=color]{width:38px!important;height:30px!important;padding:2px!important;border-radius:7px!important;min-height:0!important;cursor:pointer}
+.ilHazir{display:flex;gap:6px}
+.ilHazir button{width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,.25);cursor:pointer}
+.ekAdim{margin:4px 0 12px 18px;padding:0;font-size:13px;line-height:1.6;color:var(--ink-2)}
+.ekAdim li{margin:6px 0}
+.ekAdim b{color:var(--ink)}
 
 /* ================= PC SURUMU · premium kizil (siyah · grafit · yakut) ================= */
 body.pc[data-tema]{
@@ -2765,7 +2777,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.0.1";
+const SURUM_MORDOR = "v 3.1.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -12178,7 +12190,8 @@ function ilPlan(x, D, V, W, Hc){
     const ig = x.createRadialGradient(mx, my, 0, mx, my, r*1.6); ig.addColorStop(0, "rgba(255,226,150,.10)"); ig.addColorStop(1, "rgba(255,226,150,0)");
     x.save(); x.globalCompositeOperation = "screen"; x.fillStyle = ig; x.fillRect(mx - r*2, my - r*2, r*4, r*4); x.restore(); }
   // cap: yakin cekim kutusu aciksa ana gorselde yazilar kutuya birakilir
-  ilCapCiz(x, D, V, TF, { etiket: !yakin, yolYazi: !yakin && D.yolYazi !== false, cizgi: 1, butun: yakin });
+  const butun = D.anaGorunum === "tek" ? true : D.anaGorunum === "parcali" ? false : yakin;
+  ilCapCiz(x, D, V, TF, { etiket: !butun, yolYazi: !yakin && D.yolYazi !== false, cizgi: 1, butun });
 
   const S = ilYogun(F.sinir, 2, true).map(T), xs = S.map(q=>q[0]), ys = S.map(q=>q[1]);
   const c0 = F.sinir.reduce((tt,q)=>[tt[0]+q[0]/F.sinir.length, tt[1]+q[1]/F.sinir.length], [0,0]);
@@ -12238,7 +12251,7 @@ function ilCapCiz(x, D, V, TF, sec){
   resmiSeritler.forEach(r => Y.push({ e: r.orta, g: r.g || 7, au: [0, 0], b1: 0, b2: 0, resmi: true }));
   ekYollar.forEach(r => { const g = r.g || 7, au = r.au || [0, 0]; Y.push({ e: r.orta, g, au, b1: au[0] ? 0 : g*.5, b2: au[1] ? 0 : g*.5, taslak: r.taslak }); });
   // gorunum genisligi: kullanici carpani + kucuk olcekte bile belirgin olsun (ekranda en az 8 px)
-  Y.forEach(o => { const m = o.e[Math.floor(o.e.length/2)], s0 = Math.max(.05, olc(m)); o.g = Math.max(o.g*(D.yolKat || 1), 8/s0); });
+  Y.forEach(o => { const m = o.e[Math.floor(o.e.length/2)], s0 = Math.max(.05, olc(m)); o.g0 = o.g; o.g = Math.max(o.g*(D.yolKat || 1), 8/s0); });
   // negatif uzatma = kirpma (kisa son segmentlerde geri katlanip sivri uc yapmasin)
   const serit = (o, yari, b1, b2) => { const uz = ilUzat(kirp(o.e, b1 < 0 ? -b1 : 0, b2 < 0 ? -b2 : 0), Math.max(0, b1), Math.max(0, b2)), a = ilOfset(uz, yari), b = ilOfset(uz, -yari); return TP(a.concat(b.slice().reverse()), true); };
   const ucB = (o, k) => [o.au[0] ? k : o.b1, o.au[1] ? k : o.b2];
@@ -12251,6 +12264,11 @@ function ilCapCiz(x, D, V, TF, sec){
   const kirp = (e, bas, son) => { const kes = (q, L) => { let t = 0; while(q.length > 2){ const d = Math.hypot(q[q.length-1][0]-q[q.length-2][0], q[q.length-1][1]-q[q.length-2][1]); if(t + d > L) break; t += d; q.pop(); } return q; };
     let q = e.slice(); if(son) q = kes(q, son); if(bas) q = kes(q.reverse(), bas).reverse(); return q; };
   Y.forEach(o => { if(!o.resmi && (o.au[0] || o.au[1])) o.e = kirp(o.e, o.au[0] ? o.g*.95 : 0, o.au[1] ? o.g*.95 : 0); });
+  // bir sinir kenari yola mi bakiyor: kenarin birkac noktasi yol eksenine (yari genislik + 4 m) yakinsa evet
+  const yolGen = Y.map(o => ({ e:o.e, g0:(o.g0 || o.g) }));
+  const nktUz = (p, e) => { let d = 1e9; for(let i=0;i<e.length-1;i++){ const a = e[i], b = e[i+1], dx = b[0]-a[0], dy = b[1]-a[1], L = dx*dx + dy*dy || 1;
+      const t = Math.max(0, Math.min(1, ((p[0]-a[0])*dx + (p[1]-a[1])*dy)/L)); d = Math.min(d, Math.hypot(p[0]-a[0]-t*dx, p[1]-a[1]-t*dy)); } return d; };
+  const yolaBakar = (q, b) => [.25, .5, .75].filter(t => { const p = [q[0] + (b[0]-q[0])*t, q[1] + (b[1]-q[1])*t]; return yolGen.some(o => nktUz(p, o.e) <= o.g0/2 + 4); }).length >= 2;
   // resimdeki asfaltin gercek rengi (uc noktasinda, 5x5 ortalama)
   let Zr = null; const fotoRenk = m => { try{ if(!Zr){ const Zc = ilZeminOnbellek(V, D); Zr = Zc.getContext("2d", { willReadFrequently:true }); }
       const q = ilH(F.H, m), d = Zr.getImageData(Math.round(q[0]) - 2, Math.round(q[1]) - 2, 5, 5).data; let rr = 0, gg = 0, bb = 0;
@@ -12394,7 +12412,7 @@ function ilCapCiz(x, D, V, TF, sec){
     // dis sinir: parlak altin + alcak altin korkuluk (ince ray, kucuk direkler)
     altinHale(P0, .7);
     if(V.citPanel && V.citDirek){ const S = F.sinir, n = S.length, pan = V.citPanel, dir = V.citDirek, ust = V.citUst, pOran = pan.width/pan.height, dk = [];
-      const kn = []; for(let i=0;i<n;i++) kn.push({ q: S[i], b: S[(i+1)%n], y: (T(S[i])[1] + T(S[(i+1)%n])[1])/2 }); kn.sort((u, v) => u.y - v.y);
+      const kn = []; for(let i=0;i<n;i++) if(D.citYol === "kapali" || !yolaBakar(S[i], S[(i+1)%n])) kn.push({ q: S[i], b: S[(i+1)%n], y: (T(S[i])[1] + T(S[(i+1)%n])[1])/2 }); kn.sort((u, v) => u.y - v.y);
       kn.forEach(({ q, b }) => { let A = T(q), B = T(b); if(A[0] > B[0]){ const t = A; A = B; B = t; }
         const L = Math.hypot(B[0]-A[0], B[1]-A[1]); if(L < 4) return; const ux = (B[0]-A[0])/L, uy = (B[1]-A[1])/L, h = Math.max(13, Math.min(34, 2.1*olc([(q[0]+b[0])/2, (q[1]+b[1])/2])));
         if(ux < .34){ if(ust){ const th = Math.max(5, h*.3), tw = th*ust.width/ust.height; x.save(); x.translate(A[0], A[1]); x.rotate(Math.atan2(uy, ux)); x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 4;
@@ -12611,7 +12629,10 @@ function ilYakinCiz(x, e, D, V, P, W, Hc){
   const pcx = (ex0+ex1)/2 + (e.kx || 0), pcy = (ey0+ey1)/2 + (e.ky || 0);
   const kk = Math.max(1, x.getTransform().a), L = document.createElement("canvas"); L.width = Math.round(bw*kk); L.height = Math.round(bh*kk); const l = L.getContext("2d"); l.scale(kk, kk);
   l.imageSmoothingQuality = "high"; l.filter = "saturate(1.08) contrast(1.04)";
-  l.drawImage(Z, bw/2 - kin*pcx, bh/2 - kin*pcy, F.foto.w*kin, F.foto.h*kin); l.filter = "none";
+  e._kin = kin;
+  l.save(); l.translate(bw/2, bh/2); l.scale(kin, kin); l.translate(-pcx, -pcy);
+  l.translate(pcx + (e.zx || 0), pcy + (e.zy || 0)); l.rotate((e.zr || 0)*Math.PI/180); l.scale(e.zs || 1, e.zs || 1); l.translate(-pcx, -pcy);
+  l.drawImage(Z, 0, 0, F.foto.w, F.foto.h); l.restore(); l.filter = "none";
   ilCapCiz(l, D, V, p => [bw/2 + kin*(p[0]-pcx), bh/2 + kin*(p[1]-pcy)], { etiket:true, yolYazi: D.yolYazi !== false, cizgi:1, detay:true });
   const Hi = ilTers(F.H); e._ters = (tx, ty) => ilH(Hi, [pcx + (tx - X - bw/2)/kin, pcy + (ty - Yb - bh/2)/kin]);
   // baglanti: parselden kutuya iki teget isin + parsel cevresinde halka
@@ -12666,6 +12687,8 @@ function ilYakinCiz(x, e, D, V, P, W, Hc){
   return [X, Yb, X + bw, Yb + bh];
 }
 
+function ilRenkKoyu(hex, f){ const m = /^#?([0-9a-f]{6})$/i.exec(hex || ""); if(!m) return hex; const n = parseInt(m[1], 16), k = v => Math.round(v*f);
+  return `rgb(${k(n >> 16)},${k((n >> 8) & 255)},${k(n & 255)})`; }
 function ilYuvarlakEkle(x,X,Y,w,h,r){ x.moveTo(X+r,Y); x.arcTo(X+w,Y,X+w,Y+h,r); x.arcTo(X+w,Y+h,X,Y+h,r); x.arcTo(X,Y+h,X,Y,r); x.arcTo(X,Y,X+w,Y,r); x.closePath(); }
 // metalik altin cerceve: koyu dis kontur + parlak altin bant + ince ic cizgi + kose suslemeleri
 function ilAltinCerceve(x, X, Y, w, h, r, s){
@@ -12762,13 +12785,13 @@ const IL_OGE = {
     x.lineJoin = "round"; x.lineWidth = 12; x.strokeStyle = "#0B0B0B"; x.strokeText(a.s2, 0, s1 + 14 + s2*.92);
     x.restore(); x.fillStyle = gr; x.fillText(a.s2, 0, s1 + 14 + s2*.92);
     return [-10, -10, Math.max(w1, x.measureText(a.s2).width) + 10, s1 + 24 + s2]; },
-  slogan(x, e){ const a = e.alan; x.font = `600 34px ${IL_FONT.serit}`; const w = Math.min(900, x.measureText(a.metin).width + 90), h = 64;
-    x.save(); x.rotate(-.025); const gr = x.createLinearGradient(0,0,w,0); gr.addColorStop(0,"#1F6B2C"); gr.addColorStop(1,"#0F4A1C");
-    x.beginPath(); x.moveTo(22,0); x.lineTo(w,0); x.lineTo(w-22,h); x.lineTo(0,h); x.closePath(); x.fillStyle = gr;
+  slogan(x, e){ const a = e.alan; x.font = `600 34px ${IL_FONT.serit}`; const w = Math.min(900, x.measureText(a.metin).width + 90), h = 64, duz = e.sekil === "duz", rk = e.renk || "#1F6B2C";
+    x.save(); if(!duz) x.rotate(-.025); const gr = x.createLinearGradient(0,0,w,0); gr.addColorStop(0, rk); gr.addColorStop(1, ilRenkKoyu(rk, .55));
+    x.beginPath(); if(duz) ilYuvarlakEkle(x, 0, 0, w, h, e.kose ?? 6); else { x.moveTo(22,0); x.lineTo(w,0); x.lineTo(w-22,h); x.lineTo(0,h); x.closePath(); } x.fillStyle = gr;
     x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 12; x.shadowOffsetY = 5; x.fill(); x.shadowColor = "transparent";
-    x.strokeStyle = "rgba(160,230,140,.5)"; x.lineWidth = 2; x.stroke();
+    x.strokeStyle = e.renk ? "rgba(255,255,255,.35)" : "rgba(160,230,140,.5)"; x.lineWidth = 2; x.stroke();
     x.textAlign = "center"; x.textBaseline = "middle"; ilSigdir(x, a.metin, IL_FONT.serit, 600, w-70, 34, 14);
-    ilYazi(x, a.metin, w/2, h/2+1, "#FFFFFF", "rgba(0,0,0,.4)", 3); x.restore(); return [-6, -14, w+6, h+20]; },
+    ilYazi(x, a.metin, w/2, h/2+1, e.yaziRenk || "#FFFFFF", "rgba(0,0,0,.4)", 3); x.restore(); return [-6, -14, w+6, h+20]; },
   pusula(x, e, W, P, V){ if(V && V.ilPusula) return ilPusulaPremium(x, e, P, V); const r = 34, n = P.kuzey || 0; x.save(); x.translate(r, r);
     x.beginPath(); x.arc(0,0,r,0,7); x.fillStyle = "rgba(8,20,12,.55)"; x.fill(); x.lineWidth = 1.5; x.strokeStyle = "rgba(227,178,60,.85)"; x.stroke();
     x.rotate(n); x.beginPath(); x.moveTo(0,-r*.72); x.lineTo(r*.2,r*.1); x.lineTo(0,0); x.closePath(); x.fillStyle = "#E3B23C"; x.fill();
@@ -12846,14 +12869,14 @@ const IL_OGE = {
     x.save(); x.rotate(-.06); x.fillStyle = "#C8101D"; x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 12; x.shadowOffsetY = 5;
     x.beginPath(); x.moveTo(0,0); x.lineTo(w,0); x.lineTo(w-14,h/2); x.lineTo(w,h); x.lineTo(0,h); x.closePath(); x.fill(); x.shadowColor = "transparent";
     x.textAlign = "left"; x.textBaseline = "middle"; ilYazi(x, a.metin, 22, h/2+2, "#FFFFFF", "rgba(0,0,0,.35)", 3); x.restore(); return [-4, -10, w+6, h+16]; },
-  parselSay(x, e){ const a = e.alan, w = 400, sat = a.alt.split("\n").filter(Boolean), h = 120 + sat.length*44;
-    x.save(); x.rotate(-.06);
-    const gr = x.createLinearGradient(0,0,0,h); gr.addColorStop(0,"#E1262F"); gr.addColorStop(1,"#9E1018");
+  parselSay(x, e){ const a = e.alan, w = 400, sat = a.alt.split("\n").filter(Boolean), h = 120 + sat.length*44, duz = e.sekil === "duz", rk = e.renk || "#E1262F";
+    x.save(); if(!duz) x.rotate(-.06);
+    const gr = x.createLinearGradient(0,0,0,h); gr.addColorStop(0, rk); gr.addColorStop(1, ilRenkKoyu(rk, .6));
     x.fillStyle = gr; x.shadowColor = "rgba(0,0,0,.5)"; x.shadowBlur = 16; x.shadowOffsetY = 8;
-    x.beginPath(); x.moveTo(26,0); x.lineTo(w,8); x.lineTo(w-20,h); x.lineTo(0,h-8); x.closePath(); x.fill(); x.shadowColor = "transparent";
+    x.beginPath(); if(duz) ilYuvarlakEkle(x, 0, 0, w, h, e.kose ?? 8); else { x.moveTo(26,0); x.lineTo(w,8); x.lineTo(w-20,h); x.lineTo(0,h-8); x.closePath(); } x.fill(); x.shadowColor = "transparent";
     x.textAlign = "center"; x.textBaseline = "alphabetic";
     ilSigdir(x, a.ust, IL_FONT.kalin, 400, w-60, 92, 30); ilYazi(x, a.ust, w/2, 104, "#FFFFFF", "rgba(60,0,0,.6)", 5);
-    sat.forEach((t,i) => { ilSigdir(x, t, IL_FONT.kalin, 400, w-56, 42, 16); ilYazi(x, t, w/2, 152 + i*44, "#FFE04A", "rgba(60,0,0,.6)", 4); });
+    sat.forEach((t,i) => { ilSigdir(x, t, IL_FONT.kalin, 400, w-56, 42, 16); ilYazi(x, t, w/2, 152 + i*44, e.yaziRenk || "#FFE04A", "rgba(60,0,0,.6)", 4); });
     x.restore(); return [-6, -14, w+8, h+24]; },
   ozellik(x, e, W, P, V){ if(e.liste) return ilOzellikListe(x, e); if(e.yatay && V && V.ilKoyu && V.ilKrem) return ilOzellikPremium(x, e, V); const sat = e.alan.maddeler.split("\n").map(t => t.trim()).filter(Boolean);
     const ikon = t => { const u = t.toLocaleUpperCase("tr");
@@ -13024,11 +13047,13 @@ const IL_IKON_LIB = {
   para:["Uygun fiyat / taksit","M3 7h18v10H3z M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z M6 10v4 M18 10v4"],
   anahtar:["Hemen teslim","M4 15a4 4 0 1 0 8 0 4 4 0 1 0-8 0 M11 12l9-9 M17 6l2.5 2.5 M14.5 8.5l2 2"],
   saat:["Yakın mesafe / dakika","M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M12 7v5l3.2 2"],
-  yildiz:["Öne çıkan","M12 3l2.8 5.8 6.2.9-4.5 4.4 1.1 6.2L12 17.4 6.4 20.3l1.1-6.2L3 9.7l6.2-.9z"]
+  yildiz:["Öne çıkan","M12 3l2.8 5.8 6.2.9-4.5 4.4 1.1 6.2L12 17.4 6.4 20.3l1.1-6.2L3 9.7l6.2-.9z"],
+  sanayi:["Sanayi / fabrika","M2 21h20 M3 21v-9l5 3v-3l5 3v-3l5 3V4h3v17 M18 7h3 M19.5 4c0-1.2.8-2 2-2 M6 18h1.5 M10 18h1.5 M14 18h1.5"],
+  osb:["Organize sanayi","M2 21h20 M4 21V10h6v11 M10 21V6h5v15 M15 21v-8h5v8 M12.5 6V3 M6 13h2 M6 16h2 M12 9h1 M12 12h1 M12 15h1 M17 16h1"]
 };
 const IL_IKON_PATH = {};
 function ilIkonOto(u){ u = u.toLocaleUpperCase("tr");
-  return /ULAŞIM|ARABA|ARAÇ|OTOYOL|DAKİKA|KM/.test(u) ? "araba" : /OTOBÜS|TOPLU/.test(u) ? "otobus" : /TREN|İSTASYON/.test(u) ? "tren" : /HAVA ?LİMAN|HAVALİMAN/.test(u) ? "ucak"
+  return /SANAYİ|FABRİKA|ORGANİZE|OSB|ENDÜSTRİ/.test(u) ? "sanayi" : /ULAŞIM|ARABA|ARAÇ|OTOYOL|DAKİKA|KM/.test(u) ? "araba" : /OTOBÜS|TOPLU/.test(u) ? "otobus" : /TREN|İSTASYON/.test(u) ? "tren" : /HAVA ?LİMAN|HAVALİMAN/.test(u) ? "ucak"
     : /RESMİ|BELGE|İZİN/.test(u) ? "belge" : /TAPU|MÜSTAKİL/.test(u) ? "tapu" : /İMAR|YAPI/.test(u) ? "imar" : /YOL|ASFALT|CEPHE/.test(u) ? "yol"
     : /KÖY|MAHALLE|YERLEŞİM/.test(u) ? "ev" : /MERKEZ|ŞEHİR|İLÇE/.test(u) ? "bina" : /ELEKTR|ENERJ/.test(u) ? "simsek" : /SU\b|SU |KUYU/.test(u) ? "su"
     : /İNTERNET|ALTYAPI/.test(u) ? "wifi" : /BAHÇE|HOBİ/.test(u) ? "bahce" : /TARLA|TOPRAK|VERİM/.test(u) ? "tarla" : /AĞAÇ|ORMAN|DOĞA/.test(u) ? "agac"
@@ -13250,6 +13275,13 @@ function ilanEkran(){
       ${(ILAN.F.resmiler || []).map((rr, i) => [0, 1].map(u => { const v = ((D.uzatUc || {})[i] || [])[u];
         return ilanKaydirici("uc_" + i + "_" + u, `${(ILAN.F.resmiler.length > 1 ? (i+1) + ". " : "")}Resmi yolu ${ilUcYonu(rr, u)} ucundan uzat`, Math.round(+v || 0), 0, 250, " m"); }).join("")).join("")}
       <label class="ilTik"><input type="checkbox" ${D.cit !== false ? "checked" : ""} onchange="ilanAyar('cit', this.checked)"> Panel çit</label>
+      <div class="field"><label>Yola bakan kenarda çit</label><select onchange="ilanAyar('citYol', this.value)">
+        <option value="acik" ${D.citYol !== "kapali" ? "selected" : ""}>Yok · yol tarafı açık (giriş)</option>
+        <option value="kapali" ${D.citYol === "kapali" ? "selected" : ""}>Var · her taraf kapalı</option></select></div>
+      <div class="field"><label>Ana görselde parsel çizimi</label><select onchange="ilanAyar('anaGorunum', this.value)">
+        <option value="oto" ${!D.anaGorunum || D.anaGorunum === "oto" ? "selected" : ""}>Otomatik (yakın çekim açıksa tek parça)</option>
+        <option value="tek" ${D.anaGorunum === "tek" ? "selected" : ""}>Her zaman tek parça (bölmesiz)</option>
+        <option value="parcali" ${D.anaGorunum === "parcali" ? "selected" : ""}>Her zaman parçalı (numaralı)</option></select></div>
       <label class="ilTik"><input type="checkbox" ${D.yolYazi !== false ? "checked" : ""} onchange="ilanAyar('yolYazi', this.checked)"> Yol yazıları</label>
       ${ilanKaydirici("yolKat", "Yol genişliği (görünüm)", Math.round((D.yolKat || 1)*100), 60, 250, "%")}
       <div class="field"><label>Parsel görünümü</label><select onchange="ilanAyar('parselStil', this.value)">
@@ -13343,8 +13375,19 @@ function ilanDuzenCiz(){
         ? `<textarea rows="3" oninput="ilanAlan('${k}', this.value)" onchange="ilanDuzenCiz()">${esc(e.alan[k])}</textarea>`
         : `<input value="${esc(e.alan[k])}" oninput="ilanAlan('${k}', this.value)">`}</div>`; }).join("") +
     ilanKaydirici("boyut", "Boyut", sv, 30, 170, "%").replace(`ilanKay('boyut'`, `ilanBoyut(`).replace(`, +this.value, '%')`, `+this.value)`) +
-    (e.tip === "yakin" ? ilanKaydirici("yzum", "Kutu içi yakınlaştırma", Math.round((e.zum || 1)*100), 50, 250, "%").replace(`ilanKay('yzum'`, `ilanYakinZum(`).replace(`, +this.value, '%')`, `+this.value)`) : "");
+    (e.tip === "yakin" ? ilanKaydirici("yzum", "Kutu içi yakınlaştırma", Math.round((e.zum || 1)*100), 50, 250, "%").replace(`ilanKay('yzum'`, `ilanYakinZum(`).replace(`, +this.value, '%')`, `+this.value)`)
+      + `<div class="ilYakinOturt"><b>Kutu içindeki fotoğrafı elle oturt</b><span>Fotoğraf parsele göre kaydıysa (ör. ChatGPT düzenlemesinden sonra) sadece yakın çekimdeki fotoğrafı düzeltir; ana görsel ve çizim değişmez.</span>
+        <button class="btn ${ILAN.yakinOturt ? "" : "ghost"}" onclick="ILAN.yakinOturt=!ILAN.yakinOturt;ilanDuzenCiz();toast(ILAN.yakinOturt ? 'Şimdi kutunun içinde fotoğrafı sürükle' : 'Elle oturtma kapandı')">${ILAN.yakinOturt ? "✓ Sürükleme açık · bitir" : "✥ Kutu içinde sürükleyerek kaydır"}</button>
+        ${ilanKaydirici("yzr", "Fotoğrafı döndür", Math.round((e.zr || 0)*10), -150, 150, "").replace(`ilanKay('yzr'`, `ilanYakinZemin('zr',`).replace(`, +this.value, '')`, `+this.value/10)`)}
+        ${ilanKaydirici("yzs", "Fotoğraf ölçeği", Math.round((e.zs || 1)*100), 80, 125, "%").replace(`ilanKay('yzs'`, `ilanYakinZemin('zs',`).replace(`, +this.value, '%')`, `+this.value/100)`)}
+        <button class="btn ghost" onclick="const o=ILAN.D.ogeler[ILAN.secili];delete o.zx;delete o.zy;delete o.zr;delete o.zs;ilanDuzenCiz();ilanCizTuval();ilanKaydetGec()">Fotoğraf ayarını sıfırla</button></div>` : "")
+    + ((e.tip === "slogan" || e.tip === "parselSay") ? `<div class="field"><label>Şekil</label><select onchange="const o=ILAN.D.ogeler[ILAN.secili];o.sekil=this.value;ilanCizTuval();ilanKaydetGec()">
+        <option value="egik" ${e.sekil !== "duz" ? "selected" : ""}>Eğik köşeli (dinamik)</option><option value="duz" ${e.sekil === "duz" ? "selected" : ""}>Düz köşeli (sade)</option></select></div>
+      <div class="ilRenkSat"><label>Zemin rengi <input type="color" value="${e.renk || (e.tip === "slogan" ? "#1F6B2C" : "#E1262F")}" oninput="ILAN.D.ogeler[ILAN.secili].renk=this.value;ilanCizTuval();ilanKaydetGec()"></label>
+        <label>Yazı rengi <input type="color" value="${e.yaziRenk || (e.tip === "slogan" ? "#FFFFFF" : "#FFE04A")}" oninput="ILAN.D.ogeler[ILAN.secili].yaziRenk=this.value;ilanCizTuval();ilanKaydetGec()"></label>
+        <span class="ilHazir">${["#1F6B2C","#0E5E8C","#B8861B","#C41F2B","#1C1C22","#6B2FA0"].map(c => `<button style="background:${c}" title="${c}" onclick="ILAN.D.ogeler[ILAN.secili].renk='${c}';ilanDuzenCiz();ilanCizTuval();ilanKaydetGec()"></button>`).join("")}</span></div>` : "");
 }
+function ilanYakinZemin(k, v){ const e = ILAN.D.ogeler[ILAN.secili]; if(!e) return; e[k] = v; const b = document.getElementById(k === "zr" ? "ilk_yzr" : "ilk_yzs"); if(b) b.textContent = k === "zr" ? v.toFixed(1) + "°" : Math.round(v*100) + "%"; ilanCizTuval(); ilanKaydetGec(); }
 function ilanYakinZum(v){ const e = ILAN.D.ogeler[ILAN.secili]; if(!e) return; e.zum = v/100; const b = document.getElementById("ilk_yzum"); if(b) b.textContent = v + "%"; ilanCizTuval(); ilanKaydetGec(); }
 function ilanAlan(k, v){ const e = ILAN.D.ogeler[ILAN.secili]; if(!e) return; e.alan[k] = v; ilanCizTuval(); ilanKaydetGec(); }
 function ilanBoyut(v){ const e = ILAN.D.ogeler[ILAN.secili]; if(!e) return; if(typeof e.s !== "object") e.s = { "916": e.s || 1, "45": e.s || 1 };
@@ -13389,10 +13432,12 @@ function ilanTuvalOlay(){
     if(ILAN.dokun || !ILAN.V.veri){ sur = { dokun:true, px, py }; return; }
     if(ILAN.D._taslak){ sur = { yol:true, px, py }; return; }
     const D = ILAN.D, hit = [...D.ogeler].reverse().find(e => e._kutu && px >= e._kutu[0] && px <= e._kutu[2] && py >= e._kutu[1] && py <= e._kutu[3]);
+    if(hit && hit.tip === "yakin" && ILAN.yakinOturt && hit._kin){ sur = { yz:hit, px, py, z0:[hit.zx || 0, hit.zy || 0] }; return; }
     if(hit){ sur = { e:hit, px, py, p0:(hit.pos[D.oran] || hit.pos["916"]).slice() }; }
     else { const z = D.zemin = D.zemin || {}; sur = { zemin:true, px, py, z0:[z.x || 0, z.y || 0] }; } };
   cv.onpointermove = ev => { if(!sur || sur.dokun || sur.yol) return; const [px, py] = nk(ev), D = ILAN.D;
-    if(sur.zemin){ D.zemin.x = sur.z0[0] + px - sur.px; D.zemin.y = sur.z0[1] + py - sur.py; }
+    if(sur.yz){ const e = sur.yz, r = -(e.zr || 0)*Math.PI/180, dx = (px - sur.px)/e._kin, dy = (py - sur.py)/e._kin; e.zx = sur.z0[0] + dx; e.zy = sur.z0[1] + dy; }
+    else if(sur.zemin){ D.zemin.x = sur.z0[0] + px - sur.px; D.zemin.y = sur.z0[1] + py - sur.py; }
     else { sur.e.pos[D.oran] = [sur.p0[0] + (px - sur.px)/cv.width, sur.p0[1] + (py - sur.py)/cv.height]; if(sur.e.tip === "yakin" || sur.e.tip === "ozellik") sur.e.elle = true; }
     sur.oynadi = true; if(!ILAN.rafVar){ ILAN.rafVar = true; requestAnimationFrame(() => { ILAN.rafVar = false; ilanCizTuval(); }); } };
   cv.onpointerup = ev => { const s = sur; sur = null; if(!s) return;
@@ -17847,9 +17892,9 @@ function emsalNoktaSvg(A, kendi){
 }
 async function emsalKartiHtml(id, p, a){
   const E = a.emsal; const pc = !!window.arsaPC?.emsalAc;
-  if(!E?.ilanlar?.length) return pc ? `<div class="card" id="ekEmsal"><div class="bolum"><span class="rz altin">${svg("money")}</span><b>Emsal Fiyatlar</b></div>
-    <p class="ipuc" style="margin:2px 0 10px">Sahibinden programın içinde açılır, parselin ilçesindeki satılık ilanlar hazır gelir. İstediğin sayfada menüden “Sayfadaki ilanları emsale al” de; ilanlar tek tıkla buraya düşer, elle hiçbir şey yazmazsın.</p>
-    <button class="btn" onclick="emsalTopla('${id}')">📊 Emsal Topla</button></div>` : "";
+  if(!E?.ilanlar?.length) return ME.role === "uye" ? "" : `<div class="card" id="ekEmsal"><div class="bolum"><span class="rz altin">${svg("money")}</span><b>Emsal Fiyatlar</b></div>
+    <p class="ipuc" style="margin:2px 0 10px">${pc ? "Sahibinden programın içinde açılır, parselin ilçesindeki satılık ilanlar hazır gelir. İstediğin sayfada menüden “Sayfadaki ilanları emsale al” de; ilanlar tek tıkla buraya düşer. Sahibinden “bot değilim” ekranında takılırsa kendi tarayıcında aç ve “Arsa Takip” yer imiyle aktar." : "Bilgisayarda kendi tarayıcında sahibinden aramasını aç, “Arsa Takip” yer imine bas, sonra buradan “Panodan emsal al” de."}</p>
+    <div class="ekTuslar">${pc ? `<button class="btn" onclick="emsalTopla('${id}')">📊 Emsal Topla</button>` : ""}<button class="btn ghost" onclick="emsalPanodan('${id}')">📋 Panodan emsal al</button><button class="btn ghost" onclick="emsalYerImi('${id}')">🔖 Tarayıcı yer imi</button></div></div>`;
   const { data:yy } = await sb.from("parcel_years").select("m2_fiyat").eq("parcel_id", id).eq("yil", YEAR);
   const A = emsalAnaliz(p, E, +yy?.[0]?.m2_fiyat || null); if(!A) return "";
   const g = E.gpt, gd = g?.bant ? (g.bant[1] < A.bant[0]*.85 || g.bant[0] > A.bant[1]*1.15 ? "uyusmuyor" : "tutarli") : null;
@@ -17862,7 +17907,7 @@ async function emsalKartiHtml(id, p, a){
     <details class="ekCevre"><summary>İlanlar · ${A.n} (${A.aykiri.length} aykırı ayıklandı)</summary>
       ${E.ilanlar.map(x => `<div class="kv ekEmsalSat ${x.haric ? "ekSoluk" : ""} ${A.aykiri.some(z => z.id === x.id) ? "ekUyari" : ""}"><span><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.baslik || "ilan")}</a><small>${esc(x.yer)} · ${nf(Math.round(x.m2))} m² · ${tl(x.fiyat)} · ${esc(x.tarih)}</small></span>
         <b class="mono">${nf(x.birim)} ₺/m²</b>${ME.role !== "uye" ? `<button title="${x.haric ? "Geri al" : "Hesaptan çıkar"}" onclick="emsalHaric('${id}','${x.id}')">${x.haric ? "↺" : "✕"}</button>` : ""}</div>`).join("")}</details>
-    <div class="ekTuslar">${pc ? `<button class="btn ghost" onclick="emsalTopla('${id}')">📊 Emsal Topla</button><button class="btn ghost" onclick="emsalGpt('${id}')">✦ ChatGPT'ye yorumlat</button>` : ""}<button class="btn" onclick="emsalPdf('${id}')">Emsal Raporu (PDF)</button></div>
+    <div class="ekTuslar">${pc ? `<button class="btn ghost" onclick="emsalTopla('${id}')">📊 Emsal Topla</button>` : ""}${ME.role !== "uye" ? `<button class="btn ghost" onclick="emsalPanodan('${id}')">📋 Panodan al</button><button class="btn ghost" onclick="emsalYerImi('${id}')">🔖 Yer imi</button>` : ""}${pc ? `<button class="btn ghost" onclick="emsalGpt('${id}')">✦ ChatGPT'ye yorumlat</button>` : ""}<button class="btn" onclick="emsalPdf('${id}')">Emsal Raporu (PDF)</button></div>
     <p class="ipuc" style="margin:8px 0 0">Son toplama: ${esc(E.son || "")}${(E.gecmis || []).length > 1 ? " · " + E.gecmis.length + " ölçüm geçmişi" : ""}</p></div>`;
 }
 const kisaPara = n => !isFinite(n) ? "—" : n >= 1e6 ? (n/1e6).toFixed(n >= 1e7 ? 1 : 2).replace(".", ",") + " Mn ₺" : nf(Math.round(n/1000)*1000) + " ₺";
@@ -18059,6 +18104,26 @@ async function emsalPdf(id){
   const blob = pdf.output("blob"), ad2 = `${p.ada || 0}-${p.parsel}-emsal-raporu-${new Date().toISOString().slice(0, 10)}.pdf`;
   indirBlob(blob, ad2);
   if(ME.role !== "uye"){ try{ await dosyaYukle(new File([blob], ad2, { type:"application/pdf" }), "arastirma", id); toast("Emsal raporu indirildi ve parselin belgelerine eklendi ✓"); }catch(e){ toast("İndirildi ama belgelere eklenemedi"); } }
+}
+
+/* --- sahibinden "bot degilim" ekranini gecemeyen durumlar icin: kendi tarayicinda yer imi ile aktarma --- */
+const EMSAL_YER_IMI = "javascript:" + encodeURIComponent(`(()=>{const T=x=>(x||'').replace(/\\s+/g,' ').trim();const S=[...document.querySelectorAll('tr.searchResultsItem')].filter(r=>r.dataset&&r.dataset.id);const I=S.map(r=>{const t=r.querySelector('.classifiedTitle, a[href*="/ilan/"]');return{id:r.dataset.id,baslik:T(t&&t.innerText),url:t&&t.href,attrs:[...r.querySelectorAll('td.searchResultsAttributeValue')].map(x=>T(x.innerText)),fiyat:T((r.querySelector('.searchResultsPriceValue')||{}).innerText),yer:T((r.querySelector('.searchResultsLocationValue')||{}).innerText),tarih:T((r.querySelector('.searchResultsDateValue')||{}).innerText)}});const B=[...document.querySelectorAll('#searchResultsTable thead td, #searchResultsTable thead th')].map(x=>T(x.innerText));if(!I.length){alert('Arsa Takip: bu sayfada ilan listesi bulunamadı. Arama sonuçları sayfasında bas.');return;}const M='ARSATAKIP-EMSAL:'+JSON.stringify({url:location.href,ilanlar:I,basliklar:B});const ok=()=>alert('Arsa Takip: '+I.length+' ilan kopyalandı. Uygulamada “Panodan emsal al” de.');navigator.clipboard.writeText(M).then(ok,()=>{const a=document.createElement('textarea');a.value=M;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove();ok();});})()`);
+function emsalYerImi(id){
+  window.__emsalHedef = id;
+  const k = document.createElement("div"); k.className = "ekOnizle"; k.onclick = e => { if(e.target === k) k.remove(); };
+  k.innerHTML = `<div class="pcModal ekGpt"><div class="pcModalB"><b>Tarayıcıdan emsal aktarma (bir kerelik kurulum)</b><small>Sahibinden kendi tarayıcında (Chrome/Edge) sorunsuz açılır. Bu yer imi sayfadaki ilanları tek tıkla kopyalar.</small></div>
+    <ol class="ekAdim"><li>Aşağıdaki <b>“Kodu kopyala”</b>ya bas.</li><li>Tarayıcıda <b>Ctrl+Shift+O</b> (yer imleri) → sağ üst <b>⋮</b> → <b>Yeni yer imi ekle</b>. Ad: <b>Arsa Takip</b>, URL kısmına kopyaladığını yapıştır, kaydet. Yer imleri çubuğu kapalıysa <b>Ctrl+Shift+B</b> ile aç.</li>
+      <li>Sahibinden'de parselinin bölgesindeki satılık tarla/arsa aramasını aç, yer imleri çubuğundaki <b>Arsa Takip</b>'e bas.</li><li>Uygulamaya dön, <b>“Panodan emsal al”</b> de. Her sayfa için 3–4. adımı tekrarlayabilirsin.</li></ol>
+    <div class="pcModalAlt"><a class="btn ghost" href="${EMSAL_YER_IMI}" onclick="event.preventDefault();toast('Bu bağlantıyı yer imleri çubuğuna sürükleyebilir ya da kodu kopyalayabilirsin')">🔖 Arsa Takip (sürükle)</a><button class="btn" id="eyKop">Kodu kopyala</button></div></div>`;
+  document.body.appendChild(k);
+  k.querySelector("#eyKop").onclick = async () => { try{ await navigator.clipboard.writeText(EMSAL_YER_IMI); toast("Yer imi kodu kopyalandı ✓"); }catch(e){ prompt("Bu kodu kopyala:", EMSAL_YER_IMI); } };
+}
+async function emsalPanodan(id){
+  window.__emsalHedef = id;
+  let t = ""; try{ t = await navigator.clipboard.readText(); }catch(e){ t = prompt("Panoya erişilemedi. Kopyalanan metni buraya yapıştır:") || ""; }
+  t = String(t || "").trim();
+  if(!t.startsWith("ARSATAKIP-EMSAL:")) return toast("Panoda emsal yok: önce sahibinden'de “Arsa Takip” yer imine bas");
+  try{ await emsalIlanlarGeldi(JSON.parse(t.slice(16))); }catch(e){ toast("Panodaki veri okunamadı"); }
 }
 
 /* ================= PC SURUMU (masaustu duzeni) =================
