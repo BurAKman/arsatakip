@@ -2797,7 +2797,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.2.1";
+const SURUM_MORDOR = "v 3.2.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -13299,7 +13299,7 @@ function ilanVeriKur(p){
   const cfg = (p.cap_config && !Array.isArray(p.cap_config) && p.cap_config.parcalar?.length) ? p.cap_config : null;
   const alan = +p.alan_m2 || alanHesap(M);
   let parcalar = [{ no:"", m2: alan, poly: M }], yollar = [], eksenler = [], resmiler = [];
-  if(cfg){ try{ const yer = capYerlesim(M, cfg);
+  if(cfg){ try{ const yer = capYerlesim(M, { tapuAlan: +p.alan_m2 || 0, ...cfg });
     parcalar = yer.parcalar.map((o, i) => ({ no: o.bilgi?.no || String(i+1), m2: (isFinite(+o.bilgi?.m2) && +o.bilgi.m2 > 0) ? +o.bilgi.m2 : alanHesap(o.poly), poly: o.poly }));
     yollar = (yer.yol || []).filter(q => q && q.length > 2);
     eksenler = (yer.yolEksen || []).map(e => [e.p1, e.p2]);
@@ -14522,6 +14522,17 @@ const halkaBant = (Ry, s, a, b) => (Ry||[]).map(h=>({ ring:bant(h.ring, s, a, b)
 
 // ---- yerlesim ----
 function capYerlesimAgac(M, cfg, hizli){
+  const geo = alanHesap(M), tapu = +(cfg && cfg.tapuAlan) || 0, r = tapu > 0 && geo > 0 ? tapu/geo : 1;
+  if(!(r > .97 && r < 1.03) || Math.abs(r - 1) < 1e-4 || !cfg.agac) return capYerlesimAgacHam(M, cfg, hizli);
+  const olc = n => ({ ...n, hedef: (n.hedef != null && n.hedef !== "" && isFinite(+n.hedef)) ? +n.hedef/r : n.hedef, cocuk: (n.cocuk || []).map(olc) });
+  const yer = capYerlesimAgacHam(M, { ...cfg, agac: olc(cfg.agac) }, hizli);
+  (yer.parcalar || []).forEach(o => { if(o.bilgi) ["m2", "olculen", "hedef"].forEach(k => { if(o.bilgi[k] != null && isFinite(+o.bilgi[k])) o.bilgi[k] = Math.round(+o.bilgi[k]*r*100)/100; }); });
+  ["resmiAlan", "yolAlan", "kalanAlan", "net", "girilen", "bosAlan", "dagitilan"].forEach(k => { if(yer[k] != null && isFinite(+yer[k])) yer[k] = +yer[k]*r; });
+  if(yer.gercek instanceof Map) yer.gercek.forEach((v, k) => yer.gercek.set(k, v*r));
+  (yer.bosluklar || []).forEach(b => { if(isFinite(+b.alan)) b.alan = +b.alan*r; });
+  yer.alanOrani = r; return yer;
+}
+function capYerlesimAgacHam(M, cfg, hizli){
   const C = agacCerceve(M, cfg);
   const kok = cfg.agac;
   const tum = alanHesap(M);
@@ -14920,7 +14931,7 @@ function yolVarsayilan(){
   return rg > 0 ? Math.max(1, Math.round(rg/3*10)/10) : (+PARCA.enAzYol || 3);
 }
 function parcaCfgTemel(){
-  return { surum:2, resmiGenislik: PARCA.resmiGenislik || 0, resmiKenar: PARCA.resmiKenar || "alt",
+  return { surum:2, tapuAlan: +(PARCA.p && PARCA.p.alan_m2) || 0, resmiGenislik: PARCA.resmiGenislik || 0, resmiKenar: PARCA.resmiKenar || "alt",
     resmiEk: (PARCA.resmiEk||[]).map(e=>({ kenar:e.kenar, yon:e.yon, g:+e.g })), ters: !!PARCA.ters,
     enAzYol: yolVarsayilan(), enAzYolElle: !!PARCA.enAzYolElle, capTema:"yatay", olculer: PARCA.olculer !== false, kirpOto: !!PARCA.kirpOto,
     resmiStil: PARCA.resmiStil || "cizgi", yolStil: PARCA.yolStil || "kesik", yolYazi: PARCA.yolYazi !== false,
@@ -15523,7 +15534,7 @@ async function kenarKomsusu(halka, i, disaMetre, oran, kendi){
     }catch(e){
       const m = String(e && e.message || e);
       if(/Kaynak (404|204)|bulunamad|not found/i.test(m)) return KOMSU_YOK;   // gercekten bos
-      await new Promise(r=>setTimeout(r, 500 * (deneme+1)));             // mesgul / zaman asimi
+      await new Promise(r=>setTimeout(r, 1200 * (deneme+1)));            // mesgul / zaman asimi
     }
   }
   return KOMSU_BILINMIYOR;
@@ -15657,14 +15668,15 @@ async function resmiYolKenarlari(p, bildir){
   const isci = async () => {
     while(sira < sorulacak.length){
       const k = sorulacak[sira++];
-      const d = await kenarDurumu(halka, k.i, kendi);
+      let d = await kenarDurumu(halka, k.i, kendi);
+      if(d.sebep === "TKGM cevap vermedi" && !k.tekrar){ k.tekrar = true; sorulacak.push(k); continue; }   // sonra bir kez daha
       raporla(k, d.sebep, d.yol && !d.su);
       biten++; if(bildir) bildir(`Komşu parseller sorgulanıyor… ${biten}/${sorulacak.length}`);
       if(d.yol && !d.su) sonuc.push({ i:k.i, uzunluk:k.uz, nitelik: d.sebep,
         guc: d.sebep === "komşu kaydı yol" ? 3 : d.sebep === "arada boşluk var, karşıda parsel" ? 2 : 1 });
     }
   };
-  await Promise.all([isci(), isci(), isci()]);
+  await Promise.all([isci(), isci()]);
   // once kanitin gucu (kayitli yol > bosluk > kayit yok), esitse uzun kenar
   return sonuc.sort((a,b)=>(b.guc - a.guc) || (b.uzunluk - a.uzunluk));
 }
