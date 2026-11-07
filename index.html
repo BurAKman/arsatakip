@@ -2797,7 +2797,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.1.9";
+const SURUM_MORDOR = "v 3.2.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -15518,7 +15518,7 @@ async function kenarKomsusu(halka, i, disaMetre, oran, kendi){
     try{
       const f = await zamanAsimi(tkgm(`${TB3}/parsel/${lat.toFixed(7)}/${lon.toFixed(7)}`), 15000);
       if(!f?.properties) return KOMSU_YOK;
-      if(kendi && parselKimlik(f.properties) === kendi) return KOMSU_KENDI;   // koordinat kaymasi: hala kendi icinde
+      if(kendi && (parselKimlik(f.properties) === kendi || (KENDI_NO && [f.properties.adaNo ?? "", f.properties.parselNo ?? ""].join("|") === KENDI_NO))) return KOMSU_KENDI;   // koordinat kaymasi: hala kendi icinde
       return f.properties;
     }catch(e){
       const m = String(e && e.message || e);
@@ -15528,6 +15528,7 @@ async function kenarKomsusu(halka, i, disaMetre, oran, kendi){
   }
   return KOMSU_BILINMIYOR;
 }
+let KENDI_NO = "";
 const KOMSU_YOK = { __yok:true }, KOMSU_BILINMIYOR = { __hata:true }, KOMSU_KENDI = { __kendi:true };
 const SU_NITELIK = /dere|kanal|ark\b|çay\b|nehir|ırmak|göl|gölet|su yolu|sulama/;
 
@@ -15539,11 +15540,13 @@ async function kenarDurumu(halka, i, kendi){
   // orta nokta, 3 m disari; kendi parselimize dusersek 6 m dene
   let yakin = await kenarKomsusu(halka, i, 3, .5, kendi);
   if(yakin.__kendi) yakin = await kenarKomsusu(halka, i, 6, .5, kendi);
+  if(yakin.__kendi) yakin = await kenarKomsusu(halka, i, 10, .5, kendi);
   if(yakin.__hata) return { yol:false, sebep:"TKGM cevap vermedi" };       // bilinmiyorsa yol sayma
   if(!yakin.__yok && !yakin.__kendi){
     if(/yol|cadde|sokak|karayol/.test(nit(yakin))) return { yol:true, sebep:"komşu kaydı yol" };
     if(SU_NITELIK.test(nit(yakin))) return { yol:false, su:true, sebep:"komşu dere/kanal" };
-    return { yol:false, sebep:"bitişik komşu parsel" };
+    { const ad = [yakin.adaNo, yakin.parselNo].filter(v => v != null && v !== "").join("/"), nt = String(yakin.nitelik || "").trim();
+      return { yol:false, sebep:"bitişik komşu parsel" + (ad || nt ? ` (${[ad, nt].filter(Boolean).join(" · ")})` : "") }; }
   }
   // orta bos gorundu: kenarin ceyreklerinden de bak, cogunluk karar versin
   let bos = 1, dolu = 0;
@@ -15623,7 +15626,7 @@ async function resmiYolKenarlari(p, bildir){
 
   const M = metreye(halka);
   const sonuc = [];
-  const kendi = parselKimlik(p.geojson.properties || p);
+  const kendi = parselKimlik(p.geojson.properties || p); KENDI_NO = [String(p.ada ?? p.geojson?.properties?.adaNo ?? ""), String(p.parsel ?? p.geojson?.properties?.parselNo ?? "")].join("|"); if(KENDI_NO === "|") KENDI_NO = "";
   const isaret = halkaIsaret(M);
   if(bildir) bildir("Haritadaki yollar aranıyor…");
   const osm = await osmCevreCizgileri(halka).catch(()=>null);
