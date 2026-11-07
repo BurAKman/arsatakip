@@ -2740,6 +2740,10 @@ body.pc[data-tema] .pcOnUst .btn{margin:0;padding:7px 14px;font-size:12px;text-d
 /* saha modu PC'de: harita genis */
 body.pc #sahaHarita{height:calc(var(--pcAppH) - 200px)}
 body.pc #app[data-ekran="saha"]{columns:auto!important}
+/* gezgin: il > ilce > koy */
+.pcIlceB{font-weight:600;letter-spacing:.02em;color:var(--pc-yazi)}
+.pcIlce > .pcDL{padding-left:10px;border-left:1px solid rgba(255,255,255,.05);margin-left:10px}
+.pcIlce > .pcDL .pcDB{font-size:12px}
 
 /* acilis: sadece isikli BA */
 .baAcilis{position:fixed;inset:0;display:grid;place-items:center;background:#060607;z-index:5}
@@ -2797,7 +2801,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.2.2";
+const SURUM_MORDOR = "v 3.2.3";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -13319,14 +13323,17 @@ function ilanKonumLink(p){
 function ilanQrYukle(){ if(typeof qrcode === "function") return Promise.resolve();
   return window.__qrSoz || (window.__qrSoz = new Promise(ok => { const s = document.createElement("script");
     s.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"; s.onload = ok; s.onerror = ok; document.head.appendChild(s); })); }
+// 6360 sayili kanunla buyuksehir illerinde koyler mahalleye donustu: bu illerde TKGM'nin yalin adi mahalledir
+const IL_BUYUKSEHIR = ["ADANA","ANKARA","ANTALYA","AYDIN","BALIKESİR","BURSA","DENİZLİ","DİYARBAKIR","ERZURUM","ESKİŞEHİR","GAZİANTEP","HATAY","İSTANBUL","İZMİR","KAHRAMANMARAŞ","KAYSERİ","KOCAELİ","KONYA","MALATYA","MANİSA","MARDİN","MERSİN","MUĞLA","ORDU","SAKARYA","SAMSUN","ŞANLIURFA","TEKİRDAĞ","TRABZON","VAN"];
+function ilBuyuksehir(il){ const u = String(il || "").trim().toLocaleUpperCase("tr"); return IL_BUYUKSEHIR.includes(u) || (u === "ICEL" || u === "İÇEL"); }
 function ilanOgeler(p){
   const U = t => String(t || "").toLocaleUpperCase("tr");
-  const mh = U(p.mahalle), ana = !mh ? "" : /MAH|KÖY/.test(mh) ? mh : mh + " KÖYÜ";
+  const mh = U(p.mahalle), ana = !mh ? "" : /MAH|KÖY|\bMH\b/.test(mh) ? mh : mh + (ilBuyuksehir(p.il) ? " MH." : " KÖYÜ");
   return [
     { id:"kunye", tip:"kunye", alan:{ ust:[U(p.il), U(p.ilce)].filter(Boolean).join("  ·  "), ana, ada:String(p.ada ?? ""), parsel:String(p.parsel ?? ""), alan: p.alan_m2 ? ilSayi(p.alan_m2) + " m²" : "", link: ilanKonumLink(p), qrYazi:"HARİTADA AÇ" },
       pos:{ "916":[.5,.022], "45":[.5,.022] }, s:{ "916":1, "45":.82 } },
         { id:"pusula", tip:"pusula", alan:{ metin:"K" }, pos:{ "916":[.885,.892], "45":[.888,.872] }, s:{ "916":1, "45":.85 } },
-        { id:"ozellik", tip:"ozellik", yatay:true, liste:true, bant:true, alan:{ maddeler:"ASFALT YOLA CEPHE\nKÖY MERKEZİNE YAKIN" }, pos:{ "916":[.03,.235], "45":[.03,.27] }, s:{ "916":1, "45":.85 } },
+        { id:"ozellik", tip:"ozellik", yatay:true, liste:true, bant:true, alan:{ maddeler:"ASFALT YOLA CEPHE\n" + (ilBuyuksehir(p.il) ? "MAHALLE MERKEZİNE YAKIN" : "KÖY MERKEZİNE YAKIN") }, pos:{ "916":[.03,.235], "45":[.03,.27] }, s:{ "916":1, "45":.85 } },
     { id:"satilik", tip:"parselSay", gizli:true, alan:{ ust:"SATILIK", alt:"" }, pos:{ "916":[.6,.7], "45":[.68,.665] }, s:{ "916":.7, "45":.52 } },
     { id:"konum", tip:"konum", gizli:true, alan:{ baslik:"KONUM & MESAFELER", satirlar:"Köy merkezi|~300 m|koy\nİlçe merkezi|~6 km|ilce\nHızlı tren|~15 km|tren" },
       pos:{ "916":[.55,.7], "45":[.6,.66] }, s:{ "916":.9, "45":.66 } },
@@ -13903,6 +13910,13 @@ function ilIskelet(m, W, H){
 
 // parseller: [{ pts }] metre. disla: [{ pts, g }] (asfalt orta cizgisi + yarim genislik)
 // donus: [{ poly:[halka...] (ilki dis), alan, eksenler:[[p...]] }]
+// tapuda "yol" yazmasa da fiilen yol olan seritler: tank hendegi, kadastro/koy yolu vb. ya da tarim disi nitelikli dar uzun serit
+const TARIM_NITELIK = /tarla|bahçe|bag\b|bağ|arsa|bina|ev\b|mesken|zeytin|fındık|çayır|mera|meyve|sera|ahır|depo|fabrika|tesis|orman|fidan|kargir|ahşap|dükkan|okul|cami/;
+function yolNiteligi(nit){ return /yol|cadde|sokak|karayol|tank\s*hende/.test(String(nit || "").toLocaleLowerCase("tr")); }
+function darSerit(pts){ if(!pts || pts.length < 3) return null; let A = 0, P = 0; for(let i=0;i<pts.length;i++){ const a = pts[i], b = pts[(i+1)%pts.length]; A += a[0]*b[1] - b[0]*a[1]; P += Math.hypot(b[0]-a[0], b[1]-a[1]); }
+  A = Math.abs(A)/2; return { en: P ? 2*A/P : 0, uz: P/2 }; }
+function parselYolBenzeri(nit, pts){ const n = String(nit || "").toLocaleLowerCase("tr"); if(yolNiteligi(n)) return true;
+  const d = darSerit(pts); return !!(d && n && !TARIM_NITELIK.test(n) && d.en < 16 && d.uz > 50); }
 function ilanBosluklar(parseller, r, disla){
   const P = parseller.filter(o => o.pts && o.pts.length > 2); if(P.length < 2) return [];
   let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; P.forEach(o => o.pts.forEach(q => { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }));
@@ -14045,7 +14059,9 @@ async function ilanKadastroBul(){
     await new Promise(r => setTimeout(r, 30));
     const ana = await ilanAnaYollar(C, R);
     // capin metre cercevesine tasi (cap, sinirin ilk noktasini orijin alir: ayni cerceve)
-    const yollar = ilanBosluklar(parseller, 6.5, ana.filter(a => a.ana));
+    // yol nitelikli ya da yol gibi dar seritler (tank hendegi vb.) parsel sayilmaz: bosluk olarak yol cikar
+    const yolSerit = parseller.filter(o => !o.kendi && parselYolBenzeri(o.nit, o.pts));
+    const yollar = ilanBosluklar(parseller.filter(o => !yolSerit.includes(o)), 6.5, ana.filter(a => a.ana));
     const M = ILAN.F.sinir;
     const parselUzak = y => Math.min(...y.poly[0].map(q => Math.min(...M.map((a, i) => { const z = ilSegYakin(q, a, M[(i+1)%M.length]); return Math.hypot(z[0]-q[0], z[1]-q[1]); }))));
     // kirinti ayikla: orta cizgisi toplam 30 m'den kisa olan parcalar yol degildir
@@ -15529,6 +15545,7 @@ async function kenarKomsusu(halka, i, disaMetre, oran, kendi){
     try{
       const f = await zamanAsimi(tkgm(`${TB3}/parsel/${lat.toFixed(7)}/${lon.toFixed(7)}`), 15000);
       if(!f?.properties) return KOMSU_YOK;
+      try{ const h = ilanHalkalar(f.geometry)[0]; if(h){ const kx2 = Math.cos(h[0][1]*Math.PI/180)*111320, d2 = darSerit(h.map(q => [q[0]*kx2, q[1]*110540])); if(d2){ f.properties.__en = d2.en; f.properties.__uz = d2.uz; } } }catch(e){}
       if(kendi && (parselKimlik(f.properties) === kendi || (KENDI_NO && [f.properties.adaNo ?? "", f.properties.parselNo ?? ""].join("|") === KENDI_NO))) return KOMSU_KENDI;   // koordinat kaymasi: hala kendi icinde
       return f.properties;
     }catch(e){
@@ -15540,6 +15557,8 @@ async function kenarKomsusu(halka, i, disaMetre, oran, kendi){
   return KOMSU_BILINMIYOR;
 }
 let KENDI_NO = "";
+function parselYolBenzeriK(o){ if(!o || o.__yok || o.__kendi || o.__hata) return false; const n = String(o.nitelik || "").toLocaleLowerCase("tr");
+  if(/tank\s*hende/.test(n)) return true; return !!(n && !TARIM_NITELIK.test(n) && o.__en && o.__en < 16 && o.__uz > 50); }
 const KOMSU_YOK = { __yok:true }, KOMSU_BILINMIYOR = { __hata:true }, KOMSU_KENDI = { __kendi:true };
 const SU_NITELIK = /dere|kanal|ark\b|çay\b|nehir|ırmak|göl|gölet|su yolu|sulama/;
 
@@ -15555,6 +15574,7 @@ async function kenarDurumu(halka, i, kendi){
   if(yakin.__hata) return { yol:false, sebep:"TKGM cevap vermedi" };       // bilinmiyorsa yol sayma
   if(!yakin.__yok && !yakin.__kendi){
     if(/yol|cadde|sokak|karayol/.test(nit(yakin))) return { yol:true, sebep:"komşu kaydı yol" };
+    if(parselYolBenzeriK(yakin)) return { yol:true, guc:3, sebep:`komşu yol şeridi (${[[yakin.adaNo, yakin.parselNo].filter(v => v != null && v !== "").join("/"), String(yakin.nitelik || "").trim(), yakin.__en ? "~" + Math.round(yakin.__en) + " m en" : ""].filter(Boolean).join(" · ")})` };
     if(SU_NITELIK.test(nit(yakin))) return { yol:false, su:true, sebep:"komşu dere/kanal" };
     { const ad = [yakin.adaNo, yakin.parselNo].filter(v => v != null && v !== "").join("/"), nt = String(yakin.nitelik || "").trim();
       return { yol:false, sebep:"bitişik komşu parsel" + (ad || nt ? ` (${[ad, nt].filter(Boolean).join(" · ")})` : "") }; }
@@ -15564,7 +15584,7 @@ async function kenarDurumu(halka, i, kendi){
   for(const t of [.2, .8]){
     const k = await kenarKomsusu(halka, i, 3, t, kendi);
     if(k.__hata) continue;
-    if(k.__yok || k.__kendi) bos++; else if(/yol|cadde|sokak|karayol/.test(nit(k))) bos++; else dolu++;
+    if(k.__yok || k.__kendi) bos++; else if(/yol|cadde|sokak|karayol/.test(nit(k)) || parselYolBenzeriK(k)) bos++; else dolu++;
   }
   if(dolu > bos) return { yol:false, sebep:"kenarın çoğu komşuya bitişik" };
   const uzak = await kenarKomsusu(halka, i, 12, .5, kendi);
@@ -15673,7 +15693,7 @@ async function resmiYolKenarlari(p, bildir){
       raporla(k, d.sebep, d.yol && !d.su);
       biten++; if(bildir) bildir(`Komşu parseller sorgulanıyor… ${biten}/${sorulacak.length}`);
       if(d.yol && !d.su) sonuc.push({ i:k.i, uzunluk:k.uz, nitelik: d.sebep,
-        guc: d.sebep === "komşu kaydı yol" ? 3 : d.sebep === "arada boşluk var, karşıda parsel" ? 2 : 1 });
+        guc: d.guc ? d.guc : d.sebep === "komşu kaydı yol" ? 3 : d.sebep === "arada boşluk var, karşıda parsel" ? 2 : 1 });
     }
   };
   await Promise.all([isci(), isci()]);
@@ -18512,25 +18532,30 @@ function pcAgacCiz(){
   // ayni il/koy farkli yazilmis olabilir (KIRKLARELİ / Kırklareli / Kirklareli, "Kuştepe" / "Kuştepe Köyü", bosluklar): normalize edip tek basliga topla
   const nrm = x => String(x || "").toLocaleLowerCase("tr").replace(/[ıi̇]/g, "i").replace(/ş/g, "s").replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ö/g, "o").replace(/ç/g, "c").replace(/â/g, "a")
     .replace(/\s+/g, " ").trim().replace(/ (koyu|mahallesi|mah\.?|mh\.?)$/, "");
-  const iller = {}, ilAd = {}, mAd = {};
-  L.forEach(p => { const ik = nrm(p.il) || "—", mk = nrm(p.mahalle) || "—";
+  // il > ilce > koy/mahalle > parsel
+  const iller = {}, ilAd = {}, cAd = {}, mAd = {};
+  L.forEach(p => { const ik = nrm(p.il) || "—", ck = nrm(p.ilce) || "—", mk = nrm(p.mahalle) || "—", km = ik + "|" + ck + "|" + mk;
     ilAd[ik] = ilAd[ik] || (duzgun(p.il) || "—").toLocaleUpperCase("tr");
-    if(!mAd[ik + "|" + mk] || /köyü|mahalle/i.test(p.mahalle || "")) mAd[ik + "|" + mk] = duzgun(p.mahalle) || "—";
-    ((iller[ik] = iller[ik] || {})[mk] = iller[ik][mk] || []).push(p); });
+    cAd[ik + "|" + ck] = cAd[ik + "|" + ck] || duzgun(p.ilce) || "—";
+    if(!mAd[km] || /köyü|mahalle/i.test(p.mahalle || "")) mAd[km] = duzgun(p.mahalle) || "—";
+    const I = iller[ik] = iller[ik] || {}, C = I[ck] = I[ck] || {}; (C[mk] = C[mk] || []).push(p); });
   const pid = pcParselId(PC_SIMDI.r, PC_SIMDI.arg);
   const ac = k => `PC_KAPALI[${JSON.stringify(k).replace(/"/g, "&quot;")}]=!PC_KAPALI[${JSON.stringify(k).replace(/"/g, "&quot;")}];pcLS('pcAgac',JSON.stringify(PC_KAPALI));pcAgacCiz()`;
   const prs = p => `<button class="pcPrs ${p.id === pid ? "on" : ""}" data-id="${p.id}" onclick="go('parsel','${p.id}')"
         onmouseenter="pcKartGoster(this,'${p.id}')" onmouseleave="pcKartGizle()" oncontextmenu="pcSagMenu(event,'${p.id}')">
         <span class="pcNokta ${p._satildi && p._satildi === p._parca ? "satildi" : p._satilik ? "satilik" : p._y?.aktif ? "aktif" : ""}"></span><span>${esc(p.ada || "—")} / ${esc(p.parsel)}</span><small class="mono">${nf(Math.round(+p.alan_m2 || 0))} m²</small></button>`;
   const sirala = G => G.sort((a, b) => ((+a.ada || 0) - (+b.ada || 0)) || ((+a.parsel || 0) - (+b.parsel || 0)));
-  k.innerHTML = Object.keys(iller).sort((a, b) => a.localeCompare(b, "tr")).map(ik => {
-    const il = ilAd[ik], M = iller[ik], kIl = "il:" + ik, top = Object.values(M).reduce((t, g) => t + g.length, 0), ilKapali = PC_KAPALI[kIl] && !q;
-    return `<div class="pcIl ${ilKapali ? "kapali" : ""}"><button class="pcIlB" onclick="${ac(kIl)}"><i>▾</i>${esc(il)}<em>${top}</em></button>
-      <div class="pcIlL">${Object.keys(M).sort((a, b) => a.localeCompare(b, "tr")).map(mk => { const kM = "m:" + ik + "|" + mk, kap = PC_KAPALI[kM] && !q;
-        return `<div class="pcDugum ${kap ? "kapali" : ""}"><button class="pcDB" onclick="${ac(kM)}"><i>▾</i>${esc(mAd[ik + "|" + mk])}<em>${M[mk].length}</em></button>
-          <div class="pcDL">${sirala(M[mk]).map(prs).join("")}</div></div>`; }).join("")}</div></div>`; }).join("");
+  const say = o => Array.isArray(o) ? o.length : Object.values(o).reduce((t, v) => t + say(v), 0), tr = (a, b) => a.localeCompare(b, "tr");
+  k.innerHTML = Object.keys(iller).sort(tr).map(ik => {
+    const il = ilAd[ik], I = iller[ik], kIl = "il:" + ik, ilKapali = PC_KAPALI[kIl] && !q;
+    return `<div class="pcIl ${ilKapali ? "kapali" : ""}"><button class="pcIlB" onclick="${ac(kIl)}"><i>▾</i>${esc(il)}<em>${say(I)}</em></button>
+      <div class="pcIlL">${Object.keys(I).sort(tr).map(ck => { const kC = "c:" + ik + "|" + ck, kapC = PC_KAPALI[kC] && !q, C = I[ck];
+        return `<div class="pcDugum pcIlce ${kapC ? "kapali" : ""}"><button class="pcDB pcIlceB" onclick="${ac(kC)}"><i>▾</i>${esc(cAd[ik + "|" + ck])}<em>${say(C)}</em></button>
+          <div class="pcDL">${Object.keys(C).sort(tr).map(mk => { const km = ik + "|" + ck + "|" + mk, kM = "m:" + km, kap = PC_KAPALI[kM] && !q;
+            return `<div class="pcDugum ${kap ? "kapali" : ""}"><button class="pcDB" onclick="${ac(kM)}"><i>▾</i>${esc(mAd[km])}<em>${C[mk].length}</em></button>
+              <div class="pcDL">${sirala(C[mk]).map(prs).join("")}</div></div>`; }).join("")}</div></div>`; }).join("")}</div></div>`; }).join("");
   // acik parselin ili/koyu kapaliysa ac
-  const sec = k.querySelector(".pcPrs.on"); if(sec){ sec.closest(".pcIl")?.classList.remove("kapali"); sec.closest(".pcDugum")?.classList.remove("kapali"); }
+  const sec = k.querySelector(".pcPrs.on"); if(sec){ sec.closest(".pcIl")?.classList.remove("kapali"); let d = sec.closest(".pcDugum"); while(d){ d.classList.remove("kapali"); d = d.parentElement?.closest(".pcDugum"); } }
 }
 // akilli kart: parselin uzerine gelince
 let __pcKartSaat = null;
