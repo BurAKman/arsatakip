@@ -2340,6 +2340,11 @@ h3{letter-spacing:.02em}
 .ekAdim{margin:4px 0 12px 18px;padding:0;font-size:13px;line-height:1.6;color:var(--ink-2)}
 .ekAdim li{margin:6px 0}
 .ekAdim b{color:var(--ink)}
+/* ilan: cap elle hizalama */
+.ilHiza{ margin-top:10px; border:1px solid rgba(201,162,74,.28); border-radius:10px; padding:8px 10px; }
+.ilHiza summary{ cursor:pointer; font-size:12.5px; font-weight:600; color:#d9b866; list-style:none; }
+.ilHiza summary::before{ content:"▸ "; } .ilHiza[open] summary::before{ content:"▾ "; }
+.ilHiza[open] summary{ margin-bottom:8px; }
 
 /* ================= PC SURUMU · premium kizil (siyah · grafit · yakut) ================= */
 body.pc[data-tema]{
@@ -2777,7 +2782,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.1.5";
+const SURUM_MORDOR = "v 3.1.6";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -11671,8 +11676,15 @@ function poligonOturt(M, B, w, h){
     for(const hp of hedefOrnek){ let m = BUYUK; for(let i=0;i<T.length;i++) m = Math.min(m, segUzaklik(hp, T[i], T[(i+1)%T.length])); b += Math.min(60, m); }
     return a + b/hedefOrnek.length; };
   let en = null;
-  for(const d of [-8,-4,0,4,8]){ const r = nelderMead(maliyet, [s0, d*Math.PI/180, gx, gy], [s0*.05, .03, 4, 4], 350);
-    if(!en || r.f < en.f) en = r; }
+  const eksen = P => { let mx = 0, my = 0; P.forEach(q => { mx += q[0]; my += q[1]; }); mx /= P.length; my /= P.length; let a = 0, b = 0, c = 0;
+    P.forEach(q => { const u = q[0]-mx, v = q[1]-my; a += u*u; b += v*v; c += u*v; }); return { t: .5*Math.atan2(2*c, a - b), uz: Math.sqrt(Math.max(1e-9, (a + b + Math.hypot(a - b, 2*c))/Math.max(1e-9, (a + b - Math.hypot(a - b, 2*c))))) }; };
+  const icN = []; for(let y=by0;y<=by1;y+=2) for(let x=bx0;x<=bx1;x+=2) if(B.ic[y*w+x]) icN.push([x, y]);
+  const eI = eksen(icN), eQ = eksen(ornek), adaylar = [];
+  [-8,-4,0,4,8].forEach(d => adaylar.push(d*Math.PI/180));
+  if(eI.uz > 1.15 && eQ.uz > 1.15){ const d0 = eI.t - eQ.t; [0, Math.PI].forEach(k => [-6, 0, 6].forEach(e => adaylar.push(d0 + k + e*Math.PI/180))); }
+  for(let a=0; a<360; a+=30) adaylar.push(a*Math.PI/180);
+  const kaba = adaylar.map(t0 => nelderMead(maliyet, [s0, t0, gx, gy], [s0*.05, .03, 4, 4], 110)).sort((u, v) => u.f - v.f);
+  for(const k of kaba.slice(0, 3)){ const r = nelderMead(maliyet, k.x, [s0*.03, .015, 2, 2], 350); if(!en || r.f < en.f) en = r; }
   const [s, t, ox, oy] = en.x;
   // metre -> foto pikseli: p = s*R*([m0,-m1] - ort) + o
   return { s, t, ox, oy, ort, hata: en.f/2 };
@@ -13286,6 +13298,12 @@ function ilanEkran(){
         <button class="btn ${zeminVar && !oturdu ? "" : "ghost"}" ${zeminVar ? "" : "disabled"} onclick="ilanDokunBaslat()">${oturdu ? "Yeniden Oturt" : "Çizgiye Oturt"}</button>
       </div>
       <div class="ilNot">${!zeminVar ? "GPT ile canlandırdığın, parselin <b>sarı çizgisi</b> duran görseli yükle." : !oturdu ? "Şimdi “Çizgiye Oturt”a bas ve fotoğrafta parselin içine dokun." : "Çap oturdu. Boş yeri sürükle: zemin kayar · öğeyi sürükle: yeri değişir."}</div>
+      ${oturdu ? `<details class="ilHiza" ${ILAN.hizaAcik ? "open" : ""} ontoggle="ILAN.hizaAcik = this.open"><summary>Çapı elle hizala (döndür · büyüt · kaydır)</summary>
+        ${[["r", "Döndür", -450, 450, "°", 10], ["s", "Büyüt / küçült", 800, 1200, "%", 10], ["x", "Sağa / sola", -300, 300, "", 1], ["y", "Aşağı / yukarı", -300, 300, "", 1]].map(([k, etk, mn, mx, bir, b]) => {
+          const h = D.hiz || {}, v = k === "s" ? Math.round((h.s || 1)*1000) : k === "r" ? Math.round((h.r || 0)*10) : Math.round(h[k] || 0);
+          const yaz = k === "s" ? (v/10).toFixed(1) + "%" : k === "r" ? (v/10).toFixed(1) + "°" : v;
+          return `<div class="field ilKay"><label>${etk} <b id="ilh_${k}">${yaz}</b></label><input type="range" min="${mn}" max="${mx}" value="${v}" oninput="ilanHiza('${k}', +this.value)"></div>`; }).join("")}
+        <button class="btn ghost" onclick="ilanHizaSifirla()">Hizayı sıfırla</button></details>` : ""}
     </div>
     ${oturdu ? `<div class="card">
       <div class="bolum"><span class="rz altin">${svg("vector")}</span><b>Görünüm</b></div>
@@ -13365,6 +13383,19 @@ function ilanKay(ad, v, bir){
   else if(ad.startsWith("uc_")){ const [, i, u] = ad.split("_"); D.uzatUc = D.uzatUc || {}; const a = D.uzatUc[i] = D.uzatUc[i] || [null, null]; a[+u] = v; }
   const b = document.getElementById("ilk_" + ad); if(b) b.textContent = v + bir;
   ilanCizTuval(); ilanKaydetGec(); }
+// otomatik oturtma tam tutmadiysa: cap fotograf uzerinde elle dondurulur / buyutulur / kaydirilir (temel D.H0 korunur)
+function ilanHizaUygula(){ const D = ILAN.D; if(!D.H) return; if(!D.H0) D.H0 = D.H.slice();
+  const h = D.hiz || {}, H0 = D.H0, T = ILAN.F.sinir.map(q => ilH(H0, q));
+  const cx = T.reduce((a, q) => a + q[0], 0)/T.length, cy = T.reduce((a, q) => a + q[1], 0)/T.length, bw = D.foto ? D.foto.w : 1000;
+  const t = (h.r || 0)*Math.PI/180, sc = h.s || 1, c = Math.cos(t)*sc, n = Math.sin(t)*sc, dx = (h.x || 0)*bw/1000, dy = (h.y || 0)*bw/1000;
+  const A = [c, -n, cx + dx - (c*cx - n*cy), n, c, cy + dy - (n*cx + c*cy), 0, 0, 1];
+  D.H = [0, 1, 2].flatMap(i => [0, 1, 2].map(j => A[i*3]*H0[j] + A[i*3+1]*H0[3+j] + A[i*3+2]*H0[6+j]));
+  ilanVeriBagla(); }
+function ilanHiza(k, v){ const D = ILAN.D, h = D.hiz = D.hiz || {};
+  if(k === "s") h.s = v/1000; else if(k === "r") h.r = v/10; else h[k] = v;
+  const b = document.getElementById("ilh_" + k); if(b) b.textContent = k === "s" ? (v/10).toFixed(1) + "%" : k === "r" ? (v/10).toFixed(1) + "°" : v;
+  ilanHizaUygula(); ilanCizTuval(); ilanKaydetGec(); }
+function ilanHizaSifirla(){ const D = ILAN.D; D.hiz = {}; if(D.H0){ D.H = D.H0.slice(); ilanVeriBagla(); } ilanEkran(); ilanKaydetGec(); }
 function ilanAyar(k, v){ ILAN.D[k] = v; ilanCizTuval(); ilanKaydetGec(); }
 function ilanYolAd(i, v){ (ILAN.D.yolAd = ILAN.D.yolAd || [])[i] = v; ilanCizTuval(); ilanKaydetGec(); }
 function ilanOran(o){ ILAN.D.oran = o; ilanKaydet(); ilanEkran(); }
@@ -13479,9 +13510,13 @@ function ilanRenkliCizgi(veri, w, h, tx, ty, sMin, tTol){ // canli renkli (sari 
   const P = veri.data, ix = (x, y) => (y*w + x)*4;
   const q = k => hsv(P[k], P[k+1], P[k+2]);
   const tonlar = [];
+  // parselin ici de canli boyanmissa (GPT yesile boyayip parlatmis olabilir): dokunulan yerin rengi cizgi sayilmaz
+  let r0 = 0, g0 = 0, b0 = 0, n0 = 0; for(let yy=Math.max(0,ty-3); yy<=Math.min(h-1,ty+3); yy++) for(let xx=Math.max(0,tx-3); xx<=Math.min(w-1,tx+3); xx++){ const k = ix(xx, yy); r0 += P[k]; g0 += P[k+1]; b0 += P[k+2]; n0++; }
+  const c0 = hsv(r0/n0, g0/n0, b0/n0), icBoyali = c0[1] >= sMin*.8 && c0[2] > .35;
+  const icRenk = c => { const d = Math.abs(c[0] - c0[0]); return icBoyali && Math.min(d, 360 - d) < 28; };
   for(let a=0; a<90; a++){ const dx = Math.cos(a/90*2*Math.PI), dy = Math.sin(a/90*2*Math.PI); let en = null;
     for(let r=2; r<Math.max(w, h); r++){ const x = Math.round(tx + dx*r), y = Math.round(ty + dy*r); if(x < 0 || y < 0 || x >= w || y >= h) break;
-      const c = q(ix(x, y)); if(c[1] >= sMin && c[2] > .5){ en = c; break; } }
+      const c = q(ix(x, y)); if(c[1] >= sMin && c[2] > .5 && !icRenk(c)){ en = c; break; } }
     if(en) tonlar.push(en[0]); }
   if(tonlar.length < 40) return { hata:"Renkli çizgi bulunamadı" };
   tonlar.sort((a, b) => a - b); const ton = tonlar[Math.floor(tonlar.length/2)];
@@ -13600,7 +13635,7 @@ async function ilanOturt(px, py){
     const Hh = ilanHomografi(kk, [[en.x[0],en.x[1]],[en.x[2],en.x[3]],[en.x[4],en.x[5]],[en.x[6],en.x[7]]]);
     // calisma olceginden foto pikseline
     const H = [Hh[0]/k0, Hh[1]/k0, Hh[2]/k0, Hh[3]/k0, Hh[4]/k0, Hh[5]/k0, Hh[6], Hh[7], Hh[8]];
-    const D = ILAN.D; D.H = H; D.foto = { w:nw, h:nh }; D.zemin = {}; D.der = {};
+    const D = ILAN.D; D.H = H; D.H0 = null; D.hiz = {}; D.foto = { w:nw, h:nh }; D.zemin = {}; D.der = {};
     ILAN.dokun = false; ilanVeriBagla();
     const K0 = ilSinirKutu(ILAN.V.veri), yakin = (K0.x1 - K0.x0)/ILAN.V.veri.foto.w < .245;   // parsel cok kucukse: koy + parsel ana gorselde, cap kutuda buyuk
     D.ogeler.forEach(e => { if(e.tip === "yakin") e.gizli = !yakin; });
