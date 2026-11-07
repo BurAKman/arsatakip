@@ -2797,7 +2797,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.1.8";
+const SURUM_MORDOR = "v 3.1.9";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -12330,6 +12330,16 @@ function ilCapCiz(x, D, V, TF, sec){
   ekYollar.forEach(r => { const g = r.g || 7, au = r.au || [0, 0]; Y.push({ e: r.orta, g, au, b1: au[0] ? 0 : g*.5, b2: au[1] ? 0 : g*.5, taslak: r.taslak }); });
   // gorunum genisligi: kullanici carpani + kucuk olcekte bile belirgin olsun (ekranda en az 8 px)
   Y.forEach(o => { const m = o.e[Math.floor(o.e.length/2)], s0 = Math.max(.05, olc(m)); o.g0 = o.g; o.g = Math.max(o.g*(D.yolKat || 1), 8/s0); });
+  // kavsak: bir yolun ucu baska bir yola 14 m'den yakinsa ona kaynak yap (parca parca, aralikli gorunmesin); ucu asfalt agzi sayma
+  if(D.yolAsfaltBagla === false) Y.forEach(o => { if(!o.resmi) o.au = [0, 0]; });
+  { const enYakin = (p, e) => { let en = null; for(let i=0;i<e.length-1;i++){ const a = e[i], b = e[i+1], dx = b[0]-a[0], dy = b[1]-a[1], L = dx*dx + dy*dy || 1;
+        const t = Math.max(0, Math.min(1, ((p[0]-a[0])*dx + (p[1]-a[1])*dy)/L)), q = [a[0] + dx*t, a[1] + dy*t], d = Math.hypot(p[0]-q[0], p[1]-q[1]); if(!en || d < en.d) en = { q, d }; } return en; };
+    Y.forEach(o => { if(o.resmi || o.e.length < 2 || o.taslak) return; o.e = o.e.map(q => q.slice());
+      [0, 1].forEach(u => { const i = u ? o.e.length - 1 : 0, p = o.e[i]; let en = null;
+        Y.forEach(r => { if(r === o || r.e.length < 2) return; const z = enYakin(p, r.e); if(z && (!en || z.d < en.d)) en = { ...z, g: r.g0 || r.g }; });
+        if(!en || en.d > 14 || en.d < .05) return;
+        const ic = o.e[u ? i - 1 : 1], dx = en.q[0] - ic[0], dy = en.q[1] - ic[1], L = Math.hypot(dx, dy) || 1, uz = Math.min(en.g*.35, 3);
+        o.e[i] = [en.q[0] + dx/L*uz, en.q[1] + dy/L*uz]; o.au = [u ? o.au[0] : 0, u ? 0 : o.au[1]]; if(u) o.b2 = 0; else o.b1 = 0; }); }); }
   // negatif uzatma = kirpma (kisa son segmentlerde geri katlanip sivri uc yapmasin)
   const serit = (o, yari, b1, b2) => { const uz = ilUzat(kirp(o.e, b1 < 0 ? -b1 : 0, b2 < 0 ? -b2 : 0), Math.max(0, b1), Math.max(0, b2)), a = ilOfset(uz, yari), b = ilOfset(uz, -yari); return TP(a.concat(b.slice().reverse()), true); };
   const ucB = (o, k) => [o.au[0] ? k : o.b1, o.au[1] ? k : o.b2];
@@ -13398,6 +13408,7 @@ function ilanEkran(){
       ${(ILAN.F.resmiler || []).map((rr, i) => [0, 1].map(u => { const v = ((D.uzatUc || {})[i] || [])[u];
         return ilanKaydirici("uc_" + i + "_" + u, `${(ILAN.F.resmiler.length > 1 ? (i+1) + ". " : "")}Resmi yolu ${ilUcYonu(rr, u)} ucundan uzat`, Math.round(+v || 0), 0, 250, " m"); }).join("")).join("")}
       <label class="ilTik"><input type="checkbox" ${D.sariSil !== false ? "checked" : ""} onchange="ILAN.V._zk=null;ilanAyar('sariSil', this.checked)"> Fotoğraftaki sarı parsel çizgisini / sarı boyayı sil</label>
+      <label class="ilTik"><input type="checkbox" ${D.yolAsfaltBagla !== false ? "checked" : ""} onchange="ilanAyar('yolAsfaltBagla', this.checked)"> Yol uçlarını fotoğraftaki asfalta karıştır (zemin kaydıysa kapat)</label>
       <label class="ilTik"><input type="checkbox" ${D.cit !== false ? "checked" : ""} onchange="ilanAyar('cit', this.checked)"> Panel çit</label>
       <div class="field"><label>Yola bakan kenarda çit</label><select onchange="ilanAyar('citYol', this.value)">
         <option value="acik" ${D.citYol !== "kapali" ? "selected" : ""}>Yok · yol tarafı açık (giriş)</option>
@@ -15587,20 +15598,20 @@ function kenarCizgiyeYakin(M, i, isaret, cizgiler, enFazla){
   const ex = b[0]-a[0], ey = b[1]-a[1], L = Math.hypot(ex,ey) || 1;
   const nx = isaret > 0 ? ey/L : -ey/L, ny = isaret > 0 ? -ex/L : ex/L;
   let tutan = 0, toplamU = 0;
-  for(const t of [.2, .5, .8]){
+  for(const t of [.15, .32, .5, .68, .85]){
     const px = a[0] + ex*t, py = a[1] + ey*t;
     let enIyi = Infinity;
     cizgiler.forEach(c=>{ for(let k=0;k<c.length-1;k++){
       const sx = c[k+1][0]-c[k][0], sy = c[k+1][1]-c[k][1], sL2 = sx*sx + sy*sy || 1;
       let u2 = ((px-c[k][0])*sx + (py-c[k][1])*sy)/sL2; u2 = Math.max(0, Math.min(1, u2));
       const qx = c[k][0] + sx*u2 - px, qy = c[k][1] + sy*u2 - py, d = Math.hypot(qx, qy);
-      if(qx*nx + qy*ny < -1.5) continue;                                  // parselin icinde kalan cizgi
+      if(qx*nx + qy*ny < -7) continue;                                    // parselin derinlerinde kalan cizgi (sinirdan 7 m'ye kadar icerisi kayma sayilir)
       const paralel = Math.abs((sx*ex + sy*ey) / (Math.sqrt(sL2)*L));
-      if(paralel < .55) continue;
+      if(paralel < .5) continue;
       if(d < enIyi) enIyi = d; } });
     if(enIyi <= enFazla){ tutan++; toplamU += enIyi; }
   }
-  return tutan >= 2 ? { mesafe: Math.round(toplamU/tutan) } : null;
+  return tutan >= 3 ? { mesafe: Math.round(toplamU/tutan) } : null;
 }
 
 // hangi kenarlar resmi yola bakiyor
@@ -15628,10 +15639,10 @@ async function resmiYolKenarlari(p, bildir){
   for(let i=0;i<halka.length;i++){
     const j = (i+1) % halka.length;
     const uzunluk = Math.hypot(M[j][0]-M[i][0], M[j][1]-M[i][1]);
-    if(uzunluk >= 6) kenarlar.push({ i, uz: Math.round(uzunluk*10)/10 });   // cok kisa kenari sorma
+    if(uzunluk >= 4) kenarlar.push({ i, uz: Math.round(uzunluk*10)/10 });   // cok kisa kenari sorma
   }
   // en guclu kanit: haritada kenara paralel, disarida, yakin bir yol cizgisi
-  if(osm) kenarlar.forEach(k=>{ const y = kenarCizgiyeYakin(M, k.i, isaret, osm.yollar, 22);
+  if(osm) kenarlar.forEach(k=>{ const y = kenarCizgiyeYakin(M, k.i, isaret, osm.yollar, 28);
     if(y){ sonuc.push({ i:k.i, uzunluk:k.uz, nitelik:`haritada yol var (${y.mesafe} m)`, guc:4 }); raporla(k, `haritada yol çizgisi ${y.mesafe} m dışarıda`, true); }
     else raporla(k, "haritada yakınında yol yok", false); });
   if(sonuc.length) return sonuc.sort((a,b)=>b.uzunluk - a.uzunluk);      // haritada bulundu, TKGM'ye gerek yok
