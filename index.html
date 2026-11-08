@@ -2801,7 +2801,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.2.5";
+const SURUM_MORDOR = "v 3.2.6";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -13326,9 +13326,10 @@ function ilanQrYukle(){ if(typeof qrcode === "function") return Promise.resolve(
     s.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"; s.onload = ok; s.onerror = ok; document.head.appendChild(s); })); }
 // 6360 sayili kanunla buyuksehir illerinde koyler mahalleye donustu: bu illerde TKGM'nin yalin adi mahalledir
 const IL_BUYUKSEHIR = ["ADANA","ANKARA","ANTALYA","AYDIN","BALIKESİR","BURSA","DENİZLİ","DİYARBAKIR","ERZURUM","ESKİŞEHİR","GAZİANTEP","HATAY","İSTANBUL","İZMİR","KAHRAMANMARAŞ","KAYSERİ","KOCAELİ","KONYA","MALATYA","MANİSA","MARDİN","MERSİN","MUĞLA","ORDU","SAKARYA","SAMSUN","ŞANLIURFA","TEKİRDAĞ","TRABZON","VAN"];
-function ilBuyuksehir(il){ const u = String(il || "").trim().toLocaleUpperCase("tr"); return IL_BUYUKSEHIR.includes(u) || (u === "ICEL" || u === "İÇEL"); }
+function ilBuyuksehir(il){ let u = String(il || "").trim().toLocaleUpperCase("tr"); if(u === "ISTANBUL") u = "İSTANBUL"; if(u === "IZMIR" || u === "IZMİR") u = "İZMİR"; return IL_BUYUKSEHIR.includes(u) || (u === "ICEL" || u === "İÇEL"); }
 function ilanOgeler(p){
-  const U = t => String(t || "").toLocaleUpperCase("tr");
+  // TKGM bazen il adini noktasiz I ile verir (Istanbul -> ISTANBUL): bilinen iller duzeltilir
+  const U = t => { const u = String(t || "").toLocaleUpperCase("tr"); return ({ ISTANBUL:"İSTANBUL", IZMIR:"İZMİR", IZMİR:"İZMİR", ISTANBUL_:"" })[u] || u; };
   const mh = U(p.mahalle), ana = !mh ? "" : /MAH|KÖY|\bMH\b/.test(mh) ? mh : mh + (ilBuyuksehir(p.il) ? " MH." : " KÖYÜ");
   return [
     { id:"kunye", tip:"kunye", alan:{ ust:[U(p.il), U(p.ilce)].filter(Boolean).join("  ·  "), ana, ada:String(p.ada ?? ""), parsel:String(p.parsel ?? ""), alan: p.alan_m2 ? ilSayi(p.alan_m2) + " m²" : "", link: ilanKonumLink(p), qrYazi:"HARİTADA AÇ" },
