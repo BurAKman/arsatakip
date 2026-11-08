@@ -2801,7 +2801,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.2.4";
+const SURUM_MORDOR = "v 3.2.5";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -15574,7 +15574,8 @@ async function kenarDurumu(halka, i, kendi){
   if(yakin.__kendi) yakin = await kenarKomsusu(halka, i, 10, .5, kendi);
   if(yakin.__hata) return { yol:false, sebep:"TKGM cevap vermedi" };       // bilinmiyorsa yol sayma
   if(!yakin.__yok && !yakin.__kendi){
-    if(/yol|cadde|sokak|karayol/.test(nit(yakin))) return { yol:true, sebep:"komşu kaydı yol" };
+    if(/yol|cadde|sokak|karayol/.test(nit(yakin))){ const ad = [yakin.adaNo, yakin.parselNo].filter(v => v != null && v !== "").join("/"), nt = String(yakin.nitelik || "").trim();
+      return { yol:true, guc:3, sebep:"komşu kaydı yol" + (ad || nt ? ` (${[ad, nt].filter(Boolean).join(" · ")})` : "") }; }
     if(parselYolBenzeriK(yakin)) return { yol:true, guc:3, sebep:`komşu yol şeridi (${[[yakin.adaNo, yakin.parselNo].filter(v => v != null && v !== "").join("/"), String(yakin.nitelik || "").trim(), yakin.__en ? "~" + Math.round(yakin.__en) + " m en" : ""].filter(Boolean).join(" · ")})` };
     if(SU_NITELIK.test(nit(yakin))) return { yol:false, su:true, sebep:"komşu dere/kanal" };
     { const ad = [yakin.adaNo, yakin.parselNo].filter(v => v != null && v !== "").join("/"), nt = String(yakin.nitelik || "").trim();

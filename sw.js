@@ -3,7 +3,7 @@
 // Strateji: HTML her zaman once agdan (guncelleme aninda gelsin),
 // gorseller ve kutuphaneler once onbellekten (hizli acilsin).
 
-const SURUM = "cc-v150";
+const SURUM = "cc-v151";
 const TEMEL = [
   "./",
   "./index.html",
