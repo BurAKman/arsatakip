@@ -2801,7 +2801,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.2.6";
+const SURUM_MORDOR = "v 3.2.7";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -13659,6 +13659,23 @@ function ilanHomografi(src, dst){ // 4 nokta -> 3x3
     [A[c], A[p]] = [A[p], A[c]]; [b[c], b[p]] = [b[p], b[c]]; const d = A[c][c] || 1e-12;
     for(let r=0;r<n;r++){ if(r === c) continue; const f = A[r][c]/d; if(!f) continue; for(let k=c;k<n;k++) A[r][k] -= f*A[c][k]; b[r] -= f*b[c]; } }
   const h = b.map((v, i) => v/(A[i][i] || 1e-12)); return [h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7], 1]; }
+// parsel cizgiyle degil, canli tek renkle (GPT'nin sariya boyamasi gibi) doldurulmussa: dolgu bolgesinin kenari cizgi yapilir
+function ilanDolguBolge(veri, w, h, tx, ty){
+  const P = veri.data; let r0 = 0, g0 = 0, b0 = 0, n0 = 0;
+  for(let yy=Math.max(0,ty-3); yy<=Math.min(h-1,ty+3); yy++) for(let xx=Math.max(0,tx-3); xx<=Math.min(w-1,tx+3); xx++){ const k = (yy*w+xx)*4; r0 += P[k]; g0 += P[k+1]; b0 += P[k+2]; n0++; }
+  const c0 = hsv(r0/n0, g0/n0, b0/n0); if(!(c0[1] >= .4 && c0[2] > .4)) return { hata:"Dolgu yok" };
+  const benzer = i => { const k = i*4, c = hsv(P[k], P[k+1], P[k+2]), d = Math.abs(c[0] - c0[0]); return Math.min(d, 360 - d) < 16 && c[1] >= c0[1]*.6 && c[2] > c0[2]*.55; };
+  const ic = new Uint8Array(w*h), yig = new Int32Array(w*h); let n = 0, alan = 0; const t = ty*w + tx; ic[t] = 1; yig[n++] = t;
+  while(n){ const j = yig[--n], x = j % w, y = (j - x)/w; alan++;
+    if(x === 0 || y === 0 || x === w-1 || y === h-1) return { hata:"Dolgu kenara taşıyor" };
+    for(const k of [j-1, j+1, j-w, j+w]) if(!ic[k] && benzer(k)){ ic[k] = 1; yig[n++] = k; } }
+  if(alan < 150 || alan > w*h*.3) return { hata:"Dolgu bulunamadı" };
+  // kopya goruntu: ic gri, dolgunun dis kenari 3 px mor cizgi -> normal cizgi bulucuya ver
+  const D = new ImageData(new Uint8ClampedArray(P), w, h), Q = D.data;
+  for(let i=0;i<w*h;i++) if(ic[i]){ Q[i*4] = Q[i*4+1] = Q[i*4+2] = 128; }
+  for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){ const i = y*w + x; if(!ic[i]) continue;
+    if(!ic[i-1] || !ic[i+1] || !ic[i-w] || !ic[i+w]) for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){ const k = ((y+dy)*w + x+dx)*4; Q[k] = 255; Q[k+1] = 0; Q[k+2] = 255; } }
+  return ilanRenkliCizgi(D, w, h, tx, ty, .55, 16); }
 function ilanRenkliCizgi(veri, w, h, tx, ty, sMin, tTol){ // canli renkli (sari vb.) ince cizgi; ici sarimsi tarla olsa da sasirmaz
   const P = veri.data, ix = (x, y) => (y*w + x)*4;
   const q = k => hsv(P[k], P[k+1], P[k+2]);
@@ -13747,7 +13764,7 @@ async function ilanOturt(px, py){
     const x = c.getContext("2d", { willReadFrequently:true }); x.drawImage(im, 0, 0, w, h);
     const tx = Math.round(fx*k0), ty = Math.round(fy*k0), veri = x.getImageData(0, 0, w, h);
     let B = null;
-    for(const dene of [() => ilanRenkliCizgi(veri, w, h, tx, ty, .55, 16), () => ilanRenkliCizgi(veri, w, h, tx, ty, .42, 20), () => cizgiBul(veri, w, h, tx, ty), () => ilanKoyuCizgi(veri, w, h, tx, ty)]){
+    for(const dene of [() => ilanRenkliCizgi(veri, w, h, tx, ty, .55, 16), () => ilanRenkliCizgi(veri, w, h, tx, ty, .42, 20), () => ilanDolguBolge(veri, w, h, tx, ty), () => cizgiBul(veri, w, h, tx, ty), () => ilanKoyuCizgi(veri, w, h, tx, ty)]){
       const r = dene(); if(!r.hata){ B = r; break; } if(!B) B = r; }
     if(B.hata) return toast(B.hata);
     const M = ILAN.F.sinir;
