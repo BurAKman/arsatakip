@@ -2801,7 +2801,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.2.7";
+const SURUM_MORDOR = "v 3.2.8";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -15564,7 +15564,12 @@ async function kenarKomsusu(halka, i, disaMetre, oran, kendi){
     try{
       const f = await zamanAsimi(tkgm(`${TB3}/parsel/${lat.toFixed(7)}/${lon.toFixed(7)}`), 15000);
       if(!f?.properties) return KOMSU_YOK;
-      try{ const h = ilanHalkalar(f.geometry)[0]; if(h){ const kx2 = Math.cos(h[0][1]*Math.PI/180)*111320, d2 = darSerit(h.map(q => [q[0]*kx2, q[1]*110540])); if(d2){ f.properties.__en = d2.en; f.properties.__uz = d2.uz; } } }catch(e){}
+      try{ const h = ilanHalkalar(f.geometry)[0]; if(h){ const kx2 = Math.cos(h[0][1]*Math.PI/180)*111320, d2 = darSerit(h.map(q => [q[0]*kx2, q[1]*110540])); if(d2){ f.properties.__en = d2.en; f.properties.__uz = d2.uz; }
+        // bizim kenarin orta noktasindan komsu sinirina en kisa uzaklik (m)
+        const ox = ortaLon*kx, oy = ortaLat*ky, Hm = h.map(q => [q[0]*kx, q[1]*ky]); let en = 1e9;
+        for(let k=0;k<Hm.length;k++){ const p1 = Hm[k], p2 = Hm[(k+1)%Hm.length], ex = p2[0]-p1[0], ey = p2[1]-p1[1], L = ex*ex + ey*ey || 1;
+          const tt = Math.max(0, Math.min(1, ((ox-p1[0])*ex + (oy-p1[1])*ey)/L)); en = Math.min(en, Math.hypot(ox - p1[0] - ex*tt, oy - p1[1] - ey*tt)); }
+        f.properties.__ara = en; } }catch(e){}
       if(kendi && (parselKimlik(f.properties) === kendi || (KENDI_NO && [f.properties.adaNo ?? "", f.properties.parselNo ?? ""].join("|") === KENDI_NO))) return KOMSU_KENDI;   // koordinat kaymasi: hala kendi icinde
       return f.properties;
     }catch(e){
@@ -15596,6 +15601,8 @@ async function kenarDurumu(halka, i, kendi){
       return { yol:true, guc:3, sebep:"komşu kaydı yol" + (ad || nt ? ` (${[ad, nt].filter(Boolean).join(" · ")})` : "") }; }
     if(parselYolBenzeriK(yakin)) return { yol:true, guc:3, sebep:`komşu yol şeridi (${[[yakin.adaNo, yakin.parselNo].filter(v => v != null && v !== "").join("/"), String(yakin.nitelik || "").trim(), yakin.__en ? "~" + Math.round(yakin.__en) + " m en" : ""].filter(Boolean).join(" · ")})` };
     if(SU_NITELIK.test(nit(yakin))) return { yol:false, su:true, sebep:"komşu dere/kanal" };
+    if(yakin.__ara != null && yakin.__ara >= 1.6 && yakin.__ara < 30){ const ad = [yakin.adaNo, yakin.parselNo].filter(v => v != null && v !== "").join("/");
+      return { yol:true, guc:2, sebep:`arada ${yakin.__ara.toFixed(1).replace(".", ",")} m boşluk var, karşıda parsel` + (ad ? ` (${ad})` : "") }; }
     { const ad = [yakin.adaNo, yakin.parselNo].filter(v => v != null && v !== "").join("/"), nt = String(yakin.nitelik || "").trim();
       return { yol:false, sebep:"bitişik komşu parsel" + (ad || nt ? ` (${[ad, nt].filter(Boolean).join(" · ")})` : "") }; }
   }
