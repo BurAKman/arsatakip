@@ -2801,7 +2801,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.2.8";
+const SURUM_MORDOR = "v 3.2.9";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -12257,19 +12257,26 @@ function ilPlan(x, D, V, W, Hc){
     x.save(); x.globalCompositeOperation = "screen"; x.fillStyle = ig; x.fillRect(mx - r*2, my - r*2, r*4, r*4); x.restore(); }
   // cap: yakin cekim kutusu aciksa ana gorselde yazilar kutuya birakilir
   const butun = D.anaGorunum === "tek" ? true : D.anaGorunum === "parcali" ? false : yakin;
-  ilCapCiz(x, D, V, TF, { etiket: !butun, yolYazi: !yakin && D.yolYazi !== false, cizgi: 1, butun });
+  ilCapCiz(x, D, V, TF, { etiket: !butun && !((F.ekler || []).length && D.ekEtiket !== false), yolYazi: !yakin && D.yolYazi !== false, cizgi: 1, butun });
   const ekS = [];
   (F.ekler || []).forEach(e => { const V2 = { ...V, veri: { ...F, H: e.H, sinir: e.M, parcalar: [{ no:"", m2: e.alan, poly: e.M }], yollar: [], eksenler: [], resmiler: [] } };
     ilCapCiz(x, { ...D, kadastro: null, ekYollar: [], uzatUc: {}, _taslak: null }, V2, TF, { etiket: false, yolYazi: false, cizgi: 1, butun: true });
     ekS.push(...ilYogun(e.M, 2, true).map(m => TF(ilH(e.H, m)))); });
-  // birden fazla parsel varsa her birinin uzerine parsel numarasi
+  // birden fazla parsel: her parselin icinde ayni yazi tipiyle ustte ada/parsel (bir tik kucuk), altta m²
   if((F.ekler || []).length && D.ekEtiket !== false){
-    const etk = (M, H, no) => { if(!no) return; const P = M.map(m => TF(ilH(H, m))), c = P.reduce((t, q) => [t[0] + q[0]/P.length, t[1] + q[1]/P.length], [0, 0]);
-      const t = String(no); x.save(); x.font = `600 22px ${IL_FONT.serit}`; const w = x.measureText(t).width + 26, h = 34;
-      x.shadowColor = "rgba(0,0,0,.55)"; x.shadowBlur = 10; ilYuvarlak(x, c[0] - w/2, c[1] - h/2, w, h, h/2); x.fillStyle = "rgba(14,12,8,.86)"; x.fill();
-      x.shadowColor = "transparent"; x.lineWidth = 1.6; x.strokeStyle = "#E3B23C"; x.stroke();
-      x.fillStyle = "#F7DE8E"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(t, c[0], c[1] + 1); x.restore(); };
-    etk(F.sinir, F.H, F.no); F.ekler.forEach(e => etk(e.M, e.H, e.no)); }
+    const etk = (M, H, ada, no, m2) => { const P = ilYogun(M, 2, true).map(m => TF(ilH(H, m)));
+      let A2 = 0, gx = 0, gy = 0; for(let i=0;i<P.length;i++){ const a = P[i], b = P[(i+1)%P.length], c = a[0]*b[1] - b[0]*a[1]; A2 += c; gx += (a[0]+b[0])*c; gy += (a[1]+b[1])*c; }
+      let c = Math.abs(A2) > 1e-6 ? [gx/(3*A2), gy/(3*A2)] : P[0];
+      if(!ilIcinde(c, P)){ let en = null; const xs = P.map(q => q[0]), ys = P.map(q => q[1]), st = Math.max(2, (Math.max(...xs) - Math.min(...xs))/30);
+        for(let X=Math.min(...xs); X<=Math.max(...xs); X+=st) for(let Y=Math.min(...ys); Y<=Math.max(...ys); Y+=st){ const d = ilKenarUzak([X, Y], P); if(d > 0 && (!en || d > en.d)) en = { d, X, Y }; } if(en) c = [en.X, en.Y]; }
+      const ust = [ada, no].filter(v => v != null && String(v).trim() !== "").join("/"), alt = m2 ? ilSayi(m2) + " m²" : "";
+      const B = Math.max(12, Math.min(24, (D.ekYaziBoy || 1)*17));
+      x.save(); x.textAlign = "center"; x.textBaseline = "middle"; x.shadowColor = "rgba(0,0,0,.7)"; x.shadowBlur = 4; x.shadowOffsetY = 1; x.fillStyle = "#FFFFFF";
+      const b1 = Math.round(B*.82), ara = (b1 + B)*.62;
+      if(ust){ x.font = `600 ${b1}px ${IL_FONT.govde}`; x.fillText(ust, c[0], c[1] - (alt ? ara/2 : 0)); }
+      if(alt){ x.font = `600 ${B}px ${IL_FONT.govde}`; x.fillText(alt, c[0], c[1] + (ust ? ara/2 : 0)); }
+      x.restore(); };
+    etk(F.sinir, F.H, F.ada, F.no, (F.parcalar || []).reduce((t, p) => t + (+p.m2 || 0), 0)); F.ekler.forEach(e => etk(e.M, e.H, e.ada, e.no, e.alan)); }
 
   const S = ilYogun(F.sinir, 2, true).map(T).concat(ekS), xs = S.map(q=>q[0]), ys = S.map(q=>q[1]);
   const c0 = F.sinir.reduce((tt,q)=>[tt[0]+q[0]/F.sinir.length, tt[1]+q[1]/F.sinir.length], [0,0]);
@@ -13371,7 +13378,7 @@ function ilanResim(blob){ return new Promise((ok, no) => { const i = new Image()
 function ilanVeriBagla(){
   const { V, D, F } = ILAN;
   if(V.zemin && D.H && D.foto && D.foto.w === V.zemin.naturalWidth && D.foto.h === V.zemin.naturalHeight){
-    V.veri = { ...F, H: D.H, foto: D.foto, no: ILAN.p?.parsel, ekler: (D.ekler || []).filter(e => e.M && e.M.length > 2).map(e => ({ M: e.M, alan: e.alan, no: e.parsel, H: ilanEkH(e, D.H, D.foto) })) }; V._zk = null; }
+    V.veri = { ...F, H: D.H, foto: D.foto, no: ILAN.p?.parsel, ada: ILAN.p?.ada, ekler: (D.ekler || []).filter(e => e.M && e.M.length > 2).map(e => ({ M: e.M, alan: e.alan, no: e.parsel, ada: e.ada, H: ilanEkH(e, D.H, D.foto) })) }; V._zk = null; }
   else V.veri = null;
 }
 
@@ -13408,7 +13415,8 @@ function ilanEkran(){
             return `<div class="field ilKay"><label>${etk} <b id="ileh_${i}_${k}">${k === "r" ? (v/10).toFixed(1) + "°" : v}</b></label><input type="range" min="${mn}" max="${mx}" value="${v}" oninput="ilanEkHiza(${i}, '${k}', +this.value)"></div>`; }).join("")}
           <button class="btn ghost" onclick="ilanEkKaldir(${i})">Bu parseli kaldır</button></details>`).join("")}
         <button class="btn ghost" style="margin-top:8px;width:100%" onclick="ilanEkParselSec()">+ Yanına ikinci parsel ekle</button>
-        ${(D.ekler || []).length ? `<label class="ilTik"><input type="checkbox" ${D.ekEtiket !== false ? "checked" : ""} onchange="ilanAyar('ekEtiket', this.checked)"> Parsellerin üstünde parsel numarası</label>` : ""}</div>` : ""}
+        ${(D.ekler || []).length ? `<label class="ilTik"><input type="checkbox" ${D.ekEtiket !== false ? "checked" : ""} onchange="ilanAyar('ekEtiket', this.checked)"> Parsellerin içinde ada/parsel ve m²</label>
+          ${D.ekEtiket !== false ? ilanKaydirici("ekYazi", "Parsel yazı boyutu", Math.round((D.ekYaziBoy || 1)*100), 60, 160, "%") : ""}` : ""}</div>` : ""}
     </div>
     ${oturdu ? `<div class="card">
       <div class="bolum"><span class="rz altin">${svg("vector")}</span><b>Görünüm</b></div>
@@ -13489,7 +13497,7 @@ let ILAN_KAYDET_ZAMAN = null;
 function ilanKaydetGec(){ clearTimeout(ILAN_KAYDET_ZAMAN); ILAN_KAYDET_ZAMAN = setTimeout(ilanKaydet, 400); }
 function ilanKay(ad, v, bir){
   const D = ILAN.D, z = D.zemin = D.zemin || {};
-  if(ad === "zum") z.zum = v/100; else if(ad === "uzak") z.uzak = v/100; else if(ad === "gecis") z.gecis = v; else if(ad === "yolKat") D.yolKat = v/100; else if(ad === "kadR") D.kadastroR = v; else if(ad === "karart") D.karart = v/100; else if(ad === "uzat") D.yolUzat = v;
+  if(ad === "zum") z.zum = v/100; else if(ad === "uzak") z.uzak = v/100; else if(ad === "gecis") z.gecis = v; else if(ad === "yolKat") D.yolKat = v/100; else if(ad === "kadR") D.kadastroR = v; else if(ad === "karart") D.karart = v/100; else if(ad === "uzat") D.yolUzat = v; else if(ad === "ekYazi") D.ekYaziBoy = v/100;
   else if(ad.startsWith("uc_")){ const [, i, u] = ad.split("_"); D.uzatUc = D.uzatUc || {}; const a = D.uzatUc[i] = D.uzatUc[i] || [null, null]; a[+u] = v; }
   const b = document.getElementById("ilk_" + ad); if(b) b.textContent = v + bir;
   ilanCizTuval(); ilanKaydetGec(); }
