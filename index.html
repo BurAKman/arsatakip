@@ -2360,6 +2360,20 @@ h3{letter-spacing:.02em}
 .ilCizCubuk span{ padding:0 4px; color:#F2D27A; font-weight:600; }
 .ilCizCubuk button{ pointer-events:auto; border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.07); color:#eee; border-radius:7px; padding:5px 8px; font:inherit; font-size:11.5px; cursor:pointer; min-width:26px; }
 .ilCizCubuk button.on{ background:linear-gradient(#E3B23C,#B98A2E); color:#1a1206; font-weight:700; border-color:#E3B23C; }
+/* ilan: animasyonlu video penceresi */
+.ivKutu{ width:min(980px,100%); max-height:92vh; display:flex; gap:18px; padding:18px; border-radius:16px; background:#141210; border:1px solid rgba(201,162,74,.35); box-shadow:0 20px 60px rgba(0,0,0,.7); color:#eee; }
+.ivSahne{ position:relative; flex:0 0 auto; height:min(80vh,760px); aspect-ratio:9/16; border-radius:10px; overflow:hidden; background:#06120D; }
+.ivSahne canvas{ width:100%; height:100%; object-fit:contain; display:block; }
+.ivYuk{ position:absolute; inset:0; display:grid; place-items:center; color:#d9b866; font-size:13px; }
+.ivYan{ flex:1; min-width:220px; display:flex; flex-direction:column; gap:10px; overflow:auto; }
+.ivYan > b{ font-size:16px; color:#F2D27A; } .ivYan small{ color:#aaa; font-size:12px; line-height:1.45; }
+.ivGrup{ display:flex; flex-direction:column; gap:4px; padding:8px 10px; border:1px solid rgba(255,255,255,.08); border-radius:10px; }
+.ivMuzik{ display:flex; align-items:center; gap:6px; } .ivMuzik span{ flex:1; font-size:12.5px; color:#ccc; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ivMuzik .btn{ padding:6px 10px; min-height:0; }
+.ivSure{ font-size:12px; color:#c9a24a; }
+.ivBar{ height:8px; border-radius:6px; background:rgba(255,255,255,.08); overflow:hidden; } .ivBar i{ display:block; height:100%; width:0; background:linear-gradient(90deg,#B98A2E,#F2D27A); transition:width .2s; }
+@media (max-width:720px){ .ivKutu{ flex-direction:column; overflow:auto; } .ivSahne{ height:52vh; align-self:center; } }
+.ivMuzik .btn{ width:auto !important; flex:0 0 auto; }
 
 /* ================= PC SURUMU · premium kizil (siyah · grafit · yakut) ================= */
 body.pc[data-tema]{
@@ -2801,7 +2815,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.2.9";
+const SURUM_MORDOR = "v 3.3.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -12234,7 +12248,7 @@ function ilPlan(x, D, V, W, Hc){
     const sc = sx(v + 1); x.drawImage(Z, 0, v, fw, Math.min(2, fh - v), ax - sc*uc, a1, fw*sc, a2 - a1 + .6); }
 
   const T = m => TF(ilH(F.H, m));
-  if(D.karart > 0){
+  if(D.karart > 0 && !D._capYok){
     const [L, l] = ilKatman(x);
     l.fillStyle = `rgba(4,12,8,${D.karart})`; l.fillRect(0, 0, W, Hc);
     l.globalCompositeOperation = "destination-out"; l.filter = "blur(10px)"; l.fillStyle = "#000"; l.strokeStyle = "#000"; l.lineJoin = "round"; l.lineWidth = 26;
@@ -12246,7 +12260,7 @@ function ilPlan(x, D, V, W, Hc){
     gg.addColorStop(0, "rgba(10,40,32,0)"); gg.addColorStop(.5, "rgba(9,34,28,.08)"); gg.addColorStop(1, "rgba(7,28,22,.3)"); x.fillStyle = gg; x.fillRect(0, alt, W, Hc - alt); }
 
   // spot: parsel cevresi aydinlik, uzaklar hafif loş -> parsel sahnede gibi one cikar
-  if(D.spot !== false && D.parselStil !== "yesil"){ const Sp = ilYogun(F.sinir, 3, true).map(T);
+  if(D.spot !== false && D.parselStil !== "yesil" && !D._capYok){ const Sp = ilYogun(F.sinir, 3, true).map(T);
     let a0 = 1e9, b0 = 1e9, a1 = -1e9, b1 = -1e9; Sp.forEach(q => { a0 = Math.min(a0, q[0]); b0 = Math.min(b0, q[1]); a1 = Math.max(a1, q[0]); b1 = Math.max(b1, q[1]); });
     const mx = (a0+a1)/2, my = (b0+b1)/2, rx = Math.max(40, (a1-a0)/2), ry = Math.max(30, (b1-b0)/2), r = Math.max(rx, ry);
     x.save(); x.translate(mx, my); x.scale(rx/r, ry/r);
@@ -12257,8 +12271,10 @@ function ilPlan(x, D, V, W, Hc){
     x.save(); x.globalCompositeOperation = "screen"; x.fillStyle = ig; x.fillRect(mx - r*2, my - r*2, r*4, r*4); x.restore(); }
   // cap: yakin cekim kutusu aciksa ana gorselde yazilar kutuya birakilir
   const butun = D.anaGorunum === "tek" ? true : D.anaGorunum === "parcali" ? false : yakin;
+  const ekS = [], ekP = (F.ekler || []).map(e => ilYogun(e.M, 2, true).map(m => TF(ilH(e.H, m))));
+  if(D._capYok) ekP.forEach(q => ekS.push(...q));
+  else{
   ilCapCiz(x, D, V, TF, { etiket: !butun && !((F.ekler || []).length && D.ekEtiket !== false), yolYazi: !yakin && D.yolYazi !== false, cizgi: 1, butun });
-  const ekS = [];
   (F.ekler || []).forEach(e => { const V2 = { ...V, veri: { ...F, H: e.H, sinir: e.M, parcalar: [{ no:"", m2: e.alan, poly: e.M }], yollar: [], eksenler: [], resmiler: [] } };
     ilCapCiz(x, { ...D, kadastro: null, ekYollar: [], uzatUc: {}, _taslak: null }, V2, TF, { etiket: false, yolYazi: false, cizgi: 1, butun: true });
     ekS.push(...ilYogun(e.M, 2, true).map(m => TF(ilH(e.H, m)))); });
@@ -12277,6 +12293,7 @@ function ilPlan(x, D, V, W, Hc){
       if(alt){ x.font = `600 ${B}px ${IL_FONT.govde}`; x.fillText(alt, c[0], c[1] + (ust ? ara/2 : 0)); }
       x.restore(); };
     etk(F.sinir, F.H, F.ada, F.no, (F.parcalar || []).reduce((t, p) => t + (+p.m2 || 0), 0)); F.ekler.forEach(e => etk(e.M, e.H, e.ada, e.no, e.alan)); }
+  }
 
   const S = ilYogun(F.sinir, 2, true).map(T).concat(ekS), xs = S.map(q=>q[0]), ys = S.map(q=>q[1]);
   const c0 = F.sinir.reduce((tt,q)=>[tt[0]+q[0]/F.sinir.length, tt[1]+q[1]/F.sinir.length], [0,0]);
@@ -12284,7 +12301,7 @@ function ilPlan(x, D, V, W, Hc){
   const Hi = ilTers(F.H), Cx = v => v < 0 ? C(0) + sy(0)*v : v > fh ? C(fh) + sy(fh)*(v - fh) : C(v);
   const ters = (X, Yc) => { let lo = -fh*3, hi = fh*4; for(let i=0;i<60;i++){ const md = (lo+hi)/2; if(hy + Cx(md) - Cvc < Yc) lo = md; else hi = md; }
     const v = (lo+hi)/2, u = uc + (X - ax)/sx(v); return ilH(Hi, [u, v]); };
-  return { kuzey: Math.atan2(n1[0]-n0[0], -(n1[1]-n0[1])), parsel:[Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)], D, ters };
+  return { kuzey: Math.atan2(n1[0]-n0[0], -(n1[1]-n0[1])), parsel:[Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)], D, ters, sinirP: ilYogun(F.sinir, 2, true).map(T), ekP };
 }
 
 // resmi yol seritleri (metre): capin kendi seritleri, istenirse iki uctan uzatilir (kavsak ucunda uzatma yok)
@@ -13069,14 +13086,16 @@ function ilanCiz(cv, D, V, kat){
   cv.width = W*k; cv.height = Hc*k;
   const x = cv.getContext("2d"); x.setTransform(k, 0, 0, k, 0, 0);
   const P = ilPlan(x, D, V, W, Hc);
-  if(!ilYakinAcik(D) && D.halka !== false) ilHalkaCiz(x, P);   // yakin cekim kapaliyken de parsel halkayla one ciksin
+  if(D._sadeceOge) x.clearRect(0, 0, W, Hc);   // video: yalniz secili ogeler, saydam zeminde
+  else if(!ilYakinAcik(D) && D.halka !== false && !D._capYok) ilHalkaCiz(x, P);   // yakin cekim kapaliyken de parsel halkayla one ciksin
   // yakin cekim kutusunun dikey araligi (otomatik yerlesim ayni hesapla) -> ozellik listesi ona carpmasin
   const yakinAralik = () => { const e = D.ogeler.find(q => q.tip === "yakin" && !q.gizli); if(!e) return null;
     const O2 = IL_ORAN[D.oran], s = (typeof e.s === "object" ? e.s[D.oran] : e.s) || 1, bh = ((V.ilYakin || e.stil !== "cerceve") ? O2.yakinW*s*1086/1448 : O2.yakinH*s)/Hc, pk = P.parsel;
     let y = (e.pos[D.oran] || e.pos["916"])[1];
     if(!e.elle){ const ust = .205, alt = Math.min(.86 - bh, .555), kes = y0 => !(pk[3] < y0*Hc - 30 || pk[1] > (y0 + bh)*Hc + 30); y = !kes(ust) ? ust : !kes(alt) ? alt : ((pk[1] + pk[3])/2 > Hc/2 ? ust : alt); }
     return [y - .03, y + bh + .01]; };
-  D.ogeler.forEach(e => {
+  D.ogeler.forEach((e, oi) => {
+    const atla = D._ogeSec && !D._ogeSec.includes(oi);
     if(e.tip === "ozellik" && e.liste && !e.elle && !e.gizli){ const n = (e.alan.maddeler || "").split("\n").filter(t => t.trim()).length, s = (typeof e.s === "object" ? e.s[D.oran] : e.s) || 1;
       const lh = (Math.ceil(n/(e.duzen === "yan" ? n : e.duzen === "ikili" ? 2 : 1))*84)*s/Hc, ya = yakinAralik(); let y = D.oran === "45" ? .27 : .235;
       if(ya && y < ya[1] && y + lh > ya[0]) y = ya[1] + lh + .01 < .86 ? ya[1] + .005 : Math.max(.2, ya[0] - lh - .01);
@@ -13088,7 +13107,8 @@ function ilanCiz(cv, D, V, kat){
         const ust = .205, alt = Math.min(.86 - bh, .555), kes = y0 => !(pk[3] < y0*Hc - 30 || pk[1] > (y0 + bh)*Hc + 30);
         const y = !kes(ust) ? ust : !kes(alt) ? alt : ((pk[1] + pk[3])/2 > Hc/2 ? ust : alt);
         e.pos[D.oran] = [(e.pos[D.oran] || e.pos["916"])[0], y]; }
-      e._kutu = ilYakinCiz(x, e, D, V, P, W, Hc); return; }
+      if(!atla) e._kutu = ilYakinCiz(x, e, D, V, P, W, Hc); return; }
+    if(atla) return;
     const pos = e.pos[D.oran] || e.pos["916"], s = (typeof e.s === "object" ? e.s[D.oran] : e.s) || 1;
     x.save(); x.translate(pos[0]*W, pos[1]*Hc); x.scale(s, s);
     const k = IL_OGE[e.tip](x, e, W, P, V) || [0,0,0,0];
@@ -13485,7 +13505,8 @@ function ilanEkran(){
       <div class="ilListe">${ogeSat}</div>
       <div id="ilDuzen"></div>
     </div>
-    <button class="btn" style="margin-top:14px" onclick="ilanUret()">Afişi İndir ve Kaydet</button>` : ""}`;
+    <button class="btn" style="margin-top:14px" onclick="ilanUret()">Afişi İndir ve Kaydet</button>
+    <button class="btn ghost ivTus" style="margin-top:8px" onclick="ilanVideo()">🎬 Video Yap</button>` : ""}`;
   ilanDuzenCiz();
   ilanTuvalOlay();
   ilanCizTuval();
@@ -14143,6 +14164,232 @@ function ilanEkBagla(D, V){
   (D.ekYollar || []).forEach(y => { if(y.bagli || !y.pts || y.pts.length < 2) return; ic = ic || ilanAsfaltIc(V); y.au = y.au || [0, 0]; n += ilanUcBagla(y.pts, y.au, ic); y.bagli = true; });
   return n; }
 function ilanKadSec(i){ const y = ILAN.D.kadastro?.yollar?.[i]; if(!y) return; y.secili = !y.secili; ilanKaydet(); ilanEkran(); }
+
+/* ================= ILAN AFISI · animasyonlu video =================
+   Afisin kendisinden 9:16 / 4:5 MP4 uretir (internetsiz, ucretsiz):
+   acilis yakinlasmasi -> parsel sinirinin cizilmesi -> yollar ve cevrenin acilmasi -> parsele yakin plan -> ogeler sirayla.
+   Katmanlar bir kez cizilir (bos zemin, cap, her oge ayri saydam katman); kareler bunlarin birlesimi -> hizli.
+   Kodlama: WebCodecs (H.264) + mp4-muxer; yoksa MediaRecorder (webm, gercek zamanli). Muzik istege bagli. */
+const IV = { fps: 30, sahne: { acilis:true, cizim:true, acil:true, yakin:true, ogeler:true }, hiz: 1, kaydet: false, muzik: null, muzikAd: "" };
+const ivEase = t => t < 0 ? 0 : t > 1 ? 1 : t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
+const ivCik = t => t < 0 ? 0 : t > 1 ? 1 : 1 - Math.pow(1 - t, 3);
+const ivGeri = t => { if(t <= 0) return 0; if(t >= 1) return 1; const c1 = 1.5, c3 = c1 + 1; return 1 + c3*Math.pow(t - 1, 3) + c1*Math.pow(t - 1, 2); };
+const ivAra = (t, a, b) => b <= a ? (t >= b ? 1 : 0) : Math.max(0, Math.min(1, (t - a)/(b - a)));
+
+// ---- katmanlar ----
+async function ivKatmanlar(){
+  const D = ILAN.D, V = ILAN.V, sec = ILAN.secili; ILAN.secili = null;
+  await ilanFontlar();
+  const yeni = () => document.createElement("canvas");
+  const temizle = () => { delete D._capYok; delete D._ogeSec; delete D._sadeceOge; };
+  try{
+    const F = yeni(), P = ilanCiz(F, D, V, 1);
+    const kutular = D.ogeler.map(e => e._kutu ? e._kutu.slice() : null);
+    D._capYok = true; D._ogeSec = []; const B = yeni(); ilanCiz(B, D, V, 1); temizle();
+    D._ogeSec = []; const C = yeni(); ilanCiz(C, D, V, 1); temizle();
+    const ogeler = [];
+    D.ogeler.forEach((e, i) => { if(e.gizli || !kutular[i]) return;
+      D._sadeceOge = true; D._ogeSec = [i]; const c = yeni(); ilanCiz(c, D, V, 1); temizle();
+      ogeler.push({ i, tip: e.tip, kutu: kutular[i], c, satir: e.tip === "ozellik" ? Math.max(1, (e.alan?.maddeler || "").split("\n").filter(t => t.trim()).length) : 1, duzen: e.duzen }); });
+    // sira: kunye, yakin cekim, ozellikler, sonra digerleri (afisteki sirayla)
+    const oncelik = t => t === "kunye" ? 0 : t === "yakin" ? 1 : t === "ozellik" ? 2 : 3;
+    ogeler.sort((a, b) => oncelik(a.tip) - oncelik(b.tip) || a.i - b.i);
+    return { W: F.width, H: F.height, F, B, C, P, ogeler };
+  }finally{ temizle(); ILAN.secili = sec; if(typeof ilanCizTuval === "function") ilanCizTuval(); }
+}
+
+// ---- zaman cizelgesi ----
+function ivPlan(K){
+  const S = IV.sahne, h = IV.hiz, plan = []; let t = 0;
+  const ekle = (ad, sure) => { plan.push({ ad, a: t, b: t + sure*h }); t += sure*h; };
+  const pk = K.P.parsel, pw = pk[2] - pk[0], ph = pk[3] - pk[1];
+  K.zum = Math.max(1, Math.min(3, Math.min(K.W*.62/Math.max(1, pw), K.H*.42/Math.max(1, ph))));
+  if(S.acilis) ekle("acilis", 2);
+  if(S.cizim) ekle("cizim", 2.2);
+  if(S.acil) ekle("acil", 1.8);
+  if(S.yakin && K.zum > 1.25) ekle("yakin", 2.8);
+  const ogeT = [];
+  if(S.ogeler){ K.ogeler.forEach(o => { const sure = o.tip === "ozellik" ? .35 + o.satir*.22 : .55; ogeT.push({ o, a: t, b: t + sure*h }); t += (o.tip === "ozellik" ? .2 + o.satir*.22 : .42)*h; }); t += .3*h; }
+  ekle("son", S.ogeler ? 2.6 : 1.5);
+  return { plan, ogeT, sure: t };
+}
+
+// ---- tek kare ----
+function ivCiz(x, K, Z, t){
+  const { W, H, B, C, F, P } = K, pk = P.parsel, cx = (pk[0] + pk[2])/2, cy = (pk[1] + pk[3])/2;
+  const sah = ad => Z.plan.find(s => s.ad === ad), ic = s => s && t >= s.a && t < s.b, ora = s => s ? ivAra(t, s.a, s.b) : 1;
+  const sA = sah("acilis"), sC = sah("cizim"), sO = sah("acil"), sY = sah("yakin");
+  const ogeVar = Z.ogeT.length > 0;
+  // kamera
+  let kam = 1;
+  if(sA && t < sA.b) kam = 1.18 - .18*ivEase(ora(sA));
+  if(sY && ic(sY)){ const r = ora(sY), z = K.zum; kam = r < .36 ? 1 + (z - 1)*ivEase(r/.36) : r < .64 ? z : 1 + (z - 1)*(1 - ivEase((r - .64)/.36)); }
+  const kamera = () => { x.translate(cx, cy); x.scale(kam, kam); x.translate(-cx, -cy); };
+  x.setTransform(1, 0, 0, 1, 0, 0); x.fillStyle = "#06120D"; x.fillRect(0, 0, W, H);
+  // zemin: cap acilmadan once bos zemin, acilinca cap katmani (parselden disari dairesel acilir)
+  const acilT = sO ? ivEase(ora(sO)) : 1, capOnce = sO ? t < sO.a : false;
+  x.save(); kamera();
+  if(capOnce || !sO) x.drawImage(capOnce ? B : C, 0, 0);
+  else if(acilT >= 1) x.drawImage(C, 0, 0);
+  else { x.drawImage(B, 0, 0); const r0 = Math.hypot(pw(pk), ph(pk))/2 + 10, r1 = Math.hypot(W, H);
+    x.save(); x.beginPath(); x.arc(cx, cy, r0 + (r1 - r0)*acilT, 0, 7); x.clip(); x.drawImage(C, 0, 0); x.restore();
+    // acilan dairenin kenarinda ince altin halka
+    x.save(); x.globalAlpha = .55*(1 - acilT); x.lineWidth = 3; x.strokeStyle = "#F2D27A"; x.beginPath(); x.arc(cx, cy, r0 + (r1 - r0)*acilT, 0, 7); x.stroke(); x.restore(); }
+  // parsel sinirinin cizilmesi (bos zemin uzerinde) ve acilirken sonmesi
+  if(sC && t >= sC.a){ const r = ora(sC), cizO = ivEase(Math.min(1, r/.78)), dolgu = ivAra(r, .72, 1), son = sO ? 1 - ivAra(t, sO.a, sO.a + .7*(sO.b - sO.a)) : 1;
+    if(son > 0){ x.save(); x.globalAlpha = son; [P.sinirP].concat(P.ekP || []).forEach((poly, j, hep) => { const pay = 1/hep.length, yer = Math.max(0, Math.min(1, (cizO - j*pay)/pay)); ivSinir(x, poly, yer, dolgu); }); x.restore(); } }
+  x.restore();
+  // ogeler
+  if(ogeVar){ const hepsi = Z.ogeT.every(q => t >= q.b);
+    if(hepsi && t >= Z.ogeT[Z.ogeT.length - 1].b + .05) { x.drawImage(F, 0, 0); }
+    else Z.ogeT.forEach(q => { if(t < q.a) return; const r = ivAra(t, q.a, q.b); ivOge(x, q.o, r, K); }); }
+  else { const sS = sah("son"); if(sS && t >= sS.a){ x.save(); x.globalAlpha = ivAra(t, sS.a, sS.a + .6); x.drawImage(F, 0, 0); x.restore(); } }
+  // acilis: siyahtan gelis
+  if(sA && t < sA.a + .5){ x.fillStyle = `rgba(0,0,0,${1 - ivAra(t, sA.a, sA.a + .5)})`; x.fillRect(0, 0, W, H); }
+  else if(!sA && t < .35){ x.fillStyle = `rgba(0,0,0,${1 - t/.35})`; x.fillRect(0, 0, W, H); }
+}
+function pw(pk){ return pk[2] - pk[0]; } function ph(pk){ return pk[3] - pk[1]; }
+
+// altin sinir: yer (0..1) kadar cizili, ucunda parlayan nokta; dolgu 0..1
+function ivSinir(x, poly, yer, dolgu){
+  if(!poly || poly.length < 2 || yer <= 0) return;
+  const P = poly.concat([poly[0]]), L = []; let top = 0; for(let i=1;i<P.length;i++){ top += Math.hypot(P[i][0]-P[i-1][0], P[i][1]-P[i-1][1]); L.push(top); }
+  if(dolgu > 0){ x.save(); x.beginPath(); poly.forEach((q, i) => i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1])); x.closePath(); x.fillStyle = `rgba(70,205,95,${.42*dolgu})`; x.fill(); x.restore(); }
+  const hedef = top*yer; x.save(); x.lineJoin = "round"; x.lineCap = "round";
+  x.beginPath(); x.moveTo(P[0][0], P[0][1]); let uc = P[0];
+  for(let i=1;i<P.length;i++){ if(L[i-1] <= hedef){ x.lineTo(P[i][0], P[i][1]); uc = P[i]; continue; }
+    const once = i > 1 ? L[i-2] : 0, f = (hedef - once)/Math.max(1e-6, L[i-1] - once); uc = [P[i-1][0] + (P[i][0]-P[i-1][0])*f, P[i-1][1] + (P[i][1]-P[i-1][1])*f]; x.lineTo(uc[0], uc[1]); break; }
+  x.shadowColor = "rgba(255,206,90,.95)"; x.shadowBlur = 16; x.lineWidth = 5; x.strokeStyle = "#F2D27A"; x.stroke();
+  x.shadowBlur = 0; x.lineWidth = 2; x.strokeStyle = "#FFF6D8"; x.stroke();
+  if(yer < 1){ x.beginPath(); x.arc(uc[0], uc[1], 7, 0, 7); x.fillStyle = "#FFF6D8"; x.shadowColor = "rgba(255,220,120,1)"; x.shadowBlur = 22; x.fill(); }
+  x.restore();
+}
+
+// tek ogenin giris animasyonu (r: 0..1)
+function ivOge(x, o, r, K){
+  const [a, b, c, d] = o.kutu, pad = 40, sx = Math.max(0, a - pad), sy = Math.max(0, b - pad), sw = Math.min(K.W, c + pad) - sx, sh = Math.min(K.H, d + pad) - sy;
+  if(sw <= 0 || sh <= 0) return; const mx = (a + c)/2, my = (b + d)/2;
+  x.save();
+  if(o.tip === "ozellik" && o.satir > 1 && o.duzen !== "yan"){   // satir satir soldan kayarak
+    const n = o.satir, hh = (d - b)/n;
+    for(let i=0;i<n;i++){ const s0 = i*.22/(.35 + n*.22), s1 = s0 + .35/(.35 + n*.22), q = ivCik(ivAra(r, s0, s1)); if(q <= 0) continue;
+      const y0 = i === 0 ? sy : b + i*hh, y1 = i === n - 1 ? sy + sh : b + (i + 1)*hh;
+      x.save(); x.globalAlpha = q; x.beginPath(); x.rect(0, y0, K.W, y1 - y0); x.clip(); x.drawImage(o.c, sx, y0, sw, y1 - y0, sx - 90*(1 - q), y0, sw, y1 - y0); x.restore(); }
+    x.restore(); return; }
+  if(o.tip === "kunye"){ const q = ivCik(r); x.globalAlpha = q; x.drawImage(o.c, sx, sy, sw, sh, sx, sy - 70*(1 - q), sw, sh); }
+  else if(o.tip === "yakin"){ const q = ivGeri(r), pk = K.P.parsel, px = (pk[0] + pk[2])/2, py = (pk[1] + pk[3])/2, s = .12 + .88*q;
+    x.globalAlpha = Math.min(1, r*2.2); x.translate(px + (mx - px)*ivCik(r), py + (my - py)*ivCik(r)); x.scale(s, s); x.drawImage(o.c, sx, sy, sw, sh, sx - mx, sy - my, sw, sh); }
+  else { const q = ivGeri(r), s = 1.28 - .28*q; x.globalAlpha = Math.min(1, r*2); x.translate(mx, my); x.scale(s, s); x.drawImage(o.c, sx, sy, sw, sh, sx - mx, sy - my, sw, sh); }
+  x.restore();
+}
+
+// ---- muzik (istege bagli) ----
+async function ivMuzikHazir(sure, hz){
+  if(!IV.muzik) return null;
+  const AC = window.AudioContext || window.webkitAudioContext; const ac = new AC({ sampleRate: hz });
+  const buf = await ac.decodeAudioData(await IV.muzik.arrayBuffer()); ac.close?.();
+  const n = Math.ceil(sure*hz), L = new Float32Array(n), R = new Float32Array(n), s0 = buf.getChannelData(0), s1 = buf.numberOfChannels > 1 ? buf.getChannelData(1) : s0;
+  for(let i=0;i<n;i++){ const j = i % buf.length; const g = Math.min(1, i/(hz*.3), (n - i)/(hz*1.4)); L[i] = s0[j]*g; R[i] = s1[j]*g; }   // kisaysa doner, basta/sonda yumusak
+  return { L, R, n, hz };
+}
+
+// ---- kodlama ----
+async function ivDestek(){
+  if(typeof VideoEncoder === "undefined" || typeof VideoFrame === "undefined") return null;
+  for(const [kod, mux] of [["avc1.640028", "avc"], ["avc1.4d0028", "avc"], ["avc1.42002a", "avc"], ["vp09.00.40.08", "vp9"]]){
+    try{ const s = await VideoEncoder.isConfigSupported({ codec: kod, width: 1080, height: 1920, bitrate: 8e6, framerate: 30 }); if(s.supported) return { kod, mux }; }catch(e){} }
+  return null; }
+async function ivMuxerYukle(){
+  if(window.Mp4Muxer) return;
+  await new Promise((ok, no) => { const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/build/mp4-muxer.js"; s.onload = ok; s.onerror = () => no(new Error("Video kütüphanesi yüklenemedi (internet?)")); document.head.appendChild(s); }); }
+
+async function ivUret(ilerle){
+  const K = await ivKatmanlar(), Z = ivPlan(K), fps = IV.fps, N = Math.ceil(Z.sure*fps);
+  const cv = document.createElement("canvas"); cv.width = K.W; cv.height = K.H; const x = cv.getContext("2d");
+  const dk = await ivDestek();
+  if(dk){ await ivMuxerYukle();
+    let ses = null, sesKod = null;
+    if(IV.muzik && typeof AudioEncoder !== "undefined"){
+      for(const [kod, mux, hz] of [["mp4a.40.2", "aac", 44100], ["opus", "opus", 48000]]){
+        try{ const s = await AudioEncoder.isConfigSupported({ codec: kod, sampleRate: hz, numberOfChannels: 2, bitrate: 160000 }); if(s.supported){ sesKod = { kod, mux, hz }; break; } }catch(e){} }
+      if(sesKod) ses = await ivMuzikHazir(Z.sure, sesKod.hz); else toast("Bu cihaz müziği kodlayamıyor, video sessiz çıkacak"); }
+    const M = new Mp4Muxer.Muxer({ target: new Mp4Muxer.ArrayBufferTarget(), fastStart: "in-memory",
+      video: { codec: dk.mux, width: K.W, height: K.H, frameRate: fps }, ...(ses ? { audio: { codec: sesKod.mux, numberOfChannels: 2, sampleRate: sesKod.hz } } : {}) });
+    let hata = null;
+    const ve = new VideoEncoder({ output: (ch, meta) => M.addVideoChunk(ch, meta), error: e => hata = e });
+    ve.configure({ codec: dk.kod, width: K.W, height: K.H, bitrate: 9e6, framerate: fps, ...(dk.mux === "avc" ? { avc: { format: "avc" } } : {}) });
+    for(let f=0; f<N; f++){ if(hata) throw hata;
+      ivCiz(x, K, Z, f/fps);
+      const vf = new VideoFrame(cv, { timestamp: Math.round(f*1e6/fps), duration: Math.round(1e6/fps) }); ve.encode(vf, { keyFrame: f % (fps*2) === 0 }); vf.close();
+      while(ve.encodeQueueSize > 6) await new Promise(r => setTimeout(r, 4));
+      if(f % 6 === 0){ ilerle?.(f/N*(ses ? .92 : 1)); await new Promise(r => setTimeout(r, 0)); } }
+    await ve.flush(); ve.close(); if(hata) throw hata;
+    if(ses){ const ae = new AudioEncoder({ output: (ch, meta) => M.addAudioChunk(ch, meta), error: e => hata = e });
+      ae.configure({ codec: sesKod.kod, sampleRate: sesKod.hz, numberOfChannels: 2, bitrate: 160000 });
+      const parca = 4096; for(let i=0;i<ses.n;i+=parca){ const n = Math.min(parca, ses.n - i), d = new Float32Array(n*2); d.set(ses.L.subarray(i, i + n), 0); d.set(ses.R.subarray(i, i + n), n);
+        const ad = new AudioData({ format: "f32-planar", sampleRate: ses.hz, numberOfFrames: n, numberOfChannels: 2, timestamp: Math.round(i*1e6/ses.hz), data: d }); ae.encode(ad); ad.close(); }
+      await ae.flush(); ae.close(); if(hata) throw hata; }
+    M.finalize(); ilerle?.(1);
+    return { blob: new Blob([M.target.buffer], { type: "video/mp4" }), uzanti: "mp4" }; }
+  // yedek: gercek zamanli kayit (webm)
+  if(typeof MediaRecorder === "undefined" || !cv.captureStream) throw new Error("Bu cihazda video kaydı desteklenmiyor");
+  const tip = ["video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm"].find(t => MediaRecorder.isTypeSupported(t)) || "";
+  const st = cv.captureStream(fps), rec = new MediaRecorder(st, { mimeType: tip, videoBitsPerSecond: 9e6 }), par = [];
+  rec.ondataavailable = e => e.data.size && par.push(e.data);
+  const bitti = new Promise(r => rec.onstop = r); ivCiz(x, K, Z, 0); rec.start(250);
+  const t0 = performance.now(); await new Promise(r => { const adim = () => { const t = (performance.now() - t0)/1000; ivCiz(x, K, Z, Math.min(t, Z.sure)); ilerle?.(t/Z.sure); if(t >= Z.sure + .2) r(); else requestAnimationFrame(adim); }; requestAnimationFrame(adim); });
+  rec.stop(); await bitti; const mp4 = /mp4/.test(tip);
+  if(IV.muzik) toast("Bu cihazda müzik eklenemedi, video sessiz");
+  return { blob: new Blob(par, { type: mp4 ? "video/mp4" : "video/webm" }), uzanti: mp4 ? "mp4" : "webm" };
+}
+
+// ---- pencere: onizleme + ayarlar + olustur ----
+async function ilanVideo(){
+  if(!ILAN?.V?.veri) return toast("Önce çapı zemine oturt");
+  document.querySelector(".ivPen")?.remove();
+  const k = document.createElement("div"); k.className = "ekOnizle ivPen";
+  const sahneAd = { acilis: "Açılış yakınlaşması", cizim: "Parsel sınırının çizilmesi", acil: "Yolların ve çevrenin açılması", yakin: "Parsele yakın plan", ogeler: "Yazıların sırayla gelmesi" };
+  k.innerHTML = `<div class="ivKutu"><div class="ivSahne"><canvas id="ivTuval"></canvas><div class="ivYuk" id="ivYuk">Hazırlanıyor…</div></div>
+    <div class="ivYan"><b>🎬 Animasyonlu ilan videosu</b><small>Afişin kendisinden üretilir. Afişte ne varsa (yazılar, yollar, renkler) videoda da o var.</small>
+      <div class="ivGrup">${Object.keys(sahneAd).map(s => `<label class="ilTik"><input type="checkbox" data-s="${s}" ${IV.sahne[s] ? "checked" : ""}> ${sahneAd[s]}</label>`).join("")}</div>
+      <div class="field"><label>Hız</label><select id="ivHiz"><option value="1.25" ${IV.hiz === 1.25 ? "selected" : ""}>Sakin</option><option value="1" ${IV.hiz === 1 ? "selected" : ""}>Normal</option><option value=".75" ${IV.hiz === .75 ? "selected" : ""}>Hızlı</option></select></div>
+      <div class="field"><label>Müzik (isteğe bağlı)</label><div class="ivMuzik"><span id="ivMAd">${IV.muzik ? esc(IV.muzikAd) : "Yok"}</span>
+        <button class="btn ghost" id="ivMSec">Seç</button>${IV.muzik ? `<button class="btn ghost" id="ivMSil">Kaldır</button>` : ""}</div><input type="file" id="ivMDosya" accept="audio/*" hidden></div>
+      <label class="ilTik"><input type="checkbox" id="ivKayit" ${IV.kaydet ? "checked" : ""}> Parselin belgelerine de kaydet</label>
+      <div class="ivSure" id="ivSure"></div>
+      <div class="ivBar" id="ivBar" hidden><i></i></div>
+      <button class="btn" id="ivYap">Videoyu oluştur ve indir</button>
+      <button class="btn ghost" id="ivKapa">Kapat</button></div></div>`;
+  document.body.appendChild(k);
+  const cv = k.querySelector("#ivTuval"), x = cv.getContext("2d"); let K = null, Z = null, t0 = 0, raf = 0, calis = false;
+  const oynat = () => { cancelAnimationFrame(raf); t0 = performance.now(); const adim = () => { if(!K || calis) return; const t = ((performance.now() - t0)/1000) % (Z.sure + .8); ivCiz(x, K, Z, Math.min(t, Z.sure)); raf = requestAnimationFrame(adim); }; raf = requestAnimationFrame(adim); };
+  const yenile = () => { if(!K) return; Z = ivPlan(K); k.querySelector("#ivSure").textContent = `Süre: ${Z.sure.toFixed(1).replace(".", ",")} sn · ${K.W}×${K.H}`; oynat(); };
+  const kapa = () => { cancelAnimationFrame(raf); k.remove(); };
+  k.onclick = e => { if(e.target === k && !calis) kapa(); };
+  k.querySelector("#ivKapa").onclick = () => { if(!calis) kapa(); };
+  k.querySelectorAll("[data-s]").forEach(c => c.onchange = () => { IV.sahne[c.dataset.s] = c.checked; yenile(); });
+  k.querySelector("#ivHiz").onchange = e => { IV.hiz = +e.target.value; yenile(); };
+  k.querySelector("#ivKayit").onchange = e => IV.kaydet = e.target.checked;
+  const md = k.querySelector("#ivMDosya");
+  k.querySelector("#ivMSec").onclick = () => md.click();
+  md.onchange = () => { const f = md.files[0]; if(!f) return; IV.muzik = f; IV.muzikAd = f.name; k.querySelector("#ivMAd").textContent = f.name; };
+  k.querySelector("#ivMSil")?.addEventListener("click", () => { IV.muzik = null; IV.muzikAd = ""; k.querySelector("#ivMAd").textContent = "Yok"; });
+  k.querySelector("#ivYap").onclick = async () => {
+    if(calis || !K) return; calis = true; cancelAnimationFrame(raf);
+    const bar = k.querySelector("#ivBar"), btn = k.querySelector("#ivYap"); bar.hidden = false; btn.disabled = true; btn.textContent = "Oluşturuluyor…";
+    try{
+      const s = await ivUret(r => { bar.firstElementChild.style.width = Math.round(r*100) + "%"; });
+      const p = ILAN.p, ad = `${p.ada || 0}-${p.parsel}-ilan-video-${Date.now().toString().slice(-5)}.${s.uzanti}`;
+      indirBlob(s.blob, ad);
+      if(IV.kaydet){ try{ await dosyaYukle(new File([s.blob], ad, { type: s.blob.type }), "sunum", ILAN.id); toast("Video indirildi ve parselin belgelerine kaydedildi"); }
+        catch(e){ toast("İndirildi ama kaydedilemedi: " + (e.message || e)); } }
+      else toast(`Video indirildi (${(s.blob.size/1048576).toFixed(1).replace(".", ",")} MB)`);
+    }catch(e){ console.error(e); toast("Video oluşmadı: " + (e.message || e)); }
+    calis = false; bar.hidden = true; btn.disabled = false; btn.textContent = "Videoyu oluştur ve indir"; oynat(); };
+  await new Promise(r => setTimeout(r, 30));
+  try{ K = await ivKatmanlar(); cv.width = K.W; cv.height = K.H; k.querySelector("#ivYuk").remove(); yenile(); }
+  catch(e){ console.error(e); k.querySelector("#ivYuk").textContent = "Hazırlanamadı: " + (e.message || e); }
+}
 
 /* ================= KML ve çap ================= */
 
