@@ -2815,7 +2815,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.3.0";
+const SURUM_MORDOR = "v 3.3.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -13435,6 +13435,7 @@ function ilanEkran(){
             return `<div class="field ilKay"><label>${etk} <b id="ileh_${i}_${k}">${k === "r" ? (v/10).toFixed(1) + "°" : v}</b></label><input type="range" min="${mn}" max="${mx}" value="${v}" oninput="ilanEkHiza(${i}, '${k}', +this.value)"></div>`; }).join("")}
           <button class="btn ghost" onclick="ilanEkKaldir(${i})">Bu parseli kaldır</button></details>`).join("")}
         <button class="btn ghost" style="margin-top:8px;width:100%" onclick="ilanEkParselSec()">+ Yanına ikinci parsel ekle</button>
+        <button class="btn ivTus2" style="margin-top:8px;width:100%" onclick="ilanVideo()">🎬 Video Yap</button>
         ${(D.ekler || []).length ? `<label class="ilTik"><input type="checkbox" ${D.ekEtiket !== false ? "checked" : ""} onchange="ilanAyar('ekEtiket', this.checked)"> Parsellerin içinde ada/parsel ve m²</label>
           ${D.ekEtiket !== false ? ilanKaydirici("ekYazi", "Parsel yazı boyutu", Math.round((D.ekYaziBoy || 1)*100), 60, 160, "%") : ""}` : ""}</div>` : ""}
     </div>
