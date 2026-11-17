@@ -2820,7 +2820,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.4.1";
+const SURUM_MORDOR = "v 3.4.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -18279,9 +18279,14 @@ let GPT_MOD = null;   // { tur:"tapu"|"imar", ... }
 function gptBekleBar(metin){
   document.getElementById("ekGptBar")?.remove();
   const d = document.createElement("div"); d.id = "ekGptBar";
-  d.innerHTML = `<span>✦ ${esc(metin)}</span><button class="btn" onclick="gptCevapAl()">Cevabı al</button><button class="btn ghost" onclick="GPT_MOD=null;this.parentElement.remove()">Vazgeç</button>`;
+  d.innerHTML = `<span>✦ ${esc(metin)}</span>${window.arsaPC?.gptCevapOku ? `<button class="btn" onclick="gptCevapAl()">Cevabı al</button>` : ""}<button class="btn ${window.arsaPC?.gptCevapOku ? "ghost" : ""}" onclick="gptPanodanAl()" title="ChatGPT'de cevabın altındaki kopyala simgesine bas, sonra buna">📋 Panodan al</button><button class="btn ghost" onclick="GPT_MOD=null;this.parentElement.remove()">Vazgeç</button>`;
   document.body.appendChild(d);
 }
+// ChatGPT'ye bu pencereden girilemiyorsa (Google girisi engeli): cevap kendi tarayicidan kopyalanip buraya alinir
+async function gptPanodanAl(){ let t = ""; try{ t = await navigator.clipboard.readText(); }catch(e){}
+  if(!t) t = prompt("Pano okunamadı. ChatGPT cevabını buraya yapıştır:") || "";
+  if(!t.trim()) return toast("Panoda metin yok · ChatGPT'de cevabın altındaki kopyala simgesine bas");
+  gptCevapGeldi(t); }
 async function gptCevapAl(){ const t = await window.arsaPC?.gptCevapOku?.(); if(!t) return toast("Henüz ChatGPT cevabı yok, bitince tekrar bas"); gptCevapGeldi(t); }
 async function gptCevapGeldi(t){
   if(!GPT_MOD) return toast("ChatGPT cevabı geldi ama bekleyen bir iş yok");
@@ -18449,7 +18454,7 @@ async function emsalKartiHtml(id, p, a){
   if(!E?.ilanlar?.length) return ME.role === "uye" ? "" : `<div class="card" id="ekEmsal"><div class="bolum"><span class="rz altin">${svg("money")}</span><b>Emsal Fiyatlar</b></div>
     <p class="ipuc" style="margin:2px 0 10px">${pc ? "Sahibinden programın içinde açılır, parselin ilçesindeki satılık ilanlar hazır gelir. İstediğin sayfada menüden “Sayfadaki ilanları emsale al” de; ilanlar tek tıkla buraya düşer. Sahibinden “bot değilim” ekranında takılırsa kendi tarayıcında aç ve “Arsa Takip” yer imiyle aktar." : "Bilgisayarda kendi tarayıcında sahibinden aramasını aç, “Arsa Takip” yer imine bas, sonra buradan “Panodan emsal al” de."}</p>
     ${emsalArastirmaHtml(id, p, a)}
-    <div class="ekTuslar">${pc ? `<button class="btn" onclick="emsalArastir('${id}')">🔎 ChatGPT ile araştır</button><button class="btn ghost" onclick="emsalTopla('${id}')">📊 Emsal Topla</button>` : ""}<button class="btn ghost" onclick="emsalPanodan('${id}')">📋 Panodan emsal al</button><button class="btn ghost" onclick="emsalYerImi('${id}')">🔖 Tarayıcı yer imi</button></div></div>`;
+    <div class="ekTuslar">${pc ? `<button class="btn" onclick="emsalArastir('${id}')">🔎 ChatGPT ile araştır</button><button class="btn ghost" onclick="emsalArastir('${id}', true)" title="ChatGPT'ye bu pencereden giriş yapamıyorsan">🌐 Kendi tarayıcımda araştır</button><button class="btn ghost" onclick="emsalTopla('${id}')">📊 Emsal Topla</button>` : ""}<button class="btn ghost" onclick="emsalPanodan('${id}')">📋 Panodan emsal al</button><button class="btn ghost" onclick="emsalYerImi('${id}')">🔖 Tarayıcı yer imi</button></div></div>`;
   const { data:yy } = await sb.from("parcel_years").select("m2_fiyat").eq("parcel_id", id).eq("yil", YEAR);
   const A = emsalAnaliz(p, E, +yy?.[0]?.m2_fiyat || null); if(!A) return "";
   const g = E.gpt, gd = g?.bant ? (g.bant[1] < A.bant[0]*.85 || g.bant[0] > A.bant[1]*1.15 ? "uyusmuyor" : "tutarli") : null;
@@ -18463,7 +18468,7 @@ async function emsalKartiHtml(id, p, a){
       ${E.ilanlar.map(x => `<div class="kv ekEmsalSat ${x.haric ? "ekSoluk" : ""} ${A.aykiri.some(z => z.id === x.id) ? "ekUyari" : ""}"><span><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.baslik || "ilan")}</a><small>${esc(x.yer)} · ${nf(Math.round(x.m2))} m² · ${tl(x.fiyat)} · ${esc(x.tarih)}</small></span>
         <b class="mono">${nf(x.birim)} ₺/m²</b>${ME.role !== "uye" ? `<button title="${x.haric ? "Geri al" : "Hesaptan çıkar"}" onclick="emsalHaric('${id}','${x.id}')">${x.haric ? "↺" : "✕"}</button>` : ""}</div>`).join("")}</details>
     ${emsalArastirmaHtml(id, p, a)}
-    <div class="ekTuslar">${pc ? `<button class="btn ghost" onclick="emsalArastir('${id}')">🔎 ChatGPT ile araştır</button><button class="btn ghost" onclick="emsalTopla('${id}')">📊 Emsal Topla</button>` : ""}${ME.role !== "uye" ? `<button class="btn ghost" onclick="emsalPanodan('${id}')">📋 Panodan al</button><button class="btn ghost" onclick="emsalYerImi('${id}')">🔖 Yer imi</button>` : ""}${pc ? `<button class="btn ghost" onclick="emsalGpt('${id}')">✦ ChatGPT'ye yorumlat</button>` : ""}<button class="btn" onclick="emsalPdf('${id}')">Emsal Raporu (PDF)</button></div>
+    <div class="ekTuslar">${pc ? `<button class="btn ghost" onclick="emsalArastir('${id}')">🔎 ChatGPT ile araştır</button><button class="btn ghost" onclick="emsalArastir('${id}', true)" title="ChatGPT'ye bu pencereden giriş yapamıyorsan">🌐 Kendi tarayıcımda</button><button class="btn ghost" onclick="emsalTopla('${id}')">📊 Emsal Topla</button>` : ""}${ME.role !== "uye" ? `<button class="btn ghost" onclick="emsalPanodan('${id}')">📋 Panodan al</button><button class="btn ghost" onclick="emsalYerImi('${id}')">🔖 Yer imi</button>` : ""}${pc ? `<button class="btn ghost" onclick="emsalGpt('${id}')">✦ ChatGPT'ye yorumlat</button>` : ""}<button class="btn" onclick="emsalPdf('${id}')">Emsal Raporu (PDF)</button></div>
     <p class="ipuc" style="margin:8px 0 0">Son toplama: ${esc(E.son || "")}${(E.gecmis || []).length > 1 ? " · " + E.gecmis.length + " ölçüm geçmişi" : ""}</p></div>`;
 }
 const kisaPara = n => !isFinite(n) ? "—" : n >= 1e6 ? (n/1e6).toFixed(n >= 1e7 ? 1 : 2).replace(".", ",") + " Mn ₺" : nf(Math.round(n/1000)*1000) + " ₺";
@@ -18558,15 +18563,14 @@ function ekMerkez(h){ const lat0 = h[0][1], kx = Math.cos(lat0*Math.PI/180); let
   if(Math.abs(A) < 1e-14) return [h.reduce((t, q) => t + q[0], 0)/h.length, h.reduce((t, q) => t + q[1], 0)/h.length];
   return [X/(3*A)/kx, Y/(3*A)]; }
 function ekKusUcusu(a, b){ const R = 6371, r = Math.PI/180, dl = (b[1]-a[1])*r, dg = (b[0]-a[0])*r, x = Math.sin(dl/2)**2 + Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dg/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
-async function emsalArastir(id){
-  if(!window.arsaPC?.gptAc) return toast("Bu özellik masaüstü programında çalışır");
+async function emsalArastir(id, disari){
+  if(!disari && !window.arsaPC?.gptAc) disari = true;
   const { data:p } = await sb.from("parcels").select("*").eq("id", id).single(); const h = ekHalka(p);
   if(!h) return toast("Parselin sınır çizimi yok (önce haritadan sorgula)");
   const m = ekMerkez(h), adim = Math.max(1, Math.ceil(h.length/40)), kose = h.filter((q, i) => i % adim === 0).map(q => `${q[1].toFixed(6)},${q[0].toFixed(6)}`).join(" ");
   const { data:yy } = await sb.from("parcel_years").select("m2_fiyat").eq("parcel_id", id).eq("yil", YEAR); const fiyat = +yy?.[0]?.m2_fiyat || 0;
   const bugun = new Date().toLocaleDateString("tr-TR");
-  GPT_MOD = { tur:"emsalArastir", id, merkez:m }; gptBekleBar("ChatGPT araştırıyor · bitince “Cevabı al”a bas (birkaç dakika sürebilir)");
-  const ok = await window.arsaPC.gptAc(null, `Bir arsa/tarla için internette EMSAL FİYAT ve MESAFE araştırması yapmanı istiyorum. Web aramasını kullan. Bugün: ${bugun}.
+  const istem = `Bir arsa/tarla için internette EMSAL FİYAT ve MESAFE araştırması yapmanı istiyorum. Web aramasını kullan. Bugün: ${bugun}.
 
 PARSEL
 - İl / ilçe / mahalle: ${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)}
@@ -18583,7 +18587,16 @@ YAPILACAKLAR
 ARSATAKIP-JSON
 {"emsaller":[{"baslik":"","m2":0,"fiyat_tl":0,"konum":"","tarih":"","url":"","site":""}],
  "mesafeler":[{"hedef":"","enlem":0,"boylam":0,"km":0,"kaynak":""}],
- "bant":[0,0]}`);
+ "bant":[0,0]}`;
+  GPT_MOD = { tur:"emsalArastir", id, merkez:m };
+  let kop = false; try{ await navigator.clipboard.writeText(istem); kop = true; }catch(e){}
+  if(disari){
+    gptBekleBar("Kendi tarayıcında ChatGPT: yapıştır (Ctrl+V) → gönder → cevabı kopyala → “Panodan al”");
+    window.open("https://chatgpt.com/", "_blank");
+    toast(kop ? "Araştırma metni panoya kopyalandı · ChatGPT'de Ctrl+V ile yapıştır" : "Pano kullanılamadı");
+    return; }
+  gptBekleBar("ChatGPT araştırıyor · bitince “Cevabı al”a bas (birkaç dakika sürebilir)");
+  const ok = await window.arsaPC.gptAc(null, istem);
   if(ok === false) toast("ChatGPT'nin yazma kutusu bulunamadı: giriş yapıp tekrar dene");
 }
 async function emsalArastirCevabi(t, M){
