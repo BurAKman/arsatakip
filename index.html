@@ -2815,7 +2815,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.3.1";
+const SURUM_MORDOR = "v 3.3.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -14210,7 +14210,7 @@ function ivPlan(K){
   if(S.acil) ekle("acil", 1.8);
   if(S.yakin && K.zum > 1.25) ekle("yakin", 2.8);
   const ogeT = [];
-  if(S.ogeler){ K.ogeler.forEach(o => { const sure = o.tip === "ozellik" ? .35 + o.satir*.22 : .55; ogeT.push({ o, a: t, b: t + sure*h }); t += (o.tip === "ozellik" ? .2 + o.satir*.22 : .42)*h; }); t += .3*h; }
+  if(S.ogeler){ K.ogeler.forEach(o => { const sure = o.tip === "ozellik" ? .35 + o.satir*.22 : o.tip === "yakin" ? .9 : .55; ogeT.push({ o, a: t, b: t + sure*h }); t += (o.tip === "ozellik" ? .2 + o.satir*.22 : o.tip === "yakin" ? .7 : .42)*h; }); t += .3*h; }
   ekle("son", S.ogeler ? 2.6 : 1.5);
   return { plan, ogeT, sure: t };
 }
@@ -14223,7 +14223,12 @@ function ivCiz(x, K, Z, t){
   const ogeVar = Z.ogeT.length > 0;
   // kamera
   let kam = 1;
-  if(sA && t < sA.b) kam = 1.18 - .18*ivEase(ora(sA));
+  // parsel kucukse cizim sahnesi biraz yakindan izlenir, cevre acilirken geri cekilir
+  const zc = sC ? Math.min(1.7, K.zum || 1) : 1;
+  if(sA && t < sA.b) kam = 1.18 + (zc - 1.18)*ivEase(ora(sA));
+  if(sC && ic(sC)) kam = zc;
+  if(sC && sO && ic(sO)) kam = zc + (1 - zc)*ivEase(ora(sO));
+  if(sC && !sO && t >= sC.b && (!sY || t < sY.a)) kam = zc + (1 - zc)*ivEase(ivAra(t, sC.b, sC.b + .8));
   if(sY && ic(sY)){ const r = ora(sY), z = K.zum; kam = r < .36 ? 1 + (z - 1)*ivEase(r/.36) : r < .64 ? z : 1 + (z - 1)*(1 - ivEase((r - .64)/.36)); }
   const kamera = () => { x.translate(cx, cy); x.scale(kam, kam); x.translate(-cx, -cy); };
   x.setTransform(1, 0, 0, 1, 0, 0); x.fillStyle = "#06120D"; x.fillRect(0, 0, W, H);
@@ -14270,6 +14275,8 @@ function ivSinir(x, poly, yer, dolgu){
 function ivOge(x, o, r, K){
   const [a, b, c, d] = o.kutu, pad = 40, sx = Math.max(0, a - pad), sy = Math.max(0, b - pad), sw = Math.min(K.W, c + pad) - sx, sh = Math.min(K.H, d + pad) - sy;
   if(sw <= 0 || sh <= 0) return; const mx = (a + c)/2, my = (b + d)/2;
+  // yakin cekimin kutu disindaki parcalari (parsel halkasi, kesik baglanti cizgileri): kutu yerine oturunca belirir
+  if(o.tip === "yakin"){ const dis = ivAra(r, .55, 1); if(dis > 0){ x.save(); x.globalAlpha = dis; x.beginPath(); x.rect(0, 0, K.W, K.H); x.rect(sx, sy, sw, sh); x.clip("evenodd"); x.drawImage(o.c, 0, 0); x.restore(); } }
   x.save();
   if(o.tip === "ozellik" && o.satir > 1 && o.duzen !== "yan"){   // satir satir soldan kayarak
     const n = o.satir, hh = (d - b)/n;
