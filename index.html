@@ -2833,7 +2833,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.5.0";
+const SURUM_MORDOR = "v 3.5.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -18480,7 +18480,7 @@ async function emsalKartiHtml(id, p, a){
   let D; try{ D = emsalDegerleme(p, A, E); }catch(e){ D = { yolK:1, butun:{ m2:A.bant, toplam:A.toplam }, hs:null, hisse:[] }; }
   const g = E.gpt, gd = g?.bant ? (g.bant[1] < A.bant[0]*.85 || g.bant[0] > A.bant[1]*1.15 ? "uyusmuyor" : "tutarli") : null;
   return `<div class="card" id="ekEmsal"><div class="bolum"><span class="rz altin">${svg("money")}</span><b>Emsal Fiyatlar</b><span class="sayi">${A.n} ilan</span></div>
-    <div class="ekEmsalOzet"><div><small>Önerilen m² bandı${D.yolK !== 1 ? " · resmî yol dahil" : ""}</small><b>${nf(D.butun.m2[0])} – ${nf(D.butun.m2[1])} ₺</b></div><div><small>Bütün parsel (${nf2(+p.alan_m2 || 0)} m²)</small><b>${mnP(D.butun.toplam[0])} – ${mnP(D.butun.toplam[1])}</b></div>
+    <div class="ekEmsalOzet"><div><small>Önerilen m² bandı${D.Y?.durum === "resmi" ? " · yol cephesi dahil" : ""}</small><b>${nf(D.butun.m2[0])} – ${nf(D.butun.m2[1])} ₺</b></div><div><small>Bütün parsel (${nf2(+p.alan_m2 || 0)} m²)</small><b>${mnP(D.butun.toplam[0])} – ${mnP(D.butun.toplam[1])}</b></div>
       ${D.hs ? `<div><small>Hisseli satış · ${D.hisse.length} hisse</small><b>${mnP(D.hs.fiyat[0])} – ${mnP(D.hs.fiyat[1])}</b></div>` : `<div><small>Medyan · aynı köy</small><b>${nf(Math.round(A.med))} ₺${A.koyMed ? " · " + nf(Math.round(A.koyMed)) + " ₺" : ""}</b></div>`}</div>
     ${emsalNoktaSvg({ ...A, bant: D.butun.m2 }, A.kendiFiyat)}
     ${A.kendiFiyat ? `<div class="ekEmsalNot">Senin m² fiyatın (${nf(A.kendiFiyat)} ₺) emsal bandının <b>${A.konum}</b>.</div>` : ""}
@@ -18708,12 +18708,16 @@ function emsalYolBilgi(p){
 const EKK_ANAHTAR = /liman|port|plaj|sahil|deniz|merkez|meydan|otoyol|kavşak|kavsak|d-?\s?\d{3}|osb|sanayi|havaliman|istasyon|üniversite|hastane|okul/i;
 function emsalDegerleme(p, A, E){
   const alan = +p.alan_m2 || 0, Y = emsalYolBilgi(p);
-  const yolK = Y.durum === "resmi" ? 1.10 : 1;
+  // resmi yol primi: emsallerle KARSILASTIRMALI. Emsallerin cogu zaten "yola cepheli / asfalt" diye ilan ediliyorsa
+  // bizim cephemiz onlara gore ustunluk degildir; prim = %10 x (yol iddiasi OLMAYAN emsal orani)
+  const YOL_IDDIA = /cephe|cepheli|asfalt|yola s[ıi]f[ıi]r|anayol|ana yol|yol [üu]st|d-?\s?\d{3}|kadastro yol/i;
+  const yolEms = A.gecerli.filter(x => YOL_IDDIA.test((x.baslik || "") + " " + (x.url || ""))).length, yolOran = A.gecerli.length ? yolEms/A.gecerli.length : 0;
+  const yolPrim = Y.durum === "resmi" ? Math.round(10*(1 - yolOran))/100 : 0, yolK = 1 + yolPrim;
   // cevre raporu + arazi karnesi: arazinin kendi kusurlari fiyata yansir (en fazla -%15), artilari ayrica yazilir
   const an = p.analiz || {}, cev = an.cevre?.satirlar || [], kar = an.karne?.notlar || [];
   const S = k => cev.find(s => s.k === k), N = b => kar.find(n => n.b === b), mm = s => s && !s.yok ? (s.yolM || s.m) : null;
   const duz = [];
-  const as = S("asfalt"); if(as && (as.yok || as.m > 1000)) duz.push([`Asfalta uzak (${as.yok ? "yakında yok" : km(as.m)})`, -.05]);
+  const as = S("asfalt"); if(Y.durum !== "resmi" && as && !as.yok && as.m > 1000) duz.push([`Yol cephesi belgesiz ve asfalta ${km(as.m)}`, -.05]);
   const eg = N("Eğim"); if(eg?.puan != null && eg.puan <= 2) duz.push([`Eğimli arazi (${eg.deger})`, -.08]); else if(eg?.puan === 3) duz.push([`Orta eğim (${eg.deger})`, -.03]);
   const sn = S("sanayi"); if(sn && !sn.yok && sn.m < 500) duz.push([`Sanayi / ocak / çöp sahası yakın (${km(sn.m)})`, -.05]);
   const tk = N("Taşkın riski"); if(tk?.puan != null && tk.puan <= 2) duz.push([`Dereye çok yakın (${tk.deger})`, -.03]);
@@ -18726,7 +18730,7 @@ function emsalDegerleme(p, A, E){
   butun.ilan = yuv(butun.toplam[1], 50000);                    // ilana yazilacak (pazarlik payi dahil)
   butun.taban = yuv(butun.toplam[0]*.97, 50000);               // altina inilmemesi gereken
   butun.beklenen = yuv((butun.toplam[0] + butun.toplam[1])/2, 50000);
-  const hisse = Y.parcalar.map(o => { const m2 = +(o.hedef || o.m2) || 0; if(!m2 || !alan) return null;
+  const hisse = (Y.parcalar.length >= 2 ? Y.parcalar : []).map(o => { const m2 = +(o.hedef || o.m2) || 0; if(!m2 || !alan) return null;
     const k = Math.pow(m2/alan, egim)*.92;                      // kucuk parca primi, hisseli tapu indirimi
     const b = butun.m2.map(v => Math.min(v*k, gmax*1.2));
     return { no:o.no, m2, m2f: b.map(v => yuv(v, 10)), fiyat: b.map(v => yuv(v*m2, 5000)) }; }).filter(Boolean);
@@ -18742,34 +18746,35 @@ function emsalDegerleme(p, A, E){
   mes.sort((a, b) => a.km - b.km);
   // artilar / sinirlayanlar
   const art = [], eks = [];
-  if(Y.durum === "resmi") art.push(`Resmî (kadastral) yola cepheli${Y.cephe ? `, yaklaşık ${nf(Math.round(Y.cephe))} m cephe` : ""}. Erişim tapudan belgeli; yolu belirsiz tarlalara göre fiyata %10 prim verildi.`);
+  if(Y.durum === "resmi") art.push(`Resmî (kadastral) yola cepheli${Y.cephe ? `, yaklaşık ${nf(Math.round(Y.cephe))} m cephe` : ""}. ` + (yolPrim > 0
+    ? `Emsallerin ${yolEms ? A.gecerli.length + "'de " + yolEms + "'i de yola cepheli diye ilan edilmiş, bu yüzden" : "hiçbiri yol cephesi belirtmiyor, bu yüzden"} prim %${Math.round(yolPrim*100)}.`
+    : `Emsallerin hepsi de yola cepheli diye ilan edildiği için ayrıca prim verilmedi.`));
   else eks.push("Resmî yol cephesi çapta işaretlenmemiş. Yol durumu tapu/kadastrodan teyit edilmeden fiyat primi verilmedi.");
   if(hisse.length) art.push(`Hisse planı hazır: ${hisse.length} hisse${Y.parselYolu ? `, ${nf2(Y.parselYolu)} m parsel yolları` : ""} ve muvafakatname. Küçük hisseler m² bazında daha yüksek fiyata satılır.`);
   mes.filter(m => m.km <= 5 && EKK_ANAHTAR.test(m.hedef)).slice(0, 5).forEach(m => art.push(`${m.hedef}: ${nf2(m.km)} km (kuş uçuşu).`));
   const ky = S("koy"); if(mm(ky) != null && mm(ky) <= 1500) art.push(`Yerleşime yakın: ${ky.ad ? ky.ad + " " : ""}${km(mm(ky))}.`);
   if(eg?.puan >= 4) art.push(`Arazi ${eg.puan === 5 ? "düz" : "hafif eğimli"} (${eg.deger}): her kullanıma uygun.`);
   const bk = N("Bakı"); if(bk?.puan === 5 && /güney/.test(bk.deger || "")) art.push(`Güneye bakıyor: bol güneş alır.`);
-  const el = S("elektrik"); if(el && !el.yok && el.m <= 300) art.push(`Elektrik hattı yakın (${km(el.m)}).`); else if(el && (el.yok || el.m > 700)) eks.push(`Elektrik hattı ${el.yok ? "yakında yok" : "uzak (" + km(el.m) + ")"}: bağlantı masrafı çıkabilir.`);
-  if(tk?.puan === 5) art.push("Yakında dere yok: taşkın riski düşük.");
+  const el = S("elektrik"); if(el && !el.yok && el.m <= 300) art.push(`Elektrik hattı yakın (${km(el.m)}).`); else if(el && !el.yok && el.m > 1000) eks.push(`Haritadaki en yakın elektrik hattı ${km(el.m)}: bağlantı masrafını teyit et.`);
+  if(tk?.puan === 5 && !S("su")?.yok) art.push("Dereye uzak: taşkın riski düşük.");
   const hiz = ["durak", "okul", "market", "saglik"].map(S).filter(x => mm(x) != null && mm(x) <= 3000);
   if(hiz.length) art.push("Yakın hizmetler: " + hiz.map(x => `${x.b.split(" (")[0].toLocaleLowerCase("tr")} ${km(mm(x))}`).join(", ") + ".");
   duz.forEach(d => eks.push(`${d[0]}: fiyattan %${Math.round(-d[1]*100)} düşüldü.`));
   const orm = N("Orman sınırı"); if(orm) eks.push(`Orman sınırına ${orm.deger}: yapılaşma kısıtı olabilir.`);
-  if(/tarla|bağ|bahçe|zeytin/i.test(p.nitelik || "")) eks.push(`Niteliği ${p.nitelik}: imarlı arsa değil. İmar/plan iddiası olan ilanlar bu yüzden bandın üstünde kalır.`);
   const iddia = (E.ilanlar || []).filter(x => !x.haric && /[iİ]mar|t[iİ]car[iİ]|loj[iİ]st[iİ]k|sanay[iİ]|konut|v[iİ]lla/i.test((x.baslik || "") + " " + (x.url || "")));
-  if(iddia.length) eks.push(`Emsallerin ${iddia.length} tanesi “imar / ticari / lojistik” iddiasıyla pazarlanıyor. Bu iddialar doğrulanmadı; tarla için üst sınır kabul edildi.`);
+  if(iddia.length) eks.push(`Emsallerin ${iddia.length} tanesi “imar / ticari / lojistik” iddiasıyla pazarlanıyor${/tarla|bağ|bahçe|zeytin/i.test(p.nitelik || "") ? `, bu parsel ise ${p.nitelik.toLocaleLowerCase("tr")}` : ""}. O ilanlar bandın üst ucunu oluşturuyor.`);
   eks.push("İlan fiyatları istenen fiyattır; gerçekleşen satışlar genelde %5–15 aşağıdadır.");
   // hesap adimlari
   const adim = [["Geçerli emsallerin medyanı", tl(A.med) + "/m²"]];
   if(A.tahmin) adim.push([`Büyüklüğe göre beklenen (${nf(Math.round(alan))} m²)`, tl(A.tahmin) + "/m²"]);
   if(A.koyMed) adim.push([`Aynı mahalle emsalleri (${A.ayniKoy.length} ilan)`, tl(A.koyMed) + "/m²"]);
   adim.push(["Ağırlıklı merkez değer", tl(A.merkez) + "/m²"]);
-  if(yolK !== 1) adim.push(["Resmî yol cephesi primi", "+%10 → " + tl(A.merkez*yolK) + "/m²"]);
+  if(Y.durum === "resmi") adim.push([`Resmî yol cephesi primi (emsallerin ${yolEms}/${A.gecerli.length}'i yola cepheli)`, yolPrim > 0 ? `+%${Math.round(yolPrim*100)} → ${tl(A.merkez*yolK)}/m²` : "yok (emsallerde de var)"]);
   duz.forEach(d => adim.push([d[0], "%" + Math.round(d[1]*100)]));
   if(duz.length) adim.push(["Arazi düzeltmeleri sonrası merkez", tl(A.merkez*carpan) + "/m²"]);
   adim.push(["Bütün parsel için bant", `${nf(butun.m2[0])} – ${nf(butun.m2[1])} ₺/m²`]);
   if(hs) adim.push([`Hisseli satış ortalaması (${nf2(hs.toplamM2)} m² hisse)`, `${nf(hs.m2Ort[0])} – ${nf(hs.m2Ort[1])} ₺/m²`]);
-  return { alan, Y, yolK, carpan, duz, egim, butun, hisse, grup, hs, mes, art, eks, adim, iddia, cev, kar, karGenel: an.karne?.genel };
+  return { alan, Y, yolK, yolPrim, yolEms, carpan, duz, egim, butun, hisse, grup, hs, mes, art, eks, adim, iddia, cev, kar, karGenel: an.karne?.genel };
 }
 // "su fiyat makul mu" cetveli
 function emsalCetvel(D, kendiToplam){
@@ -18838,7 +18843,7 @@ async function emsalPdf(id){
   y += kh + 30;
   // tek cumle
   const enIyi = iki && D.hs.fiyat[1] > D.butun.toplam[1] ? "hisseli satış" : "bütün satış";
-  const cumle = `${D.Y.durum === "resmi" ? "Parsel resmî yola cepheli olduğu için emsal bandının üst yarısında fiyatlanabilir. " : "Yol durumu belgelenmediği için emsal bandının ortası esas alındı. "}`
+  const cumle = `${D.Y.durum === "resmi" ? (D.yolPrim > 0 ? `Parsel resmî yola cepheli; emsallere göre bu bir üstünlük olduğu için fiyata %${Math.round(D.yolPrim*100)} eklendi. ` : "Parsel resmî yola cepheli; emsaller de öyle olduğu için ayrıca prim verilmedi. ") : "Yol durumu çapta işaretlenmediği için yol primi verilmedi. "}`
     + `Bütün olarak gerçekçi satış ${mil(D.butun.beklenen)} civarı${iki ? `; ${enIyi === "hisseli satış" ? "hisselere bölünerek satıldığında toplam " + mil(D.hs.fiyat[1]) + "'ye kadar çıkabilir" : "hisseli satış bütün satıştan belirgin fazla getirmiyor"}` : ""}.`
     + (kendiTop ? ` Kayıtlı fiyat (${mil(kendiTop)}) bu değerlendirmeye göre ${emsalCetvel(D, kendiTop).find(c => c.kendi)?.butun?.[0].toLocaleLowerCase("tr") || "—"}.` : "");
   y = sar(x, cumle, M, y, W - 2*M, 27, "600 19px Inter, Arial", KOYU) + 26;
