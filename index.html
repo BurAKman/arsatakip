@@ -2399,12 +2399,12 @@ body.pc[data-tema]{
   --ink:#F2F0EE; --ink-2:#A9A7AC; --ink-3:#6E6C73;
   --cizgi:rgba(255,255,255,.07); --cizgi-2:rgba(255,90,99,.32); --cam:rgba(255,255,255,.04); --cam-2:rgba(255,255,255,.07);
   --green:#7FB98A; --red:#FF5A63; --blue:#8AA5C4; --r:10px;
-  --pcGez:268px; --pcSol:calc(52px + var(--pcGez)); --pcSag:300px; --pcUst:110px; --pcAppH:calc(100vh - var(--pcUst) - 24px);
+  --pcGez:268px; --pcSol:calc(52px + var(--pcGez)); --pcSag:300px; --pcUst:128px; --pcAppH:calc(100vh - var(--pcUst) - 24px);
   background:radial-gradient(1100px 600px at 70% -10%,rgba(224,49,60,.10),transparent 60%),radial-gradient(900px 500px at 10% 110%,rgba(140,20,30,.12),transparent 60%),#060607!important;
   font-family:Inter,Manrope,system-ui,sans-serif; font-size:14px; overflow:hidden; height:100vh}
 body.pc.pcGezKapali{--pcGez:0px}
 body.pc.pcOzKapali,body.pc.pcOzGizli{--pcSag:0px}
-body.pc.pcAltVar{--pcUst:146px}
+body.pc.pcAltVar{--pcUst:164px}
 body.pc #acilis,body.pc #maskot{display:none!important}
 body.pc button{cursor:pointer}
 body.pc ::-webkit-scrollbar{width:10px;height:10px}
@@ -2415,7 +2415,7 @@ body:not(.pc) .pcKabuk{display:none!important}
 .pcKabuk svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 
 /* ust menu */
-#pcMenuCubuk{position:fixed;left:0;right:0;top:0;height:32px;z-index:60;display:flex;align-items:center;padding:0 12px;
+#pcMenuCubuk{position:fixed;left:0;right:0;top:0;height:46px;z-index:60;display:flex;align-items:center;padding:0 12px;
   background:linear-gradient(180deg,#151519,#0C0C0F);border-bottom:1px solid rgba(255,255,255,.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
 .pcLogo{display:flex;align-items:center;gap:10px;padding-right:16px;margin-right:6px;border-right:1px solid var(--pc-cizgi);height:18px}
 .pcLogo b{font-family:Cinzel,serif;font-size:11.5px;letter-spacing:.38em;font-weight:600;background:linear-gradient(180deg,#FFFFFF,#9B9AA0);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -2436,7 +2436,7 @@ body:not(.pc) .pcKabuk{display:none!important}
 .pcSMB{padding:6px 12px 7px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--pc-yazi3);border-bottom:1px solid var(--pc-cizgi);margin-bottom:4px}
 
 /* komut cubugu */
-#pcKomut{position:fixed;left:0;right:0;top:32px;height:42px;z-index:58;display:flex;align-items:center;gap:12px;padding:0 12px;
+#pcKomut{position:fixed;left:0;right:0;top:46px;height:46px;z-index:58;display:flex;align-items:center;gap:12px;padding:0 12px;
   background:linear-gradient(180deg,rgba(24,24,29,.94),rgba(14,14,18,.94));backdrop-filter:blur(10px);border-bottom:1px solid var(--pc-cizgi)}
 .pcGeri{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;color:var(--pc-yazi2);background:linear-gradient(180deg,#26262C,#18181C);border:1px solid rgba(255,255,255,.09)}
 .pcGeri svg{width:15px;height:15px;stroke-width:2.2}
@@ -2464,7 +2464,7 @@ body.pc[data-tema] #pcAra{flex:1;background:none!important;border:none!important
 .pcKomutSag{width:120px}
 
 /* sol simge rayi */
-#pcRay{position:fixed;left:0;top:74px;bottom:24px;width:52px;z-index:55;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;
+#pcRay{position:fixed;left:0;top:92px;bottom:24px;width:52px;z-index:55;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;
   background:linear-gradient(180deg,rgba(20,20,24,.96),rgba(11,11,14,.96));border-right:1px solid var(--pc-cizgi)}
 #pcRay button{width:38px;height:38px;border-radius:9px;display:grid;place-items:center;color:var(--pc-yazi3);position:relative;transition:color .15s,background .15s}
 #pcRay button svg{width:19px;height:19px}
@@ -2476,7 +2476,7 @@ body.pc[data-tema] #pcAra{flex:1;background:none!important;border:none!important
   background:var(--pc-ana);color:#fff;font-weight:700;box-shadow:0 0 8px rgba(255,60,70,.6)}
 
 /* parsel gezgini */
-#pcGezgin{position:fixed;left:52px;top:74px;bottom:24px;width:var(--pcGez);z-index:54;display:flex;flex-direction:column;overflow:hidden;
+#pcGezgin{position:fixed;left:52px;top:92px;bottom:24px;width:var(--pcGez);z-index:54;display:flex;flex-direction:column;overflow:hidden;
   background:linear-gradient(180deg,rgba(20,20,24,.94),rgba(11,11,14,.94));border-right:1px solid var(--pc-cizgi);transition:width .2s}
 body.pc.pcGezKapali #pcGezgin{border:none}
 .pcPbas{display:flex;align-items:center;gap:6px;height:36px;padding:0 10px 0 14px;flex:0 0 36px;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);border-bottom:1px solid var(--pc-cizgi)}
@@ -2530,7 +2530,7 @@ body.pc[data-tema] .pcGezAra input{height:28px;padding:0 10px!important;font-siz
 .pcKartAlt{margin-top:10px;padding-top:9px;border-top:1px solid var(--pc-cizgi);font-size:11px;color:var(--pc-yazi2)}
 
 /* belge sekmeleri + alt sekmeler */
-#pcSekmeler{position:fixed;top:74px;left:var(--pcSol);right:var(--pcSag);height:36px;z-index:53;display:flex;align-items:stretch;overflow-x:auto;scrollbar-width:none;
+#pcSekmeler{position:fixed;top:92px;left:var(--pcSol);right:var(--pcSag);height:36px;z-index:53;display:flex;align-items:stretch;overflow-x:auto;scrollbar-width:none;
   background:linear-gradient(180deg,#121216,#0C0C0F);border-bottom:1px solid var(--pc-cizgi);transition:left .2s,right .2s}
 .pcSek{display:flex;align-items:center;gap:10px;padding:0 14px;font-size:12.5px;color:var(--pc-yazi3);border-right:1px solid var(--pc-cizgi);cursor:pointer;white-space:nowrap;max-width:240px}
 .pcSek svg{width:15px;height:15px}
@@ -2538,7 +2538,7 @@ body.pc[data-tema] .pcGezAra input{height:28px;padding:0 10px!important;font-siz
 .pcSek.on{color:#fff;background:linear-gradient(180deg,#1A1A1F,#0E0E11);box-shadow:inset 0 2px 0 #FF3C46,0 -6px 16px -8px rgba(255,60,70,.7)}
 .pcSek i{font-style:normal;font-size:14px;color:var(--pc-yazi3);width:16px;height:16px;display:grid;place-items:center;border-radius:4px}
 .pcSek i:hover{background:rgba(255,255,255,.1);color:#fff}
-#pcAltSekme{position:fixed;top:110px;left:var(--pcSol);right:var(--pcSag);height:36px;z-index:53;display:none;align-items:stretch;gap:4px;padding:0 14px;
+#pcAltSekme{position:fixed;top:128px;left:var(--pcSol);right:var(--pcSag);height:36px;z-index:53;display:none;align-items:stretch;gap:4px;padding:0 14px;
   background:linear-gradient(180deg,rgba(255,255,255,.015),transparent),#09090B;border-bottom:1px solid var(--pc-cizgi);transition:left .2s,right .2s}
 body.pc.pcAltVar #pcAltSekme{display:flex}
 #pcAltSekme b{display:flex;align-items:center;padding:0 10px;font-size:12.5px;font-weight:500;color:var(--pc-yazi3);cursor:pointer;position:relative}
@@ -2547,7 +2547,7 @@ body.pc.pcAltVar #pcAltSekme{display:flex}
 #pcAltSekme b.on::after{content:"";position:absolute;left:10px;right:10px;bottom:0;height:2px;border-radius:2px;background:linear-gradient(90deg,#FF5A63,#C41F2B);box-shadow:0 0 8px rgba(255,60,70,.8)}
 
 /* ozellikler paneli */
-#pcOz{position:fixed;right:0;top:74px;bottom:24px;width:300px;z-index:54;display:flex;flex-direction:column;
+#pcOz{position:fixed;right:0;top:92px;bottom:24px;width:300px;z-index:54;display:flex;flex-direction:column;
   background:linear-gradient(180deg,rgba(20,20,24,.95),rgba(11,11,14,.95));border-left:1px solid var(--pc-cizgi);transition:transform .2s}
 body.pc.pcOzKapali #pcOz,body.pc.pcOzGizli #pcOz{transform:translateX(100%)}
 #pcOzAc{position:fixed;right:0;top:50%;z-index:54;width:16px;height:52px;border-radius:7px 0 0 7px;background:#18181C;border:1px solid var(--pc-cizgi2);border-right:none;color:var(--pc-yazi3);display:none}
@@ -2822,7 +2822,7 @@ body.pc,body.pc #app{background:radial-gradient(1200px 500px at 70% -10%,rgba(12
 body.pc svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 /* ust cubuk: ikonlu menuler, kirmizi aktif */
 #pcMenuCubuk{background:linear-gradient(180deg,#121216,#0A0A0D)!important}
-.pcMenuler button{display:flex;align-items:center;gap:7px;height:32px;border-radius:0;padding:0 13px;font-size:13px;color:#CFCDD2}
+.pcMenuler button{display:flex;align-items:center;gap:7px;height:46px;border-radius:0;padding:0 13px;font-size:13px;color:#CFCDD2}
 .pcMenuler button svg{width:15px;height:15px;opacity:.85}
 .pcMenuler .pcAnaTus{color:#fff;background:linear-gradient(180deg,rgba(229,51,62,.22),rgba(229,51,62,.05));box-shadow:inset 0 -2px 0 var(--k-kirmizi),0 8px 18px -10px rgba(255,40,50,.9);margin-right:4px}
 .pcKisi{display:flex;align-items:center;gap:8px;padding:4px 12px;border-radius:8px;border:1px solid var(--k-cizgi);background:rgba(0,0,0,.35);color:#E8E6E4;font-size:12.5px}
@@ -2976,6 +2976,43 @@ body.pc .ekZ::after{box-shadow:0 0 12px 2px rgba(255,40,50,1)}
 .pcHeroUydu{border-color:rgba(255,255,255,.14);box-shadow:inset 0 0 50px rgba(0,0,0,.65),0 0 0 1px rgba(0,0,0,.5)}
 #pcDagUst{filter:brightness(1.9) contrast(1.15)!important}
 
+/* ust cubuk referanstaki gibi iki kat ve ferah: 46 + 46 px; dag silueti ikisinin arkasinda */
+#pcDagUst{height:92px!important;background:var(--pcDagUst) right 140px top -10px / auto 300px no-repeat!important;filter:none!important}
+.pcLogo img{width:28px;height:28px}.pcLogo b{font-size:16px}.pcLogo small{font-size:12px}
+.pcMenuler button{font-size:14px;padding:0 16px}.pcMenuler button svg{width:17px;height:17px}
+.pcKisi{padding:7px 14px;font-size:13.5px}
+.pcAraKutu{height:36px}
+/* Genel Bakis: ayni tasarim dili */
+body.pc .pcBox,body.pc .pcK,body.pc .pcHero{background:linear-gradient(180deg,#1B1F25 0%,#11151B 22%,#0A0D13 100%)!important;border:1px solid rgba(255,255,255,.11)!important;border-radius:14px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 20px 44px -22px rgba(0,0,0,.95)!important}
+body.pc .pcBox header{background:none!important;border-bottom:1px solid rgba(255,255,255,.07)}
+body.pc .pcBox header b{text-transform:none!important;letter-spacing:0!important;font-size:17px!important;font-weight:600!important;color:#F4F2F0!important}
+body.pc .pcBox header b::before{display:none!important}
+body.pc .pcK span{text-transform:none!important;letter-spacing:0!important;font-size:13px!important;color:#B9B7BD!important}
+body.pc .pcK b{font-family:Inter,system-ui,sans-serif!important;font-weight:700!important}
+body.pc .pcHero{background:linear-gradient(110deg,rgba(120,20,26,.35),rgba(20,24,30,.9) 45%,#0D1117)!important;border-color:rgba(255,80,90,.35)!important}
+body.pc .pcHeroTus .btn{background:linear-gradient(180deg,#20262E,#161B22)!important;border:1px solid rgba(255,255,255,.12)!important}
+body.pc .pcHeroTus .btn:first-child{background:linear-gradient(180deg,#B5222B,#8E191E 55%,#6A1116)!important;border-color:#F0464D!important;box-shadow:0 0 24px -4px rgba(255,40,50,.9)!important}
+body.pc .pcTablo th{text-transform:none!important;letter-spacing:0!important;font-size:12.5px!important;color:#9B99A0!important}
+body.pc .pcTablo .mono,body.pc .pcKv .mono,body.pc .pcPrs small{font-family:Inter,system-ui,sans-serif!important;font-variant-numeric:tabular-nums}
+body.pc .pcYakListe button{background:linear-gradient(180deg,#1A1F26,#12161C)!important;border:1px solid rgba(255,255,255,.09)!important;border-radius:10px!important}
+body.pc .pcTur{text-transform:none!important;letter-spacing:0!important;color:#FF6A72!important}
+/* kutular referanstaki gibi tek sira, kompakt */
+.pcKutular{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:7px!important}
+.pcKutular > *{min-height:72px!important;padding:9px 4px!important;gap:7px!important;font-size:12px!important;white-space:nowrap}
+.pcKutular > * span{overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.pcKutular > * svg{width:24px;height:24px}
+.pcHeroAlt{grid-template-columns:1fr 1fr 1.25fr!important}
+.pcHeroAlt > *{white-space:nowrap;font-size:12.5px!important;height:40px}
+body.pc .ekEmsalOzet small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.pc .ekEmsalOzet b{white-space:nowrap!important;font-size:15px!important}
+.pcKutular > *{white-space:normal!important;font-size:11.5px!important;line-height:1.2;min-height:76px!important}
+.pcKutular > * span{overflow:visible;max-width:none}
+body.pc .ekEmsalOzet small{white-space:normal!important;line-height:1.25}
+body.pc .ekEmsalOzet small em{display:block;font-style:normal;font-size:11px;color:#8E8C93}
+body.pc .ekEmsalOzet b{white-space:normal!important;font-size:14.5px!important;line-height:1.3}
+#pcDagUst{background:var(--pcDagUst) right 150px top -4px / auto 200px no-repeat!important}
+
 /* acilis: sadece isikli BA */
 .baAcilis{position:fixed;inset:0;display:grid;place-items:center;background:#060607;z-index:5}
 .baAcilis b{font:600 74px Cinzel,Georgia,serif;letter-spacing:.04em;color:#fff;text-shadow:0 0 6px #fff,0 0 18px #FF4752,0 0 42px #E0313C,0 0 80px rgba(224,49,60,.6);animation:baNefes 1.6s ease-in-out infinite}
@@ -3032,7 +3069,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.6.4";
+const SURUM_MORDOR = "v 3.6.5";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -18679,8 +18716,8 @@ async function emsalKartiHtml(id, p, a){
   let D; try{ D = emsalDegerleme(p, A, E); }catch(e){ D = { yolK:1, butun:{ m2:A.bant, toplam:A.toplam }, hs:null, hisse:[] }; }
   const g = E.gpt, gd = g?.bant ? (g.bant[1] < A.bant[0]*.85 || g.bant[0] > A.bant[1]*1.15 ? "uyusmuyor" : "tutarli") : null;
   return `<div class="card" id="ekEmsal"><div class="bolum"><span class="rz altin">${svg("money")}</span><b>Emsal Fiyatlar</b><span class="sayi">${A.n} ilan</span></div>
-    <div class="ekEmsalOzet"><div><i class="ekOzIk">${svg("tag")}</i><small>Önerilen m² bandı${D.Y?.durum === "resmi" ? " · yol cephesi dahil" : ""}</small><b>${nf(D.butun.m2[0])} – ${nf(D.butun.m2[1])} ₺</b></div><div><i class="ekOzIk">${svg("money")}</i><small>Bütün parsel (${nf2(+p.alan_m2 || 0)} m²)</small><b>${mnP(D.butun.toplam[0])} – ${mnP(D.butun.toplam[1])}</b></div>
-      ${D.hs ? `<div><i class="ekOzIk">${svg("cetvel")}</i><small>Hisseli satış · ${D.hisse.length} hisse</small><b>${mnP(D.hs.fiyat[0])} – ${mnP(D.hs.fiyat[1])}</b></div>` : `<div><i class="ekOzIk">${svg("vector")}</i><small>Medyan · aynı köy</small><b>${nf(Math.round(A.med))} ₺${A.koyMed ? " · " + nf(Math.round(A.koyMed)) + " ₺" : ""}</b></div>`}</div>
+    <div class="ekEmsalOzet"><div><i class="ekOzIk">${svg("tag")}</i><small>Önerilen m² bandı${D.Y?.durum === "resmi" ? "<em>yol cephesi dahil</em>" : ""}</small><b>${nf(D.butun.m2[0])} – ${nf(D.butun.m2[1])} ₺</b></div><div><i class="ekOzIk">${svg("money")}</i><small>Bütün parsel<em>${nf2(+p.alan_m2 || 0)} m²</em></small><b>${mnP(D.butun.toplam[0])} – ${mnP(D.butun.toplam[1])}</b></div>
+      ${D.hs ? `<div><i class="ekOzIk">${svg("cetvel")}</i><small>Hisseli satış<em>${D.hisse.length} hisse</em></small><b>${mnP(D.hs.fiyat[0])} – ${mnP(D.hs.fiyat[1])}</b></div>` : `<div><i class="ekOzIk">${svg("vector")}</i><small>Medyan · aynı köy</small><b>${nf(Math.round(A.med))} ₺${A.koyMed ? " · " + nf(Math.round(A.koyMed)) + " ₺" : ""}</b></div>`}</div>
     ${emsalNoktaSvg({ ...A, bant: D.butun.m2 }, A.kendiFiyat)}
     ${A.kendiFiyat ? `<div class="ekEmsalNot">Senin m² fiyatın (${nf(A.kendiFiyat)} ₺) emsal bandının <b>${A.konum}</b>.</div>` : ""}
     ${g ? `<div class="ekEmsalNot ${gd === "uyusmuyor" ? "uy" : ""}">İkinci görüş: ${g.bant ? nf(g.bant[0]) + " – " + nf(g.bant[1]) + " ₺/m²" : "bant belirtmedi"} · ${gd === "tutarli" ? "hesapla tutarlı ✓" : gd === "uyusmuyor" ? "hesapla uyuşmuyor ⚠ (rapor hesaplanan bandı esas alır)" : ""}</div>` : ""}
@@ -19766,7 +19803,8 @@ function pcHeroKur(c){
   [...acts.children].forEach(b => { const t = (b.textContent || "").trim(); const ik = (PC_TUS_IKON.find(([re]) => re.test(t)) || [, null])[1];
     if(/[iİ]mar/i.test(t)){ if(!b.querySelector("svg")){ b.innerHTML = `${svg(ik || "katman")}<span>${esc(t.replace(/^✦\s*/, ""))}</span>`; } alt.appendChild(b); return; }
     if(ik && !b.querySelector("svg")){ b.innerHTML = `${svg(ik)}<span>${esc(t)}</span>`; } });
-  [...c.querySelectorAll(":scope > button")].forEach(b => { const t = b.textContent.trim(); if(/tapu bilgi/i.test(t)){ if(!b.querySelector("svg")) b.insertAdjacentHTML("afterbegin", svg("file")); b.classList.add("pcTapuTus"); alt.appendChild(b); } });
+  [...c.querySelectorAll(":scope > button")].forEach(b => { const t = b.textContent.trim(); if(/tapu bilgi/i.test(t)){ if(!b.querySelector("svg")) b.innerHTML = `${svg("file")}<span>Tapu bilgilerini düzenle</span>`; b.classList.add("pcTapuTus"); alt.appendChild(b); } });
+  const tapu = alt.querySelector(".pcTapuTus"); if(tapu && alt.lastElementChild !== tapu) alt.appendChild(tapu);   // referanstaki gibi: imar solda, tapu sagda
 }
 // uydu kesiti: Esri World Imagery karolari + gercek parsel siniri (kirmizi, parlak). Parsel basina bir kez cizilir, bellekte tutulur.
 const PC_UYDU = {};
