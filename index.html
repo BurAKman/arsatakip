@@ -2826,7 +2826,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.4.7";
+const SURUM_MORDOR = "v 3.4.8";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -18290,6 +18290,7 @@ function gptBekleBar(metin){
 }
 // ChatGPT'ye bu pencereden girilemiyorsa (Google girisi engeli): cevap kendi tarayicidan kopyalanip buraya alinir
 async function gptPanodanAl(){ let t = ""; try{ t = await navigator.clipboard.readText(); }catch(e){}
+  if(!t && GPT_MOD?.tur === "emsalArastir"){ const id = GPT_MOD.id; return emsalPanodan(id); }
   if(!t) t = prompt("Pano okunamadı. ChatGPT cevabını buraya yapıştır:") || "";
   if(!t.trim()) return toast("Panoda metin yok · ChatGPT'de cevabın altındaki kopyala simgesine bas");
   gptCevapGeldi(t); }
@@ -18595,7 +18596,10 @@ YAPILACAKLAR
 2) Parselin önemli yerlere uzaklığını ver: mahalle/köy merkezi, ilçe merkezi, il merkezi, en yakın ana yol (otoyol/devlet yolu), varsa 30 km içindeki OSB, liman, havalimanı, sahil vb. Her referans noktasının KOORDİNATINI ve kaynağını yaz. Mesafeler kuş uçuşu olsun.
 3) Kısa bir değerlendirme yaz: bu parsele en çok benzeyen emsaller, fiyatı etkileyen artılar/eksiler, gerçekçi m² fiyat bandı.
 
-ÇOK ÖNEMLİ: Cevabının EN SONUNA, aşağıdaki biçimde tek bir JSON bloğu koy (programım bunu okuyacak). Sayıları düz sayı yaz (nokta/virgül ayırıcısı olmadan, ondalık için nokta):
+ÇOK ÖNEMLİ: Sonuçları programım okuyacak. Aşağıdaki yapıdaki JSON'u dosya aracınla (Python) "arsatakip.json" adlı İNDİRİLEBİLİR DOSYA olarak oluştur ve indirme bağlantısını cevabın en sonuna koy; JSON'u ayrıca metne yazma. Dosya oluşturamıyorsan JSON'u cevabın en sonuna, başına ARSATAKIP-JSON yazarak koy. Kurallar:
+- JSON TEK SATIR ve boşluksuz (minified) olsun; girinti, satır başı kullanma. Canvas/belge açma.
+- En fazla 12 emsal ve 12 mesafe. "url" ilanın kendi bağlantısı, "kaynak" sadece site adı (ör. "mapcarta.com").
+- Sayıları düz sayı yaz (nokta/virgül ayırıcısı olmadan, ondalık için nokta).
 ARSATAKIP-JSON
 {"emsaller":[{"baslik":"","m2":0,"fiyat_tl":0,"konum":"","tarih":"","url":"","site":""}],
  "mesafeler":[{"hedef":"","enlem":0,"boylam":0,"km":0,"kaynak":""}],
@@ -18911,7 +18915,13 @@ async function emsalPanodan(id){
   t = String(t || "").trim();
   // ChatGPT arastirma cevabi (ya da sadece JSON'u) kopyalandiysa onu isle
   if(!t.startsWith("ARSATAKIP-EMSAL:") && /"emsaller"\s*:|ARSATAKIP-JSON/.test(t)){ GPT_MOD = null; document.getElementById("ekGptBar")?.remove(); return emsalArastirCevabi(t, { tur:"emsalArastir", id, merkez:null }); }
-  if(!t.startsWith("ARSATAKIP-EMSAL:")) return toast("Panoda emsal yok: sahibinden'de “Arsa Takip” yer imine bas ya da ChatGPT cevabını kopyala");
+  if(!t.startsWith("ARSATAKIP-EMSAL:")){
+    // panoda bir sey yok: indirilen arsatakip.json / .txt dosyasini sectir
+    if(!confirm("Panoda emsal verisi yok.\n\nChatGPT'nin verdiği arsatakip.json dosyasını (ya da kaydettiğin cevap .txt dosyasını) seçmek ister misin?")) return toast("Sahibinden'de “Arsa Takip” yer imine bas ya da ChatGPT cevabını kopyala");
+    const f = await dosyaSec(".json,.txt,application/json,text/plain"); if(!f) return;
+    const m = await f.text(); if(!/"emsaller"\s*:|ARSATAKIP-JSON|ARSATAKIP-EMSAL:/.test(m)) return toast("Bu dosyada emsal verisi bulunamadı");
+    if(m.trim().startsWith("ARSATAKIP-EMSAL:")){ try{ return await emsalIlanlarGeldi(JSON.parse(m.trim().slice(16))); }catch(e){ return toast("Dosya okunamadı"); } }
+    GPT_MOD = null; document.getElementById("ekGptBar")?.remove(); return emsalArastirCevabi(m, { tur:"emsalArastir", id, merkez:null }); }
   try{ await emsalIlanlarGeldi(JSON.parse(t.slice(16))); }catch(e){ toast("Panodaki veri okunamadı"); }
 }
 
