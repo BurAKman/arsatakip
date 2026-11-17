@@ -2826,7 +2826,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.4.6";
+const SURUM_MORDOR = "v 3.4.7";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -18568,7 +18568,7 @@ async function emsalMetinCevabi(t, M){
 
 /* --- ChatGPT ile emsal + mesafe arastirmasi (PC): parselin koordinatlari ChatGPT'ye verilir, o internette arastirir;
        cevaptaki JSON blogu okunur, birim fiyatlar ve kus ucusu mesafeler BURADA yeniden hesaplanip denetlenir --- */
-function ekHalka(p){ const g = p?.geojson?.geometry || p?.geojson; if(!g?.coordinates) return null; const h = (g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0]).slice();
+function ekHalkaP(p){ const g = p?.geojson?.geometry || p?.geojson; if(!g?.coordinates) return null; const h = (g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0]).slice();
   if(h.length > 1 && h[0][0] === h[h.length-1][0] && h[0][1] === h[h.length-1][1]) h.pop(); return h.length > 2 ? h : null; }
 function ekMerkez(h){ const lat0 = h[0][1], kx = Math.cos(lat0*Math.PI/180); let A = 0, X = 0, Y = 0;
   for(let i=0;i<h.length;i++){ const a = h[i], b = h[(i+1)%h.length], ax = a[0]*kx, bx = b[0]*kx, c = ax*b[1] - bx*a[1]; A += c; X += (ax + bx)*c; Y += (a[1] + b[1])*c; }
@@ -18577,7 +18577,7 @@ function ekMerkez(h){ const lat0 = h[0][1], kx = Math.cos(lat0*Math.PI/180); let
 function ekKusUcusu(a, b){ const R = 6371, r = Math.PI/180, dl = (b[1]-a[1])*r, dg = (b[0]-a[0])*r, x = Math.sin(dl/2)**2 + Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dg/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
 async function emsalArastir(id, disari){
   if(!disari && !window.arsaPC?.gptAc) disari = true;
-  const { data:p } = await sb.from("parcels").select("*").eq("id", id).single(); const h = ekHalka(p);
+  const { data:p } = await sb.from("parcels").select("*").eq("id", id).single(); const h = ekHalkaP(p);
   if(!h) return toast("Parselin sınır çizimi yok (önce haritadan sorgula)");
   const m = ekMerkez(h), adim = Math.max(1, Math.ceil(h.length/40)), kose = h.filter((q, i) => i % adim === 0).map(q => `${q[1].toFixed(6)},${q[0].toFixed(6)}`).join(" ");
   const { data:yy } = await sb.from("parcel_years").select("m2_fiyat").eq("parcel_id", id).eq("yil", YEAR); const fiyat = +yy?.[0]?.m2_fiyat || 0;
@@ -18627,7 +18627,7 @@ async function emsalArastirCevabi(t, M){
   const parca = i0 >= 0 ? t.slice(i0) : j0 >= 0 ? t.slice(Math.max(0, t.lastIndexOf("{", j0))) : t, a0 = parca.indexOf("{"), b0 = parca.lastIndexOf("}");
   let J = null; try{ J = JSON.parse(parca.slice(a0, b0 + 1)); }catch(e){}
   const metin = (i0 >= 0 ? t.slice(0, i0) : t).replace(/```json\s*$/i, "").trim();
-  const { data:p } = await sb.from("parcels").select("*").eq("id", M.id).single(); const h = ekHalka(p), mz = h ? ekMerkez(h) : M.merkez;
+  const { data:p } = await sb.from("parcels").select("*").eq("id", M.id).single(); const h = ekHalkaP(p), mz = h ? ekMerkez(h) : M.merkez;
   const sayi = v => typeof v === "number" ? v : sayiTr(v);
   // emsaller: birim fiyat burada hesaplanir, ayni ilan (url ya da m2+fiyat) tekrar eklenmez
   const yeni = (J?.emsaller || []).map(x => ({ m2: sayi(x.m2), fiyat: sayi(x.fiyat_tl), x })).filter(o => o.m2 > 50 && o.fiyat > 1000).map(({ m2, fiyat, x }) => ({
