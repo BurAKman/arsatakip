@@ -2820,7 +2820,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.4.2";
+const SURUM_MORDOR = "v 3.4.3";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -18596,8 +18596,18 @@ ARSATAKIP-JSON
     toast(kop ? "Araştırma metni panoya kopyalandı · ChatGPT'de Ctrl+V ile yapıştır" : "Pano kullanılamadı");
     return; }
   gptBekleBar("ChatGPT araştırıyor · bitince “Cevabı al”a bas (birkaç dakika sürebilir)");
-  const ok = await window.arsaPC.gptAc(null, istem);
-  if(ok === false) toast("ChatGPT'nin yazma kutusu bulunamadı: giriş yapıp tekrar dene");
+  const kml = ekKmlMetni(p, h), kmlAd = trSlug(`${p.mahalle || p.ilce || "parsel"}-${p.ada || 0}-${p.parsel}`) + ".kml";
+  const ok = await window.arsaPC.gptAc(null, (window.arsaPC.surum >= 6 ? "Ekteki KML dosyası bu parselin sınırıdır, onu da kullan.\n\n" : "") + istem, { ad: kmlAd, tur: "application/vnd.google-earth.kml+xml", metin: kml });
+  if(ok === false) toast("ChatGPT'ye yazılamadı · metin panoda, kutuya Ctrl+V ile yapıştır");
+}
+function ekKmlMetni(p, h){
+  const es = s => String(s ?? "").replace(/[<&>]/g, c => ({ "<":"&lt;", "&":"&amp;", ">":"&gt;" })[c]);
+  const ad = `${duzgun(p.mahalle || p.ilce || "")} ${p.ada || 0}/${p.parsel}`.trim();
+  const k = h.map(q => `${(+q[0]).toFixed(6)},${(+q[1]).toFixed(6)},0`); if(k[0] !== k[k.length-1]) k.push(k[0]);
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${es(ad)}</name>
+<Placemark><name>${es(ad)}</name><description>${es(`${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)} · ${nf2(+p.alan_m2 || 0)} m² · ${p.nitelik || ""}`)}</description>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>${k.join(" ")}</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark></Document></kml>`;
 }
 async function emsalArastirCevabi(t, M){
   const i0 = t.lastIndexOf("ARSATAKIP-JSON"), parca = i0 >= 0 ? t.slice(i0) : t, a0 = parca.indexOf("{"), b0 = parca.lastIndexOf("}");
