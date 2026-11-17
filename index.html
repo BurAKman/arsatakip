@@ -2820,7 +2820,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.4.4";
+const SURUM_MORDOR = "v 3.4.5";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -18588,7 +18588,7 @@ ARSATAKIP-JSON
 {"emsaller":[{"baslik":"","m2":0,"fiyat_tl":0,"konum":"","tarih":"","url":"","site":""}],
  "mesafeler":[{"hedef":"","enlem":0,"boylam":0,"km":0,"kaynak":""}],
  "bant":[0,0]}`;
-  GPT_MOD = { tur:"emsalArastir", id, merkez:m };
+  GPT_MOD = { tur:"emsalArastir", id, merkez:m }; try{ localStorage.setItem("emsalArastirSon", JSON.stringify({ id, merkez:m, t: Date.now() })); }catch(e){}
   let kop = false; try{ await navigator.clipboard.writeText(istem); kop = true; }catch(e){}
   if(disari){
     gptBekleBar("Kendi tarayıcında ChatGPT: yapıştır (Ctrl+V) → gönder → cevabı kopyala → “Panodan al”");
@@ -18652,6 +18652,9 @@ function emsalArastirmaHtml(id, p, a){
   const eskiCG2 = gptCevapGeldi;
   gptCevapGeldi = async function(t){
     if(GPT_MOD?.tur === "emsalArastir"){ const M = GPT_MOD; GPT_MOD = null; document.getElementById("ekGptBar")?.remove(); return emsalArastirCevabi(t, M); }
+    // program yeniden acildi / bar kayboldu ama gelen sey emsal JSON'u: son arastirilan parsele yaz
+    if(!GPT_MOD && /"emsaller"\s*:/.test(t)){ let S = null; try{ S = JSON.parse(localStorage.getItem("emsalArastirSon") || "null"); }catch(e){}
+      const id = window.__emsalHedef || S?.id; if(id) return emsalArastirCevabi(t, { tur:"emsalArastir", id, merkez: S?.id === id ? S.merkez : null }); }
     return eskiCG2(t);
   };
   if(window.arsaPC?.gptCevap) window.arsaPC.gptCevap(t => gptCevapGeldi(t));
@@ -18812,7 +18815,9 @@ async function emsalPanodan(id){
   window.__emsalHedef = id;
   let t = ""; try{ t = await navigator.clipboard.readText(); }catch(e){ t = prompt("Panoya erişilemedi. Kopyalanan metni buraya yapıştır:") || ""; }
   t = String(t || "").trim();
-  if(!t.startsWith("ARSATAKIP-EMSAL:")) return toast("Panoda emsal yok: önce sahibinden'de “Arsa Takip” yer imine bas");
+  // ChatGPT arastirma cevabi (ya da sadece JSON'u) kopyalandiysa onu isle
+  if(!t.startsWith("ARSATAKIP-EMSAL:") && /"emsaller"\s*:|ARSATAKIP-JSON/.test(t)){ GPT_MOD = null; document.getElementById("ekGptBar")?.remove(); return emsalArastirCevabi(t, { tur:"emsalArastir", id, merkez:null }); }
+  if(!t.startsWith("ARSATAKIP-EMSAL:")) return toast("Panoda emsal yok: sahibinden'de “Arsa Takip” yer imine bas ya da ChatGPT cevabını kopyala");
   try{ await emsalIlanlarGeldi(JSON.parse(t.slice(16))); }catch(e){ toast("Panodaki veri okunamadı"); }
 }
 
