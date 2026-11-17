@@ -2954,6 +2954,28 @@ body.pc #app .card .bolum .sayi{border-color:rgba(231,184,103,.5);background:rgb
   -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 40%)!important}
 #pcDagUst{filter:brightness(1.65) contrast(1.15)!important}
 
+/* ===== canlilik: GPT ornegindeki tonlar olculdu (ust cubuk #2C333C, ana dugme #8E191E, aktif #4E1518, kutu #1B2028) ===== */
+#pcMenuCubuk{background:linear-gradient(90deg,#2B323A 0%,#262C34 45%,rgba(38,44,52,.25) 100%)!important;border-bottom:1px solid rgba(0,0,0,.6)}
+.pcMenuler button{color:#E6E4E2}
+.pcMenuler .pcAnaTus{background:linear-gradient(180deg,#5A1A1F,#3E1216)!important;box-shadow:inset 0 -2px 0 #FF3B3B,0 0 22px -4px rgba(255,40,50,.9)!important}
+#pcKomut{background:linear-gradient(90deg,#161B21 0%,#141920 45%,rgba(20,25,32,.25) 100%)!important}
+body.pc #app .card{background:linear-gradient(180deg,#1B1F25 0%,#11151B 22%,#0A0D13 100%)!important;border:1px solid rgba(255,255,255,.11)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 0 0 1px rgba(0,0,0,.5),0 20px 44px -22px rgba(0,0,0,.95)!important}
+.pcKutular > *,.pcHeroAlt > *,body.pc #app .btn,body.pc .ekEmsalOzet div{background:linear-gradient(180deg,#20262E,#161B22)!important;border:1px solid rgba(255,255,255,.12)!important}
+.pcKutular > * svg{color:#FFFFFF}
+body.pc #app .ekAnaTus .btn:first-child,body.pc #app .ekAnaTus .btn:last-child{background:linear-gradient(180deg,#B5222B 0%,#8E191E 55%,#6A1116 100%)!important;border:1px solid #F0464D!important;
+  box-shadow:0 0 24px -4px rgba(255,40,50,.9),inset 0 1px 0 rgba(255,255,255,.2)!important;color:#fff!important}
+body.pc #app .pcTapuTus{background:linear-gradient(180deg,#5E1E23,#45151A)!important;border:1px solid #E5333E!important;box-shadow:0 0 18px -4px rgba(255,40,50,.85)!important}
+#pcRay button.on{background:linear-gradient(180deg,#6A1C21,#4A1317)!important;box-shadow:inset 0 0 0 1px #FF4A55,0 0 20px -2px rgba(255,40,50,.85)!important}
+.pcPrs.on{background:linear-gradient(90deg,#4A171B,#2E1115)!important;box-shadow:inset 0 0 0 1px #FF4A55,0 0 16px -4px rgba(255,40,50,.85)!important}
+.pcFiltre span.on{background:linear-gradient(180deg,#5A1A1F,#3E1216)!important}
+body.pc #app .card .bolum .rz{background:rgba(229,51,62,.14)!important;border-color:rgba(255,80,90,.65)!important;box-shadow:0 0 18px -4px rgba(255,40,50,.9)}
+.ekOzIk{filter:drop-shadow(0 0 6px rgba(255,50,60,.7))}
+#pcAltSekme b.on{background:linear-gradient(180deg,transparent,rgba(229,51,62,.10))}
+body.pc .ekZ::after{box-shadow:0 0 12px 2px rgba(255,40,50,1)}
+.pcHeroUydu{border-color:rgba(255,255,255,.14);box-shadow:inset 0 0 50px rgba(0,0,0,.65),0 0 0 1px rgba(0,0,0,.5)}
+#pcDagUst{filter:brightness(1.9) contrast(1.15)!important}
+
 /* acilis: sadece isikli BA */
 .baAcilis{position:fixed;inset:0;display:grid;place-items:center;background:#060607;z-index:5}
 .baAcilis b{font:600 74px Cinzel,Georgia,serif;letter-spacing:.04em;color:#fff;text-shadow:0 0 6px #fff,0 0 18px #FF4752,0 0 42px #E0313C,0 0 80px rgba(224,49,60,.6);animation:baNefes 1.6s ease-in-out infinite}
@@ -3010,7 +3032,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.6.3";
+const SURUM_MORDOR = "v 3.6.4";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -19755,21 +19777,25 @@ async function pcUyduCiz(cv, p){
   const lon2x = (l, z) => (l + 180)/360*256*2**z, lat2y = (b, z) => { const r = b*Math.PI/180; return (1 - Math.log(Math.tan(r) + 1/Math.cos(r))/Math.PI)/2*256*2**z; };
   const lo = H.map(h => h.lng), la = H.map(h => h.lat); let z = 19;
   for(; z > 10; z--){ const w = lon2x(Math.max(...lo), z) - lon2x(Math.min(...lo), z), h = lat2y(Math.min(...la), z) - lat2y(Math.max(...la), z); if(w < W*.62 && h < Hh*.62) break; }
+  // tam sayi zoom'un ustune kesirli buyutme: parsel kutunun ~%70'ini doldursun (ince uzun parseller kucuk kalmasin)
+  const bw = lon2x(Math.max(...lo), z) - lon2x(Math.min(...lo), z), bh = lat2y(Math.min(...la), z) - lat2y(Math.max(...la), z);
+  const k = Math.max(1, Math.min(2, Math.min(W*.72/(bw || 1), Hh*.72/(bh || 1))));
   const cx = (lon2x(Math.min(...lo), z) + lon2x(Math.max(...lo), z))/2, cy = (lat2y(Math.min(...la), z) + lat2y(Math.max(...la), z))/2;
-  const ox = cx - W/2, oy = cy - Hh/2, kare = [];
-  for(let tx = Math.floor(ox/256); tx <= Math.floor((ox + W)/256); tx++) for(let ty = Math.floor(oy/256); ty <= Math.floor((oy + Hh)/256); ty++) kare.push([tx, ty]);
+  const Wv = W/k, Hv = Hh/k, ox = cx - Wv/2, oy = cy - Hv/2, kare = [];
+  for(let tx = Math.floor(ox/256); tx <= Math.floor((ox + Wv)/256); tx++) for(let ty = Math.floor(oy/256); ty <= Math.floor((oy + Hv)/256); ty++) kare.push([tx, ty]);
   const anahtar = p.id + ":" + z;
   const resimler = PC_UYDU[anahtar] || (PC_UYDU[anahtar] = Promise.all(kare.map(([tx, ty]) => new Promise(ok => { const im = new Image(); im.crossOrigin = "anonymous";
     im.onload = () => ok({ im, tx, ty }); im.onerror = () => ok(null); im.src = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${ty}/${tx}`; }))));
   const L = await resimler; if(!document.body.contains(cv)) return;
-  L.forEach(o => o && x.drawImage(o.im, o.tx*256 - ox, o.ty*256 - oy, 256, 256));
-  // karart + kirmizi ton: tasarimdaki gece havasi
-  x.fillStyle = "rgba(8,8,10,.42)"; x.fillRect(0, 0, W, Hh);
+  x.filter = "saturate(.75) brightness(.8) contrast(1.15)";
+  L.forEach(o => o && x.drawImage(o.im, (o.tx*256 - ox)*k, (o.ty*256 - oy)*k, 256*k + .5, 256*k + .5)); x.filter = "none";
+  // karart + soguk ton: tasarimdaki gece havasi
+  x.fillStyle = "rgba(6,10,16,.38)"; x.fillRect(0, 0, W, Hh);
   const g = x.createRadialGradient(W/2, Hh/2, 40, W/2, Hh/2, W*.7); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(0,0,0,.55)"); x.fillStyle = g; x.fillRect(0, 0, W, Hh);
-  const P = H.map(h => [lon2x(h.lng, z) - ox, lat2y(h.lat, z) - oy]);
+  const P = H.map(h => [(lon2x(h.lng, z) - ox)*k, (lat2y(h.lat, z) - oy)*k]);
   const yol = () => { x.beginPath(); P.forEach(([a, b], i) => i ? x.lineTo(a, b) : x.moveTo(a, b)); x.closePath(); };
-  yol(); x.fillStyle = "rgba(255,40,50,.20)"; x.fill();
-  x.save(); x.shadowColor = "rgba(255,30,40,.95)"; x.shadowBlur = 18; x.strokeStyle = "#FF3B46"; x.lineWidth = 2.6; yol(); x.stroke(); x.shadowBlur = 6; x.stroke(); x.restore();
+  yol(); x.fillStyle = "rgba(255,40,50,.26)"; x.fill();
+  x.save(); x.shadowColor = "rgba(255,30,40,1)"; x.shadowBlur = 22; x.strokeStyle = "#FF3B46"; x.lineWidth = 3; yol(); x.stroke(); x.shadowBlur = 8; x.stroke(); x.restore();
   x.fillStyle = "#FFD6D8"; P.forEach(([a, b]) => { x.beginPath(); x.arc(a, b, 2.2, 0, 7); x.fill(); });
 }
 
