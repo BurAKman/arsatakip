@@ -2815,7 +2815,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.3.2";
+const SURUM_MORDOR = "v 3.3.3";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -14171,7 +14171,7 @@ function ilanKadSec(i){ const y = ILAN.D.kadastro?.yollar?.[i]; if(!y) return; y
    acilis yakinlasmasi -> parsel sinirinin cizilmesi -> yollar ve cevrenin acilmasi -> parsele yakin plan -> ogeler sirayla.
    Katmanlar bir kez cizilir (bos zemin, cap, her oge ayri saydam katman); kareler bunlarin birlesimi -> hizli.
    Kodlama: WebCodecs (H.264) + mp4-muxer; yoksa MediaRecorder (webm, gercek zamanli). Muzik istege bagli. */
-const IV = { fps: 30, sahne: { acilis:true, cizim:true, acil:true, yakin:true, ogeler:true }, hiz: 1, kaydet: false, muzik: null, muzikAd: "" };
+const IV = { fps: 30, sahne: { acilis:true, cizim:true, acil:true, yakin:true, ogeler:true }, hiz: 1, kalite: 9, kaydet: false, muzik: null, muzikAd: "" };
 const ivEase = t => t < 0 ? 0 : t > 1 ? 1 : t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
 const ivCik = t => t < 0 ? 0 : t > 1 ? 1 : 1 - Math.pow(1 - t, 3);
 const ivGeri = t => { if(t <= 0) return 0; if(t >= 1) return 1; const c1 = 1.5, c3 = c1 + 1; return 1 + c3*Math.pow(t - 1, 3) + c1*Math.pow(t - 1, 2); };
@@ -14186,8 +14186,8 @@ async function ivKatmanlar(){
   try{
     const F = yeni(), P = ilanCiz(F, D, V, 1);
     const kutular = D.ogeler.map(e => e._kutu ? e._kutu.slice() : null);
-    D._capYok = true; D._ogeSec = []; const B = yeni(); ilanCiz(B, D, V, 1); temizle();
-    D._ogeSec = []; const C = yeni(); ilanCiz(C, D, V, 1); temizle();
+    D._capYok = true; D._ogeSec = []; const B = yeni(); ilanCiz(B, D, V, 2); temizle();
+    D._ogeSec = []; const C = yeni(); ilanCiz(C, D, V, 2); temizle();
     const ogeler = [];
     D.ogeler.forEach((e, i) => { if(e.gizli || !kutular[i]) return;
       D._sadeceOge = true; D._ogeSec = [i]; const c = yeni(); ilanCiz(c, D, V, 1); temizle();
@@ -14235,10 +14235,11 @@ function ivCiz(x, K, Z, t){
   // zemin: cap acilmadan once bos zemin, acilinca cap katmani (parselden disari dairesel acilir)
   const acilT = sO ? ivEase(ora(sO)) : 1, capOnce = sO ? t < sO.a : false;
   x.save(); kamera();
-  if(capOnce || !sO) x.drawImage(capOnce ? B : C, 0, 0);
-  else if(acilT >= 1) x.drawImage(C, 0, 0);
-  else { x.drawImage(B, 0, 0); const r0 = Math.hypot(pw(pk), ph(pk))/2 + 10, r1 = Math.hypot(W, H);
-    x.save(); x.beginPath(); x.arc(cx, cy, r0 + (r1 - r0)*acilT, 0, 7); x.clip(); x.drawImage(C, 0, 0); x.restore();
+  x.imageSmoothingQuality = "high"; const ciz2 = L => x.drawImage(L, 0, 0, W, H);
+  if(capOnce || !sO) ciz2(capOnce ? B : C);
+  else if(acilT >= 1) ciz2(C);
+  else { ciz2(B); const r0 = Math.hypot(pw(pk), ph(pk))/2 + 10, r1 = Math.hypot(W, H);
+    x.save(); x.beginPath(); x.arc(cx, cy, r0 + (r1 - r0)*acilT, 0, 7); x.clip(); ciz2(C); x.restore();
     // acilan dairenin kenarinda ince altin halka
     x.save(); x.globalAlpha = .55*(1 - acilT); x.lineWidth = 3; x.strokeStyle = "#F2D27A"; x.beginPath(); x.arc(cx, cy, r0 + (r1 - r0)*acilT, 0, 7); x.stroke(); x.restore(); }
   // parsel sinirinin cizilmesi (bos zemin uzerinde) ve acilirken sonmesi
@@ -14325,10 +14326,10 @@ async function ivUret(ilerle){
       video: { codec: dk.mux, width: K.W, height: K.H, frameRate: fps }, ...(ses ? { audio: { codec: sesKod.mux, numberOfChannels: 2, sampleRate: sesKod.hz } } : {}) });
     let hata = null;
     const ve = new VideoEncoder({ output: (ch, meta) => M.addVideoChunk(ch, meta), error: e => hata = e });
-    ve.configure({ codec: dk.kod, width: K.W, height: K.H, bitrate: 9e6, framerate: fps, ...(dk.mux === "avc" ? { avc: { format: "avc" } } : {}) });
+    ve.configure({ codec: dk.kod, width: K.W, height: K.H, bitrate: Math.round(Math.max(2.5e6, Math.min(20e6, IV.kalite*8e6*.9/Z.sure - (ses ? 160000 : 0)))), bitrateMode: "variable", latencyMode: "quality", framerate: fps, ...(dk.mux === "avc" ? { avc: { format: "avc" } } : {}) });
     for(let f=0; f<N; f++){ if(hata) throw hata;
       ivCiz(x, K, Z, f/fps);
-      const vf = new VideoFrame(cv, { timestamp: Math.round(f*1e6/fps), duration: Math.round(1e6/fps) }); ve.encode(vf, { keyFrame: f % (fps*2) === 0 }); vf.close();
+      const vf = new VideoFrame(cv, { timestamp: Math.round(f*1e6/fps), duration: Math.round(1e6/fps) }); ve.encode(vf, { keyFrame: f % (fps*4) === 0 }); vf.close();
       while(ve.encodeQueueSize > 6) await new Promise(r => setTimeout(r, 4));
       if(f % 6 === 0){ ilerle?.(f/N*(ses ? .92 : 1)); await new Promise(r => setTimeout(r, 0)); } }
     await ve.flush(); ve.close(); if(hata) throw hata;
@@ -14360,6 +14361,7 @@ async function ilanVideo(){
   k.innerHTML = `<div class="ivKutu"><div class="ivSahne"><canvas id="ivTuval"></canvas><div class="ivYuk" id="ivYuk">Hazırlanıyor…</div></div>
     <div class="ivYan"><b>🎬 Animasyonlu ilan videosu</b><small>Afişin kendisinden üretilir. Afişte ne varsa (yazılar, yollar, renkler) videoda da o var.</small>
       <div class="ivGrup">${Object.keys(sahneAd).map(s => `<label class="ilTik"><input type="checkbox" data-s="${s}" ${IV.sahne[s] ? "checked" : ""}> ${sahneAd[s]}</label>`).join("")}</div>
+      <div class="field"><label>Kalite / dosya boyutu</label><select id="ivKal">${[[6, "Hafif · ~6 MB (WhatsApp)"], [9, "Dengeli · ~9 MB (önerilen)"], [16, "Yüksek · ~16 MB"], [28, "En yüksek · ~28 MB"]].map(([v, a]) => `<option value="${v}" ${IV.kalite === v ? "selected" : ""}>${a}</option>`).join("")}</select></div>
       <div class="field"><label>Hız</label><select id="ivHiz"><option value="1.25" ${IV.hiz === 1.25 ? "selected" : ""}>Sakin</option><option value="1" ${IV.hiz === 1 ? "selected" : ""}>Normal</option><option value=".75" ${IV.hiz === .75 ? "selected" : ""}>Hızlı</option></select></div>
       <div class="field"><label>Müzik (isteğe bağlı)</label><div class="ivMuzik"><span id="ivMAd">${IV.muzik ? esc(IV.muzikAd) : "Yok"}</span>
         <button class="btn ghost" id="ivMSec">Seç</button>${IV.muzik ? `<button class="btn ghost" id="ivMSil">Kaldır</button>` : ""}</div><input type="file" id="ivMDosya" accept="audio/*" hidden></div>
@@ -14376,6 +14378,7 @@ async function ilanVideo(){
   k.onclick = e => { if(e.target === k && !calis) kapa(); };
   k.querySelector("#ivKapa").onclick = () => { if(!calis) kapa(); };
   k.querySelectorAll("[data-s]").forEach(c => c.onchange = () => { IV.sahne[c.dataset.s] = c.checked; yenile(); });
+  k.querySelector("#ivKal").onchange = e => { IV.kalite = +e.target.value; };
   k.querySelector("#ivHiz").onchange = e => { IV.hiz = +e.target.value; yenile(); };
   k.querySelector("#ivKayit").onchange = e => IV.kaydet = e.target.checked;
   const md = k.querySelector("#ivMDosya");
