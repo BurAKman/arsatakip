@@ -2374,6 +2374,11 @@ h3{letter-spacing:.02em}
 .ivBar{ height:8px; border-radius:6px; background:rgba(255,255,255,.08); overflow:hidden; } .ivBar i{ display:block; height:100%; width:0; background:linear-gradient(90deg,#B98A2E,#F2D27A); transition:width .2s; }
 @media (max-width:720px){ .ivKutu{ flex-direction:column; overflow:auto; } .ivSahne{ height:52vh; align-self:center; } }
 .ivMuzik .btn{ width:auto !important; flex:0 0 auto; }
+/* emsal: ChatGPT arastirmasi */
+.ekArastirma{ margin-top:8px; } .ekArBas{ font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:#c9a24a; margin:8px 0 4px; }
+.ekArSat{ display:grid !important; grid-template-columns:1fr auto auto; gap:8px; align-items:center; } .ekArSat small{ display:block; color:#888; font-size:11px; }
+.ekArSat em{ font-style:normal; font-size:11.5px; color:#7fc98a; } .ekArSat.ekUyari em{ color:#e8a33a; }
+.ekArMetin{ margin-top:8px; } .ekArYazi{ white-space:pre-wrap; font-size:12.5px; line-height:1.55; color:#ccc; max-height:360px; overflow:auto; padding:8px 10px; border-radius:8px; background:rgba(255,255,255,.03); }
 
 /* ================= PC SURUMU · premium kizil (siyah · grafit · yakut) ================= */
 body.pc[data-tema]{
@@ -2815,7 +2820,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.3.3";
+const SURUM_MORDOR = "v 3.4.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -18443,7 +18448,8 @@ async function emsalKartiHtml(id, p, a){
   const E = a.emsal; const pc = !!window.arsaPC?.emsalAc;
   if(!E?.ilanlar?.length) return ME.role === "uye" ? "" : `<div class="card" id="ekEmsal"><div class="bolum"><span class="rz altin">${svg("money")}</span><b>Emsal Fiyatlar</b></div>
     <p class="ipuc" style="margin:2px 0 10px">${pc ? "Sahibinden programın içinde açılır, parselin ilçesindeki satılık ilanlar hazır gelir. İstediğin sayfada menüden “Sayfadaki ilanları emsale al” de; ilanlar tek tıkla buraya düşer. Sahibinden “bot değilim” ekranında takılırsa kendi tarayıcında aç ve “Arsa Takip” yer imiyle aktar." : "Bilgisayarda kendi tarayıcında sahibinden aramasını aç, “Arsa Takip” yer imine bas, sonra buradan “Panodan emsal al” de."}</p>
-    <div class="ekTuslar">${pc ? `<button class="btn" onclick="emsalTopla('${id}')">📊 Emsal Topla</button>` : ""}<button class="btn ghost" onclick="emsalPanodan('${id}')">📋 Panodan emsal al</button><button class="btn ghost" onclick="emsalYerImi('${id}')">🔖 Tarayıcı yer imi</button></div></div>`;
+    ${emsalArastirmaHtml(id, p, a)}
+    <div class="ekTuslar">${pc ? `<button class="btn" onclick="emsalArastir('${id}')">🔎 ChatGPT ile araştır</button><button class="btn ghost" onclick="emsalTopla('${id}')">📊 Emsal Topla</button>` : ""}<button class="btn ghost" onclick="emsalPanodan('${id}')">📋 Panodan emsal al</button><button class="btn ghost" onclick="emsalYerImi('${id}')">🔖 Tarayıcı yer imi</button></div></div>`;
   const { data:yy } = await sb.from("parcel_years").select("m2_fiyat").eq("parcel_id", id).eq("yil", YEAR);
   const A = emsalAnaliz(p, E, +yy?.[0]?.m2_fiyat || null); if(!A) return "";
   const g = E.gpt, gd = g?.bant ? (g.bant[1] < A.bant[0]*.85 || g.bant[0] > A.bant[1]*1.15 ? "uyusmuyor" : "tutarli") : null;
@@ -18456,7 +18462,8 @@ async function emsalKartiHtml(id, p, a){
     <details class="ekCevre"><summary>İlanlar · ${A.n} (${A.aykiri.length} aykırı ayıklandı)</summary>
       ${E.ilanlar.map(x => `<div class="kv ekEmsalSat ${x.haric ? "ekSoluk" : ""} ${A.aykiri.some(z => z.id === x.id) ? "ekUyari" : ""}"><span><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.baslik || "ilan")}</a><small>${esc(x.yer)} · ${nf(Math.round(x.m2))} m² · ${tl(x.fiyat)} · ${esc(x.tarih)}</small></span>
         <b class="mono">${nf(x.birim)} ₺/m²</b>${ME.role !== "uye" ? `<button title="${x.haric ? "Geri al" : "Hesaptan çıkar"}" onclick="emsalHaric('${id}','${x.id}')">${x.haric ? "↺" : "✕"}</button>` : ""}</div>`).join("")}</details>
-    <div class="ekTuslar">${pc ? `<button class="btn ghost" onclick="emsalTopla('${id}')">📊 Emsal Topla</button>` : ""}${ME.role !== "uye" ? `<button class="btn ghost" onclick="emsalPanodan('${id}')">📋 Panodan al</button><button class="btn ghost" onclick="emsalYerImi('${id}')">🔖 Yer imi</button>` : ""}${pc ? `<button class="btn ghost" onclick="emsalGpt('${id}')">✦ ChatGPT'ye yorumlat</button>` : ""}<button class="btn" onclick="emsalPdf('${id}')">Emsal Raporu (PDF)</button></div>
+    ${emsalArastirmaHtml(id, p, a)}
+    <div class="ekTuslar">${pc ? `<button class="btn ghost" onclick="emsalArastir('${id}')">🔎 ChatGPT ile araştır</button><button class="btn ghost" onclick="emsalTopla('${id}')">📊 Emsal Topla</button>` : ""}${ME.role !== "uye" ? `<button class="btn ghost" onclick="emsalPanodan('${id}')">📋 Panodan al</button><button class="btn ghost" onclick="emsalYerImi('${id}')">🔖 Yer imi</button>` : ""}${pc ? `<button class="btn ghost" onclick="emsalGpt('${id}')">✦ ChatGPT'ye yorumlat</button>` : ""}<button class="btn" onclick="emsalPdf('${id}')">Emsal Raporu (PDF)</button></div>
     <p class="ipuc" style="margin:8px 0 0">Son toplama: ${esc(E.son || "")}${(E.gecmis || []).length > 1 ? " · " + E.gecmis.length + " ölçüm geçmişi" : ""}</p></div>`;
 }
 const kisaPara = n => !isFinite(n) ? "—" : n >= 1e6 ? (n/1e6).toFixed(n >= 1e7 ? 1 : 2).replace(".", ",") + " Mn ₺" : nf(Math.round(n/1000)*1000) + " ₺";
@@ -18540,6 +18547,89 @@ async function emsalMetinCevabi(t, M){
     try{ const yer = document.getElementById("ekEklenti"); if(!yer || document.getElementById("ekEmsal")) return;
       const { data:p } = await sb.from("parcels").select("*").eq("id", id).single();
       const h = await emsalKartiHtml(id, p, p.analiz || {}); if(h){ const arazi = document.getElementById("ekArazi"); (arazi || yer.firstElementChild)?.insertAdjacentHTML("afterend", h); } }catch(e){ console.log("emsal kart", e); } };
+}
+
+/* --- ChatGPT ile emsal + mesafe arastirmasi (PC): parselin koordinatlari ChatGPT'ye verilir, o internette arastirir;
+       cevaptaki JSON blogu okunur, birim fiyatlar ve kus ucusu mesafeler BURADA yeniden hesaplanip denetlenir --- */
+function ekHalka(p){ const g = p?.geojson?.geometry || p?.geojson; if(!g?.coordinates) return null; const h = (g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0]).slice();
+  if(h.length > 1 && h[0][0] === h[h.length-1][0] && h[0][1] === h[h.length-1][1]) h.pop(); return h.length > 2 ? h : null; }
+function ekMerkez(h){ const lat0 = h[0][1], kx = Math.cos(lat0*Math.PI/180); let A = 0, X = 0, Y = 0;
+  for(let i=0;i<h.length;i++){ const a = h[i], b = h[(i+1)%h.length], ax = a[0]*kx, bx = b[0]*kx, c = ax*b[1] - bx*a[1]; A += c; X += (ax + bx)*c; Y += (a[1] + b[1])*c; }
+  if(Math.abs(A) < 1e-14) return [h.reduce((t, q) => t + q[0], 0)/h.length, h.reduce((t, q) => t + q[1], 0)/h.length];
+  return [X/(3*A)/kx, Y/(3*A)]; }
+function ekKusUcusu(a, b){ const R = 6371, r = Math.PI/180, dl = (b[1]-a[1])*r, dg = (b[0]-a[0])*r, x = Math.sin(dl/2)**2 + Math.cos(a[1]*r)*Math.cos(b[1]*r)*Math.sin(dg/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
+async function emsalArastir(id){
+  if(!window.arsaPC?.gptAc) return toast("Bu özellik masaüstü programında çalışır");
+  const { data:p } = await sb.from("parcels").select("*").eq("id", id).single(); const h = ekHalka(p);
+  if(!h) return toast("Parselin sınır çizimi yok (önce haritadan sorgula)");
+  const m = ekMerkez(h), adim = Math.max(1, Math.ceil(h.length/40)), kose = h.filter((q, i) => i % adim === 0).map(q => `${q[1].toFixed(6)},${q[0].toFixed(6)}`).join(" ");
+  const { data:yy } = await sb.from("parcel_years").select("m2_fiyat").eq("parcel_id", id).eq("yil", YEAR); const fiyat = +yy?.[0]?.m2_fiyat || 0;
+  const bugun = new Date().toLocaleDateString("tr-TR");
+  GPT_MOD = { tur:"emsalArastir", id, merkez:m }; gptBekleBar("ChatGPT araştırıyor · bitince “Cevabı al”a bas (birkaç dakika sürebilir)");
+  const ok = await window.arsaPC.gptAc(null, `Bir arsa/tarla için internette EMSAL FİYAT ve MESAFE araştırması yapmanı istiyorum. Web aramasını kullan. Bugün: ${bugun}.
+
+PARSEL
+- İl / ilçe / mahalle: ${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)}
+- Ada ${p.ada || "-"} · Parsel ${p.parsel} · ${nf2(+p.alan_m2 || 0)} m² · nitelik: ${p.nitelik || "-"}
+- Merkez koordinatı (enlem, boylam): ${m[1].toFixed(6)}, ${m[0].toFixed(6)}
+- Sınır köşeleri (enlem,boylam): ${kose}${fiyat ? `\n- Düşünülen satış fiyatı: ${nf(fiyat)} TL/m² (toplam ${kisaPara(fiyat*(+p.alan_m2 || 0))})` : ""}
+
+YAPILACAKLAR
+1) Aynı mahalle ve yakın çevrede, aynı nitelikteki (tarla/arsa) GÜNCEL satılık ilanları bul (sahibinden, emlakjet, hepsiemlak vb.; mümkünse son 6 ay). Her ilan için gerçek bağlantıyı ver. İlanları uydurma; bulamazsan az ilan ver.
+2) Parselin önemli yerlere uzaklığını ver: mahalle/köy merkezi, ilçe merkezi, il merkezi, en yakın ana yol (otoyol/devlet yolu), varsa 30 km içindeki OSB, liman, havalimanı, sahil vb. Her referans noktasının KOORDİNATINI ve kaynağını yaz. Mesafeler kuş uçuşu olsun.
+3) Kısa bir değerlendirme yaz: bu parsele en çok benzeyen emsaller, fiyatı etkileyen artılar/eksiler, gerçekçi m² fiyat bandı.
+
+ÇOK ÖNEMLİ: Cevabının EN SONUNA, aşağıdaki biçimde tek bir JSON bloğu koy (programım bunu okuyacak). Sayıları düz sayı yaz (nokta/virgül ayırıcısı olmadan, ondalık için nokta):
+ARSATAKIP-JSON
+{"emsaller":[{"baslik":"","m2":0,"fiyat_tl":0,"konum":"","tarih":"","url":"","site":""}],
+ "mesafeler":[{"hedef":"","enlem":0,"boylam":0,"km":0,"kaynak":""}],
+ "bant":[0,0]}`);
+  if(ok === false) toast("ChatGPT'nin yazma kutusu bulunamadı: giriş yapıp tekrar dene");
+}
+async function emsalArastirCevabi(t, M){
+  const i0 = t.lastIndexOf("ARSATAKIP-JSON"), parca = i0 >= 0 ? t.slice(i0) : t, a0 = parca.indexOf("{"), b0 = parca.lastIndexOf("}");
+  let J = null; try{ J = JSON.parse(parca.slice(a0, b0 + 1)); }catch(e){}
+  const metin = (i0 >= 0 ? t.slice(0, i0) : t).replace(/```json\s*$/i, "").trim();
+  const { data:p } = await sb.from("parcels").select("*").eq("id", M.id).single(); const h = ekHalka(p), mz = h ? ekMerkez(h) : M.merkez;
+  const sayi = v => typeof v === "number" ? v : sayiTr(v);
+  // emsaller: birim fiyat burada hesaplanir, ayni ilan (url ya da m2+fiyat) tekrar eklenmez
+  const yeni = (J?.emsaller || []).map(x => ({ m2: sayi(x.m2), fiyat: sayi(x.fiyat_tl), x })).filter(o => o.m2 > 50 && o.fiyat > 1000).map(({ m2, fiyat, x }) => ({
+    id: "r" + trSlug(x.url || x.baslik || "").slice(-40) + "-" + Math.round(m2) + "-" + Math.round(fiyat/1000),
+    baslik: x.baslik || (x.site || "ilan"), url: /^https?:/.test(x.url || "") ? x.url : "", fiyat, m2, birim: Math.round(fiyat/m2),
+    yer: x.konum || "", tarih: x.tarih || "", alindi: new Date().toISOString().slice(0, 10), gpt: true, site: x.site || "" }));
+  // mesafeler: verilen referans koordinatindan kus ucusu BIZ hesaplariz, GPT'nin km'si ile karsilastiririz
+  const mesafeler = (J?.mesafeler || []).map(x => { const en = sayi(x.enlem), bo = sayi(x.boylam), gk = sayi(x.km);
+    const bk = isFinite(en) && isFinite(bo) && en && bo && mz ? ekKusUcusu(mz, [bo, en]) : null;
+    const durum = bk == null ? "koordinat yok" : !isFinite(gk) ? "hesaplandı" : Math.abs(bk - gk) <= Math.max(.4, gk*.15) ? "tutarlı" : "uyuşmuyor";
+    return { hedef: x.hedef || "", gptKm: isFinite(gk) ? gk : null, km: bk != null ? Math.round(bk*10)/10 : null, enlem: en, boylam: bo, kaynak: x.kaynak || "", durum }; }).filter(x => x.hedef);
+  const bant = Array.isArray(J?.bant) && J.bant.length === 2 ? J.bant.map(sayi) : null;
+  if(!J) toast("Cevapta ARSATAKIP-JSON bloğu bulunamadı · sadece metin kaydedildi");
+  let n = 0; if(yeni.length) n = await emsalKaydet(M.id, yeni, "ChatGPT araştırması");
+  const a = await analizOku(M.id).catch(() => ({})), E = { ilanlar:[], gecmis:[], ...(a.emsal || {}) };
+  E.arastirma = { tarih: new Date().toLocaleDateString("tr-TR"), metin: metin.slice(0, 20000), mesafeler, bant, ilan: yeni.length };
+  if(bant && bant[0] > 0) E.gpt = { metin: metin.slice(0, 4000), bant, tarih: E.arastirma.tarih };
+  await analizYaz(M.id, { emsal:E });
+  const uy = mesafeler.filter(x => x.durum === "uyuşmuyor").length;
+  toast(`Araştırma kaydedildi · ${n} yeni emsal · ${mesafeler.length} mesafe${uy ? ` (${uy} tanesi uyuşmuyor ⚠)` : " ✓"}`);
+  try{ PC_P_ZAMAN = 0; }catch(x){} await ekraniCiz("parsel", M.id);
+  if((E.ilanlar || []).some(t => !t.haric)) setTimeout(() => emsalPdf(M.id), 400);   // denetlenmis rapor hemen hazirlansin
+}
+function emsalArastirmaHtml(id, p, a){
+  const R = a?.emsal?.arastirma; if(!R) return "";
+  const sat = R.mesafeler.map(x => `<div class="kv ekArSat ${x.durum === "uyuşmuyor" ? "ekUyari" : ""}"><span>${esc(x.hedef)}<small>${esc(x.kaynak || "")}</small></span>
+    <b class="mono">${x.km != null ? nf2(x.km) + " km" : x.gptKm != null ? nf2(x.gptKm) + " km*" : "—"}</b><em>${x.durum === "tutarlı" ? "✓" : x.durum === "uyuşmuyor" ? `⚠ GPT: ${nf2(x.gptKm)} km` : x.durum === "koordinat yok" ? "koordinatsız" : ""}</em></div>`).join("");
+  return `<details class="ekCevre ekArastirma"><summary>🔎 ChatGPT araştırması · ${esc(R.tarih)} · ${R.ilan} ilan · ${R.mesafeler.length} mesafe</summary>
+    ${sat ? `<div class="ekArBas">Mesafeler (kuş uçuşu, parsel merkezinden; program yeniden hesapladı)</div>${sat}` : ""}
+    ${R.bant ? `<div class="ekEmsalNot">ChatGPT'nin bandı: ${nf(R.bant[0])} – ${nf(R.bant[1])} ₺/m² · ilanlar yukarıdaki hesaba katıldı, hesaplanan bant esastır</div>` : ""}
+    <details class="ekArMetin"><summary>ChatGPT'nin yazdığı değerlendirme</summary><div class="ekArYazi">${esc(R.metin || "")}</div></details></details>`;
+}
+{
+  const eskiCG2 = gptCevapGeldi;
+  gptCevapGeldi = async function(t){
+    if(GPT_MOD?.tur === "emsalArastir"){ const M = GPT_MOD; GPT_MOD = null; document.getElementById("ekGptBar")?.remove(); return emsalArastirCevabi(t, M); }
+    return eskiCG2(t);
+  };
+  if(window.arsaPC?.gptCevap) window.arsaPC.gptCevap(t => gptCevapGeldi(t));
 }
 
 /* --- emsal raporu PDF: sayfalar tuvalde cizilir (Turkce harfler sorunsuz), jsPDF ile birlestirilir --- */
@@ -18628,7 +18718,11 @@ async function emsalPdf(id){
     `Bu üç göstergenin ağırlıklı ortalaması ${tl(A.merkez)}/m²; emsallerin orta yarısının yayılımıyla önerilen bant ${nf(A.bant[0])} – ${nf(A.bant[1])} ₺/m², parsel toplamı ${kisaPara(A.toplam[0])} – ${kisaPara(A.toplam[1])}.`,
     art.length ? `Fiyatı destekleyen özellikler: ${art.join(", ")}.` : "", eks.length ? `Fiyatı aşağı çekebilecek özellikler: ${eks.join(", ")}.` : "",
     A.kendiFiyat ? `Parselin kayıtlı m² fiyatı ${tl(A.kendiFiyat)}; bu, önerilen bandın ${A.konum}.${A.konum === "üstünde" ? " Pazarlık payı bırakılarak ilan edilebilir ama satış süresi uzayabilir." : A.konum === "altında" ? " Fiyat emsallerin altında; değerin altında satma riski var." : " Fiyat emsallerle uyumlu."}` : "",
-    "Not: Sahibinden fiyatları ilan (istenen) fiyatlarıdır; gerçek satış fiyatları genelde %5–15 daha düşük gerçekleşir."
+    (() => { const al = +p.alan_m2 || 0; if(!al || A.gecerli.length < 2) return ""; const yak = [...A.gecerli].sort((u, v) => Math.abs(Math.log(u.m2/al)) - Math.abs(Math.log(v.m2/al))).slice(0, 3);
+      return `Büyüklük olarak bu parsele en yakın emsaller: ${yak.map(t => `${nf(Math.round(t.m2))} m² · ${tl(t.birim)}/m² (${t.yer || t.baslik || "ilan"})`).join("; ")}. Bu üçünün ortalaması ${tl(Math.round(yak.reduce((q, t) => q + t.birim, 0)/yak.length))}/m².`; })(),
+    (() => { const R = E.arastirma; if(!R?.mesafeler?.length) return ""; const L = R.mesafeler.filter(m => m.km != null || m.gptKm != null);
+      return L.length ? `Konum: ${L.map(m => `${m.hedef} ${nf2(m.km ?? m.gptKm)} km`).join(", ")} (kuş uçuşu).` : ""; })(),
+    "Not: İlan fiyatları istenen fiyatlardır; gerçek satış fiyatları genelde %5–15 daha düşük gerçekleşir. Hisselere bölünerek satılan arazilerde hisse m² fiyatı bütün tarlanın m² fiyatından yüksek olabilir; bu bant parselin tamamı içindir."
   ].filter(Boolean).join("\n\n");
   ({ y } = sar(x, metin, y, W - 2*M));
   y += 20;
@@ -18639,10 +18733,32 @@ async function emsalPdf(id){
     x.fillStyle = uy ? KR : "#2E7D4F"; x.font = "700 17px Inter, Arial";
     x.fillText(gb ? (uy ? `⚠ ChatGPT bandı (${nf(gb[0])} – ${nf(gb[1])} ₺/m²) hesaplanan bantla uyuşmuyor; rapor hesaplanan bandı esas alır.` : `✓ ChatGPT bandı (${nf(gb[0])} – ${nf(gb[1])} ₺/m²) hesaplanan bantla tutarlı.`) : "ChatGPT net bir bant vermedi; yalnızca yorum olarak eklendi.", M + 18, y + 36);
     y += 90;
-    let r2 = sar(x, E.gpt.metin.replace(/\*\*/g, ""), y, W - 2*M, 23, "15px Inter, Arial", "#3A3A40");
+    const ayniMetin = E.arastirma?.metin && E.gpt.metin === E.arastirma.metin.slice(0, 4000);
+    let r2 = ayniMetin ? { y, kalan:false } : sar(x, E.gpt.metin.replace(/\*\*/g, ""), y, W - 2*M, 23, "15px Inter, Arial", "#3A3A40");
     let kalanMetin = null;
     if(r2.kalan){ x = yeni(); y = 190; r2 = sar(x, "(devam) " + E.gpt.metin.replace(/\*\*/g, "").slice(-2500), y, W - 2*M, 23, "15px Inter, Arial", "#3A3A40"); }
     y = r2.y + 10;
+  }
+  const R = E.arastirma;
+  if(R){
+    x = yeni(); y = 190; y = baslik(x, `Konum ve mesafeler · ChatGPT araştırması (${R.tarih})`, y) + 22;
+    if(R.mesafeler?.length){
+      x.fillStyle = "#F5F4F6"; x.fillRect(M - 10, y - 24, W - 2*M + 20, 36); x.fillStyle = GRI; x.font = "700 14px Inter, Arial";
+      [[M, "HEDEF"], [M + 470, "KAYNAK"], [M + 760, "KUŞ UÇUŞU"], [M + 900, "DENETİM"]].forEach(([cx, t]) => x.fillText(t, cx, y)); y += 34;
+      const kes = (s2, w) => { s2 = String(s2 || ""); while(x.measureText(s2).width > w && s2.length > 3) s2 = s2.slice(0, -2); return s2; };
+      R.mesafeler.forEach(m => { if(y > H - 120){ x = yeni(); y = 190; }
+        x.font = "15px Inter, Arial"; x.fillStyle = "#2A2A30"; x.fillText(kes(m.hedef, 450), M, y); x.fillStyle = GRI; x.fillText(kes(m.kaynak, 270), M + 470, y);
+        x.font = "700 15px Inter, Arial"; x.fillStyle = KOYU; x.fillText(m.km != null ? nf2(m.km) + " km" : m.gptKm != null ? nf2(m.gptKm) + " km*" : "—", M + 760, y);
+        x.font = "600 14px Inter, Arial"; x.fillStyle = m.durum === "tutarlı" ? "#2E7D4F" : m.durum === "uyuşmuyor" ? KR : GRI;
+        x.fillText(m.durum === "tutarlı" ? "✓ tutarlı" : m.durum === "uyuşmuyor" ? `⚠ GPT ${nf2(m.gptKm)} km` : m.durum === "koordinat yok" ? "doğrulanamadı" : "hesaplandı", M + 900, y);
+        x.strokeStyle = "#EFEEF0"; x.beginPath(); x.moveTo(M - 10, y + 12); x.lineTo(W - M + 10, y + 12); x.stroke(); y += 34; });
+      y += 8; x.fillStyle = GRI; x.font = "13px Inter, Arial"; x.fillText("Mesafeler parsel merkezinden, ChatGPT'nin verdiği referans koordinatına program tarafından yeniden hesaplanmıştır. * = koordinat verilmediği için doğrulanamadı.", M, y); y += 40;
+    }
+    if(R.metin){ y = baslik(x, "ChatGPT'nin araştırma notları", y) + 18;
+      let r3 = sar(x, R.metin.replace(/\*\*/g, "").replace(/^#+\s*/gm, ""), y, W - 2*M, 23, "15px Inter, Arial", "#3A3A40");
+      let kalan = R.metin.replace(/\*\*/g, "").replace(/^#+\s*/gm, ""), sinir = 0;
+      while(r3.kalan && sinir++ < 4){ const yazilan = Math.floor(kalan.length*.5); kalan = kalan.slice(yazilan); x = yeni(); y = 190; r3 = sar(x, "(devam) " + kalan, y, W - 2*M, 23, "15px Inter, Arial", "#3A3A40"); }
+      y = r3.y + 10; }
   }
   if(y > H - 330){ x = yeni(); y = 190; }
   y = baslik(x, "Yöntem", y + 10) + 18;
