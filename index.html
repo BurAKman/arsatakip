@@ -3168,7 +3168,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.7.6";
+const SURUM_MORDOR = "v 3.7.7";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -15206,7 +15206,7 @@ function capYerlesimAgacHam(M, cfg, hizli){
   const kalanlar = yapr.filter(y=>y.kalan), sabitTop = yapr.filter(y=>!y.kalan).reduce((t,y)=>t+Math.max(.01,+y.hedef||0), 0);
   let net = tum - (C.resmiler.length ? 0 : 0);
   let yollar, kesimler, bolgeler, gercek, bosluklar = [], Lambda = 1, eDeg, SON_ORAN = 1, pahlar = [];
-  const PAH = (!elleMod && cfg.pah && cfg.pah.aktif && +cfg.pah.m > 0) ? +cfg.pah.m : 0, DIK = !elleMod && !!cfg.yolUcDik && !!cfg._dikIc, DD = cfg._dikDelta || null;
+  const PAH = (!elleMod && cfg.pah && cfg.pah.aktif && +cfg.pah.m > 0) ? +cfg.pah.m : 0, DIK = !elleMod && !!cfg.yolUcDik && !!cfg._dikIc, DD = cfg._dikDelta || null, YDIK = !elleMod && !!cfg.yolaDik;
   const ITER = hizli ? 3 : 12;
   for(let it=0; it<ITER; it++){
     eDeg = new Map();
@@ -15224,13 +15224,14 @@ function capYerlesimAgacHam(M, cfg, hizli){
       const v = yaprakMi(d) ? eDeg.get(d.id) : d.cocuk.reduce((t,c)=>t+eTop(c), 0); eTopM.set(d.id, v); return v; };
     const topE = eTop(kok);
     yollar = []; kesimler = []; bolgeler = new Map(); gercek = new Map(); bosluklar = []; pahlar = [];
-    const yerlestir = (d, R, Ry) => {
-      let bolge = R;
+    const yerlestir = (d, R, Ry, KY) => {
+      let bolge = R; const KYd = (KY || []).slice();
       for(const ky of (elleMod ? [] : (d.kenarYol||[]))){
         const s = tarafYonu(C, ky.taraf), g = Math.max(.5, +ky.g || 3);
         const izd = bolge.map(p=>p[0]*s[0]+p[1]*s[1]); const tmax = Math.max(...izd);
         if(tmax - Math.min(...izd) <= g + .5) continue;
         const kb = kenarBandi(bolge, s, g);
+        KYd.push(yolDogrultu(s));
         if(kb){ yollar.push({ poly:kb.serit, eksen:kb.eksenler[0] || null, eksenler:kb.eksenler, g, kaynak:{ dugum:d.id, kenar:ky.taraf } });
           bolge = kb.kalan; continue; }
         const serit = bant(bolge, s, tmax - g, tmax + 1);
@@ -15243,6 +15244,7 @@ function capYerlesimAgacHam(M, cfg, hizli){
         const a = Math.max(0, kullanilir(bolge, Ry)); gercek.set(d.id, a); return a; }
       let s = donmusYon(d.bol.eksen === "par" ? C.v : C.u, d.bol.aci);
       if(d.bol.ters) s = [-s[0], -s[1]];
+      if(YDIK){ const yd = yolaDikYon(s, KYd); if(yd) s = yd; }
       const n = d.cocuk.length;
       const w = d.cocuk.map(c=>eTop(c) * Math.max(.2, Math.min(5, +c.k || 1)));
       const gap = k => (k < n-1 && !elleMod) ? Math.max(0, +(d.bol.yollar||{})[k] || 0) : 0;
@@ -15258,9 +15260,9 @@ function capYerlesimAgacHam(M, cfg, hizli){
       // kesim basina ek aci varsa: kesimler sirayla, kalan bolgeden kendi yonuyle kesilir (yelpaze gibi acilan yollar)
       const KA = d.bol.kAci || {};
       if(Object.keys(KA).some(q => +KA[q] && +q < n-1)){
-        let kal = bolge, kalR = Ry, toplamY = 0;
+        let kal = bolge, kalR = Ry, toplamY = 0, oncekiSk = null, sonSk = null;
         for(let k=0;k<n;k++){
-          const c = d.cocuk[k]; let parca = null, pR = [];
+          const c = d.cocuk[k]; let parca = null, pR = []; sonSk = k < n-1 ? donmusYon(s, +KA[k] || 0) : null;
           if(kal && kal.length > 2){
             const sk = k < n-1 ? donmusYon(s, +KA[k] || 0) : s, ns = [-sk[0], -sk[1]];
             const iz = kal.map(p=>p[0]*sk[0]+p[1]*sk[1]), a0 = Math.min(...iz), a1 = Math.max(...iz);
@@ -15282,7 +15284,9 @@ function capYerlesimAgacHam(M, cfg, hizli){
               if(ba > .5) bosluklar.push({ poly:bp, alan:ba, dugum:d.id });
             }
           }
-          if(parca) toplamY += yerlestir(c, parca, pR); else { gercek.set(c.id, 0); yapraklar(c).forEach(y=>gercek.set(y.id, 0)); }
+          const kyC = KYd.slice(); if(k > 0 && gap(k-1) > 0 && oncekiSk) kyC.push(yolDogrultu(oncekiSk)); if(k < n-1 && gap(k) > 0 && sonSk) kyC.push(yolDogrultu(sonSk));
+          oncekiSk = sonSk;
+          if(parca) toplamY += yerlestir(c, parca, pR, kyC); else { gercek.set(c.id, 0); yapraklar(c).forEach(y=>gercek.set(y.id, 0)); }
         }
         gercek.set(d.id, toplamY); return toplamY;
       }
@@ -15309,7 +15313,8 @@ function capYerlesimAgacHam(M, cfg, hizli){
             if(serit) yollar.push({ poly:serit, eksen:cizgiKirp(bolge, s, t + g/2), g, kaynak:{ dugum:d.id, k } }); }
           kesimler.push({ dugum:d.id, k, s, t, g, ac:a, bitis:son.araliklar[k+1][1], cizgi:cizgiKirp(bolge, s, t + g/2), bolge, Ry });
         }
-        if(parca) toplam += yerlestir(c, parca, Ry.length ? halkaBant(Ry, s, a, b) : []); else { gercek.set(c.id, 0); yapraklar(c).forEach(y=>gercek.set(y.id, 0)); }
+        const kyC = KYd.slice(); if((k > 0 && gap(k-1) > 0) || (k < n-1 && gap(k) > 0)) kyC.push(yolDogrultu(s));
+        if(parca) toplam += yerlestir(c, parca, Ry.length ? halkaBant(Ry, s, a, b) : [], kyC); else { gercek.set(c.id, 0); yapraklar(c).forEach(y=>gercek.set(y.id, 0)); }
       });
       gercek.set(d.id, toplam);
       return toplam;
@@ -15410,7 +15415,17 @@ function capDenetim(yer){
     cephe.set(o.id, c);
     const no = o.bilgi.no;
     if(c != null && c < .5) uyari.push({ tur:"hata", id:o.id, metin:`${no} nolu parçanın yola çıkışı yok` });
-    else if(c != null && c < 5) uyari.push({ tur:"dikkat", id:o.id, metin:`${no} nolu parçanın yol cephesi dar (${c.toFixed(1).replace(".",",")} m)` });
+    else if(c != null && c < 5) uyari.push({ tur:"dikkat", id:o.id, kalite:true, metin:`${no} nolu parçanın yol cephesi dar (${c.toFixed(1).replace(".",",")} m)` });
+    else if(c != null && c < 10) uyari.push({ tur:"dikkat", id:o.id, kalite:true, metin:`${no} nolu parçanın yola cephesi ${c.toFixed(1).replace(".",",")} m · 10 m altı kullanışsız sayılır` });
+    if(c != null && c >= 5){ const der = (o.bilgi.olculen ?? o.bilgi.m2)/c; if(der/c > 3) uyari.push({ tur:"dikkat", id:o.id, kalite:true, metin:`${no} nolu parça dar ve derin (cephe ${c.toFixed(1).replace(".",",")} m, derinlik ~${der.toFixed(0)} m)` }); }
+    { const P = o.poly, Mg = PARCA.geometri || []; let enK = 180;
+      if(P && P.length > 2){ const yon = alanIsaretli(P) > 0 ? 1 : -1;
+        for(let i=0;i<P.length;i++){ const a = P[(i-1+P.length)%P.length], b = P[i], d = P[(i+1)%P.length];
+          if(Mg.some(m=>Math.hypot(m[0]-b[0], m[1]-b[1]) < .3)) continue;    // arazinin kendi kosesi, kesimden degil
+          const ux = a[0]-b[0], uy = a[1]-b[1], vx = d[0]-b[0], vy = d[1]-b[1], Lu = Math.hypot(ux,uy), Lv = Math.hypot(vx,vy); if(Lu < 1 || Lv < 1) continue;
+          const cr = (b[0]-a[0])*(d[1]-b[1]) - (b[1]-a[1])*(d[0]-b[0]); if(cr*yon <= 0) continue;
+          enK = Math.min(enK, Math.acos(Math.max(-1, Math.min(1, (ux*vx+uy*vy)/(Lu*Lv))))*180/Math.PI); } }
+      if(enK < 60) uyari.push({ tur:"dikkat", id:o.id, kalite:true, metin:`${no} nolu parçada sivri köşe var (${enK.toFixed(0)}°)` }); }
     if(o.ekPoly && o.ekPoly.length) uyari.push({ tur:"dikkat", id:o.id, metin:`${no} nolu parçayı çizdiğin yol ${o.ekPoly.length + 1} parçaya bölüyor` });
     if(o.bilgi.m2 < 20) uyari.push({ tur:"dikkat", id:o.id, metin:`${no} nolu parça çok küçük (${nf2(o.bilgi.m2)} m²)` });
   });
@@ -15634,7 +15649,7 @@ function parcaCfgTemel(){
     resmiEk: (PARCA.resmiEk||[]).map(e=>({ kenar:e.kenar, yon:e.yon, g:+e.g })), ters: !!PARCA.ters,
     enAzYol: yolVarsayilan(), enAzYolElle: !!PARCA.enAzYolElle, capTema:"yatay", olculer: PARCA.olculer !== false, kirpOto: !!PARCA.kirpOto,
     resmiStil: PARCA.resmiStil || "cizgi", yolStil: PARCA.yolStil || "kesik", yolYazi: PARCA.yolYazi !== false,
-    elleYol: elleYolKopya(PARCA.elleYol), pah: { aktif: !!(PARCA.pah && PARCA.pah.aktif), m: +(PARCA.pah && PARCA.pah.m) || 1.5 }, yolUcDik: !!PARCA.yolUcDik };
+    elleYol: elleYolKopya(PARCA.elleYol), pah: { aktif: !!(PARCA.pah && PARCA.pah.aktif), m: +(PARCA.pah && PARCA.pah.m) || 1.5 }, yolUcDik: !!PARCA.yolUcDik, yolaDik: !!PARCA.yolaDik };
 }
 function elleYolKopya(e){ return { aktif: !!(e && e.aktif), yollar: ((e && e.yollar) || []).map(y=>({ pts: y.pts.map(q=>[Math.round(q[0]*1000)/1000, Math.round(q[1]*1000)/1000]), g:+y.g || 3 })) }; }
 function parcaCfg(){
@@ -15922,6 +15937,17 @@ function yolUcDikUygula(M, C, yollar, bolgeler, yapr, gercek){
     y.poly = W; y.eksenler = seg; y.eksen = seg.slice().sort((p,q)=>Math.hypot(q[1][0]-q[0][0], q[1][1]-q[0][1]) - Math.hypot(p[1][0]-p[0][0], p[1][1]-p[0][1]))[0]; y.dik = true;
   });
 }
+
+// parselin yan sinirlari yola DIK olsun: komsu parsel yollarinin dogrultusu (birden fazlaysa ortalamasi) kesim yonu olur.
+// kesimler zaten yola paralel gidiyorsa (yoldan geriye bolme) dokunulmaz.
+function yolaDikYon(s, KY){
+  if(!KY || !KY.length) return null; let vx = 0, vy = 0;
+  KY.forEach(r => { const sg = (r[0]*s[0] + r[1]*s[1]) < 0 ? -1 : 1; vx += r[0]*sg; vy += r[1]*sg; });
+  const L = Math.hypot(vx, vy); if(L < 1e-9) return null; vx /= L; vy /= L;
+  if(Math.abs(vx*s[0] + vy*s[1]) < Math.cos(50*Math.PI/180)) return null;
+  return [vx, vy];
+}
+const yolDogrultu = s => [-s[1], s[0]];
 function kesimAci(ek, deger){ const K = PARCA.secKesim; if(!K) return;
   degisim(()=>{ const b = dugumBul(PARCA.agac, K.dugum); if(!b || !b.d.bol) return; const A = b.d.bol.kAci = b.d.bol.kAci || {};
     let v = ek == null ? +deger || 0 : (+A[K.k] || 0) + ek; v = Math.max(-45, Math.min(45, Math.round(v*100)/100));
@@ -16201,6 +16227,7 @@ function editorCiz(){
     yol(o.poly); x.fillStyle = o.bilgi.renk || "#C6D9A7"; x.fill();
     x.lineWidth = 1; x.strokeStyle = "#B49E2A"; x.stroke();
     if(D.uyari.some(u=>u.id === o.id && u.tur === "hata")){ x.lineWidth = 2; x.strokeStyle = "#D23C3C"; x.stroke(); }
+    else if(D.uyari.some(u=>u.id === o.id && u.kalite)){ x.save(); x.lineWidth = 2.2; x.setLineDash([6,4]); x.strokeStyle = "#E0782E"; x.stroke(); x.restore(); }
   });
   // ayrilmamis alan: tarali
   (yer.bosluklar||[]).forEach(bs=>{ yol(bs.poly); x.fillStyle = "#F4F1EA"; x.fill();
@@ -17069,6 +17096,9 @@ async function capAyar(arg){
           fazlalık kilitsiz bütün parçalardan aynı oranda düşülür ve kâğıda düşülmüş metrekareler yazılır. İşaretlemezsen fazlalık sadece uyarı olarak
           gösterilir; kâğıda ve hisselere senin yazdığın metrekareler birebir geçer.</span></span></label>
       <label style="display:flex;gap:10px;align-items:flex-start;font-size:13.5px;cursor:pointer;margin-top:12px">
+        <input type="checkbox" id="yolaDik" style="margin-top:3px;width:18px;height:18px">
+        <span><b>Parselleri yola dik kes</b><br><span style="font-size:12px;color:var(--ink-3)">Parsellerin yan sınırları önündeki parsel yoluna 90° olur (iki yol arasındaki sırada iki yolun ortası alınır). Parseller eğik paralelkenar değil, düzgün dikdörtgene yakın çıkar. Açıksa grubun "kesim açısı" ayarı bu sıralarda kullanılmaz.</span></span></label>
+      <label style="display:flex;gap:10px;align-items:flex-start;font-size:13.5px;cursor:pointer;margin-top:12px">
         <input type="checkbox" id="pahAktif" style="margin-top:3px;width:18px;height:18px">
         <span><b>Yol ağzı pahı</b><br><span style="font-size:12px;color:var(--ink-3)">Parsel yolunun resmi yola ya da başka bir yola bağlandığı köşeler eğik kesilir, kesilen köşe yola katılır. Metrekareler yine birebir tutar.</span></span></label>
       <div style="display:flex;gap:8px;align-items:center;margin:8px 0 0 28px;font-size:13px"><span>Pah boyu (m)</span>
@@ -17124,6 +17154,7 @@ async function capAyar(arg){
   PARCA.kirpOto = !!(duzen && duzen.kirpOto);
   PARCA.pah = duzen ? { aktif: !!(duzen.pah && duzen.pah.aktif), m: +(duzen.pah && duzen.pah.m) || 1.5 } : { aktif:true, m:1.5 };   // yeni capta acik, eski caplarda kapali
   PARCA.yolUcDik = duzen ? !!duzen.yolUcDik : true;
+  PARCA.yolaDik = duzen ? !!duzen.yolaDik : true;
   PARCA.resmiStil = (duzen && duzen.resmiStil) || "cizgi";
   PARCA.yolStil = (duzen && duzen.yolStil) || "kesik";
   PARCA.yolYazi = !(duzen && duzen.yolYazi === false);
@@ -17133,6 +17164,7 @@ async function capAyar(arg){
     pa.onchange = () => { PARCA.pah.aktif = pa.checked; pm.disabled = !pa.checked; ozetCiz(); };
     pm.onchange = () => { const v = sayiCoz(pm.value); if(!(v > 0 && v <= 10)){ toast("0 ile 10 m arası bir pah yaz"); pm.value = ham(PARCA.pah.m); return; } PARCA.pah.m = v; ozetCiz(); }; } }
   { const yd = document.getElementById("yolUcDik"); if(yd){ yd.checked = !!PARCA.yolUcDik; yd.onchange = () => { PARCA.yolUcDik = yd.checked; ozetCiz(); }; } }
+  { const yk = document.getElementById("yolaDik"); if(yk){ yk.checked = !!PARCA.yolaDik; yk.onchange = () => { PARCA.yolaDik = yk.checked; ozetCiz(); }; } }
   capEditorKur();
   if(PARCA.eskiCevrildi) toast("Bu çap eski blok düzeniyle çizilmişti; yeni düzenleyiciye yaklaşık olarak aktarıldı, kontrol et");
   if(!window.__capBoyut){ window.__capBoyut = true; window.addEventListener("resize", () => { if(document.getElementById("capEditor")) editorCiz(); }); }
