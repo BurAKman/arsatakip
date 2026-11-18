@@ -3116,6 +3116,80 @@ body.pc .pcAcilir button:hover:not(:disabled){background:linear-gradient(90deg,r
 .baAcilis{position:fixed;inset:0;display:grid;place-items:center;background:#060607;z-index:5}
 .baAcilis b{font:600 74px Cinzel,Georgia,serif;letter-spacing:.04em;color:#fff;text-shadow:0 0 6px #fff,0 0 18px #FF4752,0 0 42px #E0313C,0 0 80px rgba(224,49,60,.6);animation:baNefes 1.6s ease-in-out infinite}
 @keyframes baNefes{50%{text-shadow:0 0 4px #fff,0 0 12px #FF4752,0 0 28px #E0313C,0 0 54px rgba(224,49,60,.4)}}
+/* ===== v1.0 nihai duzen ===== */
+/* parsel silme penceresi (telefon + PC) */
+.silKutu{display:flex;align-items:center;justify-content:center;padding:16px}
+.silPen{width:min(520px,100%);background:linear-gradient(180deg,#1A1D23,#101318);border:1px solid rgba(255,80,90,.35);border-radius:14px;padding:20px 20px 16px;color:#EDEBEE;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.silBas{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.silBas b{display:block;font-size:17px}.silBas small{color:#9A98A0;font-size:12.5px}
+.silIk{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:rgba(220,40,50,.16);border:1px solid rgba(255,80,90,.4);flex:0 0 auto}
+.silIk svg{width:19px;height:19px;color:#FF5A63}
+.silPen p{margin:8px 0;font-size:13.5px;color:#C9C7CC;line-height:1.45}
+.silListe{margin:4px 0 10px;padding-left:18px;font-size:13px;color:#C9C7CC;line-height:1.7}.silListe b{color:#fff}
+.silNot{font-size:12px!important;color:#8E8C93!important}
+.silOnay{display:block;font-size:13px;color:#C9C7CC;margin:12px 0 4px}
+.silOnay input{display:block;width:100%;margin-top:7px;padding:10px 12px;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:#0B0D11;color:#fff;font:600 15px "IBM Plex Mono",monospace}
+.silTus{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px}
+.silTus .btn{width:auto!important;margin:0!important;padding:9px 14px!important}
+.silTam{background:linear-gradient(180deg,#D8323C,#8E1018)!important;color:#fff!important;border:0!important}
+.silTam:disabled{opacity:.35;filter:grayscale(.6);cursor:not-allowed}
+.silSatir{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:22px 2px 30px;padding-top:14px;border-top:1px solid rgba(255,255,255,.07)}
+.silSatir button{display:inline-flex;align-items:center;gap:7px;background:none;border:1px solid rgba(255,80,90,.35);color:#FF6B73;border-radius:9px;padding:8px 12px;font-size:13px;cursor:pointer}
+.silSatir button:hover{background:rgba(220,40,50,.12)}
+.silSatir svg{width:15px;height:15px}
+.silSatir small{color:#8E8C93;font-size:12px}
+/* sinir cizimi yok */
+.sinirYok{text-align:center;padding:34px 22px!important}
+.sinirYok .sinirIk{display:inline-grid;place-items:center;width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.05);margin-bottom:10px}
+.sinirYok .sinirIk svg{width:24px;height:24px}
+.sinirYok b{display:block;font-size:17px;margin-bottom:6px}
+.sinirYok p{max-width:520px;margin:0 auto 16px;color:var(--ink-3,#9A98A0);font-size:13.5px;line-height:1.5}
+.sinirTus{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.sinirTus .btn{width:auto!important;margin:0!important}
+/* PC: Genel Bakis */
+body.pc .pcPano3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch;margin-bottom:16px}
+body.pc .pcPano3 .pcBox{display:flex;flex-direction:column}
+body.pc .pcPano3 .pcBoxIc{flex:1;padding:12px 14px 14px}
+body.pc .pcPano3 .pcYakListe{grid-template-columns:1fr}
+body.pc .pcK.tik{cursor:pointer}body.pc .pcK.tik:hover{border-color:rgba(255,90,99,.45)!important}
+body.pc .pcHspSat{padding:12px 14px;border-radius:10px;background:linear-gradient(180deg,#1A1F26,#12161C);border:1px solid rgba(255,255,255,.08);margin-bottom:10px}
+body.pc .pcHspSat:last-child{margin-bottom:0}
+body.pc .pcHspBas{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:#A9A7AE}
+body.pc .pcHspBas em{font-style:normal;font-size:11.5px;color:#7E7C84}
+body.pc .pcHspSat > b{display:block;font-size:24px;margin:4px 0 8px;letter-spacing:-.01em}
+body.pc .pcHspSat > b.kirmizi{color:#FF6B73}body.pc .pcHspSat > b.yesil{color:#5BD08B}
+body.pc .pcHspAlt{display:flex;gap:16px;font-size:12px;color:#8E8C93}body.pc .pcHspAlt b{color:#D9D7DC;font-weight:500}
+body.pc .pcHspAlt .gecti b{color:#FF6B73}
+body.pc .pcHarListe{display:flex;flex-direction:column}
+body.pc .pcHarSat{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
+body.pc .pcHarSat:last-child{border-bottom:0}
+body.pc .pcHarSat.tik{cursor:pointer}body.pc .pcHarSat.tik:hover b{color:#FF7A82}
+body.pc .pcHarSat > i{width:7px;height:7px;border-radius:50%;background:#FF4A55;box-shadow:0 0 6px rgba(255,60,70,.7);flex:0 0 auto}
+body.pc .pcHarSat > div{flex:1;min-width:0}
+body.pc .pcHarSat b{display:block;font-weight:500;color:#ECEAEE;text-transform:none}
+body.pc .pcHarSat small{display:block;color:#7E7C84;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.pc .pcHarSat em{font-style:normal;color:#7E7C84;font-size:11.5px;font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+body.pc .pcPiyasaSerit .pcBoxIc{grid-template-columns:repeat(4,1fr)!important}
+@media (max-width:1350px){ body.pc .pcPano3{grid-template-columns:1fr 1fr} body.pc .pcPano3 > :last-child{grid-column:1 / -1} }
+/* PC: baslik satirinda yeni kayit tusu, yuvarlak + gizli */
+body.pc .fab{display:none!important}
+body.pc .pcBaslikTus{margin-left:14px;display:flex}
+body.pc .pcBaslikTus .btn{width:auto!important;margin:0!important;padding:7px 14px!important;font-size:13px!important;display:inline-flex;align-items:center;gap:7px}
+body.pc .pcBaslikTus .btn svg{width:15px;height:15px}
+/* PC: Claude'a sor */
+body.pc .yzKart{padding:18px 18px 16px!important}
+body.pc .yzUst label{display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:#A9A7AE}
+body.pc .yzUst select{max-width:520px}
+body.pc .yzHazir{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 10px}
+body.pc #yzSoru{width:100%;min-height:150px;resize:vertical;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#0B0D11;color:#fff;font:14px/1.5 Inter,system-ui,sans-serif}
+body.pc .yzAlt{display:flex;align-items:center;gap:14px;margin-top:12px}
+body.pc .yzAlt small{flex:1;color:#8E8C93;font-size:12px}
+body.pc .yzAlt .btn{width:auto!important;margin:0!important;display:inline-flex;align-items:center;gap:8px}
+body.pc .yzAlt .btn svg{width:16px;height:16px}
+body.pc .yzDis{display:flex;align-items:center;gap:8px;margin:14px 2px;font-size:12.5px;color:#8E8C93}
+/* PC: emsal kartinin tuslari esit, tek satir */
+body.pc #ekEmsal .ekAnaTus{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+body.pc #ekEmsal .ekAnaTus .btn{grid-column:auto!important;width:100%!important;margin:0!important;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+body.pc #ekEmsal .ekAnaTus .btn svg{width:16px;height:16px}
 </style>
 </head>
 <body>
@@ -3168,7 +3242,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.8.2";
+const SURUM_MORDOR = "v 1.0.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -19202,9 +19276,9 @@ function emsalNoktaSvg(A, kendi){
 async function emsalKartiHtml(id, p, a){
   const E = a.emsal; const pc = !!window.arsaPC?.emsalAc;
   if(!E?.ilanlar?.length) return ME.role === "uye" ? "" : `<div class="card" id="ekEmsal"><div class="bolum"><span class="rz altin">${svg("money")}</span><b>Emsal Fiyatlar</b></div>
-    <p class="ipuc" style="margin:2px 0 10px">${pc ? "Sahibinden programın içinde açılır, parselin ilçesindeki satılık ilanlar hazır gelir. İstediğin sayfada menüden “Sayfadaki ilanları emsale al” de; ilanlar tek tıkla buraya düşer. Sahibinden “bot değilim” ekranında takılırsa kendi tarayıcında aç ve “Arsa Takip” yer imiyle aktar." : "Bilgisayarda kendi tarayıcında sahibinden aramasını aç, “Arsa Takip” yer imine bas, sonra buradan “Panodan emsal al” de."}</p>
+    <p class="ipuc" style="margin:2px 0 10px">${pc ? "Henüz emsal yok. “Emsal araştır” ilçedeki güncel satılık ilanları ve önemli yerlere mesafeleri araştırır; cevap gelince “Sonucu al” ile buraya düşer." : "Bilgisayarda kendi tarayıcında sahibinden aramasını aç, “Arsa Takip” yer imine bas, sonra buradan “Panodan emsal al” de."}</p>
     ${emsalArastirmaHtml(id, p, a)}
-    <div class="ekTuslar ekAnaTus">${pc ? `<button class="btn" onclick="emsalArastir('${id}')">🔎 Emsal araştır</button>` : `<button class="btn" onclick="emsalArastir('${id}', true)">🔎 Emsal araştır</button>`}<button class="btn ghost" onclick="emsalPanodan('${id}')">📥 Sonucu al</button></div>
+    <div class="ekTuslar ekAnaTus">${pc ? `<button class="btn" onclick="emsalArastir('${id}')">${svg("pusula")}Emsal araştır</button>` : `<button class="btn" onclick="emsalArastir('${id}', true)">🔎 Emsal araştır</button>`}<button class="btn ghost" onclick="emsalPanodan('${id}')">${pc ? svg("indir") : "📥 "}Sonucu al</button></div>
     <details class="ekDiger"><summary>Diğer emsal kaynakları</summary><div class="ekTuslar">${pc ? `<button class="btn ghost" onclick="emsalArastir('${id}', true)">🌐 Kendi tarayıcımda araştır</button><button class="btn ghost" onclick="emsalTopla('${id}')">📊 Sahibinden'den topla</button>` : ""}<button class="btn ghost" onclick="emsalYerImi('${id}')">🔖 Sahibinden yer imi kurulumu</button></div></details></div>`;
   const { data:yy } = await sb.from("parcel_years").select("m2_fiyat").eq("parcel_id", id).eq("yil", YEAR);
   const A = emsalAnaliz(p, E, +yy?.[0]?.m2_fiyat || null); if(!A) return "";
@@ -19672,12 +19746,13 @@ const PC_MENU = [
 ];
 const PC_AILE = { parsel:"araziler", yeni:"araziler", parcalar:"araziler", sunum:"araziler", ilan:"araziler", saha:"araziler", belgeler:"araziler", capAyar:"araziler", fiyatDuzen:"araziler", fiyat:"araziler", marka:"ayarlar", yedek:"ayarlar", tema:"ayarlar", rehber:"ayarlar" };
 const PC_AD = { ana:"Genel Bakış", araziler:"Araziler", harita:"Harita Sorgu", fiyat:"Tapu Bilgileri", cap:"Çap", kml:"KML", yaklasan:"Yaklaşanlar", hesap:"Hesap - Kitap",
-  ekler:"Ekler", yz:"İdrak Makamı", yedek:"Yedek", ayarlar:"Ayarlar", tema:"Tema", marka:"Marka", yeni:"Yeni Parsel", fiyatDuzen:"Tapu Düzenle",
+  ekler:"Ekler", yz:"Claude'a Sor", yedek:"Yedek", ayarlar:"Ayarlar", tema:"Tema", marka:"Marka", yeni:"Yeni Parsel", fiyatDuzen:"Tapu Düzenle",
   parsel:"Genel", parcalar:"Hisseler", capAyar:"Çap", ilan:"İlan Afişi", sunum:"Sunum", saha:"Saha", belgeler:"Belgeler" };
 // parsel calisma alani: 4 sekme. Ayni isin parcalari tek sekmede, ustte kucuk bir anahtarla gecilir.
 const PC_ALT = [["parsel","Genel","home"],["capAyar","Çap & Hisseler","cetvel"],["ilan","İlan & Sunum","photo"],["belgeler","Belgeler","atac"]];
 const PC_ALT_GRUP = { parsel:"parsel", capAyar:"capAyar", parcalar:"capAyar", ilan:"ilan", sunum:"ilan", belgeler:"belgeler", saha:"parsel", fiyatDuzen:"parsel" };
 const PC_ALT_ANAHTAR = { capAyar:[["capAyar","Çizim"],["parcalar","Hisse durumu"]], ilan:[["ilan","Afiş & video"],["sunum","Sunum görseli"]] };
+const PC_GIZLI_EKRAN = new Set(["fiyat", "cap", "kml", "tema", "yeni", "fiyatDuzen", "marka"]);
 const PC_PARSEL_EKRAN = new Set(["parsel","parcalar","capAyar","ilan","sunum","saha","belgeler"]);
 const pcParselId = (r, arg) => PC_PARSEL_EKRAN.has(r) && arg ? String(arg).split("|")[0] : null;
 
@@ -19740,9 +19815,9 @@ function pcMenuAc(btn, k){
   const pid = pcParselId(PC_SIMDI.r, PC_SIMDI.arg), adm = ME.role === "admin";
   const M = {
     dosya:[ adm && ["Yeni parsel", "go('yeni')"], ["Haritadan parsel sorgula", "pcGit('harita')"], adm && window.arsaPC?.gptAc && ["✦ Tapu fotoğrafından parsel ekle", "tapuIleEkle()"], "-", ["Yedek al / geri yükle", "pcGit('yedek')"], window.arsaPC?.yedekKlasor && ["Yedek klasörünü aç", "arsaPC.yedekKlasor()"], "-", ["Çıkış", "cikisSor()"] ],
-    parsel: pid ? [ ...PC_ALT.map(([r, a]) => [a, `pcAltGit('${r}','${pid}')`]), ["Hisse durumu", `pcAltGit('parcalar','${pid}')`], ["Sunum görseli", `pcAltGit('sunum','${pid}')`], "-", ["İmar durumu (e-Plan)", `eplanAc('${pid}')`], window.arsaPC?.gptAc && ["✦ İmar yorumu (ChatGPT)", `imarYorumAc('${pid}')`], ["KML indir", `kmlIndirParsel('${pid}')`] ] : [ ["Önce bir parsel aç", ""] ],
-    gorunum:[ [(document.body.classList.contains("pcGezKapali") ? "Parsel gezginini göster" : "Parsel gezginini gizle"), "pcPanel('pcGez')"], [(document.body.classList.contains("pcOzKapali") ? "Özellikler panelini göster" : "Özellikler panelini gizle"), "pcPanel('pcOz')"], "-", PC_EXE ? null : ["Telefon görünümüne geç", "localStorage.setItem('pcKapali','1');location.reload()"], ["Tema", "go('tema')"] ],
-    araclar:[ ["Tapu bilgileri (tüm parseller)", "pcGit('fiyat')"], ["Çap listesi", "pcGit('cap')"], ["KML", "pcGit('kml')"], ["Vekalet / muvafakat (Ekler)", "pcGit('ekler')"], ["İdrak Makamı", "pcGit('yz')"], "-", ["Yedek al / geri yükle", "pcGit('yedek')"], adm && ["Ayarlar", "pcGit('ayarlar')"] ],
+    parsel: pid ? [ ...PC_ALT.map(([r, a]) => [a, `pcAltGit('${r}','${pid}')`]), ["Hisse durumu", `pcAltGit('parcalar','${pid}')`], ["Sunum görseli", `pcAltGit('sunum','${pid}')`], "-", ["İmar durumu (e-Plan)", `eplanAc('${pid}')`], window.arsaPC?.gptAc && ["✦ İmar yorumu (ChatGPT)", `imarYorumAc('${pid}')`], ["✦ Bu parseli Claude'a sor", `yzSorAc('${pid}')`], ["KML indir", `kmlIndirParsel('${pid}')`], adm && "-", adm && ["Parseli sil…", `parselTamSilAc('${pid}')`] ] : [ ["Önce bir parsel aç", ""] ],
+    gorunum:[ [(document.body.classList.contains("pcGezKapali") ? "Parsel gezginini göster" : "Parsel gezginini gizle"), "pcPanel('pcGez')"], [(document.body.classList.contains("pcOzKapali") ? "Özellikler panelini göster" : "Özellikler panelini gizle"), "pcPanel('pcOz')"], PC_EXE ? null : "-", PC_EXE ? null : ["Telefon görünümüne geç", "localStorage.setItem('pcKapali','1');location.reload()"] ],
+    araclar:[ ["✦ Claude'a sor", "pcGit('yz')"], ["Vekalet / muvafakat (Ekler)", "pcGit('ekler')"], ["Takvim · yaklaşanlar", "pcGit('yaklasan')"], "-", ["Yedek al / geri yükle", "pcGit('yedek')"], adm && ["Marka kimliği", "pcGit('marka')"], ["Ayarlar", "pcGit('ayarlar')"] ],
     yardim:[ [surumYazi() + " · masaüstü", ""], ["Veriler telefonla ortak (Supabase)", ""], PC_SON_YEDEK && ["Son otomatik yedek: " + new Date(PC_SON_YEDEK).toLocaleString("tr-TR"), ""] ]
   }[k].filter(x => x !== false && x !== null && x !== undefined && x !== "");
   btn.classList.add("on");
@@ -19771,7 +19846,7 @@ function pcAraYaz(q){
   const s = document.getElementById("pcAraSonuc"); if(!s) return; q = (q || "").toLocaleLowerCase("tr").trim();
   if(!q){ s.innerHTML = ""; return; }
   const P = PC_P.filter(p => `${p.il} ${p.ilce} ${p.mahalle} ${p.mevkii || ""} ${p.nitelik || ""} ${p.ada || ""}/${p.parsel} ${p.ada || ""} ${p.parsel}`.toLocaleLowerCase("tr").includes(q)).slice(0, 8);
-  const E = Object.entries(PC_AD).filter(([r, a]) => !PC_PARSEL_EKRAN.has(r) && a.toLocaleLowerCase("tr").includes(q)).slice(0, 4);
+  const E = Object.entries(PC_AD).filter(([r, a]) => !PC_PARSEL_EKRAN.has(r) && !PC_GIZLI_EKRAN.has(r) && a.toLocaleLowerCase("tr").includes(q)).slice(0, 4);
   s.innerHTML = !P.length && !E.length ? `<div class="pcAraBos">Sonuç yok</div>` :
     P.map(p => `<button onclick="pcAraKapat();document.getElementById('pcAra').value='';go('parsel','${p.id}')">${svg("pin")}<span><b>${esc(duzgun(p.mahalle))} · ${esc((p.ada || "—") + "/" + p.parsel)}</b><small>${esc(duzgun(p.il))} · ${esc(duzgun(p.ilce))} · ${nf2(+p.alan_m2 || 0)} m²</small></span></button>`).join("")
     + E.map(([r, a]) => `<button onclick="pcAraKapat();document.getElementById('pcAra').value='';pcGit('${r}')">${svg("chevron")}<span><b>${esc(a)}</b><small>ekran</small></span></button>`).join("");
@@ -19788,6 +19863,7 @@ async function pcParselYukle(zorla){
   }catch(e){}
   pcAgacCiz(); pcSekmeCiz(); pcOzCiz(); pcDurumCiz();
 }
+const PC_BASLIK_IKON = { ana:"home", araziler:"katman", harita:"map", hesap:"money", yaklasan:"takvim", ekler:"file", yz:"spark", yedek:"indir", ayarlar:"gear", marka:"tag", yeni:"pin", fiyat:"file", cap:"cetvel", kml:"globe", fiyatDuzen:"file" };
 const PC_FILTRELER = [["hepsi","Tümü", () => true], ["aktif","Aktif", p => p._y?.aktif], ["satilik","Satılık", p => p._satilik > 0], ["satildi","Satılan", p => p._satildi > 0], ["pasif","Pasif", p => !p._y?.aktif]];
 function pcAgacCiz(){
   const f = document.getElementById("pcFiltre"), k = document.getElementById("pcAgac"); if(!k) return;
@@ -19855,11 +19931,11 @@ function pcKartGoster(el, id){
 function pcSagMenu(e, id){
   e.preventDefault(); pcKartGizle(); document.getElementById("pcSagMenu")?.remove();
   const p = PC_P.find(x => x.id === id); if(!p) return; const adm = ME.role === "admin";
-  const L = [["Aç", `go('parsel','${id}')`], ["Parçalar", `pcAltGit('parcalar','${id}')`], adm && p.geojson && ["Çap çiz", `pcAltGit('capAyar','${id}')`], ["İlan afişi", `pcAltGit('ilan','${id}')`],
-    ["Sunum", `pcAltGit('sunum','${id}')`], p.geojson && ["Saha modu", `go('saha','${id}')`], "-",
+  const L = [["Aç", `go('parsel','${id}')`], ["Hisse durumu", `pcAltGit('parcalar','${id}')`], adm && p.geojson && ["Çap çiz", `pcAltGit('capAyar','${id}')`], p.geojson && ["İlan afişi", `pcAltGit('ilan','${id}')`],
+    ["Sunum görseli", `pcAltGit('sunum','${id}')`], ["Belgeler", `pcAltGit('belgeler','${id}')`], "-",
     p.lat && ["Google Haritalar'da göster", `window.open('https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}','_blank')`], p.lat && ["Earth'te aç", `window.open(earthUrl(${p.lat},${p.lng}),'_blank')`],
-    ["İmar durumu (e-Plan)", `eplanAc('${id}')`], p.geojson && ["KML indir", `kmlIndirParsel('${id}')`],
-    adm && "-", adm && ["Belge ekle…", `pcBelgeSec('${id}')`], adm && p._y && ["Sil", `parselSil('${p._y.id}','${id}','${esc(p.mahalle)} ${esc(p.ada || "")}/${esc(p.parsel)}').then(()=>pcParselYukle(true))`, "sil"] ].filter(Boolean);
+    ["İmar durumu (e-Plan)", `eplanAc('${id}')`], ["✦ Claude'a sor", `yzSorAc('${id}')`], p.geojson && ["KML indir", `kmlIndirParsel('${id}')`],
+    adm && "-", adm && ["Belge ekle…", `pcBelgeSec('${id}')`], adm && ["Parseli sil…", `parselTamSilAc('${id}')`, "sil"] ].filter(Boolean);
   const d = document.createElement("div"); d.id = "pcSagMenu"; d.className = "pcAcilir";
   d.innerHTML = `<div class="pcSMB">${esc(duzgun(p.mahalle))} ${esc((p.ada || "—") + "/" + p.parsel)}</div>` + L.map(x => x === "-" ? "<hr>" : `<button class="${x[2] || ""}" onclick="document.getElementById('pcSagMenu')?.remove();${x[1].replace(/"/g, "&quot;")}">${esc(x[0])}</button>`).join("");
   document.body.appendChild(d);
@@ -19886,7 +19962,7 @@ function pcSekmeCiz(){
   const pid = pcParselId(PC_SIMDI.r, PC_SIMDI.arg), akt = pid ? "p:" + pid : PC_SIMDI.r;
   const pAkt = pid && PC_P.find(x => x.id === pid);
   const baslik = pAkt ? `${duzgun(pAkt.mahalle)} - ${(pAkt.ada || "—")} / ${pAkt.parsel}` : (PC_AD[PC_SIMDI.r] || "Genel Bakış");
-  k.innerHTML = `<div class="pcBaslikSatir">${svg(pAkt ? "pin" : "home")}<h1>${esc(baslik)}</h1></div>`
+  k.innerHTML = `<div class="pcBaslikSatir">${svg(pAkt ? "pin" : (PC_BASLIK_IKON[PC_SIMDI.r] || "home"))}<h1>${esc(baslik)}</h1><span class="pcBaslikTus" id="pcBaslikTus"></span></div>`
     + `<div class="pcAcik">${PC_SEKMELER.filter(s => s.k !== akt).map(s => { const i = PC_SEKMELER.indexOf(s); return `<span class="pcSek" onclick="pcSekmeAc(${i})" title="${esc(pcSekmeAd(s))}">${esc(pcSekmeAd(s))}<i onclick="event.stopPropagation();pcSekmeKapat(${i})">×</i></span>`; }).join("")}</div>`;
   const alt = document.getElementById("pcAltSekme");
   document.body.classList.toggle("pcAltVar", !!pid);
@@ -19906,7 +19982,7 @@ function pcSekmeKapat(i){
 async function pcOzCiz(){
   const k = document.getElementById("pcOzIc"); if(!k) return;
   const pid = pcParselId(PC_SIMDI.r, PC_SIMDI.arg);
-  document.body.classList.toggle("pcOzGizli", PC_SIMDI.r === "ana" || PC_SIMDI.r === "capAyar" || PC_SIMDI.r === "ilan" || PC_SIMDI.r === "sunum" || PC_SIMDI.r === "harita");
+  document.body.classList.toggle("pcOzGizli", !(pid ? !/^(capAyar|ilan|sunum)$/.test(PC_SIMDI.r) : PC_SIMDI.r === "araziler"));
   const blok = (ad, ic, sag) => `<details class="pcAkord" open><summary>${ad}${sag != null ? `<em>${sag}</em>` : ""}</summary>${ic}</details>`;
   const KVI = [[/^20\d\d$/,"note"],[/m² fiyat/,"tag"],[/toplam/i,"money"],[/rakım/i,"globe"],[/eğim/i,"vector"],[/bakı/i,"pusula"],[/asfalt|otoyol/i,"map"],[/yerleşim|köy/i,"home"],[/elektrik/i,"spark"],[/taşkın|dere/i,"kure"],
     [/ilçe|il merkezi|merkez/i,"home"],[/durak|tren|hızlı/i,"map"],[/okul/i,"note"],[/sağlık/i,"plus"],[/cami/i,"home"],[/market|akaryakıt/i,"tag"],[/havaliman/i,"globe"],[/satılık|satıldı|parça/i,"cetvel"]];
@@ -20002,55 +20078,68 @@ function pcBelgeTuruSor(pid, dosyalar){
   };
 }
 
-/* ---- Genel Bakis: PC'de ana menu yerine pano ---- */
+/* ---- Genel Bakis: PC'de ana menu yerine pano ----
+   v1.0: arazi listesi yok (solda gezgin + Araziler ekrani var). Tek bakista: KPI, yaklasanlar, hesap durumu, ekipte son hareketler, piyasa. */
 async function pcPano(){
   const yil = new Date().getFullYear(), saat = new Date().getHours();
   const selam = saat < 6 ? "İyi geceler" : saat < 12 ? "Günaydın" : saat < 18 ? "İyi günler" : "İyi akşamlar";
   const ad = (ME?.full_name || "").split(" ")[0];
   const kutu = (id, baslik, sag, ic, ek) => `<section class="pcBox ${ek || ""}"><header><b>${baslik}</b>${sag || ""}</header><div class="pcBoxIc" id="${id}">${ic || `<div class="spin"></div>`}</div></section>`;
+  const adm = ME.role === "admin";
   app.innerHTML = `<div class="top pcBaslik"><h1>Genel Bakış</h1></div>
     <div class="pcHero"><div><small id="stamp"></small><h2>${selam}${ad ? ", " + esc(ad) : ""}</h2><p>Portföyün ${yil} özeti</p></div>
-      <div class="pcHeroTus">${ME.role === "admin" ? `<button class="btn" onclick="go('yeni')">${svg("pin")}Yeni parsel</button>` : ""}
+      <div class="pcHeroTus">${adm ? `<button class="btn" onclick="go('yeni')">${svg("pin")}Yeni parsel</button>` : ""}
         <button class="btn ghost" onclick="pcGit('harita')">${svg("pusula")}Parsel sorgula</button>
-        <button class="btn ghost" onclick="pcGit('cap')">${svg("cetvel")}Çap çiz</button>
-        <button class="btn ghost" onclick="pcGit('hesap')">${svg("money")}Hesap - Kitap</button></div></div>
+        <button class="btn ghost" onclick="pcGit('hesap')">${svg("money")}Hesap - Kitap</button>
+        <button class="btn ghost" onclick="pcGit('yz')">${svg("spark")}Claude'a sor</button></div></div>
     <div class="pcKpi" id="pcKpi">${"<div class='pcK'><span>—</span><b>…</b></div>".repeat(5)}</div>
-    <div class="pcPanoIzgara">
-      ${kutu("pcSon", "Son güncellenen araziler", `<button class="pcLink" onclick="pcGit('araziler')">Tümü →</button>`, "", "pcBoxGenis")}
-      <div class="pcSagSutun">
-        ${kutu("pcYak", "Yaklaşanlar · 30 gün", `<button class="pcLink" onclick="pcGit('yaklasan')">Tümü →</button>`)}
-        ${kutu("rates", "Piyasa", "", "", "pcBoxPiyasa")}
-      </div>
-    </div>`;
+    <div class="pcPano3">
+      ${kutu("pcYak", "Yaklaşanlar · 30 gün", `<button class="pcLink" onclick="pcGit('yaklasan')">Takvim →</button>`)}
+      ${kutu("pcHsp", "Hesap durumu", `<button class="pcLink" onclick="pcGit('hesap')">Hesap - Kitap →</button>`)}
+      ${kutu("pcHar", "Son hareketler", "")}
+    </div>
+    ${kutu("rates", "Piyasa", "", "", "pcBoxPiyasa pcPiyasaSerit")}`;
   document.getElementById("rates").classList.add("rates", "pcRates");
   try{ kurlar(); }catch(e){}
-  const [{ data:parseller }, { data:yillar }, { data:parcalar }] = await Promise.all([
-    sb.from("parcels").select("*"), sb.from("parcel_years").select("*").eq("yil", yil), sb.from("parca").select("m2,satilik,satildi,m2_fiyat") ]);
+  const bugun = new Date(); bugun.setHours(0,0,0,0); const gun = t => Math.round((new Date(t) - bugun)/86400000);
+  const [{ data:parseller }, { data:yillar }, { data:parcalar }, { data:ekler }, { data:hesaplar }, { data:vadeler }, { data:log }, { data:kisiler }] = await Promise.all([
+    sb.from("parcels").select("id,alan_m2,mahalle,ada,parsel"), sb.from("parcel_years").select("parcel_id,aktif").eq("yil", yil), sb.from("parca").select("m2,satilik,satildi,m2_fiyat"),
+    sb.from("ekler").select("*"), sb.from("hesap").select("*"), sb.from("hesap_vade").select("*"),
+    sb.from("activity_log").select("action,detail,created_at,entity_id,user_id").order("created_at", { ascending:false }).limit(9), sb.from("profiles").select("id,full_name") ]);
   const P = parseller || [], Y = yillar || [], PC = parcalar || [];
   const toplamM2 = P.reduce((t, p) => t + (+p.alan_m2 || 0), 0), aktif = Y.filter(y => y.aktif).length;
   const satildi = PC.filter(p => p.satildi), satilik = PC.filter(p => p.satilik && !p.satildi);
   const ciro = satildi.reduce((t, p) => t + (+p.m2 || 0)*(+p.m2_fiyat || 0), 0);
   const kisaTl = n => n >= 1e6 ? (n/1e6).toFixed(n >= 1e7 ? 0 : 1).replace(".", ",") + " Mn ₺" : nf(Math.round(n)) + " ₺";
-  const kpi = [["Parsel", nf(P.length), `${aktif} aktif`], ["Toplam alan", nf(Math.round(toplamM2)), "m²"], ["Satılık parça", nf(satilik.length), "satışta"],
-    ["Satılan parça", nf(satildi.length), "toplam"], ["Satış bedeli", ciro ? kisaTl(ciro) : "—", "satılan parçalar"]];
+  const kpi = [["Parsel", nf(P.length), `${aktif} aktif`, "pcGit('araziler')"], ["Toplam alan", nf(Math.round(toplamM2)), "m²", "pcGit('araziler')"], ["Satılık parça", nf(satilik.length), "satışta", ""],
+    ["Satılan parça", nf(satildi.length), "toplam", ""], ["Satış bedeli", ciro ? kisaTl(ciro) : "—", "satılan parçalar", ""]];
   const kk = document.getElementById("pcKpi"); if(!kk) return;
-  kk.innerHTML = kpi.map(([a, b, c]) => `<div class="pcK"><span>${a}</span><b class="mono">${b}</b><small>${c}</small></div>`).join("");
-  const son = P.slice().sort((a, b) => String(b.updated_at || b.created_at).localeCompare(String(a.updated_at || a.created_at))).slice(0, 8);
-  document.getElementById("pcSon").innerHTML = son.length ? `<table class="pcTablo"><thead><tr><th>Yer</th><th>Ada / Parsel</th><th class="sag">Alan</th><th class="sag">${yil}</th></tr></thead><tbody>${son.map(p => {
-      const y = Y.find(q => q.parcel_id === p.id);
-      return `<tr onclick="go('parsel','${p.id}')" oncontextmenu="pcSagMenu(event,'${p.id}')"><td><b>${esc(duzgun(p.mahalle))}</b><small>${esc(duzgun(p.il))} · ${esc(duzgun(p.ilce))}</small></td><td class="mono">${esc(p.ada || "—")} / ${esc(p.parsel)}</td>
-        <td class="sag mono nw">${nf(Math.round(+p.alan_m2 || 0))} m²</td><td class="sag">${y ? `<span class="pcDurum ${y.aktif ? "on" : ""}">${y.aktif ? "aktif" : "pasif"}</span>` : "—"}</td></tr>`; }).join("")}</tbody></table>`
-    : `<div class="pcBos">Henüz parsel yok.</div>`;
-  const bugun = new Date(); bugun.setHours(0,0,0,0); const gun = t => Math.round((new Date(t) - bugun)/86400000);
-  const [{ data:ekler }, { data:vadeler }] = await Promise.all([ sb.from("ekler").select("*"), sb.from("hesap_vade").select("*, hesap(kisi,tip,kapandi)").eq("odendi", false) ]);
+  kk.innerHTML = kpi.map(([a, b, c, git]) => `<div class="pcK ${git ? "tik" : ""}" ${git ? `onclick="${git}"` : ""}><span>${a}</span><b class="mono">${b}</b><small>${c}</small></div>`).join("");
+  // yaklasanlar
+  const grup = {}; (vadeler || []).forEach(v => (grup[v.hesap_id] = grup[v.hesap_id] || []).push(v));
+  const H = hesaplar || [], hk = Object.fromEntries(H.map(h => [h.id, h]));
   const s = [];
-  (ekler||[]).forEach(k => { if(!k.suresiz && k.gecerlilik_tarihi) s.push({ tur:"Vekalet", b:k.ad_soyad, g:gun(k.gecerlilik_tarihi), git:"go('ekler')" }); });
-  (vadeler||[]).forEach(v => { if(!v.hesap?.kapandi) s.push({ tur: v.hesap?.tip === "borc" ? "Borç" : "Alacak", b:(v.hesap?.kisi || "—") + " · " + nf(Math.round(+v.tutar || 0)) + " ₺", g:gun(v.tarih), git:`hesapAc('${v.hesap_id}')` }); });
+  (ekler || []).forEach(k => { if(!k.suresiz && k.gecerlilik_tarihi) s.push({ tur:"Vekalet", b:k.ad_soyad, g:gun(k.gecerlilik_tarihi), git:"go('ekler')" }); });
+  (vadeler || []).forEach(v => { const h = hk[v.hesap_id]; if(!v.odendi && h && !h.kapandi) s.push({ tur: h.tip === "borc" ? "Borç" : "Alacak", b:(h.kisi || "—") + " · " + nf(Math.round(+v.tutar || 0)) + " ₺", g:gun(v.tarih), git:`hesapAc('${v.hesap_id}')` }); });
   const yak = s.filter(o => o.g <= 30).sort((a, b) => a.g - b.g).slice(0, 6);
   const yk = document.getElementById("pcYak"); if(!yk) return;
   yk.innerHTML = yak.length ? `<div class="pcYakListe">${yak.map(o => `<button onclick="${o.git}"><span class="pcTur">${o.tur}</span><b>${esc(o.b)}</b>
       <span class="pcGun ${o.g < 0 ? "gecti" : o.g <= 7 ? "yakin" : ""}">${o.g < 0 ? -o.g + " gün geçti" : o.g === 0 ? "bugün" : o.g + " gün"}</span></button>`).join("")}</div>`
     : `<div class="pcBos">Önümüzdeki 30 günde takip edilecek bir şey yok.</div>`;
+  // hesap durumu: hesap ekraniyla ayni hesap (hesapOzet)
+  const oz = { borc:{ kalan:0, buAy:0, gec:0, n:0 }, alacak:{ kalan:0, buAy:0, gec:0, n:0 } };
+  H.forEach(h => { const t = oz[h.tip === "borc" ? "borc" : "alacak"]; let o; try{ o = hesapOzet(h, grup[h.id] || []); }catch(e){ return; }
+    t.kalan += o.kalan; if(o.kalan >= .5) t.n++; (o.buAy || []).forEach(v => t.buAy += v.kalan); (o.geciken || []).forEach(v => t.gec += v.kalan); });
+  const tl = n => nf(Math.round(n)) + " ₺";
+  const hs = (ad, t, cls) => `<div class="pcHspSat"><div class="pcHspBas"><span>${ad}</span><em>${t.n} açık kayıt</em></div><b class="mono ${cls}">${tl(t.kalan)}</b>
+      <div class="pcHspAlt"><span>Bu ay <b class="mono">${tl(t.buAy)}</b></span><span class="${t.gec >= .5 ? "gecti" : ""}">Geciken <b class="mono">${tl(t.gec)}</b></span></div></div>`;
+  const hb = document.getElementById("pcHsp"); if(hb) hb.innerHTML = H.length ? hs("Kalan borç", oz.borc, "kirmizi") + hs("Kalan alacak", oz.alacak, "yesil") : `<div class="pcBos">Hesap - Kitap'ta kayıt yok.</div>`;
+  // son hareketler
+  const once = t => { const d = (Date.now() - new Date(t))/60000; return d < 1 ? "şimdi" : d < 60 ? Math.round(d) + " dk" : d < 1440 ? Math.round(d/60) + " sa" : d < 2880 ? "dün" : new Date(t).toLocaleDateString("tr-TR", { day:"numeric", month:"short" }); };
+  const hr = document.getElementById("pcHar");
+  if(hr) hr.innerHTML = (log || []).length ? `<div class="pcHarListe">${log.map(l => { const p = P.find(x => x.id === l.entity_id);
+      return `<div class="pcHarSat ${p ? "tik" : ""}" ${p ? `onclick="go('parsel','${p.id}')"` : ""}><i></i><div><b>${esc(l.action || "")}</b><small>${esc(((kisiler || []).find(k => k.id === l.user_id)?.full_name || "").split(" ")[0])}${l.detail ? " · " + esc(String(l.detail).slice(0, 70)) : ""}</small></div><em>${once(l.created_at)}</em></div>`; }).join("")}</div>`
+    : `<div class="pcBos">Henüz hareket yok.</div>`;
 }
 
 /* ---- ekran duzeni: uzun ekranlar cok sutun, editorler iki panel ---- */
@@ -20223,7 +20312,7 @@ let PC_SIRA = { k:"yer", art:true };
           <td class="sag mono">${nf2(alan(r))} m²</td><td class="sag mono">${r.m2_fiyat ? nf(Math.round(r.m2_fiyat)) + " ₺" : "—"}</td>
           <td class="sag mono">${t ? nf(Math.round(t)) + " ₺" : "—"}</td>
           <td class="sag"><span class="pcDurum ${r.aktif ? "on" : ""}">${r.aktif ? "aktif" : "pasif"}</span></td>
-          <td class="sag pcIslem">${ME.role === 'admin' ? `<button title="Sil" onclick="event.stopPropagation();parselSil('${r.id}','${p.id}','${esc(p.mahalle)} ${esc(p.ada||"")}/${esc(p.parsel)}').then(()=>pcParselYukle(true))">${svg("trash")}</button>` : ""}</td></tr>`; }).join("")}</tbody>
+          <td class="sag pcIslem">${ME.role === 'admin' ? `<button title="Parseli sil" onclick="event.stopPropagation();parselTamSilAc('${p.id}')">${svg("trash")}</button>` : ""}</td></tr>`; }).join("")}</tbody>
       <tfoot><tr><td colspan="3">${rows.length} parsel</td><td class="sag mono">${nf2(top)} m²</td><td></td><td class="sag mono">${deg ? nf(Math.round(deg)) + " ₺" : ""}</td><td colspan="2"></td></tr></tfoot></table></div>`;
   };
 }
@@ -20581,6 +20670,203 @@ async function capTarifCevabi(t){
   };
   if(window.arsaPC?.gptCevap) window.arsaPC.gptCevap(t => gptCevapGeldi(t));
 }
+
+/* ================= v1.0 · NIHAI DUZEN (mobil + PC ortak) =================
+   1) Parseli tamamen silme: kayit, yillar, parcalar, notlar, etiketler, vekaletler, belgeler (depodaki dosyalar dahil), cap, analiz, ilan zemini.
+   2) Sinir cizimi olmayan parselde cap / ilan / sunum / saha ekrani bos kalmasin, ne yapilacagini soylesin.
+   3) PC: Claude'a sor (parsel bilgisiyle, program icindeki Claude penceresinde), basliklarda + tusu, ayarlarda sadece is ayarlari. */
+
+/* ---------- 1) parsel silme ---------- */
+// eski cop kutulari (mobil liste) da buraya gelir: tam silme ya da sadece bu yilin listesinden cikarma
+function parselSil(yilKaydiId, parselId){ return parselTamSilAc(parselId, yilKaydiId); }
+
+async function parselTamSilAc(pid, yilKaydiId){
+  if(ME?.role !== "admin") return toast("Silme yetkisi sadece admin'de");
+  const { data:p } = await sb.from("parcels").select("*").eq("id", pid).single();
+  if(!p) return toast("Parsel bulunamadı");
+  const say = async (t, kol = "parcel_id") => { try{ const { data } = await sb.from(t).select("id").eq(kol, pid); return (data || []).length; }catch(e){ return 0; } };
+  const [nBelge, nNot, nParca, nYil, nEk, nEt] = await Promise.all([say("documents"), say("notes"), say("parca"), say("parcel_years"), say("ekler"), say("parcel_tags")]);
+  const { data:yk } = await sb.from("parcel_years").select("id").eq("parcel_id", pid).eq("yil", YEAR);
+  const yilId = yilKaydiId || yk?.[0]?.id;
+  const ad = `${duzgun(p.mahalle)} ${p.ada || "—"}/${p.parsel}`;
+  const satir = (n, a) => n ? `<li><b>${n}</b> ${a}</li>` : "";
+  const k = document.createElement("div"); k.className = "ekOnizle silKutu";
+  k.innerHTML = `<div class="silPen" role="dialog" aria-label="Parseli sil">
+      <div class="silBas"><span class="silIk">${svg("trash")}</span><div><b>Parseli sil</b><small>${esc(ad)} · ${esc(duzgun(p.il))} / ${esc(duzgun(p.ilce))}</small></div></div>
+      <p>Bu parselle ilgili her şey kalıcı olarak silinir, geri alınamaz:</p>
+      <ul class="silListe"><li><b>1</b> parsel kaydı (sınır, çap düzeni, analiz, emsal)</li>${satir(nYil, "yıl kaydı (fiyat, malik, ilan bağlantısı)")}${satir(nParca, "parça / hisse")}${satir(nBelge, "belge ve görsel (depodaki dosyalarıyla)")}${satir(nNot, "not")}${satir(nEk, "vekalet / muvafakat kaydı")}${satir(nEt, "etiket bağı")}</ul>
+      ${window.arsaPC?.yedekYaz ? `<p class="silNot">Silmeden önce bu parselin kayıtları Belgeler\\Arsa Takip Yedek klasörüne ayrı bir dosya olarak yazılır.</p>` : ""}
+      <label class="silOnay">Onaylamak için parsel numarasını yaz: <b>${esc(p.parsel)}</b><input id="silNo" autocomplete="off" inputmode="numeric" placeholder="${esc(p.parsel)}"></label>
+      <div class="silTus">
+        ${yilId && nYil > 1 ? `<button class="btn ghost" id="silYil" title="Parsel ve belgeler durur, sadece ${YEAR} listesinden çıkar">Sadece ${YEAR} listesinden çıkar</button>` : ""}
+        <span style="flex:1"></span>
+        <button class="btn ghost" onclick="this.closest('.ekOnizle').remove()">Vazgeç</button>
+        <button class="btn silTam" id="silTam" disabled>Tamamen sil</button>
+      </div></div>`;
+  document.body.appendChild(k); k.onclick = e => { if(e.target === k) k.remove(); };
+  const inp = k.querySelector("#silNo"), tus = k.querySelector("#silTam");
+  inp.oninput = () => { tus.disabled = inp.value.trim() !== String(p.parsel).trim(); };
+  inp.onkeydown = e => { if(e.key === "Enter" && !tus.disabled) tus.click(); };
+  setTimeout(() => inp.focus(), 50);
+  const yb = k.querySelector("#silYil");
+  if(yb) yb.onclick = async () => {
+    const { error } = await sb.from("parcel_years").delete().eq("id", yilId); if(error) return toast("Olmadı: " + error.message);
+    await sb.from("activity_log").insert({ team_id:ME.team_id, user_id:ME.id, action:"yıldan çıkarıldı", entity:"parcels", entity_id:pid, detail:`${ad} (${YEAR})` });
+    k.remove(); toast(`${YEAR} listesinden çıkarıldı`); parselSilindiSonra(pid, false);
+  };
+  tus.onclick = async () => {
+    tus.disabled = true; tus.textContent = "Siliniyor…"; k.querySelectorAll("button").forEach(b => b.disabled = true);
+    try{ await parselTamSil(pid, p, ad); k.remove(); toast("Parsel ve bütün kayıtları silindi"); parselSilindiSonra(pid, true); }
+    catch(e){ tus.textContent = "Tamamen sil"; k.querySelectorAll("button").forEach(b => b.disabled = false); toast("Silinemedi: " + (e.message || e)); }
+  };
+}
+
+async function parselTamSil(pid, p, ad){
+  const al = async t => { try{ const { data } = await sb.from(t).select("*").eq("parcel_id", pid); return data || []; }catch(e){ return []; } };
+  const [belgeler, notlar, parcalar, yillar, ekler, etiketler] = await Promise.all(["documents", "notes", "parca", "parcel_years", "ekler", "parcel_tags"].map(al));
+  // emniyet: once bu parselin butun kayitlari yerel yedege (PC programi)
+  if(window.arsaPC?.yedekYaz){
+    try{ const d = new Date(), z = n => String(n).padStart(2, "0"), t = `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}`;
+      await window.arsaPC.yedekYaz(`silinen-parsel-${String(ad).replace(/[^\wçğıöşüÇĞİÖŞÜ.-]+/g, "_")}-${t}.json`, JSON.stringify({ silinme: new Date().toISOString(), parcels:[p], parcel_years:yillar, parca:parcalar, notes:notlar, documents:belgeler, ekler, parcel_tags:etiketler }, null, 1)); }catch(e){ console.log("silme yedegi", e); }
+  }
+  // depodaki dosyalar: belge kayitlari + parsel klasorunde kayitsiz kalmis olanlar (ilan zemini vb.)
+  const yollar = new Set(belgeler.map(b => b.file_path).filter(Boolean));
+  try{ const { data:ls } = await sb.storage.from("arsatakip").list(`${p.team_id || ME.team_id}/${pid}`, { limit:1000 }); (ls || []).forEach(o => o?.name && yollar.add(`${p.team_id || ME.team_id}/${pid}/${o.name}`)); }catch(e){}
+  const L = [...yollar]; for(let i = 0; i < L.length; i += 100){ try{ await sb.storage.from("arsatakip").remove(L.slice(i, i + 100)); }catch(e){} }
+  // bagli kayitlar (veritabani cascade olsa da olmasa da)
+  const sil = async (t, kol = "parcel_id") => { const { error } = await sb.from(t).delete().eq(kol, pid); if(error && !/does not exist|schema cache/i.test(error.message)) throw new Error(t + ": " + error.message); };
+  await sil("parcel_tags"); await sil("notes"); await sil("parca"); await sil("ekler"); await sil("documents"); await sil("parcel_years");
+  const { error } = await sb.from("parcels").delete().eq("id", pid); if(error) throw error;
+  await sb.from("activity_log").insert({ team_id:ME.team_id, user_id:ME.id, action:"parsel silindi", entity:"parcels", entity_id:pid, detail:`${ad} · ${belgeler.length} belge, ${parcalar.length} parça` });
+  // bu cihazdaki izler
+  try{ localStorage.removeItem("ilan:" + pid); }catch(e){}
+  try{ const db = await ilanDb(); db.transaction("zemin", "readwrite").objectStore("zemin").delete(pid); }catch(e){}
+}
+
+function parselSilindiSonra(pid, tamamen){
+  if(typeof PC_ACIK !== "undefined" && PC_ACIK){
+    const i = PC_SEKMELER.findIndex(s => s.pid === pid); if(i >= 0) PC_SEKMELER.splice(i, 1);
+    PC_P = PC_P.filter(x => !tamamen || x.id !== pid); pcParselYukle(true);
+    const acik = pcParselId(PC_SIMDI.r, PC_SIMDI.arg) === pid;
+    if(acik || PC_SIMDI.r === "araziler" || PC_SIMDI.r === "ana") pcGit(PC_SIMDI.r === "ana" ? "ana" : "araziler"); else pcSekmeCiz();
+    return;
+  }
+  const s = GEZINTI[GEZINTI.length - 1]; if(s && String(s.arg || "").split("|")[0] === pid){ GEZINTI = [{ r:"ana" }]; go("araziler"); } else if(document.getElementById("liste")) araziListele();
+}
+
+/* ---------- 2) sinir cizimi olmayan parsel ---------- */
+{
+  const SINIR_GEREK = { capAyar:"Çap çizmek", ilan:"İlan afişi hazırlamak", saha:"Saha modu", sunum:"Sunum görseline çap koymak" };
+  for(const r of ["capAyar", "ilan", "saha"]){
+    const eski = ekranlar[r]; if(!eski) continue;
+    ekranlar[r] = async function(arg){
+      const pid = String(arg || "").split("|")[0];
+      if(pid){ try{ const { data:p } = await sb.from("parcels").select("id,geojson,mahalle,ada,parsel,il,ilce").eq("id", pid).single();
+        if(p && !p.geojson){ app.innerHTML = head(`${p.ada || "—"}/${p.parsel}`, `go('parsel','${pid}')`) + `<div class="card sinirYok">
+            <span class="sinirIk">${svg("map")}</span><b>Bu parselin sınır çizimi yok</b>
+            <p>${SINIR_GEREK[r]} için parselin TKGM sınırı lazım. Haritadan ${esc(duzgun(p.mahalle))} ${esc((p.ada || "—") + "/" + p.parsel)} parselini sorgulayıp kaydedince sınır buraya gelir.</p>
+            <div class="sinirTus"><button class="btn" onclick="sinirSorgula('${pid}')">${svg("pusula")}Haritadan sınırı al</button><button class="btn ghost" onclick="go('parsel','${pid}')">Parsele dön</button></div></div>`; return; } }catch(e){} }
+      return eski.apply(this, arguments);
+    };
+  }
+}
+// haritayi parselin il/ilce/mahalle/ada/parsel bilgisiyle ac
+async function sinirSorgula(pid){
+  const { data:p } = await sb.from("parcels").select("il,ilce,mahalle,ada,parsel").eq("id", pid).single();
+  window.__sinirIcin = p ? { pid, ...p } : null; go("harita");
+  if(p){ toast(`${duzgun(p.mahalle)} ${p.ada || "—"}/${p.parsel}: il, ilçe, mahalle seçip Sorgula'ya bas`); }
+}
+
+/* ---------- 3) Claude'a sor (PC: program icindeki Claude penceresi; telefonda kopyala + claude.ai) ---------- */
+const YZ_HAZIR = [
+  ["İlan metni", "Bu arazi için sahibinden.com'a koyacağım satış ilanının başlığını (en fazla 60 karakter) ve açıklamasını yaz. Abartısız, güven veren, maddeli; ulaşım, konum ve hisse/parça bilgisini öne çıkar. Fiyatı yazma."],
+  ["Alıcıya mesaj", "Bu araziyle ilgilenen bir alıcıya WhatsApp'tan göndereceğim kısa, samimi ama ciddi bir bilgilendirme mesajı yaz. Konum, alan, parça ve ulaşım bilgisini ver, yer görmeye davet et."],
+  ["Fiyat yorumu", "Aşağıdaki bilgilere ve emsallere bakarak bu arazinin m² fiyatı hakkında yorum yap: makul aralık nedir, fiyatı yukarı ve aşağı çeken etkenler neler? Kesin rakam uydurma, gerekçeni yaz."],
+  ["Pazarlık", "Bu arazi için bir alıcı teklif verdi. Pazarlıkta nasıl bir yol izlemeliyim, hangi argümanları kullanabilirim? Teklif tutarını aşağıya yazacağım."],
+  ["Hukuki kontrol", "Bu tarla/arazinin hisseli ya da parça parça satışında Türkiye'deki güncel mevzuata göre dikkat etmem gerekenleri (3083, 5403 Toprak Koruma, tarım arazisi asgari büyüklükleri, hisseli satış kısıtları, tapuda dikkat edilecekler) madde madde yaz. Emin olmadığın yerde belirt."],
+  ["Yatırım özeti", "Bu araziyi bir yatırımcıya anlatacak tek sayfalık kısa bir özet yaz: konum avantajları, riskler, potansiyel kullanım (hobi bahçesi, tarım, ileride imar) ve öne çıkan rakamlar."]
+];
+async function yzParselMetni(pid){
+  const { data:p } = await sb.from("parcels").select("*").eq("id", pid).single(); if(!p) return "";
+  const [{ data:yl }, { data:et }, { data:pc }] = await Promise.all([ sb.from("parcel_years").select("*").eq("parcel_id", pid).order("yil", { ascending:false }),
+    sb.from("parcel_tags").select("tags(name)").eq("parcel_id", pid), sb.from("parca").select("ad,m2,satilik,satildi,m2_fiyat").eq("parcel_id", pid).order("sira") ]);
+  const y = yl?.[0] || {}, a = p.analiz || {}, etiket = (et || []).map(e => e.tags?.name).filter(Boolean);
+  const L = [ `Konum: ${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)}${p.mevkii ? " · mevkii " + p.mevkii : ""}`, `Ada/parsel: ${p.ada || "—"}/${p.parsel}`,
+    `Yüzölçümü: ${nf2(gercekAlan(p))} m²`, `Niteliği: ${p.nitelik || "—"}`, p.lat ? `Koordinat: ${(+p.lat).toFixed(6)}, ${(+p.lng).toFixed(6)}` : null,
+    y.m2_fiyat ? `Bizim m² fiyatımız: ${nf(y.m2_fiyat)} ₺` : null, etiket.length ? `Etiketler: ${etiket.join(", ")}` : null ];
+  if((pc || []).length) L.push(`Parçalar (${pc.length}):\n` + pc.map((o, i) => `- ${o.ad || (i + 1) + " nolu"}: ${nf2(+o.m2 || 0)} m²${o.satildi ? " · satıldı" : o.satilik ? " · satılık" : ""}${o.m2_fiyat ? " · " + nf(o.m2_fiyat) + " ₺/m²" : ""}`).join("\n"));
+  if(a.cevre?.satirlar) L.push("Yakın çevre:\n" + a.cevre.satirlar.filter(s => !s.yok).map(s => `- ${s.b}: ${s.m === 0 ? "bitişik" : km(s.yolM || s.m)}${s.dk ? " (" + s.dk + " dk)" : ""}${s.ad ? " · " + s.ad : ""}`).join("\n"));
+  if(a.karne?.notlar) L.push("Arazi karnesi:\n" + a.karne.notlar.map(n => `- ${n.b}: ${n.deger}`).join("\n"));
+  const em = (a.emsal?.ilanlar || []).filter(e => !e.haric && e.m2 && e.fiyat).slice(0, 15);
+  if(em.length) L.push("Emsal ilanlar:\n" + em.map(e => `- ${e.baslik || e.ad || "ilan"}: ${e.m2 ? nf(e.m2) + " m²" : ""} ${e.fiyat ? nf(e.fiyat) + " ₺" : ""}${e.m2 && e.fiyat ? " (" + nf(Math.round(e.fiyat/e.m2)) + " ₺/m²)" : ""}`).join("\n"));
+  return L.filter(Boolean).join("\n");
+}
+function yzSorAc(pid){ window.__yzPid = pid || null; if(typeof PC_ACIK !== "undefined" && PC_ACIK) pcGit("yz"); else go("yz"); }
+{
+  const eskiYz = yapayZeka;
+  const yeniYz = async function(){
+    const pc = typeof PC_ACIK !== "undefined" && PC_ACIK;
+    if(!pc) return eskiYz();
+    const { data:P } = await sb.from("parcels").select("id,il,ilce,mahalle,ada,parsel").order("mahalle");
+    const sec = window.__yzPid || pcParselId(PC_SIMDI.r, PC_SIMDI.arg) || "";
+    app.innerHTML = head("Claude'a Sor", "go('ana')") + `
+      <div class="card yzKart">
+        <div class="yzUst"><label>Parsel<select id="yzP"><option value="">— parselsiz, genel soru —</option>${(P || []).map(p => `<option value="${p.id}" ${p.id === sec ? "selected" : ""}>${esc(duzgun(p.mahalle))} ${esc((p.ada || "—") + "/" + p.parsel)} · ${esc(duzgun(p.ilce))}</option>`).join("")}</select></label></div>
+        <div class="yzHazir">${YZ_HAZIR.map(([a], i) => `<button class="pill sade" onclick="yzHazirSec(${i})">${esc(a)}</button>`).join("")}</div>
+        <textarea id="yzSoru" rows="7" placeholder="Ne sormak istiyorsun? Yukarıdan hazır bir iş seç ya da kendin yaz. Seçtiğin parselin bilgileri (konum, alan, parçalar, çevre, karne, emsaller) soruya otomatik eklenir."></textarea>
+        <div class="yzAlt"><small>Claude, programın içindeki kendi penceresinde açılır. İlk seferde Claude hesabınla giriş yapman yeter, sonra hatırlar.</small>
+          <button class="btn" onclick="yzGonder()">${svg("spark")}Claude'a gönder</button></div>
+      </div>
+      <div class="yzDis"><span>Diğerleri tarayıcıda:</span>${AI_LER.filter(a => a.id !== "claude").map(a => `<a class="pill sade" href="${a.url}" target="_blank" rel="noopener">${esc(a.ad)}</a>`).join("")}</div>`;
+    window.__yzPid = null;
+  };
+  yapayZeka = yeniYz; ekranlar.yz = yeniYz;
+}
+function yzHazirSec(i){ const t = document.getElementById("yzSoru"); if(t){ t.value = YZ_HAZIR[i][1]; t.focus(); } }
+async function yzGonder(){
+  const soru = (document.getElementById("yzSoru")?.value || "").trim(); if(!soru) return toast("Önce sorunu yaz");
+  const pid = document.getElementById("yzP")?.value;
+  const bilgi = pid ? await yzParselMetni(pid) : "";
+  const metin = (bilgi ? `Arsa/tarla portföyümdeki bir parsel hakkında soruyorum. Türkçe cevap ver.\n\nPARSEL BİLGİLERİ\n${bilgi}\n\nİSTEK\n` : "Türkçe cevap ver.\n\n") + soru;
+  if(window.arsaPC?.yzAc){ const ok = await window.arsaPC.yzAc("claude", null, metin, null, false); if(ok !== false){ toast("Soru Claude penceresine yazıldı · göndermek için orada Enter'a bas"); return; } }
+  try{ await navigator.clipboard.writeText(metin); }catch(e){}
+  window.open("https://claude.ai/new", "_blank"); toast("Soru panoya kopyalandı, Claude'da yapıştır");
+}
+
+/* ---------- 4) PC ince ayarlar ---------- */
+{
+  const eskiDz = pcDuzenle;
+  pcDuzenle = function(){
+    eskiDz();
+    if(!PC_ACIK) return;
+    const r = app.dataset.ekran || "ana";
+    // sagdaki yuvarlak + yerine baslik satirinda yazili tus
+    const yer = document.getElementById("pcBaslikTus"), fab = app.querySelector(":scope > .fab");
+    if(yer){ const AD = { araziler:"Yeni parsel", hesap:"Yeni kayıt", ekler:"Yeni kişi" };
+      yer.innerHTML = fab && AD[r] ? `<button class="btn" onclick="${(fab.getAttribute("onclick") || "").replace(/"/g, "&quot;")}">${svg("plus")}${AD[r]}</button>` : ""; }
+    if(r === "ayarlar"){
+      ["sesKutu", "introKutu", "maskotKutu"].forEach(id => document.getElementById(id)?.closest("label")?.remove());
+      [...app.querySelectorAll("button")].forEach(b => { if(/^\s*Yedekleme/.test(b.textContent) && PC_SON_YEDEK) b.textContent = "Yedekleme · otomatik yedek " + new Date(PC_SON_YEDEK).toLocaleDateString("tr-TR"); if(/Hikâyeyi/.test(b.textContent)) b.remove(); });
+    }
+    if(r === "harita" && window.__sinirIcin){ const s = window.__sinirIcin; window.__sinirIcin = null;
+      setTimeout(() => { const ada = app.querySelector('input[placeholder="Ada"], #ada'), prs = app.querySelector('input[placeholder="Parsel"], #parsel'); if(ada && s.ada) ada.value = s.ada; if(prs) prs.value = s.parsel; }, 600); }
+  };
+}
+// parsel Genel sekmesine (PC + telefon) en altta sessiz bir "Parseli sil" satiri
+{
+  const eskiDetay = ekranlar.parsel;
+  const yeni = async function(id){
+    const r = await eskiDetay.apply(this, arguments);
+    if(ME?.role === "admin" && app.dataset.ekran === "parsel" && !app.querySelector(".silSatir")){
+      const d = document.createElement("div"); d.className = "silSatir";
+      d.innerHTML = `<button onclick="parselTamSilAc('${id}')">${svg("trash")}Parseli sil</button><small>Parsel, belgeleri, çapı, parçaları ve notlarıyla birlikte kalıcı olarak silinir.</small>`;
+      app.appendChild(d); }
+    return r;
+  };
+  ekranlar.parsel = yeni; try{ parselDetay = yeni; }catch(e){}
+}
+// yedek dosyalari artik uygulamanin adini tasir (eski "parselparsel" adli yedekler de geri yuklenebilir; geri yukleme dosya adina bakmaz)
+yedekDosyaAdi = function(){ const d = new Date(), p = n => String(n).padStart(2, "0"); return `arsatakip-yedek-${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}.json`; };
 
 baslat();
 
