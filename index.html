@@ -3168,7 +3168,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.8.1";
+const SURUM_MORDOR = "v 3.8.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -15940,10 +15940,17 @@ function yolUcDikUygula(M, C, yollar, bolgeler, yapr, gercek){
       for(let k=1;k<adim;k++){ const t = a1 + (a2-a1)*k/adim; cizgi.push([Cm[0]+Math.cos(t)*R, Cm[1]+Math.sin(t)*R]); }
       cizgi.push(T2, Ep);
       const kesik = kirp(W, a, T1[0]*a[0] + T1[1]*a[1]); if(kesik.length < 3){ neden.push('şerit kesilemedi'); continue; }
-      const r = g/2, uzun = cizgi.concat([[Ep[0]+no[0]*g*1.5, Ep[1]+no[1]*g*1.5]]), parca = [[kapat(kesik)]];
-      for(let k=0;k<uzun.length-1;k++){ const p = uzun[k], q = uzun[k+1], dx = q[0]-p[0], dy = q[1]-p[1], L = Math.hypot(dx, dy); if(L < 1e-6) continue;
-        const ox = -dy/L*r, oy = dx/L*r; parca.push([kapat([[p[0]+ox,p[1]+oy],[q[0]+ox,q[1]+oy],[q[0]-ox,q[1]-oy],[p[0]-ox,p[1]-oy]])]);
-        if(k > 0){ const hal = []; for(let j=0;j<16;j++){ const t = j/16*Math.PI*2; hal.push([p[0]+Math.cos(t)*r, p[1]+Math.sin(t)*r]); } parca.push([kapat(hal)]); } }
+      // kavisli yol tek parca serit: eksen cizgisinin iki yana gonye (miter) ofseti. Duz kismin 1 m gerisinden baslar ki
+      // duz seritle birlesim kusursuz olsun (eski yontemde dikdortgenler arasinda centik kaliyordu)
+      const r = g/2, T0 = [T1[0]-a[0], T1[1]-a[1]], hat = [T0].concat(cizgi, [[Ep[0]+no[0]*g*1.5, Ep[1]+no[1]*g*1.5]]);
+      const birim = (p, q) => { const dx = q[0]-p[0], dy = q[1]-p[1], L = Math.hypot(dx, dy) || 1; return [dx/L, dy/L]; };
+      const sol = [], sag = [];
+      for(let k=0;k<hat.length;k++){ const p = hat[k];
+        const dg = k > 0 ? birim(hat[k-1], p) : birim(p, hat[k+1]), dc = k < hat.length-1 ? birim(p, hat[k+1]) : dg;
+        const n1 = [-dg[1], dg[0]], n2 = [-dc[1], dc[0]]; let bx = n1[0]+n2[0], by = n1[1]+n2[1]; const bL = Math.hypot(bx, by) || 1; bx /= bL; by /= bL;
+        const m = r / Math.max(.5, bx*n1[0] + by*n1[1]);
+        sol.push([p[0]+bx*m, p[1]+by*m]); sag.push([p[0]-bx*m, p[1]-by*m]); }
+      const parca = [[kapat(kesik)], [kapat(sol.concat(sag.reverse()))]];
       const yeni = enBuyuk(PC.intersection(PC.union(...parca), [kapat(M)]));
       if(!yeni){ neden.push('birleşim başarısız'); continue; }
       W = yeni; uclar[uc] = { cizgi };
@@ -17686,17 +17693,30 @@ function capCizPng(p, cfg, kucuk, kat, cercevesiz){
 
       // kenar olculeri: konumu sonra, carpismaya bakarak belirlenecek
       if(cfg.olculer !== false && !kucuk){
-        for(let k=0;k<d.length;k++){
-          const j = (k+1) % d.length;
-          const uz = Math.hypot(d[j][0]-d[k][0], d[j][1]-d[k][1]);
-          if(uz < 2) continue;
-          const a1 = ek[k], a2 = ek[j];
+        // kavis (yol donusu) gibi kisa, hafif donen kenar dizileri TEK kenar sayilir: uzunlugu toplam yazilir
+        const kn = d.length, KL = i => Math.hypot(d[(i+1)%kn][0]-d[i][0], d[(i+1)%kn][1]-d[i][1]);
+        const don = i => { const a = d[i], b = d[(i+1)%kn], c = d[(i+2)%kn], ux = b[0]-a[0], uy = b[1]-a[1], vx = c[0]-b[0], vy = c[1]-b[1];
+          const L1 = Math.hypot(ux,uy), L2 = Math.hypot(vx,vy); if(L1 < 1e-9 || L2 < 1e-9) return 0; return Math.acos(Math.max(-1, Math.min(1, (ux*vx+uy*vy)/(L1*L2))))*180/Math.PI; };
+        const tapuKose = q => M.some(m => Math.hypot(m[0]-q[0], m[1]-q[1]) < .05);   // arazinin kendi kose noktasi: birlestirme
+        const devam = i => don(i) < 20 && (KL(i) < 2.2 || KL((i+1)%kn) < 2.2) && !tapuKose(d[(i+1)%kn]);
+        let bas = 0; for(let i=0;i<kn;i++){ if(!devam((i-1+kn)%kn)){ bas = i; break; } }
+        const zincir = []; { let cur = null;
+          for(let s2=0; s2<kn; s2++){ const i = (bas + s2) % kn;
+            if(!cur) cur = { ilk:i, son:i, uz:0 };
+            cur.son = i; cur.uz += KL(i);
+            if(!devam(i) || s2 === kn-1){ zincir.push(cur); cur = null; } } }
+        zincir.forEach(Z => {
+          const uz = Z.uz; if(uz < 2) return;
+          const P0 = d[Z.ilk], P1 = d[(Z.son+1)%kn];
+          // yazi, zincirin en uzun kenarina oturur (kavisin kirisi yolun ustune dusmesin), deger toplam uzunluktur
+          let enI = Z.ilk, enL = -1; for(let i = Z.ilk, s3 = 0; s3 < kn; s3++, i = (i+1)%kn){ if(KL(i) > enL){ enL = KL(i); enI = i; } if(i === Z.son) break; }
+          const a1 = E(d[enI]), a2 = E(d[(enI+1)%kn]);
           const dx = a2[0]-a1[0], dy = a2[1]-a1[1], u = Math.hypot(dx,dy) || 1;
-          if(u < 30) continue;
-          const anah = [d[k], d[j]].map(q=>Math.round(q[0]*20) + ":" + Math.round(q[1]*20)).sort().join("|");
-          if(olcuGoruldu.has(anah)) continue; olcuGoruldu.add(anah);
+          if(u < 30) return;
+          const anah = [P0, P1].map(q=>Math.round(q[0]*20) + ":" + Math.round(q[1]*20)).sort().join("|");
+          if(olcuGoruldu.has(anah)) return; olcuGoruldu.add(anah);
           bekleyen.push({ a1, a2, dx, dy, u, om, ek, metin: uz.toFixed(2).replace(".",",") });
-        }
+        });
       }
     });
 
@@ -17737,7 +17757,7 @@ function capCizPng(p, cfg, kucuk, kat, cercevesiz){
 
     const desen = (img, metre) => { if(!img) return null; const pt = x.createPattern(img, "repeat");
       try{ pt.setTransform(new DOMMatrix().scale(metre*olcek/img.width)); }catch(e){} return pt; };
-    const yolYazisi = (p1, p2, metin, boy, renk, ince) => {
+    const yolYazisi = (p1, p2, metin, boy, renk, ince, zemin) => {
       if(kucuk) return;
       const e1 = E(p1), e2 = E(p2);
       const uz = Math.hypot(e2[0]-e1[0], e2[1]-e1[1]);
@@ -17750,6 +17770,7 @@ function capCizPng(p, cfg, kucuk, kat, cercevesiz){
       x.rotate(ac);
       x.textAlign = "center"; x.textBaseline = "middle";
       x.font = `${ince ? 400 : 700} ${S(boy || 12)}px Arial`;
+      if(zemin){ const w = x.measureText(metin).width + S(10), h = Math.max(S(6), zemin.h); x.fillStyle = zemin.renk; x.fillRect(-w/2, -h/2, w, h); }
       x.lineWidth = S((boy || 12) * (ince ? .3 : .42)); x.strokeStyle = renk ? renk[1] : "#FFFFFF"; x.lineJoin = "round";
       x.strokeText(metin, 0, 0);
       x.fillStyle = renk ? renk[0] : "#1A1A1A"; x.fillText(metin, 0, 0);
@@ -17799,7 +17820,18 @@ function capCizPng(p, cfg, kucuk, kat, cercevesiz){
       seritler.concat(delikler).forEach(q=>{ yol(q.map(E)); x.stroke(); }); x.restore();
       yolListesi.forEach(o=>eksenDolu(o.p1, o.p2));
     }else{
-      yolListesi.forEach(o=>{ kesikCiz(o.p1, o.p2); eksenDolu(o.p1, o.p2); });
+      { const ayni = (p, q) => Math.hypot(p[0]-q[0], p[1]-q[1]) < 1e-4, kalan = yolListesi.slice(), hatlar = [];
+        while(kalan.length){ const o = kalan.shift(), h = [o.p1, o.p2];
+          let uzadi = true; while(uzadi){ uzadi = false;
+            for(let i=0;i<kalan.length;i++){ const q = kalan[i];
+              if(ayni(q.p1, h[h.length-1])){ h.push(q.p2); kalan.splice(i,1); uzadi = true; break; }
+              if(ayni(q.p2, h[0])){ h.unshift(q.p1); kalan.splice(i,1); uzadi = true; break; }
+              if(ayni(q.p2, h[h.length-1])){ h.push(q.p1); kalan.splice(i,1); uzadi = true; break; }
+              if(ayni(q.p1, h[0])){ h.unshift(q.p2); kalan.splice(i,1); uzadi = true; break; } } }
+          hatlar.push(h); }
+        hatlar.forEach(h => { const e2 = h.map(E); x.save(); x.setLineDash(kucuk ? [4,3] : [9,6]); x.lineCap = "butt"; x.lineJoin = "round";
+          x.lineWidth = kucuk ? 1 : 1.6; x.strokeStyle = "#1A1A1A"; x.beginPath(); e2.forEach((q,i)=> i ? x.lineTo(q[0],q[1]) : x.moveTo(q[0],q[1])); x.stroke(); x.restore(); });
+        yolListesi.forEach(o=>eksenDolu(o.p1, o.p2)); }
     }
     const enUzunYol = yolListesi.sort((a,b2)=>b2.uzunluk - a.uzunluk)[0];
     if(cfg.yolYazi !== false){
@@ -17808,7 +17840,8 @@ function capCizPng(p, cfg, kucuk, kat, cercevesiz){
       if(detay.length){
         detay.forEach(r => { const seg = (r.eksenler && r.eksenler.length ? r.eksenler : [r.eksen]).filter(Boolean)
             .sort((a, b2) => Math.hypot(b2[1][0]-b2[0][0], b2[1][1]-b2[0][1]) - Math.hypot(a[1][0]-a[0][0], a[1][1]-a[0][1]))[0];
-          if(seg) yolYazisi(seg[0], seg[1], "PARSEL YOLU · " + (+r.g).toFixed(2).replace(".", ",") + " m", 9.5, yRenk, true); });
+          if(seg) yolYazisi(seg[0], seg[1], "PARSEL YOLU · " + (+r.g).toFixed(2).replace(".", ",") + " m", 9.5, yRenk, true,
+            { renk: toprak ? "#B98C5E" : "#FFFFFF", h: Math.min(S(9.5) + S(5), (+r.g)*olcek - 2) }); });
       }else if(enUzunYol) yolYazisi(enUzunYol.p1, enUzunYol.p2, "PARSEL YOLU", 9.5, yRenk, true);
     }
 
