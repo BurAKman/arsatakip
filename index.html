@@ -3168,7 +3168,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.7.9";
+const SURUM_MORDOR = "v 3.8.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -15365,7 +15365,7 @@ function capYerlesimAgacHam(M, cfg, hizli){
   const ilk = C.resmiler[0] || null;
   return { agacMi:true, parcalar, yol: yollar.map(y=>y.poly), elle: !!EY, kutuphaneYok,
            yolEksen: EY ? EY.eksenler.map(e=>({ ...e })) : yollar.flatMap(y=>(y.eksenler && y.eksenler.length ? y.eksenler : (y.eksen ? [y.eksen] : [])).map(e=>({ p1:e[0], p2:e[1], g:y.g }))),
-           yollarDetay: yollar, kesimler, bolgeler, gercek, cerceve:C, pahlar, _dikOlcum: dikOlc,
+           yollarDetay: yollar, kesimler, bolgeler, gercek, cerceve:C, pahlar, _dikOlcum: dikOlc, yolUcDik: DIK,
            resmiYol: ilk ? ilk.resmiYol : null, resmiZincir: ilk ? ilk.resmiZincir : null, resmiler: C.resmiler,
            resmiAlan: Math.round(C.resmiler.reduce((t,r)=>t+r.resmiAlan,0)*100)/100,
            yolAlan: Math.round(yolAlan*100)/100, yolGenislik: Math.max(0, ...yollar.map(y=>y.g)),
@@ -15438,6 +15438,9 @@ function capDenetim(yer){
       const ex = E2[0]-O[0], ey = E2[1]-O[1], rx = rk[1][0]-rk[0][0], ry = rk[1][1]-rk[0][1], L1 = Math.hypot(ex,ey), L2 = Math.hypot(rx,ry); if(L1 < 1 || L2 < .5) return;
       const ac = Math.acos(Math.min(1, Math.abs(ex*rx + ey*ry)/(L1*L2)))*180/Math.PI;
       if(ac < 70) uyari.push({ tur:"dikkat", metin:`Bir parsel yolu resmî yola ${ac.toFixed(0)}° ile bağlanıyor · araç dönüşü için en az 70° önerilir` }); }); }); });
+
+  if(yer.yolUcDik) (yer.yollarDetay || []).forEach(r => { const nd = (r && r.kaynak && !r.dik ? (r.dikNeden || []) : []).filter(n => n !== "resmi yol ucu" && n !== "zaten dik");
+    if(nd.length) uyari.push({ tur:"bilgi", metin:`Bir parsel yolunun ucu sınıra dik bağlanamadı: ${nd.join(" · ")}` }); });
   if(yer.kutuphaneYok) uyari.push({ tur:"hata", metin:"Elle yol için gereken çizim kütüphanesi yüklenemedi. İnternet bağlantısını kontrol edip sayfayı yenile." });
   if(yer.bosAlan > .5) uyari.push({ tur:"bilgi", metin:`${nf2(yer.bosAlan)} m² ayrılmamış alan var · boş alana dokunup parça yapabilirsin` });
   const fazla = (yer.girilen || 0) - (yer.net || 0);
@@ -15870,34 +15873,51 @@ function pahUygula(P, yollar, C, m){
 // parsel yolu, resmi olmayan sinira egik carpiyorsa ucundan once kirilip sinira DIK baglanir (haritaci usulu).
 // bosta kalan eski yol parcasi komsu parsele gecer, yeni yolun girdigi yer parselden duser.
 function yolUcDikUygula(M, C, yollar, bolgeler, yapr, gercek){
-  const PC = window.polygonClipping; if(!PC) return;
+  const PC0 = window.polygonClipping; if(!PC0) return;
+  // polygon-clipping bazi neredeyse cakisik kenarlarda yuvarlama yuzunden cokebiliyor: once oldugu gibi,
+  // olmazsa koordinatlar 0,1 mm / 1 mm izgaraya oturtularak tekrar dener
+  const izgara = (v, q) => Array.isArray(v) ? (typeof v[0] === "number" ? [Math.round(v[0]/q)*q, Math.round(v[1]/q)*q] : v.map(w => izgara(w, q))) : v;
+  const guvenli = ad => (...g) => { try{ return PC0[ad](...g); }catch(e){}
+    for(const q of [1e-4, 1e-3, 5e-3]){ try{ return PC0[ad](...g.map(w => izgara(w, q))); }catch(e){} }
+    throw new Error("geometri: " + ad); };
+  const PC = { union: guvenli("union"), intersection: guvenli("intersection"), difference: guvenli("difference") };
   const kapat = r => r.concat([r[0]]), ac = r => { const q = r.slice(); q.pop(); return halkaTemizle(q); };
   const enBuyuk = mp => mp.map(pl=>ac(pl[0])).filter(r=>r.length > 2).sort((x,y)=>polyAlan(y)-polyAlan(x))[0] || null;
   const resmiK = new Set(); ((C && C.resmiler) || []).forEach(r => (r.kenarlar || []).forEach(i => resmiK.add(i)));
   const n = M.length;
   const kenarBul = p => { let en = -1, eu = .1; for(let i=0;i<n;i++){ const u = segUzaklik(p, M[i], M[(i+1)%n]); if(u < eu){ eu = u; en = i; } } return en; };
   const kenaraYakin = (p, P) => { for(let i=0;i<P.length;i++) if(segUzaklik(p, P[i], P[(i+1)%P.length]) < .06) return true; return false; };
-  yollar.forEach(y => {
-    if(!y.kaynak || !y.poly || y.poly.length < 3) return;
-    const g = +y.g || 0; if(!(g > 0)) return;
+  yollar.forEach(y => { const yedek = { poly: y.poly, eksen: y.eksen, eksenler: y.eksenler }, bY = new Map(), gY = new Map();
+    yapr.forEach(L => { bY.set(L.id, bolgeler.get(L.id)); gY.set(L.id, gercek.get(L.id)); });
+    try{ yolUcTek(y); }catch(e){ console.log("yol ucu dik (tek yol)", e);   // bu yolu eski haline dondur, digerlerine devam
+      Object.assign(y, yedek); y.dik = false; (y.dikNeden = y.dikNeden || []).push("geometri hesaplanamadı");
+      yapr.forEach(L => { bolgeler.set(L.id, bY.get(L.id)); gercek.set(L.id, gY.get(L.id)); }); }
+  });
+  function yolUcTek(y){
+    const neden = y.dikNeden = [];
+    if(!y.kaynak || !y.poly || y.poly.length < 3){ neden.push('şerit yok'); return; }
+    const g = +y.g || 0; if(!(g > 0)){ neden.push('genişlik 0'); return; }
     // kesim yolu da, "kenarina yol" ile acilan yol da olur: eksen = en uzun eksen parcasi
-    if(y.eksenler && y.eksenler.length > 1 && y.kaynak.k == null) return;   // kirik kenar yolu (sinir boyunca donen): dokunma
+    if(y.eksenler && y.eksenler.length > 1 && y.kaynak.k == null){ const Ls = y.eksenler.map(e=>Math.hypot(e[1][0]-e[0][0], e[1][1]-e[0][1])), top = Ls.reduce((t,v)=>t+v, 0);
+      if(Math.max(...Ls) < .75*top){ neden.push('sınır boyunca dönen kenar yolu'); return; } }
     const eks0 = (y.eksenler && y.eksenler.length ? y.eksenler : (y.eksen ? [y.eksen] : [])).filter(e=>e && e[0] && e[1])
       .sort((p, q)=>Math.hypot(q[1][0]-q[0][0], q[1][1]-q[0][1]) - Math.hypot(p[1][0]-p[0][0], p[1][1]-p[0][1]))[0];
-    if(!eks0) return;
+    if(!eks0){ neden.push('eksen yok'); return; }
     y.eksen = eks0;
     let W = y.poly.slice(); const uclar = [null, null];
     for(const uc of [0, 1]){
       const E = y.eksen[uc], O = y.eksen[1-uc];
-      const ax = E[0]-O[0], ay = E[1]-O[1], La = Math.hypot(ax, ay); if(La < 10) continue;
+      const ax = E[0]-O[0], ay = E[1]-O[1], La = Math.hypot(ax, ay); if(La < 10){ neden.push('yol kısa'); continue; }
       const a = [ax/La, ay/La];
       // uc bir sinir kosesine denk gelebilir: yol seridinin degdigi kenarlarin en uzunu esas alinir
       const adaylar = []; for(let i=0;i<n;i++){ if(segUzaklik(E, M[i], M[(i+1)%n]) < g/2 + .3) adaylar.push(i); }
-      if(!adaylar.length || adaylar.some(i=>resmiK.has(i))) continue;
+      if(!adaylar.length){ neden.push('uç sınıra değmiyor (' + Math.min(...M.map((m,i)=>segUzaklik(E, m, M[(i+1)%n]))).toFixed(1) + ' m)'); continue; }
+      if(adaylar.some(i=>resmiK.has(i))){ neden.push('resmi yol ucu'); continue; }
       adaylar.sort((i, j)=>Math.hypot(M[(j+1)%n][0]-M[j][0], M[(j+1)%n][1]-M[j][1]) - Math.hypot(M[(i+1)%n][0]-M[i][0], M[(i+1)%n][1]-M[i][1]));
       let ki = -1, no = null, cs = 0;
       for(const i of adaylar){ const nn = disNormal(M, i), c2 = a[0]*nn[0] + a[1]*nn[1]; if(c2 > .35 && c2 <= Math.cos(6*Math.PI/180)){ ki = i; no = nn; cs = c2; break; } }
-      if(ki < 0) continue;   // zaten dike yakin ya da fazla yatik
+      if(ki < 0 && adaylar.every(i=>{ const nn = disNormal(M, i); return a[0]*nn[0]+a[1]*nn[1] > Math.cos(6*Math.PI/180); })){ neden.push('zaten dik'); continue; }
+      if(ki < 0){ neden.push('açı uygun değil (' + adaylar.map(i=>{ const nn = disNormal(M, i); return Math.round(Math.acos(Math.max(-1, Math.min(1, a[0]*nn[0]+a[1]*nn[1])))*180/Math.PI) + '°'; }).join(', ') + ')'); continue; }
       let Ld = Math.max(2*g, 6), u = Ld/cs;
       if(u > La*.35){ u = La*.35; Ld = u*cs; }
       const A = [E[0]-a[0]*u, E[1]-a[1]*u];
@@ -15907,13 +15927,13 @@ function yolUcDikUygula(M, C, yollar, bolgeler, yapr, gercek){
         if(Math.abs(den) < 1e-12) continue;
         const t = ((c[0]-A[0])*sy - (c[1]-A[1])*sx)/den, w = ((c[0]-A[0])*ry - (c[1]-A[1])*rx)/den;
         if(t > 0 && t <= 1 && w >= -1e-9 && w <= 1+1e-9 && t < enT){ if(resmiK.has(i)){ enT = -1; break; } enT = t; Ep = [A[0]+rx*t, A[1]+ry*t]; } }
-      if(!Ep || enT < 0) continue;
-      const kesik = kirp(W, a, A[0]*a[0] + A[1]*a[1]); if(kesik.length < 3) continue;
+      if(!Ep || enT < 0){ neden.push('sınıra dik ışın bulunamadı'); continue; }
+      const kesik = kirp(W, a, A[0]*a[0] + A[1]*a[1]); if(kesik.length < 3){ neden.push('şerit kesilemedi'); continue; }
       const r = g/2, px = -no[1]*r, py = no[0]*r, B = [Ep[0]+no[0]*g*1.5, Ep[1]+no[1]*g*1.5];
       const kol = [[A[0]+px,A[1]+py],[B[0]+px,B[1]+py],[B[0]-px,B[1]-py],[A[0]-px,A[1]-py]];
       const hal = []; for(let k=0;k<28;k++){ const t = k/28*Math.PI*2; hal.push([A[0]+Math.cos(t)*r, A[1]+Math.sin(t)*r]); }
       const yeni = enBuyuk(PC.intersection(PC.union([kapat(kesik)], [kapat(kol)], [kapat(hal)]), [kapat(M)]));
-      if(!yeni) continue;
+      if(!yeni){ neden.push('birleşim başarısız'); continue; }
       W = yeni; uclar[uc] = { A, Ep };
     }
     if(!uclar[0] && !uclar[1]) return;
@@ -15956,7 +15976,7 @@ function yolUcDikUygula(M, C, yollar, bolgeler, yapr, gercek){
     if(uclar[1]) pts.push(uclar[1].A, uclar[1].Ep); else pts.push(y.eksen[1]);
     const seg = []; for(let i=0;i<pts.length-1;i++) seg.push([pts[i], pts[i+1]]);
     y.poly = W; y.eksenler = seg; y.eksen = seg.slice().sort((p,q)=>Math.hypot(q[1][0]-q[0][0], q[1][1]-q[0][1]) - Math.hypot(p[1][0]-p[0][0], p[1][1]-p[0][1]))[0]; y.dik = true;
-  });
+  }
 }
 
 // parselin yan sinirlari yola DIK olsun: komsu parsel yollarinin dogrultusu (birden fazlaysa ortalamasi) kesim yonu olur.
