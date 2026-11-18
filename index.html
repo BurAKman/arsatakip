@@ -3168,7 +3168,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.7.8";
+const SURUM_MORDOR = "v 3.7.9";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -15191,7 +15191,8 @@ function capYerlesimAgacHam(M, cfg, hizli){
   // yol ucu dik: once dik baglamanin parsellere etkisi olculur, sonraki turda yerlesim bu farki telafi eder (2-3 tur)
   if(cfg.yolUcDik && !cfg._dikIc && !(cfg.elleYol && cfg.elleYol.aktif)){
     let D = null, yer = null;
-    for(let pas=0; pas<(hizli ? 2 : 3); pas++){ yer = capYerlesimAgacHam(M, { ...cfg, _dikIc:true, _dikDelta:D }, hizli); D = yer._dikOlcum || null; if(!D) break; }
+    for(let pas=0; pas<(hizli ? 3 : 6); pas++){ yer = capYerlesimAgacHam(M, { ...cfg, _dikIc:true, _dikDelta:D }, hizli); const D2 = yer._dikOlcum || null; if(!D2) break;
+      let fark = 0; D2.forEach((v, k)=>{ fark = Math.max(fark, Math.abs(v - ((D && D.get(k)) || 0))); }); D = D2; if(pas > 0 && fark < .2) break; }
     return yer;
   }
   const C = agacCerceve(M, cfg);
@@ -15428,6 +15429,9 @@ function capDenetim(yer){
       if(enK < 60) uyari.push({ tur:"dikkat", id:o.id, kalite:true, metin:`${no} nolu parçada sivri köşe var (${enK.toFixed(0)}°)` }); }
     if(o.ekPoly && o.ekPoly.length) uyari.push({ tur:"dikkat", id:o.id, metin:`${no} nolu parçayı çizdiğin yol ${o.ekPoly.length + 1} parçaya bölüyor` });
     if(o.bilgi.m2 < 20) uyari.push({ tur:"dikkat", id:o.id, metin:`${no} nolu parça çok küçük (${nf2(o.bilgi.m2)} m²)` });
+    { const tum = (yer.parcalar||[]).filter(q=>!q.bilgi.kalan && +q.bilgi.m2 > 0 && isFinite(+q.bilgi.olculen)).map(q=>+q.bilgi.olculen / +q.bilgi.m2).sort((a,b)=>a-b);
+      if(tum.length > 2 && !o.bilgi.kalan && isFinite(+o.bilgi.olculen) && +o.bilgi.m2 > 0){ const med = tum[Math.floor(tum.length/2)], sap = (+o.bilgi.olculen) - med*(+o.bilgi.m2);
+        if(Math.abs(sap) > Math.max(1, .004*o.bilgi.m2)) uyari.push({ tur:"dikkat", id:o.id, kalite:true, metin:`${no} nolu parçanın çizimdeki alanı diğerlerine göre ${nf2(Math.abs(sap))} m² ${sap > 0 ? "fazla" : "eksik"}` }); } }
   });
   if(resmiKenar.length) (yer.yollarDetay || []).forEach(r => { const segs = (r.eksenler && r.eksenler.length ? r.eksenler : (r.eksen ? [r.eksen] : [])); segs.forEach(e => { [0, 1].forEach(u => {
       const E2 = e[u], O = e[1-u]; const rk = resmiKenar.find(k => segUzaklik(E2, k[0], k[1]) < Math.max(1.5, (+r.g||4)/2 + .5)); if(!rk) return;
@@ -15874,8 +15878,14 @@ function yolUcDikUygula(M, C, yollar, bolgeler, yapr, gercek){
   const kenarBul = p => { let en = -1, eu = .1; for(let i=0;i<n;i++){ const u = segUzaklik(p, M[i], M[(i+1)%n]); if(u < eu){ eu = u; en = i; } } return en; };
   const kenaraYakin = (p, P) => { for(let i=0;i<P.length;i++) if(segUzaklik(p, P[i], P[(i+1)%P.length]) < .06) return true; return false; };
   yollar.forEach(y => {
-    if(!y.kaynak || y.kaynak.k == null || !y.eksen || !y.poly || y.poly.length < 3) return;
+    if(!y.kaynak || !y.poly || y.poly.length < 3) return;
     const g = +y.g || 0; if(!(g > 0)) return;
+    // kesim yolu da, "kenarina yol" ile acilan yol da olur: eksen = en uzun eksen parcasi
+    if(y.eksenler && y.eksenler.length > 1 && y.kaynak.k == null) return;   // kirik kenar yolu (sinir boyunca donen): dokunma
+    const eks0 = (y.eksenler && y.eksenler.length ? y.eksenler : (y.eksen ? [y.eksen] : [])).filter(e=>e && e[0] && e[1])
+      .sort((p, q)=>Math.hypot(q[1][0]-q[0][0], q[1][1]-q[0][1]) - Math.hypot(p[1][0]-p[0][0], p[1][1]-p[0][1]))[0];
+    if(!eks0) return;
+    y.eksen = eks0;
     let W = y.poly.slice(); const uclar = [null, null];
     for(const uc of [0, 1]){
       const E = y.eksen[uc], O = y.eksen[1-uc];
@@ -17573,7 +17583,7 @@ function capCizPng(p, cfg, kucuk, kat, cercevesiz){
   if(!M) throw new Error("sınır çizimi yok");
 
   const G = kucuk ? 700 : 1000, Y = kucuk ? 900 : 1400;
-  const tabloN = (!kucuk && cfg && cfg.alanTablo !== false && parcalar && (parcalar.length > 1 || cfg.agac)) ? parcalar.length : 0;
+  const tabloN = (!kucuk && cfg && cfg.alanTablo === true && parcalar && (parcalar.length > 1 || cfg.agac)) ? parcalar.length : 0;
   const tabloBlok = tabloN > 7 ? 2 : 1, tabloSatir = Math.ceil(tabloN / tabloBlok), tabloH = tabloN ? 30 + 17*(tabloSatir + 1) + 40 : 0;
   const ustAlan = kucuk ? 110 : 330, altAlan = kucuk ? 30 : 90 + tabloH, kenar = kucuk ? 40 : 80;
   const K = Math.max(1, +kat || 1);   // PDF icin yuksek cozunurluk: cizim ayni, piksel K kat
