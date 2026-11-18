@@ -3351,6 +3351,45 @@ body.pc .hspTakG.gecti .hspTakB{color:#FF7A82}body.pc .hspTakG.yakin .hspTakB{co
 body.pc .hspTakS.gecti .hspTarih{border-color:rgba(255,90,99,.7);background:rgba(220,40,50,.18)}body.pc .hspTakS.gecti em{color:#FF7A82}
 body.pc .hspTakS.yakin .hspTarih{border-color:rgba(232,182,97,.7);background:rgba(232,182,97,.12)}body.pc .hspTakS.yakin em{color:#E8B661}
 body.pc .hspTakS.yakin .hspTarih b{color:#F3D29A}
+/* ===== Piyasalar ===== */
+body.pc .pysAnaKutu > header{display:flex;align-items:center;gap:12px}
+body.pc .pysAnaSaat{margin-left:auto;color:#7E7C84;font-size:11.5px}
+body.pc .pysAnaKutu > header .pcLink{margin-left:0!important}
+body.pc .pysAnaKutu .pcBoxIc{padding:10px 14px 14px}
+body.pc .pysAnaIc{display:grid;grid-template-columns:5fr 4fr 3fr;gap:16px}
+@media (max-width:1500px){ body.pc .pysAnaIc{grid-template-columns:1fr 1fr} body.pc .pysAnaIc > :first-child{grid-column:1/-1} }
+body.pc .pysGB{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8E8C93;margin:0 2px 8px}
+body.pc .pysIzgara{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
+body.pc .pysIzgara.buyuk{grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:12px;padding:12px 14px 14px}
+body.pc .pysKart{position:relative;padding:10px 11px 0;border-radius:10px;background:linear-gradient(180deg,#161A20,#0E1116);border:1px solid rgba(255,255,255,.08);overflow:hidden;color:#8E8C93}
+body.pc .pysKart.buyuk{padding:14px 16px 10px;border-radius:12px}
+body.pc .pysKart.art{color:#5BD08B}body.pc .pysKart.az{color:#FF5A63}
+body.pc .pysKart.art{border-color:rgba(91,208,139,.22)}body.pc .pysKart.az{border-color:rgba(255,90,99,.25)}
+body.pc .pysUst{display:flex;align-items:center;gap:6px}
+body.pc .pysUst b{flex:1;font-size:12.5px;font-weight:500;color:#C9C7CC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.pc .pysKart.buyuk .pysUst b{font-size:14px;color:#ECEAEE}
+body.pc .pysYz{font-size:11px;font-weight:600;font-family:"IBM Plex Mono",monospace;white-space:nowrap}
+body.pc .pysFiyat{font-size:15px;font-weight:600;color:#F4F2F0;margin-top:3px;white-space:nowrap}
+body.pc .pysKart.buyuk .pysFiyat{font-size:22px;margin-top:6px}
+body.pc .pysTl{display:block;font-size:11px;color:#8E8C93;margin-top:1px}
+body.pc .pysSpark{display:block;width:calc(100% + 22px);height:34px;margin:4px -11px 0}
+body.pc .pysKart.buyuk .pysSpark{width:100%;height:64px;margin:10px 0 4px}
+body.pc .pysAlt{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#6E6C73;padding-top:4px;border-top:1px solid rgba(255,255,255,.05)}
+body.pc .pysCik{width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,90,99,.5);background:rgba(220,40,50,.15);color:#FF7A82;cursor:pointer;line-height:1}
+body.pc .pysEkle{min-height:120px;border-radius:12px;border:1px dashed rgba(255,255,255,.2);background:none;color:#C9C7CC;cursor:pointer;font-size:13.5px}
+body.pc .pysEkle:hover{border-color:rgba(255,90,99,.6);color:#fff}
+body.pc .pysBar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+body.pc .pysBar small{color:#7E7C84;font-size:12px}
+body.pc .pysBar .btn{width:auto!important;margin:0!important;padding:8px 14px!important;display:inline-flex;align-items:center;gap:7px}
+body.pc .pysBar .btn svg{width:15px;height:15px}
+body.pc .pysBar .btn.on{border-color:rgba(255,80,90,.75)!important}
+body.pc .pysGrup{margin-bottom:16px}
+body.pc .pysGrup > header{display:flex;align-items:baseline;gap:12px}
+body.pc .pysGrup > header small{color:#7E7C84;font-size:11.5px}
+body.pc .pysUyar{margin:0 0 12px;padding:10px 14px;border-radius:10px;border:1px solid rgba(232,182,97,.45);background:rgba(232,182,97,.08);color:#E8C98A;font-size:12.5px}
+body.pc .pysAnaKutu .pysUyar{margin:12px 0 0}
+body.pc .pysNot{color:#6E6C73;font-size:11.5px;margin:6px 2px 20px}body.pc .pysNot a{color:#FF7A82;cursor:pointer}
+body.pc .pysAlt b{color:#A9A7AE;font-weight:500}
 </style>
 </head>
 <body>
@@ -19558,7 +19597,7 @@ YAPILACAKLAR
 2) Parselin önemli yerlere uzaklığını ver: mahalle/köy merkezi, ilçe merkezi, il merkezi, en yakın ana yol (otoyol/devlet yolu), varsa 30 km içindeki OSB, liman, havalimanı, sahil vb. Her referans noktasının KOORDİNATINI ve kaynağını yaz. Mesafeler kuş uçuşu olsun.
 3) Kısa bir değerlendirme yaz: bu parsele en çok benzeyen emsaller, fiyatı etkileyen artılar/eksiler, gerçekçi m² fiyat bandı.
 
-ÇOK ÖNEMLİ: Sonuçları programım okuyacak. Aşağıdaki yapıdaki JSON'u dosya aracınla (Python) "arsatakip.json" adlı İNDİRİLEBİLİR DOSYA olarak oluştur ve indirme bağlantısını cevabın en sonuna koy; JSON'u ayrıca metne yazma. Dosya oluşturamıyorsan JSON'u cevabın en sonuna, başına ARSATAKIP-JSON yazarak koy. Kurallar:
+ÇOK ÖNEMLİ: Sonuçları programım okuyacak. DOSYA OLUŞTURMA, indirme bağlantısı verme. Aşağıdaki yapıdaki JSON'u cevabın EN SONUNA tek bir kod bloğu (\`\`\`json) içinde yaz; kod bloğundan hemen önceki satıra sadece ARSATAKIP-JSON yaz. Kod bloğundan sonra başka hiçbir şey yazma. koy. Kurallar:
 - JSON TEK SATIR ve boşluksuz (minified) olsun; girinti, satır başı kullanma. Canvas/belge açma.
 - En fazla 12 emsal ve 12 mesafe. "url" ilanın kendi bağlantısı, "kaynak" sadece site adı (ör. "mapcarta.com").
 - Sayıları düz sayı yaz (nokta/virgül ayırıcısı olmadan, ondalık için nokta).
@@ -19587,12 +19626,30 @@ function ekKmlMetni(p, h){
 <Placemark><name>${es(ad)}</name><description>${es(`${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)} · ${nf2(+p.alan_m2 || 0)} m² · ${p.nitelik || ""}`)}</description>
 <Polygon><outerBoundaryIs><LinearRing><coordinates>${k.join(" ")}</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark></Document></kml>`;
 }
+// metnin icindeki "emsaller" iceren JSON nesnesini bul: kod blogu etiketleri, "Kopyala" yazilari, sonrasindaki metin ne olursa olsun
+function emsalJsonBul(t){
+  t = String(t || "").replace(/[\u201C\u201D]/g, '"');
+  const dene = x => { try{ const o = JSON.parse(x); return o && typeof o === "object" && (Array.isArray(o.emsaller) || Array.isArray(o.mesafeler)) ? o : null; }catch(e){ return null; } };
+  let i = t.length;
+  while((i = t.lastIndexOf('"emsaller"', i - 1)) >= 0){
+    for(let a = t.lastIndexOf("{", i); a >= 0 && i - a < 400; a = t.lastIndexOf("{", a - 1)){
+      let d = 0, q = false, k = false;
+      for(let j = a; j < t.length; j++){ const c = t[j];
+        if(q){ if(k) k = false; else if(c === "\\") k = true; else if(c === '"') q = false; continue; }
+        if(c === '"') q = true; else if(c === "{") d++; else if(c === "}"){ if(--d === 0){ const o = dene(t.slice(a, j + 1)); if(o) return { J:o, bas:a }; break; } } }
+    }
+    if(i <= 0) break;
+  }
+  return null;
+}
 async function emsalArastirCevabi(t, M){
-  // isaret yoksa (yalniz JSON kopyalanmissa) son "emsaller" anahtarinin basladigi { 'den al
-  const i0 = t.lastIndexOf("ARSATAKIP-JSON"), j0 = t.lastIndexOf('"emsaller"');
-  const parca = i0 >= 0 ? t.slice(i0) : j0 >= 0 ? t.slice(Math.max(0, t.lastIndexOf("{", j0))) : t, a0 = parca.indexOf("{"), b0 = parca.lastIndexOf("}");
-  let J = null; try{ J = JSON.parse(parca.slice(a0, b0 + 1)); }catch(e){}
-  const metin = (i0 >= 0 ? t.slice(0, i0) : t).replace(/```json\s*$/i, "").trim();
+  const bul = emsalJsonBul(t), J = bul?.J || null, i0 = bul ? Math.max(0, t.lastIndexOf("ARSATAKIP-JSON", bul.bas)) : -1;
+  if(!J){
+    // JSON gelmedi (ChatGPT dosya olarak vermis ya da cevap bitmemis): onceki arastirmanin ustune bos kayit yazma
+    GPT_MOD = M; try{ gptBekleBar("Cevapta emsal JSON'u yok · ChatGPT dosya verdiyse penceredeki arsatakip.json bağlantısına tıkla (kendiliğinden gelir), yoksa cevap bitince tekrar “Cevabı gönder”"); }catch(e){}
+    return toast(/arsatakip\.json|indir|download/i.test(t) ? "ChatGPT sonucu dosya olarak vermiş · ChatGPT penceresinde arsatakip.json bağlantısına tıkla, otomatik aktarılır" : "Cevapta emsal verisi bulunamadı · cevap bitince tekrar gönder ya da JSON'u kopyalayıp “Sonucu al”");
+  }
+  const metin = (i0 > 0 ? t.slice(0, i0) : bul.bas > 0 ? t.slice(0, bul.bas) : "").replace(/```json\s*$/i, "").replace(/\bjson\s*(Kopyala|Copy code|Copy)?\s*$/i, "").trim();
   const { data:p } = await sb.from("parcels").select("*").eq("id", M.id).single(); const h = ekHalkaP(p), mz = h ? ekMerkez(h) : M.merkez;
   const sayi = v => typeof v === "number" ? v : sayiTr(v);
   // emsaller: birim fiyat burada hesaplanir, ayni ilan (url ya da m2+fiyat) tekrar eklenmez
@@ -19606,7 +19663,6 @@ async function emsalArastirCevabi(t, M){
     const durum = bk == null ? "koordinat yok" : !isFinite(gk) ? "hesaplandı" : Math.abs(bk - gk) <= Math.max(.4, gk*.15) ? "tutarlı" : "uyuşmuyor";
     return { hedef: x.hedef || "", gptKm: isFinite(gk) ? gk : null, km: bk != null ? Math.round(bk*10)/10 : null, enlem: en, boylam: bo, kaynak: x.kaynak || "", durum }; }).filter(x => x.hedef);
   const bant = Array.isArray(J?.bant) && J.bant.length === 2 ? J.bant.map(sayi) : null;
-  if(!J) toast("Cevapta ARSATAKIP-JSON bloğu bulunamadı · sadece metin kaydedildi");
   let n = 0; if(yeni.length) n = await emsalKaydet(M.id, yeni, "ChatGPT araştırması");
   const a = await analizOku(M.id).catch(() => ({})), E = { ilanlar:[], gecmis:[], ...(a.emsal || {}) };
   E.arastirma = { tarih: new Date().toLocaleDateString("tr-TR"), metin: metin.slice(0, 20000), mesafeler, bant, ilan: yeni.length };
@@ -19889,7 +19945,8 @@ const pcLS = (k, v) => { try{ if(v === undefined) return localStorage.getItem(k)
 const PC_MENU = [
   { r:"araziler", i:"katman", ad:"Araziler" },
   { r:"harita",   i:"map",    ad:"Harita sorgu", kisa:"Harita" },
-  { r:"hesap",    i:"money",  ad:"Hesap & Takvim", kisa:"Hesap", rozet:true }
+  { r:"hesap",    i:"money",  ad:"Hesap & Takvim", kisa:"Hesap", rozet:true },
+  { r:"piyasa",   i:"grafik", ad:"Piyasalar", kisa:"Piyasa" }
 ];
 const PC_AILE = { yaklasan:"hesap", parsel:"araziler", yeni:"araziler", parcalar:"araziler", sunum:"araziler", ilan:"araziler", saha:"araziler", belgeler:"araziler", capAyar:"araziler", fiyatDuzen:"araziler", fiyat:"araziler", marka:"ayarlar", yedek:"ayarlar", tema:"ayarlar", rehber:"ayarlar" };
 const PC_AD = { ana:"Genel Bakış", araziler:"Araziler", harita:"Harita Sorgu", fiyat:"Tapu Bilgileri", cap:"Çap", kml:"KML", yaklasan:"Yaklaşanlar", hesap:"Hesap - Kitap",
@@ -20245,9 +20302,9 @@ async function pcPano(){
       ${kutu("pcHsp", "Hesap durumu", `<button class="pcLink" onclick="pcGit('hesap')">Hesap & Takvim →</button>`)}
       ${kutu("pcHar", "Son hareketler", "")}
     </div>
-    ${kutu("rates", "Piyasa", "", "", "pcBoxPiyasa pcPiyasaSerit")}`;
-  document.getElementById("rates").classList.add("rates", "pcRates");
-  try{ kurlar(); }catch(e){}
+    ${kutu("pysAna", "Piyasalar", `<small class="pysAnaSaat" id="pysAnaSaat"></small><button class="pcLink" onclick="pcGit('piyasa')">Tümü →</button>`, "", "pysAnaKutu")}`;
+  { const st = document.getElementById("stamp"), n = new Date(); if(st) st.textContent = n.toLocaleDateString("tr-TR", { day:"2-digit", month:"long", year:"numeric" }) + "  ·  " + n.toLocaleTimeString("tr-TR", { hour:"2-digit", minute:"2-digit" }); }
+  try{ pysAnaCiz(); }catch(e){}
   const bugun = new Date(); bugun.setHours(0,0,0,0); const gun = t => Math.round((new Date(t) - bugun)/86400000);
   const [{ data:parseller }, { data:yillar }, { data:parcalar }, { data:ekler }, { data:hesaplar }, { data:vadeler }, { data:log }, { data:kisiler }] = await Promise.all([
     sb.from("parcels").select("id,alan_m2,mahalle,ada,parsel"), sb.from("parcel_years").select("parcel_id,aktif").eq("yil", yil), sb.from("parca").select("m2,satilik,satildi,m2_fiyat"),
@@ -21316,6 +21373,131 @@ const hesapEskiEkran = hesap;
   hesapYeni = function(){ if(pcMi()) return hspDuzen(); return eskiYeni(); };
 }
 try{ PC_AD.hesap = "Hesap & Takvim"; PC_BASLIK_IKON.hesap = "money"; }catch(e){}
+
+/* ================= v1.0 · PIYASALAR (PC) =================
+   Doviz, altin/gumus, Borsa Istanbul (~15 dk gecikmeli) ve kripto tek ekranda; anasayfada ozet serit.
+   Veri: Supabase fonksiyonu (mod:"piyasa", Yahoo Finance). Fonksiyon guncellenmemisse kripto Binance'ten, doviz eski kaynaktan gelir.
+   Takip listesi cihazda saklanir, ekrandan eklenip cikarilir. Ileride alarm modulu bu listenin uzerine kurulacak. */
+const PYS_ONS = 31.1035;
+const PYS_VARSAYILAN = [
+  { k:"doviz", g:"Döviz & Emtia", L:[ { s:"USDTRY=X", ad:"Dolar" }, { s:"EURTRY=X", ad:"Euro" }, { s:"@ALTIN", ad:"Gram altın" }, { s:"@GUMUS", ad:"Gram gümüş" }, { s:"GC=F", ad:"Ons altın" } ] },
+  { k:"bist", g:"Borsa İstanbul", L:[ { s:"XU100.IS", ad:"BIST 100" }, { s:"ASELS.IS", ad:"ASELS" }, { s:"TTRAK.IS", ad:"TTRAK" }, { s:"TURSG.IS", ad:"TURSG" } ] },
+  { k:"kripto", g:"Kripto", L:[ { s:"BTC-USD", ad:"Bitcoin" }, { s:"ETH-USD", ad:"Ethereum" }, { s:"SOL-USD", ad:"Solana" } ] }
+];
+const PYS_TURETIK = { "@ALTIN": ["GC=F", "USDTRY=X"], "@GUMUS": ["SI=F", "USDTRY=X"] };
+let PYS_ARALIK = "1G", PYS_VERI = {}, PYS_DURUM = { kaynak:"", zaman:0, hata:"" }, PYS_DUZEN = false, __pysSaat = null;
+function pysListe(){ try{ const x = JSON.parse(localStorage.getItem("piyasaListe") || "null"); if(Array.isArray(x) && x.length) return x; }catch(e){} return JSON.parse(JSON.stringify(PYS_VARSAYILAN)); }
+function pysListeYaz(L){ try{ localStorage.setItem("piyasaListe", JSON.stringify(L)); }catch(e){} }
+function pysSemboller(){ const S = new Set(); pysListe().forEach(g => g.L.forEach(o => (PYS_TURETIK[o.s] || [o.s]).forEach(x => S.add(x)))); S.add("USDTRY=X"); return [...S]; }
+
+async function pysGetir(aralik, zorla){
+  const A = aralik || PYS_ARALIK, on = PYS_VERI[A];
+  if(!zorla && on && Date.now() - on.zaman < 55000) return on;
+  const semboller = pysSemboller(); let veri = null, kaynak = "", hata = "";
+  for(const ad2 of (typeof FN !== "undefined" && FN ? [FN] : ["tkgm", "quick-task"])){
+    try{ const { data, error } = await zamanAsimi(sb.functions.invoke(ad2, { body:{ mod:"piyasa", semboller, aralik:A } }), 15000);
+      if(error){ hata = error.message || String(error); continue; }
+      if(data?.veri){ veri = data.veri; kaynak = "fonksiyon"; break; }
+      hata = data?.error || "fonksiyon piyasa bilmiyor"; }catch(e){ hata = e.message || String(e); }
+  }
+  if(!veri){   // yedek: kripto Binance (tarayicidan dogrudan), doviz eski kaynak
+    veri = {}; kaynak = "yedek";
+    try{ const K = { "BTC-USD":"BTCUSDT", "ETH-USD":"ETHUSDT", "SOL-USD":"SOLUSDT" }, ist = semboller.filter(s => /-USD$/.test(s)).map(s => K[s] || s.replace("-USD", "USDT")).concat(["USDTTRY"]);
+      const r = await zamanAsimi(fetch(`https://api.binance.com/api/v3/ticker/24hr?symbols=${encodeURIComponent(JSON.stringify(ist))}`).then(x => x.json()), 9000);
+      (r || []).forEach(t => { if(t.symbol === "USDTTRY"){ veri["USDTRY=X"] = { f:+t.lastPrice, o:+t.prevClosePrice || null, c:"TRY", s:[] }; return; } const s = t.symbol.replace("USDT", "-USD"); veri[s] = { f:+t.lastPrice, o:+t.prevClosePrice || (+t.lastPrice/(1 + (+t.priceChangePercent)/100)), c:"USD", s:[] }; }); }catch(e){}
+    try{ const r = await zamanAsimi(tkgm("https://open.er-api.com/v6/latest/TRY"), 8000); veri["USDTRY=X"] = veri["USDTRY=X"] || { f:1/r.rates.USD, c:"TRY", s:[] }; veri["EURTRY=X"] = { f:1/r.rates.EUR, c:"TRY", s:[] }; }catch(e){}
+  }
+  // turetilmis: gram altin / gumus (ons fiyati x dolar / 31,1035)
+  const usd = veri["USDTRY=X"];
+  for(const [t, [ons]] of Object.entries(PYS_TURETIK)){ const o = veri[ons];
+    if(o?.f && usd?.f){ const k = usd.f/PYS_ONS, n = (o.s || []).length, us = usd.s || [];
+      veri[t] = { f:o.f*k, o: o.o && (usd.o || usd.f) ? o.o*(usd.o || usd.f)/PYS_ONS : null, c:"TRY", s:(o.s || []).map((v, i) => v*((us[Math.round(i*(us.length - 1)/Math.max(1, n - 1))] || usd.f)/PYS_ONS)) }; } }
+  return PYS_VERI[A] = { veri, zaman:Date.now(), kaynak, hata: kaynak === "yedek" ? hata : "" };
+}
+
+const pysFiyat = (v, c) => { if(v == null || !isFinite(v)) return "—"; const d = Math.abs(v) >= 1000 ? 0 : Math.abs(v) >= 10 ? 2 : 4;
+  return v.toLocaleString("tr-TR", { minimumFractionDigits:d, maximumFractionDigits:d }) + (c === "USD" ? " $" : c === "TRY" ? " ₺" : c ? " " + c : ""); };
+function pysSpark(s, w, h, yon){
+  if(!s || s.length < 2) return `<svg class="pysSpark" viewBox="0 0 ${w} ${h}"></svg>`;
+  const mn = Math.min(...s), mx = Math.max(...s), r = mx - mn || 1, P = s.map((v, i) => [i*(w/(s.length - 1)), h - 3 - (v - mn)/r*(h - 6)]);
+  const d = P.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" "), id = "g" + Math.random().toString(36).slice(2, 8);
+  return `<svg class="pysSpark ${yon}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".28"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>
+    <path d="${d} L${w} ${h} L0 ${h} Z" fill="url(#${id})"/><path d="${d}" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>`;
+}
+function pysKart(o, g, buyuk, A){
+  A = A || PYS_ARALIK; const v = PYS_VERI[A]?.veri?.[o.s] || {}, usd = PYS_VERI[A]?.veri?.["USDTRY=X"]?.f;
+  const yz = v.f != null && v.o ? (v.f/v.o - 1)*100 : null, yon = yz == null ? "" : yz > 0.005 ? "art" : yz < -0.005 ? "az" : "";
+  const c = o.s === "GC=F" || o.s === "SI=F" ? "USD" : v.c, tl = g.k === "kripto" && usd && v.f ? `<small class="pysTl">${pysFiyat(v.f*usd, "TRY")}</small>` : "";
+  return `<div class="pysKart ${yon} ${buyuk ? "buyuk" : ""}" title="${esc(v.ad || o.s)}${v.hata ? " · " + esc(v.hata) : ""}">
+    <div class="pysUst"><b>${esc(o.ad)}</b>${yz == null ? `<span class="pysYz">—</span>` : `<span class="pysYz">${yz > 0 ? "▲" : yz < 0 ? "▼" : "•"} %${Math.abs(yz).toFixed(2).replace(".", ",")}</span>`}
+      ${PYS_DUZEN ? `<button class="pysCik" title="Listeden çıkar" onclick="event.stopPropagation();pysCikar('${g.k}','${esc(o.s)}')">×</button>` : ""}</div>
+    <div class="pysFiyat mono">${pysFiyat(v.f, c)}</div>${tl}
+    ${pysSpark(v.s, buyuk ? 260 : 150, buyuk ? 64 : 34, yon)}
+    ${buyuk ? `<div class="pysAlt"><span>en düşük <b class="mono">${v.s?.length ? pysFiyat(Math.min(...v.s), c) : "—"}</b></span><span>en yüksek <b class="mono">${v.s?.length ? pysFiyat(Math.max(...v.s), c) : "—"}</b></span></div>` : ""}</div>`;
+}
+const pysSaat = A => { const d = PYS_VERI[A || PYS_ARALIK]; return d ? new Date(d.zaman).toLocaleTimeString("tr-TR", { hour:"2-digit", minute:"2-digit" }) : "—"; };
+function pysUyari(A){ const d = PYS_VERI[A || PYS_ARALIK]; return d?.kaynak === "yedek" ? `<div class="pysUyar">Borsa, altın ve gümüş için Supabase'deki fonksiyonun güncellenmesi lazım (bir kere). Şimdilik sadece döviz ve kripto gösteriliyor.</div>` : ""; }
+
+/* anasayfa seridi */
+async function pysAnaCiz(){
+  const k = document.getElementById("pysAna"); if(!k) return;
+  if(!PYS_VERI["1G"]) k.innerHTML = `<div class="spin"></div>`;
+  try{ await pysGetir("1G"); }catch(e){}
+  const k2 = document.getElementById("pysAna"); if(!k2) return;
+  const L = pysListe();
+  k2.innerHTML = `<div class="pysAnaIc">${L.map(g => `<div class="pysAnaG"><div class="pysGB">${esc(g.g)}</div><div class="pysIzgara">${g.L.map(o => pysKart(o, g, false, "1G")).join("")}</div></div>`).join("")}</div>${pysUyari("1G")}`;
+  const s = document.getElementById("pysAnaSaat"); if(s) s.textContent = "güncelleme " + pysSaat("1G") + " · BIST ~15 dk gecikmeli";
+}
+
+/* tam ekran */
+async function pysEkran(){
+  app.innerHTML = head("Piyasalar", "pcGit('ana')") + `
+    <div class="pysBar"><span class="hspSeg">${["1G","5G","1A","6A","1Y"].map(a => `<button class="${PYS_ARALIK === a ? "on" : ""}" onclick="PYS_ARALIK='${a}';pysEkran()">${a}</button>`).join("")}</span>
+      <small id="pysSaat">yükleniyor…</small><span style="flex:1"></span>
+      <button class="btn ghost" onclick="pysGetir(PYS_ARALIK,true).then(pysEkranIc)">${svg("indir")}Yenile</button>
+      <button class="btn ghost ${PYS_DUZEN ? "on" : ""}" onclick="PYS_DUZEN=!PYS_DUZEN;pysEkranIc()">${svg("kalem")}${PYS_DUZEN ? "Bitti" : "Listeyi düzenle"}</button>
+      <button class="btn" onclick="pysClaude()">${svg("spark")}Claude'a yorumlat</button></div>
+    <div id="pysIc"><div class="spin"></div></div>`;
+  try{ await pysGetir(); }catch(e){}
+  pysEkranIc();
+}
+function pysEkranIc(){
+  const k = document.getElementById("pysIc"); if(!k) return;
+  const L = pysListe();
+  k.innerHTML = pysUyari() + L.map(g => `<section class="pcBox pysGrup"><header><b>${esc(g.g)}</b><small>${g.k === "bist" ? "~15 dk gecikmeli · seans dışında son kapanış" : g.k === "kripto" ? "7/24 · dolar, altında TL karşılığı" : "gram fiyatlar ons × dolar ile hesaplanır (Kapalıçarşı'dan biraz farklı olabilir)"}</small></header>
+    <div class="pcBoxIc pysIzgara buyuk">${g.L.map(o => pysKart(o, g, true)).join("")}${PYS_DUZEN ? `<button class="pysEkle" onclick="pysEkle('${g.k}')">+ ${g.k === "bist" ? "Hisse ekle" : g.k === "kripto" ? "Coin ekle" : "Sembol ekle"}</button>` : ""}</div></section>`).join("")
+    + `<div class="pysNot">Alım-satım tavsiyesi değildir. Veri: Yahoo Finance ve Binance; BIST fiyatları yaklaşık 15 dakika gecikmelidir.${PYS_DUZEN ? ` <a onclick="if(confirm('Takip listesi varsayılana dönsün mü?')){localStorage.removeItem('piyasaListe');PYS_VERI={};pysEkran()}">Varsayılana dön</a>` : ""}</div>`;
+  const s = document.getElementById("pysSaat"); if(s) s.textContent = "son güncelleme " + pysSaat() + " · her dakika yenilenir";
+}
+async function pysEkle(gk){
+  const g = pysListe().find(x => x.k === gk); if(!g) return;
+  const ipucu = gk === "bist" ? "Hisse kodu (örn. THYAO)" : gk === "kripto" ? "Coin kodu (örn. AVAX)" : "Yahoo sembolü (örn. GBPTRY=X, BZ=F)";
+  const g1 = prompt(ipucu, ""); if(!g1) return;
+  let s = g1.trim().toUpperCase().replace(/\s+/g, "");
+  if(gk === "bist" && !/\.IS$/.test(s)) s += ".IS"; if(gk === "kripto" && !/-USD$/.test(s)) s = s.replace(/USDT?$/, "") + "-USD";
+  const ad = prompt("Kartta görünecek ad", s.replace(/\.IS$|-USD$|=X$/g, "")); if(ad === null) return;
+  const L = pysListe(), G = L.find(x => x.k === gk); if(G.L.some(o => o.s === s)) return toast("Zaten listede");
+  G.L.push({ s, ad: ad.trim() || s }); pysListeYaz(L); PYS_VERI = {}; toast("Eklendi, fiyat çekiliyor…"); await pysGetir(PYS_ARALIK, true); pysEkranIc();
+}
+function pysCikar(gk, s){ const L = pysListe(), G = L.find(x => x.k === gk); if(!G) return; G.L = G.L.filter(o => o.s !== s); pysListeYaz(L); pysEkranIc(); }
+async function pysClaude(){
+  try{ await pysGetir(); }catch(e){}
+  const d = PYS_VERI[PYS_ARALIK]?.veri || {}, usd = d["USDTRY=X"]?.f;
+  const satir = pysListe().map(g => g.g + ":\n" + g.L.map(o => { const v = d[o.s] || {}, yz = v.f && v.o ? ((v.f/v.o - 1)*100).toFixed(2) : "?";
+    return `- ${o.ad} (${o.s}): ${pysFiyat(v.f, o.s === "GC=F" ? "USD" : v.c)}, ${PYS_ARALIK} değişim %${yz}${g.k === "kripto" && usd && v.f ? ", ≈ " + pysFiyat(v.f*usd, "TRY") : ""}`; }).join("\n")).join("\n\n");
+  const metin = `Aşağıda takip ettiğim piyasaların ${new Date().toLocaleString("tr-TR")} itibarıyla fiyatları var (BIST ~15 dk gecikmeli). Türkçe, kısa ve maddeli yorumla: günün öne çıkanları, dikkat edilmesi gereken seviyeler/riskler, dolar ve altındaki hareketin TL varlıklara (arsa dahil) etkisi. Kesin al-sat tavsiyesi verme, senaryo olarak anlat; güncel haberlere bakabiliyorsan onları da kat.\n\n${satir}`;
+  if(window.arsaPC?.yzAc){ const ok = await window.arsaPC.yzAc("claude", null, metin, null, false); if(ok !== false) return toast("Claude penceresine yazıldı · orada Enter'a bas"); }
+  try{ await navigator.clipboard.writeText(metin); }catch(e){} window.open("https://claude.ai/new", "_blank"); toast("Panoya kopyalandı, Claude'a yapıştır");
+}
+// her dakika: anasayfa ya da piyasa ekranı açıkken
+clearInterval(__pysSaat);
+__pysSaat = setInterval(async () => { if(document.hidden || !(typeof PC_ACIK !== "undefined" && PC_ACIK)) return; const r = app.dataset.ekran;
+  if(r === "ana" && document.getElementById("pysAna")){ await pysGetir("1G", true).catch(() => {}); pysAnaCiz(); }
+  else if(r === "piyasa" && document.getElementById("pysIc") && !PYS_DUZEN){ await pysGetir(PYS_ARALIK, true).catch(() => {}); pysEkranIc(); } }, 60000);
+
+ekranlar.piyasa = pysEkran; try{ UST_EKRAN.piyasa = "ana"; }catch(e){}
+try{ Object.assign(ic, { grafik:'<path d="M3 17l5-5 4 3 8-8"/><path d="M15 7h5v5"/>' }); }catch(e){}
+try{ PC_AD.piyasa = "Piyasalar"; PC_BASLIK_IKON.piyasa = "grafik"; }catch(e){}
 
 baslat();
 
