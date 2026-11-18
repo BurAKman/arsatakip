@@ -3583,6 +3583,91 @@ body.pc #pcRay button em.pzRozet{position:absolute!important;top:4px!important;r
 body.pc .pzdSol{display:flex;flex-direction:column;gap:16px;min-width:0}
 body.pc .pzdTahmin .pcBoxIc{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;padding:12px 16px 14px}
 @media (max-width:1300px){ body.pc .pzdTahmin .pcBoxIc{grid-template-columns:1fr} }
+.pzYzBar span{flex:1}.pzYzBar button{background:#0B0D11;border:1px solid rgba(232,182,97,.5);color:#E8C98A;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:12px}
+.pzYzBar em{font-style:normal;color:#fff;background:#C8242E;padding:3px 8px;border-radius:7px;font-size:12px}
+/* ===== v2: sade dil, ne yapmali, cetvel, olasiliklar, sade grafik, gezgin, duyurular ===== */
+body.pc .pzTl{display:block;font-size:10.5px;color:#8E8C93;font-weight:500;margin-top:1px}
+body.pc .pzTlBuyuk{font-size:15px!important;color:#A9A7AE!important}
+body.pc .pzNe{padding:14px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03)}
+body.pc .pzNe small{font-size:10.5px;letter-spacing:.14em;color:#8E8C93}
+body.pc .pzNe > b{display:block;font-size:26px;font-weight:800;letter-spacing:.02em;margin:2px 0 6px}
+body.pc .pzNe p{margin:0;font-size:13.5px;line-height:1.55;color:#E6E4E8}
+body.pc .pzNe.yesil{border-color:rgba(91,208,139,.55);background:linear-gradient(180deg,rgba(91,208,139,.14),rgba(91,208,139,.03))}body.pc .pzNe.yesil > b{color:#5BD08B}
+body.pc .pzNe.altin{border-color:rgba(232,182,97,.55);background:linear-gradient(180deg,rgba(232,182,97,.14),rgba(232,182,97,.03))}body.pc .pzNe.altin > b{color:#E8B661}
+body.pc .pzNe.kirmizi{border-color:rgba(255,74,85,.6);background:linear-gradient(180deg,rgba(220,40,50,.18),rgba(220,40,50,.04))}body.pc .pzNe.kirmizi > b{color:#FF5A63}
+body.pc .pzNe.turuncu{border-color:rgba(240,140,70,.55);background:linear-gradient(180deg,rgba(240,140,70,.12),rgba(240,140,70,.03))}body.pc .pzNe.turuncu > b{color:#F39A5A}
+body.pc .pzNe.gri > b{color:#E6E4E8}
+body.pc .pzOy{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:11.5px;color:#8E8C93}body.pc .pzOy > span{display:inline-flex;align-items:center;gap:5px}
+body.pc .pzCetvel{margin:16px 0 4px}
+body.pc .pzCetvelBar{position:relative;height:30px;border-radius:8px;background:#0B0D11;overflow:visible}
+body.pc .pzCetvelBar > i{position:absolute;top:0;bottom:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+body.pc .pzCetvelBar > i span{font-style:normal;font-size:9.5px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
+body.pc .pzCetvelBar .zk{background:rgba(220,40,50,.35);color:#FFB3B8;border-radius:8px 0 0 8px}body.pc .pzCetvelBar .dk{background:rgba(240,140,70,.22);color:#F7B88A}
+body.pc .pzCetvelBar .al{background:rgba(91,208,139,.35);color:#C9F2D9}body.pc .pzCetvelBar .bk{background:rgba(255,255,255,.07);color:#C9C7CC}
+body.pc .pzCetvelBar .st{background:rgba(232,182,97,.35);color:#FBE3B5;border-radius:0 8px 8px 0}
+body.pc .pzSuan{position:absolute;top:-6px;bottom:-6px;width:3px;margin-left:-1.5px;background:#fff;border-radius:2px;box-shadow:0 0 10px #fff}
+body.pc .pzSuan em{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-style:normal;font-size:10px;font-weight:800;color:#fff;white-space:nowrap}
+body.pc .pzCetvelEt{position:relative;height:30px;font-size:10px;color:#8E8C93}body.pc .pzCetvelEt span{position:absolute;transform:translateX(-50%);white-space:nowrap;top:3px}
+body.pc .pzSev2{display:flex;flex-direction:column;gap:6px}
+body.pc .pzSev2 > div{display:grid;grid-template-columns:1.1fr auto auto 1fr;gap:8px;align-items:baseline;padding:8px 10px;border-radius:9px;font-size:12.5px}
+body.pc .pzSev2 span{font-weight:600}body.pc .pzSev2 b{color:#fff;font-weight:600}body.pc .pzSev2 em{font-style:normal;color:#8E8C93;text-align:right;font-size:11.5px}
+body.pc .pzSev2 .al{background:rgba(91,208,139,.1)}body.pc .pzSev2 .al span{color:#7EDBA3}
+body.pc .pzSev2 .st{background:rgba(232,182,97,.1)}body.pc .pzSev2 .st span{color:#F0C77A}
+body.pc .pzSev2 .zk{background:rgba(220,40,50,.12)}body.pc .pzSev2 .zk span{color:#FF8A91}
+body.pc .pzSade > div{display:grid;grid-template-columns:auto 1fr;column-gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px}
+body.pc .pzSade span{color:#A9A7AE}body.pc .pzSade b{grid-column:2;font-weight:500;color:#E6E4E8;margin-top:1px}body.pc .pzSade .pzNok{margin-top:4px}
+body.pc .pzTkIzgara{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:1500px){ body.pc .pzTkIzgara{grid-template-columns:repeat(2,minmax(0,1fr))} }
+body.pc .pzTk{padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)}
+body.pc .pzTk h4{margin:0 0 8px;font-size:13px;color:#ECEAEE}
+body.pc .pzTkAna small{display:block;font-size:10.5px;color:#7E7C84}body.pc .pzTkAna b{font-size:17px;color:#fff}body.pc .pzTkAna em{font-style:normal;font-size:12px;font-weight:600;margin-left:6px}
+body.pc .pzTkAna .art{color:#5BD08B}body.pc .pzTkAna .az{color:#FF5A63}
+body.pc .pzTkBar{position:relative;height:12px;margin:12px 0 4px;border-radius:6px;background:#0B0D11}
+body.pc .pzTkBar .genis{position:absolute;top:2px;bottom:2px;border-radius:5px;background:linear-gradient(90deg,rgba(255,74,85,.45),rgba(255,255,255,.18) 50%,rgba(91,208,139,.45))}
+body.pc .pzTkBar .dar{position:absolute;top:0;bottom:0;border-radius:6px;border:1px solid rgba(255,255,255,.35)}
+body.pc .pzTkBar .su{position:absolute;top:-4px;bottom:-4px;width:2px;background:#E8B661}body.pc .pzTkBar .ol{position:absolute;top:-3px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:#fff;top:2px}
+body.pc .pzTkUc{display:flex;justify-content:space-between;font-size:10.5px;font-family:"IBM Plex Mono",monospace}
+body.pc .pzTk ul{list-style:none;margin:10px 0 0;padding:0}body.pc .pzTk li{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:4px 0;border-top:1px solid rgba(255,255,255,.05)}
+body.pc .pzTk li span{color:#A9A7AE}body.pc .pzTk li b{font-weight:700}body.pc .pzTk li.kucuk{font-size:11px}body.pc .pzTk li.kucuk b{font-weight:500;font-family:"IBM Plex Mono",monospace}
+body.pc .pzBasari{margin-top:12px;padding:12px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03)}
+body.pc .pzBasari small{font-size:10.5px;letter-spacing:.12em;color:#8E8C93}body.pc .pzBasari > b{display:block;font-size:16px;margin:4px 0}
+body.pc .pzBasari p{margin:0;font-size:13px;line-height:1.55;color:#D9D7DC}
+body.pc .pzBasari.yesil{border-color:rgba(91,208,139,.5)}body.pc .pzBasari.yesil > b{color:#5BD08B}
+body.pc .pzBasari.kirmizi{border-color:rgba(255,74,85,.5)}body.pc .pzBasari.kirmizi > b{color:#FF6B73}
+body.pc .pzBasari.turuncu{border-color:rgba(240,140,70,.45)}body.pc .pzBasari.turuncu > b{color:#F39A5A}
+body.pc .pzBasariS{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+body.pc .pzBasariS > span{flex:1;min-width:140px;padding:8px 10px;border-radius:9px;background:#0B0D11;font-size:11.5px;color:#A9A7AE}
+body.pc .pzBasariS b{display:block;font-size:16px;margin:2px 0}body.pc .pzBasariS em{font-style:normal;font-size:10.5px;color:#7E7C84}
+body.pc .pzdSade{position:relative}body.pc .pzdAna.buyuk{height:560px}
+body.pc .pzdKatm{position:absolute;left:0;top:0;pointer-events:none;z-index:5}
+body.pc .pzYzNe{padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);margin:10px 0 6px}
+body.pc .pzdYzK.claude .pzYzNe{border-color:rgba(217,119,87,.45)}body.pc .pzdYzK.gpt .pzYzNe{border-color:rgba(25,195,125,.4)}
+body.pc .pzYzNe small{display:block;font-size:10.5px;letter-spacing:.1em;color:#8E8C93;text-transform:uppercase}body.pc .pzYzNe b{font-size:15px;color:#fff;line-height:1.45}
+body.pc .pzYzBasit{font-size:13px;color:#C9C7CC;margin:6px 0;line-height:1.5}
+body.pc .pzNeHucre{white-space:normal!important;max-width:520px}body.pc .pzNeHucre small{display:block;color:#A9A7AE;font-size:11.5px;margin-top:3px;line-height:1.4}
+body.pc .pzNeK{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:7px;letter-spacing:.03em}
+body.pc .pzNeK.yesil{background:#2E9E5E;color:#fff}body.pc .pzNeK.altin{background:#C9963F;color:#1A1205}body.pc .pzNeK.kirmizi{background:#C8242E;color:#fff}
+body.pc .pzNeK.turuncu{background:#D9773A;color:#fff}body.pc .pzNeK.gri{background:rgba(255,255,255,.12);color:#E6E4E8}
+body.pc .pzPozIs{font-style:normal;font-size:11px}
+body.pc .pzDuyuru{display:flex;flex-direction:column;gap:4px;margin:0 0 12px;padding:10px 14px;border-radius:12px;border:1px solid rgba(232,182,97,.5);background:linear-gradient(90deg,rgba(232,182,97,.12),rgba(232,182,97,.03))}
+body.pc .pzDuyuru > b{font-size:12px;letter-spacing:.06em;color:#F0C77A;margin-bottom:2px}
+body.pc .pzDuyuru button{display:flex;align-items:baseline;gap:6px;background:none;border:0;color:#E6E4E8;font-size:12.5px;text-align:left;cursor:pointer;padding:3px 0}
+body.pc .pzDuyuru button:hover{color:#fff}body.pc .pzDuyuru em{font-style:normal;color:#A9A7AE;margin-left:auto;font-size:11.5px;white-space:nowrap}
+/* sol menu: piyasa gezgini */
+body.pc #pzGez{display:none}
+body.pc.pzMod #pcGezgin > :not(#pzGez){display:none!important}
+body.pc.pzMod #pzGez{display:flex;flex-direction:column;flex:1;min-height:0}
+body.pc .pzGezIc{flex:1;overflow-y:auto;padding:2px 6px 14px}
+body.pc .pzGgB{display:flex;align-items:center;gap:7px;width:100%;background:none;border:0;color:#ECEAEE;font-weight:700;font-size:12.5px;letter-spacing:.04em;padding:9px 6px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.06)}
+body.pc .pzGgB i{font-style:normal;color:#FF4A55;font-size:10px;transition:transform .15s}body.pc .pzGgB em{margin-left:auto;font-style:normal;font-weight:500;color:#7E7C84;font-size:11px}
+body.pc .pzGg.kapali .pzGgB i{transform:rotate(-90deg)}body.pc .pzGg.kapali .pzGgL{display:none}
+body.pc .pzGs{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;width:100%;background:none;border:0;border-radius:8px;padding:6px 8px;color:#D9D7DC;cursor:pointer;font-size:12.5px;text-align:left}
+body.pc .pzGs:hover{background:rgba(255,255,255,.04)}body.pc .pzGs.on{background:rgba(220,40,50,.18);box-shadow:inset 2px 0 0 #FF4A55}
+body.pc .pzGs span{font-weight:600}body.pc .pzGs b{font-weight:500;font-size:11.5px;color:#A9A7AE}body.pc .pzGs em{font-style:normal;font-size:11px;font-weight:600;min-width:46px;text-align:right}
+body.pc .pzGs em.art{color:#5BD08B}body.pc .pzGs em.az{color:#FF5A63}
+body.pc .pzGsTum{background:none;border:0;color:#FF7A82;font-size:11.5px;padding:6px 8px;cursor:pointer}
+body.pc .pzCetvelEt span.alt{top:16px}
+body.pc .pzdTahmin .pcBoxIc{display:block!important}
 </style>
 </head>
 <body>
@@ -3635,7 +3720,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.1.0";
+const SURUM_MORDOR = "v 1.1.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -21809,6 +21894,21 @@ const PZM = {
       bant: PZM.bant(D, i, ayGun), test: PZM.test(D, ayGun) };
   }
 };
+/* ---- v2: olasiliklar (sade dil icin) ---- */
+PZM.fi = x => { const t = 1/(1 + 0.2316419*Math.abs(x)), d = 0.3989423*Math.exp(-x*x/2), p = d*t*(0.3193815 + t*(-0.3565638 + t*(1.781478 + t*(-1.821256 + t*1.330274)))); return x > 0 ? 1 - p : p; };
+// S: bugunku fiyat, mu/sd: gunluk log getiri ortalamasi/sapmasi, n: gun sayisi
+PZM.ihtimal = (S, mu, sd, n, hedef, stop) => {
+  const m = mu*n, s = sd*Math.sqrt(n) || 1e-9, Phi = PZM.fi;
+  const yuk = Phi(m/s);
+  const dokun = (H, yukari) => { if(!H || !isFinite(H)) return null; const b = Math.abs(Math.log(H/S)); if(b < 1e-9) return 1;
+    const mm = yukari ? m : -m, k = 2*(yukari ? mu : -mu)*b/(sd*sd || 1e-12);
+    const p = Phi((mm - b)/s) + Math.exp(Math.max(-50, Math.min(50, k)))*Phi((-b - mm)/s); return Math.max(0, Math.min(1, p)); };
+  return { yuk, hedef: hedef ? dokun(hedef, hedef > S) : null, stop: stop ? dokun(stop, stop > S) : null,
+    p10: S*Math.exp(m - 1.2816*s), p50: S*Math.exp(m), p90: S*Math.exp(m + 1.2816*s), p25: S*Math.exp(m - 0.6745*s), p75: S*Math.exp(m + 0.6745*s) };
+};
+PZM.getiri = (c, i) => { const L = []; for(let j = Math.max(1, i - 252); j <= i; j++) L.push(Math.log(c[j]/c[j - 1]));
+  const ort = L.reduce((t, x) => t + x, 0)/(L.length || 1), sd = Math.sqrt(L.reduce((t, x) => t + (x - ort)**2, 0)/Math.max(1, L.length - 1));
+  return { mu: Math.max(-0.0006, Math.min(0.0006, ort*0.5)), sd }; };
 
 /* ================= PIYASALAR · veri katmani =================
    Sembol anahtari: BIST:TTRAK · NASDAQ:AAPL · KRIPTO:BTC · MADEN:XAU / MADEN:GRALTIN · DOVIZ:USDTRY
@@ -22609,16 +22709,20 @@ VARLIKLAR
 ${oz.map((o, i) => `${i + 1}) ${o.metin}${onc(o)}`).join("\n\n")}
 
 KURALLAR
-- Kısa ve net yaz, Türkçe. Her varlık için: karar (GÜÇLÜ AL / AL / TUT / SAT / GÜÇLÜ SAT), güven (1-5), rejim (boğa / ayı / yatay) ve 2-3 cümlelik özet.
+- Bu benim kişisel programım, kararı ben veriyorum. Kaçamak yapma, "yatırım tavsiyesi değildir" gibi uyarılar YAZMA, net konuş.
+- Sade, günlük Türkçe kullan; teknik terim kullanırsan yanına ne demek olduğunu yaz. Bir çocuğun bile anlayacağı netlikte ol.
+- Her varlık için: karar (GÜÇLÜ AL / AL / TUT / SAT / GÜÇLÜ SAT), güven (1-5), rejim (boğa / ayı / yatay), 2-3 cümlelik özet,
+  "ne_yapmali": tek cümlelik net eylem (ör. "Şimdi alma, 58.000 $'a inerse al", "Elindekinin yarısını sat, kalanı tut", "Kademeli al: paranı 3'e böl"),
+  "basit_ozet": hiç bilmeyen birine anlatır gibi 1-2 cümle.
 - Al bölgesi, sat (kâr al) bölgesi, zarar kes seviyesi ve 1, 3, 6, 12 ay ile uzun vade (2-3 yıl) hedef fiyatları ver. Hedefler senaryonun baz hali olsun, abartma.
 - Önceki analizin varsa: koşullar değişmediyse hedefleri ve seviyeleri AYNEN KORU, sadece özet ve haberleri güncelle; değiştirdiysen "hedef_degisti": true yaz ve nedenini özete ekle.
 - Nedenler en fazla 4 madde, riskler en fazla 3 madde. Bilmediğin şeyi uydurma; haber bulamadıysan boş bırak.
-- Bu bir yatırım tavsiyesi değil, kişisel araştırma notu.${firsatIste ? `
+- Portföyümdeyse maliyetime göre ne yapmam gerektiğini söyle (tut / ekle / kâr al / zararı kes).${firsatIste ? `
 - Ayrıca listede OLMAYAN, şu an dikkat çekici bulduğun 3-5 fırsatı ("firsatlar") ver: BIST hissesi, NASDAQ'ın önemli hisseleri, büyük coinler ya da değerli madenler olabilir. Sembolü BIST:KOD / NASDAQ:KOD / KRIPTO:KOD / MADEN:XAU biçiminde yaz, nedeni tek cümle.
 - Takip etmem gereken yaklaşan halka arzları (Türkiye'de talep toplaması yaklaşanlar ve ${(PZ.ayar?.ipo || ["Anthropic"]).join(", ")} gibi izlediğim şirketlerin halka arz haberleri) "olaylar" içinde tur "halka_arz" olarak ver (sembol boş olabilir).` : ""}
 
 CEVAP BİÇİMİ: Önce kısa bir genel piyasa yorumu yaz (en fazla 5 cümle). Cevabın EN SONUNA, önceki satıra sadece ARSATAKIP-PIYASA yazıp tek bir \`\`\`json kod bloğu içinde şu yapıyı ver (dosya oluşturma, kod bloğundan sonra hiçbir şey yazma):
-{"piyasa_analiz":[{"sembol":"BIST:KOD","karar":"AL","guven":3,"rejim":"boğa","ozet":"","nedenler":[""],"riskler":[""],"al_bolgesi":[0,0],"sat_bolgesi":[0,0],"stop":0,"hedef":{"1a":0,"3a":0,"6a":0,"12a":0,"uzun":0},"hedef_degisti":false,"haberler":[{"baslik":"","tarih":"","etki":"olumlu|olumsuz|nötr","url":""}],"olaylar":[{"tur":"temettu|bedelsiz|bedelli|bolunme|geri_alim|bilanco|halka_arz|diger","tarih":"YYYY-AA-GG","aciklama":""}]}],"genel":"","firsatlar":[{"sembol":"","neden":""}],"olaylar":[{"sembol":"","tur":"halka_arz","tarih":"","aciklama":""}]}
+{"piyasa_analiz":[{"sembol":"BIST:KOD","karar":"AL","guven":3,"rejim":"boğa","ozet":"","ne_yapmali":"","basit_ozet":"","nedenler":[""],"riskler":[""],"al_bolgesi":[0,0],"sat_bolgesi":[0,0],"stop":0,"hedef":{"1a":0,"3a":0,"6a":0,"12a":0,"uzun":0},"hedef_degisti":false,"haberler":[{"baslik":"","tarih":"","etki":"olumlu|olumsuz|nötr","url":""}],"olaylar":[{"tur":"temettu|bedelsiz|bedelli|bolunme|geri_alim|bilanco|halka_arz|diger","tarih":"YYYY-AA-GG","aciklama":""}]}],"genel":"","firsatlar":[{"sembol":"","neden":""}],"olaylar":[{"sembol":"","tur":"halka_arz","tarih":"","aciklama":""}]}
 Sayılar düz sayı olsun (binlik ayırıcı yok, ondalık nokta).`;
 }
 // cevabi kaydet
@@ -22626,7 +22730,7 @@ async function pzYzKaydet(J, kay, semboller){
   const L = Array.isArray(J?.[PZ_ANAHTAR]) ? J[PZ_ANAHTAR] : [];
   let n = 0;
   for(const a of L){ let s = String(a.sembol || "").toUpperCase().trim(); if(!s.includes(":")){ const b = semboller.find(x => pzKod(x) === s); if(b) s = b; } if(!semboller.includes(s) && semboller.length === 1) s = semboller[0];
-    if(!s) continue;
+    if(!s || /:KOD$/.test(s) || (!a.ozet && !a.ne_yapmali && !(a.al_bolgesi || []).some(x => +x))) continue;   // ornek sablon ya da bos kayit
     try{ await pzEkle("piyasa_analiz", { sembol:s, kaynak:kay, veri:{ ...a, sembol:s } }); n++; }catch(e){ console.log("analiz kaydi", e); }
     for(const o of a.olaylar || []) if(o?.aciklama || o?.tur) await pzOlayKaydet({ sembol:s, tur:/^(temettu|bedelsiz|bedelli|bolunme|geri_alim|bilanco|halka_arz)$/.test(o.tur) ? o.tur : "diger", tarih:/^\d{4}-\d{2}-\d{2}$/.test(o.tarih || "") ? o.tarih : null, baslik:String(o.aciklama || o.tur).slice(0, 300), kaynak:kay === "claude" ? "Claude" : "ChatGPT" }); }
   for(const o of J?.olaylar || []) if(o?.aciklama) await pzOlayKaydet({ sembol:o.sembol && String(o.sembol).includes(":") ? String(o.sembol).toUpperCase() : null, tur:o.tur || "halka_arz", tarih:/^\d{4}-\d{2}-\d{2}$/.test(o.tarih || "") ? o.tarih : null, baslik:String(o.aciklama).slice(0, 300), kaynak:kay === "claude" ? "Claude" : "ChatGPT" });
@@ -22650,8 +22754,17 @@ async function pzBekle(oku, mesaj){
   throw new Error("cevap 15 dakikada gelmedi");
 }
 let PZ_YZ_IS = null;
+let __pzYzSaat = null, __pzYzBas = 0;
 function pzYzDurum(m){ PZ.yzDurum = m; const k = document.getElementById("pzGece"); if(k) pzGeceKutu(); const b = document.getElementById("pzYzBar");
-  if(m){ if(!b){ const d = document.createElement("div"); d.id = "pzYzBar"; d.className = "pzYzBar"; document.body.appendChild(d); } document.getElementById("pzYzBar").innerHTML = `<i class="pzDon"></i>${esc(m)}`; } else b?.remove(); }
+  if(!m){ b?.remove(); clearInterval(__pzYzSaat); __pzYzSaat = null; __pzYzBas = 0; return; }
+  if(!b){ const d = document.createElement("div"); d.id = "pzYzBar"; d.className = "pzYzBar"; document.body.appendChild(d); }
+  if(!__pzYzBas) __pzYzBas = Date.now();
+  const ciz = async () => { const e = document.getElementById("pzYzBar"); if(!e) return; let ek = "";
+    try{ const d = await window.arsaPC?.yzOtoDurum?.(); if(d?.asama && d.asama !== "bitti") ek = ` · ${d.asama}${d.uzunluk ? " (" + d.uzunluk.toLocaleString("tr-TR") + " karakter)" : ""}`; }catch(x){}
+    const sn = Math.round((Date.now() - __pzYzBas)/1000), site = /ChatGPT/.test(PZ.yzDurum) ? "gpt" : "claude";
+    e.innerHTML = `<i class="pzDon"></i><span>${esc(PZ.yzDurum)}${esc(ek)} · ${Math.floor(sn/60)}:${String(sn % 60).padStart(2, "0")}</span>`
+      + (window.arsaPC?.yzOtoGoster ? `<button onclick="arsaPC.yzOtoGoster('${site}')">Pencereyi göster</button>` : window.arsaPC && !window.arsaPC.yzOto ? `<em>Açılan pencerede Enter'a bas</em>` : ""); };
+  ciz(); clearInterval(__pzYzSaat); __pzYzSaat = setInterval(ciz, 2000); }
 // detay ekranindaki tus: tek varlik, iki yapay zeka (ya da biri)
 async function pzYzTek(k, sadece){
   if(PZ_YZ_IS) return toast("Bir analiz zaten çalışıyor: " + (PZ.yzDurum || ""));
@@ -22742,6 +22855,284 @@ setTimeout(() => { if(typeof PC_ACIK !== "undefined" && PC_ACIK) pzAlarmKontrol(
   const sonuc = eskiCiz.apply(this, arguments);
   if(r === "piyasaDetay") setTimeout(() => { const h = document.querySelector("#pcSekmeler .pcBaslikSatir h1"), s = PZD.s; if(h && s && s.k === arg) h.textContent = `${s.kod} · ${s.ad || ""}`; }, 900);
   return sonuc; }; }
+
+/* ================= PIYASALAR v2 · sade dil, net "ne yapmali", temiz grafik, TL/dolar, piyasa gezgini, duyurular =================
+   Ortak seviyeler: program (motor) + Claude + ChatGPT seviyelerinin ortancasi. Eylem: fiyat hangi bolgede -> tek cumle. */
+const PZ_KARAR_PUAN = { "GÜÇLÜ AL":2, "AL":1, "TUT":0, "SAT":-1, "GÜÇLÜ SAT":-2 };
+const pzKararP = k => { const u = String(k || "").toLocaleUpperCase("tr").trim(); return PZ_KARAR_PUAN[u] ?? (/GÜÇLÜ AL/.test(u) ? 2 : /GÜÇLÜ SAT/.test(u) ? -2 : /SAT/.test(u) ? -1 : /AL/.test(u) ? 1 : 0); };
+const pzOrtanca = L => { const a = L.filter(x => x != null && isFinite(x) && x > 0).sort((x, y) => x - y); if(!a.length) return null; const m = Math.floor(a.length/2); return a.length % 2 ? a[m] : (a[m - 1] + a[m])/2; };
+function pzIki(v, para, ond){ if(v == null || !isFinite(v)) return "—"; if(para === "USD" && PZ.usd) return `${pzPara(v, "USD", ond)}<small class="pzTl">${pzPara(v*PZ.usd, "TRY", v*PZ.usd >= 1000 ? 0 : 2)}</small>`; return pzPara(v, para, ond); }
+const pzIkiDuz = (v, para) => v == null || !isFinite(v) ? "—" : para === "USD" && PZ.usd ? `${pzPara(v, "USD")} (${pzPara(v*PZ.usd, "TRY", 0)})` : pzPara(v, para);
+
+// motor + Claude + GPT -> ortak seviye ve karar
+function pzOrtak(A, Y){
+  const c = Y?.claude?.[0]?.veri, g = Y?.gpt?.[0]?.veri, n = v => +String(v ?? "").replace(",", ".") || null;
+  const al = [pzOrtanca([A?.al?.[0], n(c?.al_bolgesi?.[0]), n(g?.al_bolgesi?.[0])]), pzOrtanca([A?.al?.[1], n(c?.al_bolgesi?.[1]), n(g?.al_bolgesi?.[1])])];
+  const sat = [pzOrtanca([A?.karAl?.[0], n(c?.sat_bolgesi?.[0]), n(g?.sat_bolgesi?.[0])]), pzOrtanca([A?.karAl?.[1], n(c?.sat_bolgesi?.[1]), n(g?.sat_bolgesi?.[1])])];
+  const stop = pzOrtanca([A?.stop, n(c?.stop), n(g?.stop)]);
+  if(al[0] && al[1] && al[0] > al[1]) al.reverse(); if(sat[0] && sat[1] && sat[0] > sat[1]) sat.reverse();
+  const K = [["Program", A?.puan?.karar, 1], ["Claude", c?.karar, 1.5], ["ChatGPT", g?.karar, 1.2]].filter(x => x[1]);
+  const top = K.reduce((t, x) => t + pzKararP(x[1])*x[2], 0), ag = K.reduce((t, x) => t + x[2], 0), o = ag ? top/ag : 0;
+  const karar = o >= 1.4 ? "GÜÇLÜ AL" : o >= .45 ? "AL" : o <= -1.4 ? "GÜÇLÜ SAT" : o <= -.45 ? "SAT" : "TUT";
+  return { al, sat, stop, karar, oy:K, kaynak: (c ? 1 : 0) + (g ? 1 : 0) };
+}
+// fiyat hangi bolgede -> tek cumle
+function pzEylem(f, O, poz){
+  const { al, sat, stop, karar } = O, P = v => pzIkiDuz(v, PZD.s?.para || O.para), uz = v => v ? Math.abs(v/f - 1)*100 : null, y = v => v.toFixed(1).replace(".", ",");
+  const kz = poz ? (f/poz - 1)*100 : null, kzM = poz ? ` Maliyetine göre ${kz >= 0 ? "%" + y(kz) + " kârdasın" : "%" + y(-kz) + " zarardasın"}.` : "";
+  if(!f) return { kod:"VERİ YOK", renk:"gri", cumle:"Fiyat gelmedi." };
+  if(stop && f <= stop) return { kod:"ZARAR KES", renk:"kirmizi", cumle:`Fiyat zarar kes seviyesinin (${P(stop)}) altında. Elinde varsa çık, düşüş derinleşebilir.${kzM}` };
+  if(sat[0] && f >= sat[0]) return { kod: karar.includes("AL") ? "KÂR AL" : "SAT", renk:"altin", cumle:`Fiyat sat bölgesinde (${P(sat[0])} üstü). Elinde varsa ${karar.includes("AL") ? "bir kısmını sat, kârı cebe koy" : "satmayı düşün"}. Yeni alım için erken değil, geç.${kzM}` };
+  if(al[0] && al[1] && f >= al[0] && f <= al[1]) return karar.includes("SAT")
+    ? { kod:"BEKLE", renk:"gri", cumle:`Fiyat al bölgesinde ama genel görüş olumsuz (${karar}). Acele etme, ${P(stop)} altına inerse uzak dur.${kzM}` }
+    : { kod:"AL", renk:"yesil", cumle:`Fiyat al bölgesinde (${P(al[0])} – ${P(al[1])}). Almak için uygun yer: paranı 2-3'e bölüp kademeli al. Zarar kes: ${P(stop)}.${kzM}` };
+  if(al[0] && f < al[0]) return { kod:"DİKKAT", renk:"turuncu", cumle:`Fiyat al bölgesinin altına sarktı (%${y(uz(al[0]))} aşağıda). Hemen alma, toparlanmasını bekle. ${P(stop)} altına inerse çık.${kzM}` };
+  if(al[1] && sat[0] && f > al[1] && f < sat[0]) return karar.includes("SAT")
+    ? { kod:"TUT / SATMAYI DÜŞÜN", renk:"turuncu", cumle:`Genel görüş olumsuz (${karar}). Yeni alım yapma. Elinde varsa ${P(sat[0])} yakınında satmayı, ${P(stop)} altında çıkmayı düşün.${kzM}` }
+    : { kod:"BEKLE / TUT", renk:"gri", cumle:`Fiyat ortada. Elinde varsa tut. Yeni almak için ${P(al[1])}'e inmesini bekle (%${y(uz(al[1]))} aşağıda). Satış için hedef ${P(sat[0])} (%${y(uz(sat[0]))} yukarıda).${kzM}` };
+  return { kod: karar, renk: karar.includes("AL") ? "yesil" : karar.includes("SAT") ? "kirmizi" : "gri", cumle:`Genel görüş: ${karar}.${kzM}` };
+}
+const pzPozMaliyet = k => { const P = PZ.portfoy.filter(p => p.sembol === k); if(!P.length) return null; const a = P.reduce((t, p) => t + (+p.adet || 0), 0);
+  const s = PZD.s || {}; return a ? P.reduce((t, p) => t + (+p.maliyet)*(+p.adet)*(p.para === "USD" && s.para !== "USD" ? (PZ.usd || 1) : p.para !== "USD" && s.para === "USD" ? 1/(PZ.usd || 1) : 1), 0)/a : null; };
+
+/* ---- fiyat cetveli: zarar kes | dikkat | AL | bekle | SAT, ustunde "su an" ---- */
+function pzCetvel(f, O, para){
+  const { al, sat, stop } = O; if(!al[0] || !sat[0] || !stop) return "";
+  const lo = Math.min(stop, f)*0.95, hi = Math.max(sat[1] || sat[0]*1.05, f)*1.04, x = v => Math.max(0, Math.min(100, (v - lo)/(hi - lo)*100));
+  const seg = (a, b, cls, ad) => { const w = Math.max(0, x(b) - x(a)); return `<i class="${cls}" style="left:${x(a)}%;width:${w}%" title="${ad}">${w >= 12 ? `<span>${ad}</span>` : ""}</i>`; };
+  return `<div class="pzCetvel"><div class="pzCetvelBar">${seg(lo, stop, "zk", "ZARAR KES")}${seg(stop, al[0], "dk", "DİKKAT")}${seg(al[0], al[1], "al", "AL")}${seg(al[1], sat[0], "bk", "BEKLE / TUT")}${seg(sat[0], hi, "st", "SAT")}
+    <b class="pzSuan" style="left:${x(f)}%"><em>ŞU AN</em></b></div>
+    <div class="pzCetvelEt"><span style="left:${x(stop)}%">${pzPara(stop, para)}</span><span class="alt" style="left:${x(al[0])}%">${pzPara(al[0], para)}</span><span style="left:${x(al[1])}%">${pzPara(al[1], para)}</span><span class="alt" style="left:${x(sat[0])}%">${pzPara(sat[0], para)}</span></div></div>`;
+}
+
+/* ---- sag panel: NE YAPMALI + programin gorusu (sade) ---- */
+pzdMasaCiz = function(){
+  const k = document.getElementById("pzdMasa"); if(!k) return; const A = PZD.A, s = PZD.s, p = s.para || PZD.R?.meta?.para;
+  if(!A){ k.innerHTML = `<div class="pcBos">Analiz için yeterli geçmiş veri yok.</div>`; return; }
+  const Y = PZ.analiz[s.k] || {}, O = pzOrtak(A, Y), f = (s.bn && PZ.canli[s.bn]?.f) || A.fiyat, E = pzEylem(f, O, pzPozMaliyet(s.k));
+  PZD.O = O; PZD.E = E;
+  const ind = A.ind, oran = v => v ? pzYuzde((v/f - 1)*100, 1) : "";
+  const sade = [
+    ind.rsi != null && [ind.rsi > 70 ? "az" : ind.rsi < 30 ? "art" : ind.rsi >= 50 ? "art" : "az", `Alım-satım dengesi (RSI ${ind.rsi.toFixed(0)})`, ind.rsi > 80 ? "Çok fazla alınmış, düzeltme gelebilir" : ind.rsi > 70 ? "Isınmış, yükseliş yorulabilir" : ind.rsi < 30 ? "Çok fazla satılmış, tepki yükselişi gelebilir" : ind.rsi >= 50 ? "Alıcılar biraz daha güçlü" : "Satıcılar biraz daha güçlü"],
+    ind.hist != null && [ind.hist > 0 ? "art" : "az", "Yön göstergesi (MACD)", ind.hist > 0 ? "Yukarı dönmüş" : "Aşağı dönmüş"],
+    ind.s50 && [f > ind.s50 ? "art" : "az", "Son 2-3 ayın ortalaması", f > ind.s50 ? `Fiyat ortalamanın %${((f/ind.s50 - 1)*100).toFixed(1).replace(".", ",")} üstünde` : `Fiyat ortalamanın %${((1 - f/ind.s50)*100).toFixed(1).replace(".", ",")} altında`],
+    ind.s200 && [f > ind.s200 ? "art" : "az", "Son 1 yılın ortalaması", f > ind.s200 ? "Fiyat uzun vadeli ortalamanın üstünde: ana yön yukarı" : "Fiyat uzun vadeli ortalamanın altında: ana yön aşağı"],
+    ind.hacimOran != null && [ind.hacimOran > 1.3 ? "art" : "", "İşlem hacmi", ind.hacimOran > 1.5 ? `Normalin ${ind.hacimOran.toFixed(1).replace(".", ",")} katı: ilgi çok yüksek` : ind.hacimOran < .7 ? "Normalden düşük: ilgi az" : "Normal seviyede"],
+    [(A.bant?.find(b => b.ay === 0)?.yillikOyn || 0) > 50 ? "az" : "", "Oynaklık", `Günde ortalama ${pzIkiDuz(ind.atr, p)} oynuyor (yıllık %${(A.bant?.find(b => b.ay === 0)?.yillikOyn || 0).toFixed(0)})`] ].filter(Boolean);
+  const rejim = A.rejim.ad === "boğa" ? ["art", "🐂 Boğa: yükseliş dönemi", "Fiyat uzun süredir yükseliyor ve ortalamaların üstünde."] : A.rejim.ad === "ayı" ? ["az", "🐻 Ayı: düşüş dönemi", "Fiyat uzun süredir düşüyor ve ortalamaların altında."] : ["", "↔ Yatay: yön belli değil", "Fiyat belirgin bir yöne gitmiyor, bir aşağı bir yukarı."];
+  k.innerHTML = `<div class="pzNe ${E.renk}"><small>NE YAPMALI?</small><b>${E.kod}</b><p>${esc(E.cumle)}</p>
+      <div class="pzOy">${O.oy.map(([a, v]) => `<span>${a}<span class="pzKarar ${pzKararCls(v)}">${esc(v)}</span></span>`).join("")}${O.kaynak < 2 ? `<span class="soluk">${O.kaynak ? "tek yapay zekâ" : "henüz Claude/GPT yok"}</span>` : ""}</div></div>
+    ${pzCetvel(f, O, p)}
+    <div class="pzMini">Seviyeler ${O.kaynak ? "· program + Claude + ChatGPT ortak" : "· programın hesabı"}</div>
+    <div class="pzSev2">
+      <div class="al"><span>Buradan al</span><b class="mono">${pzIki(O.al[0], p)}</b><b class="mono">– ${pzIki(O.al[1], p)}</b><em>${oran(O.al[1])}</em></div>
+      <div class="st"><span>Buradan sat</span><b class="mono">${pzIki(O.sat[0], p)}</b><b class="mono">– ${pzIki(O.sat[1], p)}</b><em>${oran(O.sat[0])}</em></div>
+      <div class="zk"><span>Buranın altında çık</span><b class="mono">${pzIki(O.stop, p)}</b><b></b><em>${oran(O.stop)}</em></div></div>
+    <div class="pzMini">Piyasa havası</div><div class="pzRejim ${rejim[0]}"><b>${rejim[1]}</b><small>${rejim[2]}</small></div>
+    <div class="pzMini">Programın görüşü: <span class="pzKarar ${pzKararCls(A.puan.karar)}">${A.puan.karar}</span> <span class="mono soluk">${A.puan.puan > 0 ? "+" : ""}${A.puan.puan}/100</span></div>
+    <div class="pzGauge"><div class="pzGaugeIc" style="--p:${(A.puan.puan + 100)/2}"></div><span>SAT</span><span>TUT</span><span>AL</span></div>
+    <ul class="pzNeden">${A.puan.nedenler.slice(0, 4).map(n => `<li class="${n.d > 0 ? "art" : "az"}">${n.d > 0 ? "▲" : "▼"} ${esc(n.m)}</li>`).join("")}</ul>
+    <div class="pzMini">Göstergeler (sade)</div><div class="pzSade">${sade.map(([c, a, b]) => `<div><i class="pzNok ${c}"></i><span>${a}</span><b>${esc(b)}</b></div>`).join("")}</div>
+    <div class="pzMini">Destek ve dirençler</div><div class="pzSevL"><div><small>Düşerse tutunabileceği yerler</small>${A.sev.destek.slice(0, 3).map(x => `<b class="mono art">${pzIki(x.f, p)}</b>`).join("") || "—"}</div>
+      <div><small>Yükselirse zorlanacağı yerler</small>${A.sev.direnc.slice(0, 3).map(x => `<b class="mono az">${pzIki(x.f, p)}</b>`).join("") || "<b>— zirvede, önünde engel yok</b>"}</div></div>`;
+  pzdTahminCiz();
+};
+
+/* ---- olasiliklar + motorun basarisi: sade ---- */
+function pzdTahminCiz(){
+  const k = document.getElementById("pzdTahmin"); if(!k || !PZD.A) return;
+  const A = PZD.A, s = PZD.s, p = s.para || PZD.R?.meta?.para, f = A.fiyat, O = PZD.O || pzOrtak(A, PZ.analiz[s.k]), ag = pzAyGun(s), G = PZM.getiri(A.D.c, A.i);
+  const y = v => "%" + Math.round(v*100), oran = v => pzYuzde((v/f - 1)*100, 1);
+  const kart = ay => { const I = PZM.ihtimal(f, G.mu, G.sd, ay*ag, O.sat[0], O.stop), lo = I.p10*0.97, hi = I.p90*1.03, x = v => Math.max(0, Math.min(100, (v - lo)/(hi - lo)*100));
+    return `<div class="pzTk"><h4>${ay === 12 ? "1 yıl" : ay + " ay"} sonra</h4>
+      <div class="pzTkAna"><small>En olası fiyat</small><b class="mono">${pzIki(I.p50, p)}</b><em class="${pzYon((I.p50/f - 1)*100)}">${oran(I.p50)}</em></div>
+      <div class="pzTkBar"><i class="genis" style="left:${x(I.p10)}%;width:${x(I.p90) - x(I.p10)}%"></i><i class="dar" style="left:${x(I.p25)}%;width:${x(I.p75) - x(I.p25)}%"></i>
+        <b class="su" style="left:${x(f)}%" title="şu an"></b><b class="ol" style="left:${x(I.p50)}%" title="en olası"></b></div>
+      <div class="pzTkUc"><span class="az">${pzPara(I.p10, p)}</span><span class="art">${pzPara(I.p90, p)}</span></div>
+      <ul><li><span>Yükselmiş olma ihtimali</span><b class="${I.yuk >= .5 ? "art" : "az"}">${y(I.yuk)}</b></li>
+        ${O.sat[0] ? `<li><span>Sat hedefine (${pzPara(O.sat[0], p)}) değme</span><b class="altin">${y(I.hedef)}</b></li>` : ""}
+        ${O.stop ? `<li><span>Zarar kese (${pzPara(O.stop, p)}) düşme</span><b class="az">${y(I.stop)}</b></li>` : ""}
+        <li class="kucuk"><span>%10 ihtimalle bunun altına iner</span><b class="az">${pzPara(I.p10, p)}</b></li>
+        <li class="kucuk"><span>%10 ihtimalle bunun üstüne çıkar</span><b class="art">${pzPara(I.p90, p)}</b></li></ul></div>`; };
+  const t = A.test, ufuk = Math.round(t.ufuk/ag), al = t.al, fark = al ? al.ort - (t.taban ?? 0) : null;
+  const hukum = !al || al.n < 15 ? ["gri", "Yeterli örnek yok", "Program bu varlıkta yeterince AL sinyali vermemiş; geçmiş başarısını ölçemiyoruz."]
+    : fark > 2 && al.isabet >= 55 ? ["yesil", "✓ Bu varlıkta program işe yarıyor", `Program AL dediği günlerde alsaydın ${ufuk} ay sonra ortalama ${pzYuzde(al.ort, 1)} getiri olmuş; rastgele bir günde alsaydın ${pzYuzde(t.taban, 1)}. AL sinyali ortalamadan ${fark.toFixed(1).replace(".", ",")} puan daha iyi.`]
+    : fark < -2 || al.isabet < 45 ? ["kirmizi", "✗ Bu varlıkta programın AL sinyaline güvenme", `Program AL dediği günlerde alsaydın ${ufuk} ay sonra ortalama ${pzYuzde(al.ort, 1)} olmuş; rastgele bir günde alsaydın ${pzYuzde(t.taban, 1)}. Yani sinyal bu varlıkta işe yaramamış. Kararda Claude ve ChatGPT'yi öne al.`]
+    : ["turuncu", "≈ Program burada ortalama iş çıkarıyor", `AL sinyalinde ${ufuk} ay sonra ortalama ${pzYuzde(al.ort, 1)}, rastgele günde ${pzYuzde(t.taban, 1)}. Fark küçük: tek başına karar verdirmez.`];
+  k.innerHTML = `<div class="pzTkIzgara">${[1, 3, 6, 12].map(kart).join("")}</div>
+    <div class="pzNot">Bu oranlar fiyatın son 1 yıldaki iniş-çıkış hızından hesaplanır, haberleri bilmez. Haberli yorum için aşağıdaki Claude ve ChatGPT kutularına bak. Uzun vade (2-3 yıl) hedefleri de orada.</div>
+    <div class="pzBasari ${hukum[0]}"><small>PROGRAMIN GEÇMİŞ BAŞARISI · son 2 yıl</small><b>${hukum[1]}</b><p>${esc(hukum[2])}</p>
+      ${al ? `<div class="pzBasariS"><span>AL dediğinde<b class="mono ${pzYon(al.ort)}">${pzYuzde(al.ort, 1)}</b><em>${al.n} gün · %${al.isabet.toFixed(0)}'inde kâr</em></span>
+        ${t.sat ? `<span>SAT dediğinde<b class="mono ${pzYon(t.sat.ort)}">${pzYuzde(t.sat.ort, 1)}</b><em>${t.sat.n} gün · %${t.sat.isabet.toFixed(0)}'inde düşmüş</em></span>` : ""}
+        <span>Rastgele bir gün<b class="mono ${pzYon(t.taban)}">${pzYuzde(t.taban, 1)}</b><em>${ufuk} ay sonra</em></span></div>` : ""}</div>`;
+}
+{ const h = document.querySelector?.(".pzdTahmin header b"); }
+
+/* ---- grafik: sade gorunum (bolgeler + gelecek tahmini) / uzman gorunumu ---- */
+const pzdGrafikUzman = pzdGrafikCiz;
+PZD.uzman = (() => { try{ return localStorage.getItem("pzUzman") === "1"; }catch(e){ return false; } })();
+pzdKatmanCiz = function(){
+  const k = document.getElementById("pzdKatman"); if(!k) return;
+  if(PZD.sekme !== "bizim"){ k.innerHTML = ""; return; }
+  const sw = `<span class="hspSeg"><button class="${PZD.uzman ? "" : "on"}" onclick="PZD.uzman=false;try{localStorage.setItem('pzUzman','0')}catch(e){};pzdGrafikCiz()">Sade</button><button class="${PZD.uzman ? "on" : ""}" onclick="PZD.uzman=true;try{localStorage.setItem('pzUzman','1')}catch(e){};pzdGrafikCiz()">Uzman</button></span>`;
+  if(!PZD.uzman){ k.innerHTML = sw; return; }
+  const L = [["ort","Ortalamalar"],["bb","Bollinger"],["sev","Destek/direnç"],["isaret","Al/sat okları"],["claude","Claude"],["gpt","GPT"]];
+  k.innerHTML = sw + L.map(([v, a]) => `<label class="${PZD.katman[v] ? "on" : ""} ${v}"><input type="checkbox" ${PZD.katman[v] ? "checked" : ""} onchange="PZD.katman.${v}=this.checked;pzdGrafikCiz()">${a}</label>`).join("");
+};
+pzdGrafikCiz = async function(){
+  if(PZD.uzman || PZD.sekme !== "bizim") return pzdGrafikUzman();
+  document.querySelectorAll("#pzdAralik button").forEach(b => b.classList.toggle("on", b.textContent === PZD.aralik));
+  document.querySelectorAll(".pzdGBar .hspSeg:first-child button").forEach(b => b.classList.toggle("on", b.textContent === "Grafik"));
+  pzdKatmanCiz();
+  const k = document.getElementById("pzdGrafik"); if(!k) return; pzdTemizle();
+  const s = PZD.s, p = s.para || PZD.R?.meta?.para, gun = !/^(1G|5G|1A)$/.test(PZD.aralik);
+  k.innerHTML = `<div class="pzdSade"><div class="pzdAna buyuk" id="pzdAna"></div><canvas class="pzdKatm" id="pzdKatm"></canvas></div><div class="pzdLejant" id="pzdLejant"></div>`;
+  try{ await pzLib(); }catch(e){ k.innerHTML = `<div class="pzSqlUyar">${esc(e.message)}</div>`; return; }
+  let R = PZD.R;
+  try{ if(!/^(1Y|2Y)$/.test(PZD.aralik) || !R) R = await pzGecmis(s, PZD.aralik); }catch(e){ k.innerHTML = pzKaynakHata(e.message); return; }
+  if(!R?.c?.length){ k.innerHTML = `<div class="pcBos">Grafik verisi gelmedi.</div>`; return; }
+  if(PZD.aralik === "1Y" && R === PZD.R){ const n = Math.min(R.c.length, pzAyGun(s)*12 + 5), a = R.c.length - n; R = { ...R, t:R.t.slice(a), o:R.o.slice(a), h:R.h.slice(a), l:R.l.slice(a), c:R.c.slice(a), v:R.v.slice(a) }; }
+  const LC = window.LightweightCharts, T = R.t.map(t => t + 3*3600), kr = pzTur(s.k) === "KRIPTO";
+  const ana = LC.createChart(document.getElementById("pzdAna"), { layout:{ background:{ type:"solid", color:"#0B0E13" }, textColor:"#8E8C93", fontFamily:"Inter, system-ui, sans-serif", fontSize:11 },
+    grid:{ vertLines:{ color:"rgba(255,255,255,.03)" }, horzLines:{ color:"rgba(255,255,255,.03)" } }, rightPriceScale:{ borderColor:"rgba(255,255,255,.08)", scaleMargins:{ top:.08, bottom:.08 } },
+    timeScale:{ borderColor:"rgba(255,255,255,.08)", timeVisible:!gun, rightOffset:2 }, crosshair:{ mode:0 }, autoSize:true, handleScroll:true, handleScale:true,
+    localization:{ locale:"tr-TR", priceFormatter: x => (+x).toLocaleString("tr-TR", { maximumFractionDigits: Math.abs(x) >= 1000 ? 0 : Math.abs(x) >= 1 ? 2 : 5 }),
+      timeFormatter: t => new Date(t*1000).toLocaleDateString("tr-TR", gun ? { day:"2-digit", month:"short", year:"2-digit" } : { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" }) } });
+  PZD.grafikler.push(ana);
+  const mum = ana.addCandlestickSeries({ upColor:PZ_RENK.art, downColor:PZ_RENK.az, borderVisible:false, wickUpColor:"rgba(91,208,139,.7)", wickDownColor:"rgba(255,74,85,.7)", priceLineColor:"#ffffff", priceLineWidth:1 });
+  // gelecek: tahmin konisi (gunluk grafiklerde, 6 ay)
+  const A = PZD.A, O = PZD.O || (A && pzOrtak(A, PZ.analiz[s.k])), f = R.c[R.c.length - 1], G = A ? PZM.getiri(A.D.c, A.i) : null, son = T[T.length - 1];
+  const gelecek = []; if(gun && G){ const ag = pzAyGun(s), adim = 86400; let t = son, n = 0;
+    while(n < 6*ag){ t += adim; const d = new Date(t*1000).getUTCDay(); if(!kr && (d === 0 || d === 6)) continue; n++; gelecek.push({ t, n }); } }
+  mum.setData(T.map((t, i) => ({ time:t, open:R.o[i], high:R.h[i], low:R.l[i], close:R.c[i] })).concat(gelecek.map(g => ({ time:g.t }))));
+  const kon = gelecek.map(g => { const I = PZM.ihtimal(f, G.mu, G.sd, g.n, null, null); return { time:g.t, n:g.n, p10:I.p10, p50:I.p50, p90:I.p90 }; });
+  if(kon.length){ const c = (k2, renk, st) => ana.addLineSeries({ color:renk, lineWidth:1.5, lineStyle:st, priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false }).setData([{ time:son, value:f }].concat(kon.map(x => ({ time:x.time, value:x[k2] }))));
+    c("p90", "rgba(91,208,139,.85)", 2); c("p50", "rgba(255,255,255,.85)", 2); c("p10", "rgba(255,74,85,.85)", 2); }
+  ana.timeScale().fitContent();
+  // katman: bolgeler, etiketler, koni dolgusu
+  const cv = document.getElementById("pzdKatm"), kut = document.getElementById("pzdAna");
+  const ciz = () => { if(!cv || !document.body.contains(cv)) return; const W = kut.clientWidth, H = kut.clientHeight, dpr = window.devicePixelRatio || 1;
+    cv.width = W*dpr; cv.height = H*dpr; cv.style.width = W + "px"; cv.style.height = H + "px"; const x = cv.getContext("2d"); x.scale(dpr, dpr); x.clearRect(0, 0, W, H);
+    const pw = ana.priceScale("right").width(), w = W - pw, Y = v => mum.priceToCoordinate(v), X = t => ana.timeScale().timeToCoordinate(t);
+    const bant = (a, b, renk, yazi, alt, yaziRenk) => { if(!a || !b) return; const y1 = Y(b), y2 = Y(a); if(y1 == null || y2 == null) return; x.fillStyle = renk; x.fillRect(0, Math.min(y1, y2), w, Math.abs(y2 - y1));
+      x.font = "700 12px Inter, Arial"; x.fillStyle = yaziRenk; x.textAlign = "left"; const yy = Math.max(14, Math.min(H - 6, (y1 + y2)/2 + 4)); x.fillText(yazi, 10, yy); if(alt){ x.font = "500 10.5px Inter, Arial"; x.globalAlpha = .85; x.fillText(alt, 10, yy + 13); x.globalAlpha = 1; } };
+    if(O?.al?.[0]){ bant(O.al[0], O.al[1], "rgba(91,208,139,.13)", "AL BÖLGESİ", "buradan al", "#7EDBA3");
+      bant(O.sat[0], O.sat[1] || O.sat[0]*1.03, "rgba(232,182,97,.13)", "SAT BÖLGESİ", "buradan sat / kâr al", "#F0C77A");
+      if(O.al[1] && O.sat[0]) bant(O.al[1], O.sat[0], "rgba(255,255,255,.025)", "BEKLE / TUT", "elindekini tut, yenisini alma", "rgba(220,218,224,.6)");
+      if(O.stop){ const ys = Y(O.stop); if(ys != null){ x.fillStyle = "rgba(255,40,50,.08)"; x.fillRect(0, ys, w, H - ys); x.strokeStyle = "#FF2D3A"; x.lineWidth = 1.5; x.setLineDash([]); x.beginPath(); x.moveTo(0, ys); x.lineTo(w, ys); x.stroke();
+        x.font = "700 12px Inter, Arial"; x.fillStyle = "#FF6B73"; x.fillText("ZARAR KES", 10, ys + 15); x.font = "500 10.5px Inter, Arial"; x.fillText("buranın altında çık", 10, ys + 28); } } }
+    // koni dolgusu + aylik etiketler
+    if(kon.length){ const ust = kon.map(k2 => [X(k2.time), Y(k2.p90)]), alt = kon.map(k2 => [X(k2.time), Y(k2.p10)]).reverse(), x0 = X(son), y0 = Y(f);
+      if(ust.every(q => q[0] != null && q[1] != null) && x0 != null){ x.beginPath(); x.moveTo(x0, y0); ust.forEach(q => x.lineTo(q[0], q[1])); alt.forEach(q => x.lineTo(q[0], q[1])); x.closePath();
+        const g = x.createLinearGradient(x0, 0, w, 0); g.addColorStop(0, "rgba(255,255,255,.10)"); g.addColorStop(1, "rgba(255,255,255,.03)"); x.fillStyle = g; x.fill();
+        x.strokeStyle = "rgba(255,255,255,.25)"; x.setLineDash([3, 4]); x.beginPath(); x.moveTo(x0, 0); x.lineTo(x0, H); x.stroke(); x.setLineDash([]);
+        x.font = "600 10.5px Inter, Arial"; x.fillStyle = "rgba(255,255,255,.7)"; x.textAlign = "left"; x.fillText("BUGÜN", x0 + 4, 12); x.fillText("TAHMİN →", x0 + 4, 25);
+        [1, 3, 6].forEach(ay => { const q = kon.find(k2 => k2.n === ay*pzAyGun(s)) || kon[kon.length - 1]; const xx = X(q.time); if(xx == null || xx > w - 20) return;
+          const lab = (v, renk, dy) => { const yy = Y(v); if(yy == null) return; x.fillStyle = renk; x.beginPath(); x.arc(xx, yy, 3, 0, 7); x.fill(); x.font = "600 10.5px Inter, Arial"; x.textAlign = "right"; x.fillText(pzPara(v, p), xx - 6, yy + dy); };
+          x.strokeStyle = "rgba(255,255,255,.12)"; x.beginPath(); x.moveTo(xx, 30); x.lineTo(xx, H - 20); x.stroke();
+          x.font = "700 11px Inter, Arial"; x.fillStyle = "#ECEAEE"; x.textAlign = "center"; x.fillText(ay + " ay", xx, 42);
+          lab(q.p90, "#7EDBA3", -6); lab(q.p50, "#FFFFFF", 4); lab(q.p10, "#FF8A91", 14); }); } }
+    // su an etiketi
+    const yf = Y(f), xf = X(son); if(yf != null && xf != null){ x.fillStyle = "#fff"; x.beginPath(); x.arc(xf, yf, 4.5, 0, 7); x.fill(); x.strokeStyle = "rgba(255,255,255,.35)"; x.lineWidth = 6; x.beginPath(); x.arc(xf, yf, 8, 0, 7); x.stroke(); }
+  };
+  PZD.katmanCiz = ciz;
+  ana.timeScale().subscribeVisibleLogicalRangeChange(() => requestAnimationFrame(ciz));
+  try{ PZD.gozcu = new ResizeObserver(() => requestAnimationFrame(ciz)); PZD.gozcu.observe(kut); }catch(e){}
+  setTimeout(ciz, 60);
+  document.getElementById("pzdLejant").innerHTML = `<span><i style="background:#5BD08B"></i>AL bölgesi</span><span><i style="background:#E8B661"></i>SAT bölgesi</span><span><i style="background:#FF2D3A"></i>zarar kes</span>`
+    + (kon.length ? `<span><i style="background:#fff"></i>en olası yol</span><span><i style="background:#5BD08B"></i>iyimser (%10)</span><span><i style="background:#FF4A55"></i>kötümser (%10)</span><span class="soluk">gri alan: %80 ihtimalle fiyatın kalacağı aralık</span>` : "")
+    + `<span class="soluk">${O?.kaynak ? "bölgeler: program + Claude + ChatGPT ortak" : "bölgeler: programın hesabı"} · daha fazla çizgi için “Uzman”</span>`;
+};
+
+/* ---- yapay zeka kutusu: ne yapmali en ustte, TL karsiligi ---- */
+{ const eski = pzYzKutu;
+  pzYzKutu = function(L, kay){ const a = L?.[0]?.veri; let h = eski(L, kay); if(!a) return h;
+    const ust = (a.ne_yapmali ? `<div class="pzYzNe"><small>${kay === "claude" ? "Claude" : "ChatGPT"} ne diyor?</small><b>${esc(a.ne_yapmali)}</b></div>` : "") + (a.basit_ozet ? `<p class="pzYzBasit">${esc(a.basit_ozet)}</p>` : "");
+    h = h.replace('<p class="pzYzOzet">', ust + '<p class="pzYzOzet">');
+    if(PZD.s?.para === "USD" && PZ.usd) h = h.replace(/<b class="mono">([\d.,]+) \$<\/b>/g, (m, v) => { const n = +v.replace(/\./g, "").replace(",", "."); return `<b class="mono">${v} $<small class="pzTl">${pzPara(n*PZ.usd, "TRY", 0)}</small></b>`; });
+    return h; }; }
+
+/* ---- detay ust: dolar varliklarda TL karsiligi ---- */
+{ const eski = pzDetay;
+  pzDetay = async function(k){ const r = await eski.apply(this, arguments);
+    const s = PZD.s; if(s?.para === "USD" && pzTur(s.k) !== "KRIPTO" && PZ.usd){ const f = document.querySelector(".pzdFiyat"); if(f && !f.querySelector(".pzTlBuyuk")) f.insertAdjacentHTML("beforeend", `<small class="mono pzTlBuyuk">${pzPara((s.f || PZD.A?.fiyat || 0)*PZ.usd, "TRY")}</small>`); }
+    const h = document.querySelector(".pzdTahmin header b"); if(h) h.textContent = "Gelecek ihtimaller · programın geçmiş başarısı";
+    const m = document.querySelector(".pzdMasa header"); if(m) m.innerHTML = `<b>Ne yapmalı?</b><small>program + Claude + ChatGPT</small>`;
+    return r; };
+  ekranlar.piyasaDetay = pzDetay; }
+
+/* ---- listeler: NASDAQ ve kriptoda TL ---- */
+{ const eski = pzTablo;
+  pzTablo = function(){ eski(); if(PZ.sekme !== "nasdaq" || !PZ.usd) return;
+    const t = document.querySelector("#pzTablo .pzT"); if(!t || t.dataset.tl) return; t.dataset.tl = 1;
+    t.querySelectorAll("thead tr th:nth-child(3)").forEach(th => th.insertAdjacentHTML("afterend", `<th class="sag">TL</th>`));
+    t.querySelectorAll("tbody tr").forEach(tr => { const td = tr.children[2]; const v = +String(td?.textContent || "").replace(/[^\d,]/g, "").replace(",", "."); td?.insertAdjacentHTML("afterend", `<td class="sag mono soluk">${v ? pzPara(v*PZ.usd, "TRY") : "—"}</td>`); }); }; }
+
+/* ---- takip: her varlik icin "ne yapmali" ---- */
+PZ.eylem = PZ.eylem || {};
+async function pzEylemHesap(k){
+  const o = PZ.eylem[k]; if(o && Date.now() - o.t < 10*60000) return o.v;
+  const s = await pzSatirBul(k).catch(() => null); if(!s) return null;
+  let A = null; try{ A = PZM.analiz(await pzGecmis(s, "2Y"), s.tv?.["Recommend.All"], pzAyGun(s)); }catch(e){}
+  const Y = PZ.analiz[k] || await pzAnalizOku(k).catch(() => ({})), O = pzOrtak(A, Y), f = (s.bn && PZ.canli[s.bn]?.f) || s.f || A?.fiyat;
+  const eskiS = PZD.s; PZD.s = s; const E = pzEylem(f, O, pzPozMaliyet(k)); PZD.s = eskiS;
+  PZ.eylem[k] = { t:Date.now(), v:{ E, O, s } }; return PZ.eylem[k].v;
+}
+pzTakipTablo = async function(k){
+  if(!PZ.takip.length){ k.innerHTML = `<div class="pcBos">Takip listen boş. Listelerde ★'a basarak hisse, coin ya da maden ekle.</div>`; return; }
+  const F = await pzFiyatlar(PZ.takip.map(t => t.sembol)).catch(() => ({}));
+  const satir = t => { const s = F[t.sembol] || { k:t.sembol, kod:pzKod(t.sembol), ad:t.ad }, c = s.bn && PZ.canli[s.bn], f = c?.f ?? s.f, d = c?.deg ?? s.deg, poz = PZ.portfoy.some(p => p.sembol === t.sembol);
+    return `<tr onclick="go('piyasaDetay','${t.sembol}')"><td>${pzYildiz(t.sembol)}</td><td><div class="pzSem">${pzLogo(s)}<span><b>${esc(s.kod || pzKod(t.sembol))}${poz ? ` <i class="pzPozIs" title="portföyde">💼</i>` : ""}</b><small>${esc(s.ad || t.ad || "")} · ${pzTurAd(t.sembol)}</small></span></div></td>
+      <td class="sag mono" ${s.bn ? `data-canli="${s.bn}"` : ""}>${pzIki(f, s.para)}</td><td class="sag mono ${pzYon(d)}" ${s.bn ? `data-canlid="${s.bn}"` : ""}>${pzYuzde(d)}</td>
+      <td class="pzNeHucre" id="pzne-${t.sembol.replace(/[^A-Z0-9]/gi, "_")}"><span class="soluk">hesaplanıyor…</span></td><td>${pzGecRozet(s.gec)}</td></tr>`; };
+  k.innerHTML = `<table class="pzT"><thead><tr><th></th><th>Varlık</th><th class="sag">Fiyat</th><th class="sag">Gün</th><th>Ne yapmalı? (program + Claude + ChatGPT)</th><th></th></tr></thead><tbody>${PZ.takip.map(satir).join("")}</tbody></table>`;
+  for(const t of PZ.takip){ pzEylemHesap(t.sembol).then(v => { const el = document.getElementById("pzne-" + t.sembol.replace(/[^A-Z0-9]/gi, "_")); if(!el || !v) return;
+    el.innerHTML = `<span class="pzNeK ${v.E.renk}">${v.E.kod}</span><small>${esc(v.E.cumle)}</small>`; }).catch(() => {}); }
+};
+
+/* ---- duyurular: portfoy/takipteki bolunme, bedelsiz, bedelli, temettu, halka arz + bugun tetiklenen alarmlar ---- */
+function pzDuyurular(){
+  const ilgili = new Set(PZ.portfoy.map(p => p.sembol).concat(PZ.takip.map(t => t.sembol))), sinir = Date.now() - 30*86400000;
+  return PZ.olay.filter(o => /bedelsiz|bedelli|bolunme|temettu|halka_arz/.test(o.tur) && (!o.sembol || ilgili.has(o.sembol)) && ((o.tarih && new Date(o.tarih).getTime() >= sinir) || new Date(o.created_at).getTime() >= sinir))
+    .sort((a, b) => ((b.tarih ? new Date(b.tarih) : 0) - (a.tarih ? new Date(a.tarih) : 0))).slice(0, 8);
+}
+function pzDuyuruHtml(L){ return L.length ? `<div class="pzDuyuru"><b>📣 Duyurular</b>${L.map(o => `<button onclick="${o.sembol ? `go('piyasaDetay','${esc(o.sembol)}')` : `PZ.sekme='olay';pcGit('piyasa')`}"><span class="pzOlayT ${o.tur}">${PZ_OLAY_AD[o.tur]}</span><b>${esc(o.sembol ? pzKod(o.sembol) : "")}</b> ${esc(o.baslik.slice(0, 90))}${o.tarih ? ` <em>${trTarih(o.tarih)}</em>` : ""}</button>`).join("")}</div>` : ""; }
+{ const eski = pzEkran;
+  pzEkran = async function(){ const r = await eski.apply(this, arguments);
+    const k = document.getElementById("pzSerit"); if(k && !document.getElementById("pzDuyuruK")){ k.insertAdjacentHTML("afterend", `<div id="pzDuyuruK"></div>`); }
+    const d = document.getElementById("pzDuyuruK"); if(d) d.innerHTML = pzDuyuruHtml(pzDuyurular());
+    pzGezginCiz(); return r; };
+  ekranlar.piyasa = pzEkran; }
+// Genel Bakis: piyasa kutusunun ustunde duyurular
+{ const eski = typeof pysAnaCiz === "function" ? pysAnaCiz : null;
+  if(eski) pysAnaCiz = async function(){ await eski.apply(this, arguments);
+    try{ if(!PZ.takip.length && !PZ.portfoy.length && !PZ.olay.length) await pzKisiselYukle(); }catch(e){}
+    const k = document.getElementById("pysAna"); if(k && !k.querySelector(".pzDuyuru")) k.insertAdjacentHTML("afterbegin", pzDuyuruHtml(pzDuyurular())); }; }
+
+/* ---- sol menu: piyasa ekranlarinda parsel gezgini yerine piyasa gezgini ---- */
+let PZ_GEZ_KAPALI = (() => { try{ return JSON.parse(localStorage.getItem("pzGez") || "{}"); }catch(e){ return {}; } })(), PZ_GEZ_ARA = "";
+function pzGezginCiz(){
+  const g = document.getElementById("pcGezgin"); if(!g) return;
+  let k = document.getElementById("pzGez"); if(!k){ k = document.createElement("div"); k.id = "pzGez"; g.appendChild(k); }
+  const aktif = app.dataset.ekran === "piyasaDetay" ? app.dataset.pid : "";
+  const q = PZ_GEZ_ARA.toLocaleLowerCase("tr").trim(), ara = L => q ? L.filter(s => `${s.kod} ${s.ad}`.toLocaleLowerCase("tr").includes(q)) : L;
+  const sat = s => { const c = s.bn && PZ.canli[s.bn], f = c?.f ?? s.f, d = c?.deg ?? s.deg;
+    return `<button class="pzGs ${s.k === aktif ? "on" : ""}" onclick="go('piyasaDetay','${s.k}')"><span>${esc(s.kod)}</span><b class="mono" ${s.bn ? `data-canli="${s.bn}"` : ""}>${pzPara(f, s.para === "USD" ? "" : "")}</b><em class="mono ${pzYon(d)}" ${s.bn ? `data-canlid="${s.bn}"` : ""}>${pzYuzde(d, 1)}</em></button>`; };
+  const bul = k2 => [].concat(PZ.liste.bist || [], PZ.liste.nasdaq || [], PZ.liste.kripto || [], PZ.liste.maden || [], PZ.liste.doviz || []).find(x => x.k === k2) || { k:k2, kod:pzKod(k2), ad:"" };
+  const grup = (id, ad, L, tum) => { const kap = PZ_GEZ_KAPALI[id] && !q;
+    return `<div class="pzGg ${kap ? "kapali" : ""}"><button class="pzGgB" onclick="PZ_GEZ_KAPALI['${id}']=!PZ_GEZ_KAPALI['${id}'];try{localStorage.setItem('pzGez',JSON.stringify(PZ_GEZ_KAPALI))}catch(e){};pzGezginCiz()"><i>▾</i>${ad}<em>${L.length}</em></button>
+      <div class="pzGgL">${L.length ? L.map(sat).join("") : `<div class="pzNot">boş</div>`}${tum ? `<button class="pzGsTum" onclick="PZ.sekme='${tum}';pcGit('piyasa')">tümünü listele →</button>` : ""}</div></div>`; };
+  const bist = (PZ.liste.bist || []).slice().sort((a, b) => (b.tv?.market_cap_basic || 0) - (a.tv?.market_cap_basic || 0));
+  k.innerHTML = `<div class="pcPbas"><b>PİYASALAR</b><button title="Ana ekran" onclick="pcGit('piyasa')">⌂</button></div>
+    <div class="pcGezAra"><input placeholder="Ara: TTRAK, BTC…" value="${esc(PZ_GEZ_ARA)}" oninput="PZ_GEZ_ARA=this.value;pzGezginCiz();this.focus();this.setSelectionRange(this.value.length,this.value.length)"></div>
+    <div class="pzGezIc">${grup("takip", "★ Takip listem", ara(PZ.takip.map(t => bul(t.sembol))))}${grup("portfoy", "💼 Portföyüm", ara([...new Set(PZ.portfoy.map(p => p.sembol))].map(bul)))}
+      ${grup("bist", "BIST", ara(q ? bist : bist.slice(0, 40)), "bist")}${grup("nasdaq", "NASDAQ", ara(PZ.liste.nasdaq || []), "nasdaq")}${grup("kripto", "Kripto", ara((PZ.liste.kripto || []).slice(0, 30)), "kripto")}
+      ${grup("maden", "Madenler & döviz", ara((PZ.liste.maden || []).concat(PZ.liste.doviz || [])), "maden")}</div>`;
+}
+{ const eski = ekraniCiz;
+  ekraniCiz = function(r, arg){ const piy = /^piyasa/.test(r || ""); document.body.classList.toggle("pzMod", piy && typeof PC_ACIK !== "undefined" && PC_ACIK);
+    const sonuc = eski.apply(this, arguments); if(piy) setTimeout(() => { pzGezginCiz(); if(r === "piyasaDetay" && !PZ.liste.bist) Promise.all([pzBist().catch(() => {}), pzKripto().catch(() => {}), pzNasdaq().catch(() => {}), pzMadenDoviz().catch(() => {})]).then(pzGezginCiz); }, 300); return sonuc; }; }
+// canli fiyat gelince gezgindeki hucreler de guncellenir (pzCanliYaz zaten data-canli ile yapar)
 
 baslat();
 
