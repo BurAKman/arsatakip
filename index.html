@@ -3168,7 +3168,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.7.3";
+const SURUM_MORDOR = "v 3.7.4";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -14976,6 +14976,7 @@ function agacTemiz(d){
               k:+d.k||1, kenarYol:(d.kenarYol||[]).map(y=>({ taraf:y.taraf, g:+y.g||3 })), bol:null, cocuk:[] };
   if(d.bol && !yaprakMi(d)){
     o.bol = { eksen: d.bol.eksen === "par" ? "par" : "dik", aci:+d.bol.aci||0, ters:!!d.bol.ters, yollar:{ ...(d.bol.yollar||{}) } };
+    if(d.bol.kAci && Object.keys(d.bol.kAci).some(q => +d.bol.kAci[q])) o.bol.kAci = { ...d.bol.kAci };
     o.cocuk = d.cocuk.map(agacTemiz);
   }
   return o;
@@ -15246,6 +15247,37 @@ function capYerlesimAgacHam(M, cfg, hizli){
         for(let i=0;i<34;i++){ const m = (lo+hi)/2; if(F(m) - Fbas < A) lo = m; else hi = m; }
         return (lo+hi)/2;
       };
+      // kesim basina ek aci varsa: kesimler sirayla, kalan bolgeden kendi yonuyle kesilir (yelpaze gibi acilan yollar)
+      const KA = d.bol.kAci || {};
+      if(Object.keys(KA).some(q => +KA[q] && +q < n-1)){
+        let kal = bolge, kalR = Ry, toplamY = 0;
+        for(let k=0;k<n;k++){
+          const c = d.cocuk[k]; let parca = null, pR = [];
+          if(kal && kal.length > 2){
+            const sk = k < n-1 ? donmusYon(s, +KA[k] || 0) : s, ns = [-sk[0], -sk[1]];
+            const iz = kal.map(p=>p[0]*sk[0]+p[1]*sk[1]), a0 = Math.min(...iz), a1 = Math.max(...iz);
+            const Fk = t => t <= a0 ? 0 : (kalR.length ? kullanilir(kirp(kal, sk, t), halkaKirp(kalR, sk, t)) : polyAlan(kirp(kal, sk, t)));
+            const Ft = kalR.length ? kullanilir(kal, kalR) : polyAlan(kal);
+            let t = a1;
+            if(Ft > w[k] + 1e-6){ let lo = a0, hi = a1; for(let i=0;i<34;i++){ const m = (lo+hi)/2; if(Fk(m) < w[k]) lo = m; else hi = m; } t = (lo+hi)/2; }
+            parca = t >= a1 ? kal : kirp(kal, sk, t); if(parca && parca.length < 3) parca = null;
+            pR = kalR.length ? (t >= a1 ? kalR : halkaKirp(kalR, sk, t)) : [];
+            if(k < n-1){
+              const g = gap(k);
+              if(g > 0 && t < a1){ const serit = bant(kal, sk, t, t + g); if(serit) yollar.push({ poly:serit, eksen:cizgiKirp(kal, sk, t + g/2), g, kaynak:{ dugum:d.id, k } }); }
+              kesimler.push({ dugum:d.id, k, s:sk, t, g, ac:a0, bitis:a1, cizgi:cizgiKirp(kal, sk, t + g/2), bolge:kal, Ry:kalR });
+              const yeni = t + g >= a1 ? [] : kirp(kal, ns, -(t + g));
+              kalR = kalR.length ? halkaKirp(kalR, ns, -(t + g)) : [];
+              kal = yeni.length > 2 ? yeni : null;
+            } else if(t < a1 - .01){
+              const bp = kirp(kal, ns, -t), ba = bp.length > 2 ? (kalR.length ? kullanilir(bp, halkaKirp(kalR, ns, -t)) : polyAlan(bp)) : 0;
+              if(ba > .5) bosluklar.push({ poly:bp, alan:ba, dugum:d.id });
+            }
+          }
+          if(parca) toplamY += yerlestir(c, parca, pR); else { gercek.set(c.id, 0); yapraklar(c).forEach(y=>gercek.set(y.id, 0)); }
+        }
+        gercek.set(d.id, toplamY); return toplamY;
+      }
       // her cocuk istedigi alani BIREBIR alir; artan alan grubun sonunda ayrilmamis kalir
       const son = { araliklar:[] };
       { let c0 = tmin;
@@ -15663,6 +15695,13 @@ function secimCiz(){
           <option value="0" ${g ? "" : "selected"}>Yok</option><option value="1" ${g ? "selected" : ""}>Var</option></select></div>
         <div class="field" style="margin:0"><label>Genişlik (m)</label>
           <input id="kyg" inputmode="decimal" value="${ham(g || yolVarsayilan())}" onchange="if(${g ? 1 : 0}) kesimYol(sayiCoz(this.value)||3)"></div></div>
+      <div class="field" style="margin:10px 0 0"><label>Bu kesimin açısı · ${+((b.d.bol.kAci||{})[PARCA.secKesim.k]||0)}° <span style="opacity:.6">(yolu tek başına döndürür)</span></label>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <button class="pill sade" onclick="kesimAci(-1)">−1°</button><button class="pill sade" onclick="kesimAci(-.25)">−¼</button>
+          <input inputmode="decimal" value="${ham(+((b.d.bol.kAci||{})[PARCA.secKesim.k]||0))}" onfocus="this.select()" onchange="kesimAci(null, sayiCoz(this.value)||0)" style="width:64px;padding:7px 6px;text-align:center">
+          <button class="pill sade" onclick="kesimAci(.25)">+¼</button><button class="pill sade" onclick="kesimAci(1)">+1°</button>
+          <button class="pill sade" onclick="kesimAci(null, 0)">Sıfırla</button></div></div>
+      ${cepheEsitlenir(b.d) ? `<button class="pill gold" style="margin-top:10px" onclick="cepheEsitle(${b.d.id})">Resmi yola cepheleri eşitle</button>` : ""}
       <button class="pill sade" style="margin-top:10px" onclick="parcaSec(${b.d.id})">Bu grubu seç</button>${[b.d.cocuk[PARCA.secKesim.k], b.d.cocuk[PARCA.secKesim.k+1]].filter(Boolean).map(c=>`<button class="pill sade" style="margin:6px 6px 0 0" onclick="parcaSec(${c.id})">${yaprakMi(c) ? esc(c.no || "") + " nolu parçayı seç" : "Yandaki grubu seç (" + yapraklar(c).map(y=>y.no).join(", ") + ")"}</button>`).join("")}
     </div>`;
     return;
@@ -15710,7 +15749,8 @@ function secimCiz(){
         <option value="0" ${B.ters ? "" : "selected"}>Normal</option><option value="1" ${B.ters ? "selected" : ""}>Ters</option></select></div></div>
       <div class="field" style="margin:0 0 8px"><label>Kesim açısı · ${+B.aci||0}°</label>
         <input type="range" min="-60" max="60" value="${+B.aci||0}" style="padding:0" onchange="grupAyar('aci', +this.value)"></div>
-      <div style="font-size:12px;color:var(--ink-3)">${n} alt parça · ${Object.values(B.yollar||{}).filter(v=>+v>0).length} arada yol</div>`;
+      <div style="font-size:12px;color:var(--ink-3)">${n} alt parça · ${Object.values(B.yollar||{}).filter(v=>+v>0).length} arada yol${Object.values(B.kAci||{}).some(v=>+v) ? " · kesimler ayrı açılı" : ""}</div>
+      ${cepheEsitlenir(d) ? `<button class="pill gold" style="margin-top:8px" onclick="cepheEsitle(${d.id})">Resmi yola cepheleri eşitle</button>` : ""}${Object.values(B.kAci||{}).some(v=>+v) ? `<button class="pill sade" style="margin:8px 0 0 6px" onclick="kesimParalel(${d.id})">Kesimleri paralel yap</button>` : ""}`;
   }
   k.innerHTML = `<div class="card" style="border-color:var(--gold)">
     <div class="bolum"><b>${yaprak ? `${esc(d.no)} nolu parça` : `Grup · ${yapraklar(d).map(y=>y.no).join(", ")}`}</b>
@@ -15762,6 +15802,49 @@ function bolUygula(){
   });
 }
 function grupAyar(ad, v){ degisim(()=>{ const b = dugumBul(PARCA.agac, PARCA.sec); if(b && b.d.bol){ b.d.bol[ad] = v; yapraklar(b.d).forEach(()=>{}); (b.d.cocuk||[]).forEach(c=>c.k = 1); } }); }
+function kesimAci(ek, deger){ const K = PARCA.secKesim; if(!K) return;
+  degisim(()=>{ const b = dugumBul(PARCA.agac, K.dugum); if(!b || !b.d.bol) return; const A = b.d.bol.kAci = b.d.bol.kAci || {};
+    let v = ek == null ? +deger || 0 : (+A[K.k] || 0) + ek; v = Math.max(-45, Math.min(45, Math.round(v*100)/100));
+    if(v) A[K.k] = v; else delete A[K.k]; if(!Object.keys(A).length) delete b.d.bol.kAci; }); }
+function kesimParalel(id){ degisim(()=>{ const b = dugumBul(PARCA.agac, id); if(b && b.d.bol) delete b.d.bol.kAci; }); }
+// grubun cocuklarinin resmi yol boyunca cephe uzunluklari (m)
+function cepheOlc(yer, d){
+  const C = yer.cerceve, R = (C && C.resmiler) || [], Z = R.filter(r=>!r.ek)[0] || R[0];
+  if(!Z || !Z.resmiZincir) return null; const ic = Z.resmiZincir.ic;
+  const ustunde = p => { for(let i=0;i<ic.length-1;i++) if(segUzaklik(p, ic[i], ic[i+1]) < .08) return true; return false; };
+  return d.cocuk.map(c=>{ const P = yer.bolgeler && yer.bolgeler.get(c.id); if(!P) return 0; let L = 0;
+    for(let i=0;i<P.length;i++){ const a = P[i], b = P[(i+1)%P.length]; if(ustunde(a) && ustunde(b) && ustunde([(a[0]+b[0])/2, (a[1]+b[1])/2])) L += Math.hypot(b[0]-a[0], b[1]-a[1]); }
+    return L; });
+}
+function cepheEsitlenir(d){ if(!d || yaprakMi(d) || !d.bol || d.cocuk.length < 2 || !PARCA.yer) return false;
+  try{ const f = cepheOlc(PARCA.yer, d); return !!(f && f.every(v=>v > .5)); }catch(e){ return false; } }
+function cepheEsitle(id){
+  const b = dugumBul(PARCA.agac, id); if(!b || !b.d.bol) return; const d = b.d, n = d.cocuk.length;
+  const anlik = agacAnlik(), A0 = { ...(d.bol.kAci || {}) };
+  const olc = () => cepheOlc(capYerlesimAgac(PARCA.geometri, { ...parcaCfgTemel(), agac:PARCA.agac }, true), d) || [];
+  toast("Cepheler hesaplanıyor…");
+  setTimeout(()=>{
+    try{
+      d.bol.kAci = { ...A0 };
+      for(let tur=0; tur<3; tur++){
+        for(let k=0;k<n-1;k++){
+          const f0 = olc(), hedef = f0.reduce((t,v)=>t+v, 0)/n;
+          // ilk k+1 cocugun cephe toplami hedefin k+1 kati olsun
+          const fark = a => { d.bol.kAci[k] = a; const f = olc(); let top = 0; for(let i=0;i<=k;i++) top += f[i]; return top - hedef*(k+1); };
+          const m0 = +d.bol.kAci[k] || 0; let lo = Math.max(-45, m0 - 25), hi = Math.min(45, m0 + 25), flo = fark(lo), fhi = fark(hi);
+          if(flo*fhi > 0){ d.bol.kAci[k] = Math.abs(flo) < Math.abs(fhi) ? lo : hi; continue; }
+          for(let i=0;i<16;i++){ const m = (lo+hi)/2, fm = fark(m); if(fm*flo > 0){ lo = m; flo = fm; } else hi = m; }
+          d.bol.kAci[k] = Math.round((lo+hi)/2*100)/100;
+        }
+      }
+      Object.keys(d.bol.kAci).forEach(q=>{ if(!+d.bol.kAci[q]) delete d.bol.kAci[q]; });
+      const yeni = { ...d.bol.kAci }; agacYukle(anlik);
+      degisim(()=>{ const b2 = dugumBul(PARCA.agac, id); if(b2) b2.d.bol.kAci = yeni; });
+      const f = cepheOlc(PARCA.yer, dugumBul(PARCA.agac, id).d) || [];
+      toast("Resmi yol cepheleri: " + f.map(v=>nf2(v) + " m").join(" · "));
+    }catch(e){ console.log("cephe esitle", e); agacYukle(anlik); ozetCiz(); toast("Eşitlenemedi"); }
+  }, 30);
+}
 function kesimYol(g){ const K = PARCA.secKesim; if(!K) return;
   degisim(()=>{ const b = dugumBul(PARCA.agac, K.dugum); if(!b) return; b.d.bol.yollar = b.d.bol.yollar || {};
     if(g > 0) b.d.bol.yollar[K.k] = g; else delete b.d.bol.yollar[K.k]; }); }
