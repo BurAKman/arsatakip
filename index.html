@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0B0F0D">
+<meta name="theme-color" content="#0A0D13">
 <title>Arsa Takip</title>
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon.png?v=ba1">
-<link rel="apple-touch-icon" href="icon.png?v=ba1">
+<link rel="icon" href="icon.png?v=a1">
+<link rel="apple-touch-icon" href="icon.png?v=a1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Cinzel:wght@500;600;700&family=Playfair+Display:wght@700;800&family=Anton&family=Oswald:wght@500;600;700&family=Inter:wght@600;700;800&display=swap" rel="stylesheet">
@@ -3190,10 +3190,118 @@ body.pc .yzDis{display:flex;align-items:center;gap:8px;margin:14px 2px;font-size
 body.pc #ekEmsal .ekAnaTus{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 body.pc #ekEmsal .ekAnaTus .btn{grid-column:auto!important;width:100%!important;margin:0!important;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 body.pc #ekEmsal .ekAnaTus .btn svg{width:16px;height:16px}
+/* telefon: acilis ve ust logo kirmizi A */
+.baAcilis img{width:118px;height:118px;object-fit:contain;filter:drop-shadow(0 0 18px rgba(255,40,50,.55));animation:baNefes 1.6s ease-in-out infinite}
+.top .logo .mark img{object-fit:contain!important;padding:5px;box-sizing:border-box;background:#0D0F13}
+body.pc .mobCapTus{display:none!important}
+/* telefon: Claude'a sor */
+.yzKart{padding:16px!important}
+.yzUst label{display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--ink-3,#A9A7AE)}
+.yzUst select{width:100%}
+.yzHazir{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 10px}
+#yzSoru{width:100%;min-height:150px;resize:vertical;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#0B0D11;color:#fff;font:14px/1.5 Inter,system-ui,sans-serif;box-sizing:border-box}
+.yzAlt{display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}
+.yzAlt small{flex:1 1 200px;color:#8E8C93;font-size:12px}
+.yzAlt .btn{width:auto!important;margin:0!important;display:inline-flex;align-items:center;gap:8px}
+.yzAlt .btn svg{width:16px;height:16px}
+.yzDis{display:flex;align-items:center;gap:8px;margin:14px 2px;font-size:12.5px;color:#8E8C93;flex-wrap:wrap}
+/* ===== PC: Hesap & Takvim ===== */
+body.pc .hspKpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+body.pc .hspKpi .pcK b{font-size:22px}
+body.pc .yesil{color:#5BD08B!important}body.pc .kirmizi{color:#FF6B73!important}
+body.pc .hspIzgara{display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:16px;align-items:start}
+@media (max-width:1300px){ body.pc .hspIzgara{grid-template-columns:1fr} }
+body.pc .hspListe > header,body.pc .hspTakvim > header{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+body.pc .hspTakvim > header small{color:#7E7C84;font-size:11.5px;margin-left:auto}
+body.pc .hspSuz{display:flex;gap:8px;flex-wrap:wrap}
+body.pc .hspSeg{display:inline-flex;border:1px solid rgba(255,255,255,.12);border-radius:9px;overflow:hidden;background:#0B0D11}
+body.pc .hspSeg button{background:none;border:0;color:#A9A7AE;font-size:12.5px;padding:6px 12px;cursor:pointer;border-right:1px solid rgba(255,255,255,.08)}
+body.pc .hspSeg button:last-child{border-right:0}
+body.pc .hspSeg button.on{background:linear-gradient(180deg,#B5222B,#7A1218);color:#fff}
+body.pc .hspSeg button:not(.on):hover{color:#fff;background:rgba(255,255,255,.05)}
+body.pc .hspSeg.buyuk{display:flex}body.pc .hspSeg.buyuk button{flex:1;padding:9px 12px;font-size:13.5px}
+body.pc .hspAra{margin-left:auto;width:220px;padding:7px 11px!important;border-radius:9px!important;font-size:13px!important}
+body.pc .hspListe .pcBoxIc{padding:4px 8px 8px}
+body.pc .hspT td{vertical-align:middle}
+body.pc .hspT tbody tr{cursor:pointer}
+body.pc .hspT tbody tr.kapali{opacity:.55}
+body.pc .hspT td small{display:block;color:#7E7C84;font-size:11.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+body.pc .hspT td small.gecti,body.pc .hspTS .gecti,body.pc .hspTakS em.gecti{color:#FF6B73!important}
+body.pc .hspT td small.yakin,body.pc .hspTS .yakin{color:#E8B661!important}
+body.pc .hspKalan{font-weight:600}
+body.pc .hspTur{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid;margin-right:6px;font-weight:500}
+body.pc .hspTur.alacak{color:#5BD08B;border-color:rgba(91,208,139,.45);background:rgba(91,208,139,.08)}
+body.pc .hspTur.borc{color:#FF6B73;border-color:rgba(255,107,115,.45);background:rgba(255,107,115,.08)}
+body.pc .hspTur.vekalet{color:#E8B661;border-color:rgba(232,182,97,.45);background:rgba(232,182,97,.08)}
+body.pc .hspBar{height:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden;min-width:110px}
+body.pc .hspBar i{display:block;height:100%;background:#5BD08B}body.pc .hspBar i.borc{background:#FF5A63}
+body.pc .hspOk{color:#5BD08B;font-size:12px}
+/* takvim */
+body.pc .hspTakvim .pcBoxIc{padding:8px 10px 10px;max-height:calc(100vh - 330px);overflow:auto}
+body.pc .hspTakG{margin-bottom:8px}
+body.pc .hspTakB{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8E8C93;padding:8px 6px 6px}
+body.pc .hspTakB em{font-style:normal;margin-left:auto;font-size:11px;color:#7E7C84;letter-spacing:0}
+body.pc .hspTakB.gecti{color:#FF6B73}
+body.pc .hspTakS{display:flex;align-items:center;gap:10px;padding:8px;border-radius:9px;cursor:pointer;border:1px solid transparent}
+body.pc .hspTakS:hover{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.07)}
+body.pc .hspTakS > div{flex:1;min-width:0}
+body.pc .hspTakS > div b{display:block;font-size:13.5px;font-weight:500;color:#ECEAEE;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.pc .hspTakS > div small{display:block;font-size:11.5px;color:#8E8C93;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.pc .hspTakS em{font-style:normal;font-size:11.5px;color:#A9A7AE;white-space:nowrap;font-family:"IBM Plex Mono",monospace}
+body.pc .hspTakS button{width:28px;height:28px;border-radius:8px;border:1px solid rgba(91,208,139,.45);background:rgba(91,208,139,.08);color:#5BD08B;cursor:pointer;flex:0 0 auto}
+body.pc .hspTakS button:hover{background:rgba(91,208,139,.2)}
+body.pc .hspTarih{width:42px;height:42px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0B0D11;border:1px solid rgba(255,255,255,.1);flex:0 0 auto;line-height:1}
+body.pc .hspTarih b{font-size:16px;color:#fff}body.pc .hspTarih small{font-size:10px;color:#8E8C93;margin-top:3px;text-transform:uppercase}
+body.pc .hspTarih.gecti{border-color:rgba(255,90,99,.6);background:rgba(220,40,50,.12)}body.pc .hspTarih.yakin{border-color:rgba(232,182,97,.5)}
+/* kayit penceresi */
+.hspModal{display:flex;align-items:center;justify-content:center;padding:20px}
+.hspPen{width:min(860px,100%);max-height:calc(100vh - 40px);display:flex;flex-direction:column;background:linear-gradient(180deg,#191C22,#0F1216);border:1px solid rgba(255,255,255,.12);border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.65);color:#EDEBEE}
+.hspPenBas{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.07)}
+.hspPenBas b{font-size:17px}
+.hspX{background:none;border:0;color:#8E8C93;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:8px}.hspX:hover{color:#fff;background:rgba(255,255,255,.06)}
+.hspPenIc{padding:16px 20px;overflow:auto}
+.hspSatir2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.hspSatir3{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:14px;margin-bottom:14px}
+.hspSatir4{display:grid;grid-template-columns:1.3fr .8fr 1fr 1fr auto;gap:10px;align-items:end;margin-top:10px}
+.hspAlan label{display:block;font-size:12px;color:#A9A7AE;margin-bottom:6px}
+.hspAlan input,.hspAlan select,.hspTS input{width:100%;box-sizing:border-box;padding:9px 11px;border-radius:9px;border:1px solid rgba(255,255,255,.13);background:#0B0D11;color:#fff;font-size:14px}
+.hspAlan input:focus,.hspTS input:focus{outline:none;border-color:rgba(255,90,99,.7)}
+.hspIc{display:flex;gap:6px}.hspIc button{white-space:nowrap;padding:0 12px;border-radius:9px;border:1px solid rgba(91,208,139,.45);background:rgba(91,208,139,.08);color:#5BD08B;cursor:pointer;font-size:12.5px}
+.hspUret{margin:0 0 12px;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07)}
+.hspUret summary{cursor:pointer;font-size:13px;color:#D9D7DC}
+.hspUret .btn{width:auto!important;margin:0!important;padding:9px 16px!important}
+.hspIpuc{display:block;color:#7E7C84;font-size:11.5px;margin-top:8px}
+.hspTS{display:grid;grid-template-columns:28px 1.1fr 1fr 1fr 1.2fr 70px;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.hspTS.bas{font-size:11px;color:#7E7C84;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid rgba(255,255,255,.1)}
+.hspTS input{padding:7px 9px;font-size:13px}
+.hspTS [data-a="tutar"],.hspTS [data-a="odenen"]{text-align:right;font-family:"IBM Plex Mono",monospace}
+.hspTS.odendi input{color:#8E8C93}
+.hspDur{font-size:12px;color:#A9A7AE}
+.hspTsT{display:flex;gap:4px;justify-content:flex-end}
+.hspTsT button{width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:#0B0D11;color:#C9C7CC;cursor:pointer;display:grid;place-items:center}
+.hspTsT button:first-child{color:#5BD08B;border-color:rgba(91,208,139,.4)}
+.hspTsT button:hover{background:rgba(255,255,255,.06)}.hspTsT svg{width:14px;height:14px}
+.hspEkle{margin-top:10px;background:none;border:1px dashed rgba(255,255,255,.2);color:#C9C7CC;border-radius:9px;padding:8px 14px;cursor:pointer;font-size:13px}
+.hspEkle:hover{border-color:rgba(255,90,99,.6);color:#fff}
+.hspBosT{color:#7E7C84;font-size:13px;padding:10px 2px}
+.hspOzetB{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:14px;padding:12px 14px;border-radius:10px;background:#0B0D11;border:1px solid rgba(255,255,255,.08);font-size:13px;color:#A9A7AE}
+.hspOzetB b{color:#fff;margin-left:4px}.hspOzetB .hspBar{flex:1;min-width:120px}
+.hspHata{display:none;margin-top:12px;padding:10px 12px;border-radius:9px;background:rgba(220,40,50,.12);border:1px solid rgba(255,90,99,.5);color:#FFB3B8;font-size:13px}
+.hspPenAlt{display:flex;align-items:center;gap:8px;padding:14px 20px;border-top:1px solid rgba(255,255,255,.07)}
+.hspPenAlt .btn{width:auto!important;margin:0!important;padding:9px 16px!important;display:inline-flex;align-items:center;gap:7px}
+.hspPenAlt .btn svg{width:15px;height:15px}
+.hspSil{color:#FF6B73!important;border-color:rgba(255,90,99,.45)!important}
+.hspModal .hspBar{height:6px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}
+.hspModal .hspBar i{display:block;height:100%;background:#5BD08B}.hspModal .hspBar i.borc{background:#FF5A63}
+.hspModal .hspSeg{display:flex;border:1px solid rgba(255,255,255,.12);border-radius:9px;overflow:hidden;background:#0B0D11}
+.hspModal .hspSeg button{flex:1;background:none;border:0;color:#A9A7AE;font-size:13.5px;padding:9px 12px;cursor:pointer;border-right:1px solid rgba(255,255,255,.08)}
+.hspModal .hspSeg button:last-child{border-right:0}
+.hspModal .hspSeg button.on{background:linear-gradient(180deg,#B5222B,#7A1218);color:#fff}
+.hspModal .hspOk{color:#5BD08B;font-size:12px}.hspModal .gecti{color:#FF6B73}.hspModal .yakin{color:#E8B661}.hspModal .kirmizi{color:#FF6B73!important}.hspModal .yesil{color:#5BD08B!important}
 </style>
 </head>
 <body>
-<div class="wrap" id="app"><div class="baAcilis"><b>BA</b></div></div>
+<div class="wrap" id="app"><div class="baAcilis"><img src="logo.png?v=a1" alt=""></div></div>
 <div id="toast"></div>
 
 <script>
@@ -3326,9 +3434,9 @@ function payOran(s){
 function girisEkrani(){
   app.innerHTML = `
     <div style="min-height:78vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:6px">
-      <span style="width:104px;height:104px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.5);
+      <span style="width:104px;height:104px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,70,80,.55);background:#0D0F13;
         box-shadow:0 6px 26px rgba(0,0,0,.6);margin-bottom:20px">
-        <img src="logo.png?v=ba1" alt="" style="width:100%;height:100%;object-fit:cover;display:block"></span>
+        <img src="logo.png?v=a1" alt="" style="width:100%;height:100%;object-fit:contain;padding:18px;box-sizing:border-box;display:block"></span>
       <h1 style="font-size:27px;font-weight:700;color:#fff;letter-spacing:-.02em">Arsa Takip</h1><p style="margin:-2px 0 0;color:rgba(255,255,255,.6);font-size:12px;letter-spacing:.2em">by Melkor</p>
       <p style="margin:2px 0 32px;color:rgba(255,255,255,.75);font-size:14px">Kullanıcı girişi</p>
       <button class="btn" id="ggl" style="max-width:320px;display:flex;align-items:center;justify-content:center;gap:10px">
@@ -3348,7 +3456,6 @@ function head(title, back){
   const sag = back ? "" : `<div class="ustSag">
       <span class="surumRozet ufak">${surumYazi().toLocaleUpperCase("tr")}</span>
       <div class="ustIkon">
-        <button class="ibtn ak" onclick="go('tema')" aria-label="Tema">${svg("palet")}</button>
         ${ME.role==='admin'?`<button class="ibtn ak" onclick="go('ayarlar')" aria-label="Ayarlar">${svg("gear")}</button>`:""}
         <button class="ibtn cik" onclick="cikisSor()" aria-label="Çıkış yap">${svg("out")}</button>
       </div>
@@ -3360,7 +3467,7 @@ function head(title, back){
         stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`:""}
     ${title
       ? `<h1>${esc(title)}</h1>`
-      : `<div class="logo">${anaTema()==="loca" ? "" : `<span class="mark"><img src="${gv('logo.png')}&ba=1" alt=""></span>`}
+      : `<div class="logo">${anaTema()==="loca" ? "" : `<span class="mark"><img src="${gv('logo.png')}&a=1" alt=""></span>`}
            <span><b>${anaTema()==="loca" ? "Kahramanın Yolu" : "Arsa Takip"}</b>
              <span>${anaTema()==="loca" ? "Yürüyen değil, arınan varır!" : "by Melkor"}</span>
              ${kullaniciRozetHtml()}</span></div>`}
@@ -7476,9 +7583,9 @@ const ANA_TEMALAR = [
   { k:"loca",   ad:"Melkor", aciklama:"Mor gece ve spektral turkuaz. Maskotlu, seviyeli, animasyonlu eğlence alanı. · beta 1.0" }
 ];
 // Mordor yalnizca admin icindir; digerleri dogrudan Melkor'a duser
-const temaSecebilir = () => ME?.role === "admin";
+const temaSecebilir = () => !!ME;   // v1.0: tek tema (is). PC duzeni de her yetkide acilir; yetkiler ekranlarin icinde
 const anaTema = () => {
-  if(!temaSecebilir()) return "loca";
+  return "vitrin";   // v1.0: Melkor kaldirildi
   const t = localStorage.getItem("anaTema");
   return (t === "vitrin" || t === "loca") ? t : "vitrin";
 };
@@ -7520,9 +7627,12 @@ function menuGovde(tema){
       </button>`;
     return `<div class="vitrin">
       <div class="kurSerit"><div class="sDoku"></div><div id="rates" class="rates"></div></div>
-      ${MENULER.map((m,i)=>serit(`go('${m.r}')`, svg(m.i), m.ad, m.alt, i < 4 ? "kizil" : "koz")).join("")}
-      ${serit("go('yaklasan')", svg("note"), "Yaklaşanlar", "Vekalet süreleri, vadeler", "ikincil", true)}
-      ${serit("go('hesap')", svg("money"), "Hesap - Kitap", "Alacaklar, borçlar", "ikincil")}
+      ${serit("go('araziler')", svg("katman"), "Araziler", "Parseller, belgeler, çap", "kizil")}
+      ${serit("go('harita')", svg("pusula"), "Harita", "Parsel sorgula", "kizil")}
+      ${serit("go('yaklasan')", svg("note"), "Takvim", "Vekalet süreleri, vadeler", "kizil", true)}
+      ${serit("go('hesap')", svg("money"), "Hesap - Kitap", "Alacaklar, borçlar", "kizil")}
+      ${serit("go('ekler')", svg("atac"), "Ekler", "Vekalet, muvafakat", "koz")}
+      ${serit("go('yz')", svg("spark"), "Claude'a Sor", "Parsel bilgisiyle", "koz")}
     </div>`;
   }
 
@@ -8959,6 +9069,7 @@ async function parselDetay(id){
       <button class="btn ghost" style="margin-top:8px" onclick="go('sunum','${id}')">Sunum Görseli Hazırla</button>
       <button class="btn ghost" style="margin-top:8px" onclick="go('ilan','${id}')">İlan Afişi Hazırla</button>
       <button class="btn ghost" style="margin-top:8px" onclick="go('parcalar','${id}')">Parçalar / Hisseler</button>
+      ${p.geojson ? `<button class="btn ghost mobCapTus" style="margin-top:8px" onclick="pcAltGit('capAyar','${id}')">Çap Çiz / Düzenle</button>` : ""}
 ` : ""}
     </div>
 
@@ -17205,7 +17316,7 @@ async function capAyar(arg){
   PARCA.elleYol = { aktif:false, yollar:[] }; PARCA.mod = null; PARCA.yolCiz = null;
   capDokuYukle();
 
-  app.innerHTML = head(belgeId ? "Çapı Düzenle" : "Çap Çizdir", belgeId ? `go('parsel','${parselId}')` : "go('cap')") + `
+  app.innerHTML = head(belgeId ? "Çapı Düzenle" : "Çap Çizdir", `go('parsel','${parselId}')`) + `
     <div class="card">
       <div style="font-size:12px;color:var(--ink-3)">${esc(duzgun(p.mahalle))}</div>
       <div style="font-size:17px;font-weight:600;margin-top:2px">Ada ${esc(p.ada||"—")} · Parsel ${esc(p.parsel)}</div>
@@ -18215,22 +18326,6 @@ async function ayarlar(){
       <div class="kv"><span>Hesap</span><b>${esc((ME.full_name && !ME.full_name.includes("@")) ? ME.full_name : (ME.email||"").split("@")[0])}</b></div>
       <div class="kv"><span>E-posta</span><b>${esc(ME.email||"")}</b></div>
       <div class="kv"><span>Yetki</span><b>${rolAd[ME.role]}</b></div>
-      <label style="display:flex;align-items:center;gap:10px;margin:12px 0 0;font-size:13.5px;color:var(--ink)">
-        <input type="checkbox" id="sesKutu" style="width:20px;height:20px"
-          ${localStorage.getItem("sesKapali") === "1" ? "" : "checked"}
-          onchange="localStorage.setItem('sesKapali', this.checked ? '0' : '1')">
-        <span style="flex:1">Uygulama sesleri açık</span></label>
-      <label style="display:flex;align-items:center;gap:10px;margin:10px 0 0;font-size:13.5px;color:var(--ink)">
-        <input type="checkbox" id="introKutu" style="width:20px;height:20px"
-          ${localStorage.getItem("introSesKapali") === "1" ? "checked" : ""}
-          onchange="localStorage.setItem('introSesKapali', this.checked ? '1' : '0')">
-        <span style="flex:1">Açılış videosunun sesi kapalı</span></label>
-      <label style="display:flex;align-items:center;gap:10px;margin:10px 0 0;font-size:13.5px;color:var(--ink)">
-        <input type="checkbox" id="maskotKutu" style="width:20px;height:20px"
-          ${localStorage.getItem("maskotKapali") === "1" ? "" : "checked"}
-          onchange="localStorage.setItem('maskotKapali', this.checked ? '0' : '1');
-                    this.checked ? maskotKur() : document.getElementById('maskot')?.remove()">
-        <span style="flex:1">Maskot açık · sadece Melkor teması</span></label>
       ${ME.role==='admin'?`<button class="btn ghost" style="margin-top:12px" onclick="go('marka')">
         Marka Kimliği ${markaVarMi()?"· tanımlı":"· tanımsız"}</button>`:""}
       ${anaTema()==="loca"?`<button class="btn ghost" style="margin-top:12px"
@@ -18345,7 +18440,7 @@ window.addEventListener("popstate", () => {
     GEZINTI = [{ r:"ana", arg:undefined }];
   }else{
     // alt ekranlar ust ekrana parsel kimligiyle doner
-    const arg = (ust === "parsel") ? (simdi.arg ? String(simdi.arg).split("|")[0] : undefined) : undefined;
+    const arg = (ust === "parsel") ? (simdi.r === "fiyatDuzen" && window.SONPARSELID ? SONPARSELID : simdi.arg ? String(simdi.arg).split("|")[0] : undefined) : undefined;
     GEZINTI.pop();
     GEZINTI.push({ r:ust, arg });
     ekraniCiz(ust, arg);
@@ -19741,10 +19836,9 @@ const pcLS = (k, v) => { try{ if(v === undefined) return localStorage.getItem(k)
 const PC_MENU = [
   { r:"araziler", i:"katman", ad:"Araziler" },
   { r:"harita",   i:"map",    ad:"Harita sorgu", kisa:"Harita" },
-  { r:"hesap",    i:"money",  ad:"Hesap - Kitap", kisa:"Hesap" },
-  { r:"yaklasan", i:"takvim", ad:"Takvim · yaklaşanlar", kisa:"Takvim", rozet:true }
+  { r:"hesap",    i:"money",  ad:"Hesap & Takvim", kisa:"Hesap", rozet:true }
 ];
-const PC_AILE = { parsel:"araziler", yeni:"araziler", parcalar:"araziler", sunum:"araziler", ilan:"araziler", saha:"araziler", belgeler:"araziler", capAyar:"araziler", fiyatDuzen:"araziler", fiyat:"araziler", marka:"ayarlar", yedek:"ayarlar", tema:"ayarlar", rehber:"ayarlar" };
+const PC_AILE = { yaklasan:"hesap", parsel:"araziler", yeni:"araziler", parcalar:"araziler", sunum:"araziler", ilan:"araziler", saha:"araziler", belgeler:"araziler", capAyar:"araziler", fiyatDuzen:"araziler", fiyat:"araziler", marka:"ayarlar", yedek:"ayarlar", tema:"ayarlar", rehber:"ayarlar" };
 const PC_AD = { ana:"Genel Bakış", araziler:"Araziler", harita:"Harita Sorgu", fiyat:"Tapu Bilgileri", cap:"Çap", kml:"KML", yaklasan:"Yaklaşanlar", hesap:"Hesap - Kitap",
   ekler:"Ekler", yz:"Claude'a Sor", yedek:"Yedek", ayarlar:"Ayarlar", tema:"Tema", marka:"Marka", yeni:"Yeni Parsel", fiyatDuzen:"Tapu Düzenle",
   parsel:"Genel", parcalar:"Hisseler", capAyar:"Çap", ilan:"İlan Afişi", sunum:"Sunum", saha:"Saha", belgeler:"Belgeler" };
@@ -19752,7 +19846,7 @@ const PC_AD = { ana:"Genel Bakış", araziler:"Araziler", harita:"Harita Sorgu",
 const PC_ALT = [["parsel","Genel","home"],["capAyar","Çap & Hisseler","cetvel"],["ilan","İlan & Sunum","photo"],["belgeler","Belgeler","atac"]];
 const PC_ALT_GRUP = { parsel:"parsel", capAyar:"capAyar", parcalar:"capAyar", ilan:"ilan", sunum:"ilan", belgeler:"belgeler", saha:"parsel", fiyatDuzen:"parsel" };
 const PC_ALT_ANAHTAR = { capAyar:[["capAyar","Çizim"],["parcalar","Hisse durumu"]], ilan:[["ilan","Afiş & video"],["sunum","Sunum görseli"]] };
-const PC_GIZLI_EKRAN = new Set(["fiyat", "cap", "kml", "tema", "yeni", "fiyatDuzen", "marka"]);
+const PC_GIZLI_EKRAN = new Set(["yaklasan", "fiyat", "cap", "kml", "tema", "yeni", "fiyatDuzen", "marka"]);
 const PC_PARSEL_EKRAN = new Set(["parsel","parcalar","capAyar","ilan","sunum","saha","belgeler"]);
 const pcParselId = (r, arg) => PC_PARSEL_EKRAN.has(r) && arg ? String(arg).split("|")[0] : null;
 
@@ -19817,7 +19911,7 @@ function pcMenuAc(btn, k){
     dosya:[ adm && ["Yeni parsel", "go('yeni')"], ["Haritadan parsel sorgula", "pcGit('harita')"], adm && window.arsaPC?.gptAc && ["✦ Tapu fotoğrafından parsel ekle", "tapuIleEkle()"], "-", ["Yedek al / geri yükle", "pcGit('yedek')"], window.arsaPC?.yedekKlasor && ["Yedek klasörünü aç", "arsaPC.yedekKlasor()"], "-", ["Çıkış", "cikisSor()"] ],
     parsel: pid ? [ ...PC_ALT.map(([r, a]) => [a, `pcAltGit('${r}','${pid}')`]), ["Hisse durumu", `pcAltGit('parcalar','${pid}')`], ["Sunum görseli", `pcAltGit('sunum','${pid}')`], "-", ["İmar durumu (e-Plan)", `eplanAc('${pid}')`], window.arsaPC?.gptAc && ["✦ İmar yorumu (ChatGPT)", `imarYorumAc('${pid}')`], ["✦ Bu parseli Claude'a sor", `yzSorAc('${pid}')`], ["KML indir", `kmlIndirParsel('${pid}')`], adm && "-", adm && ["Parseli sil…", `parselTamSilAc('${pid}')`] ] : [ ["Önce bir parsel aç", ""] ],
     gorunum:[ [(document.body.classList.contains("pcGezKapali") ? "Parsel gezginini göster" : "Parsel gezginini gizle"), "pcPanel('pcGez')"], [(document.body.classList.contains("pcOzKapali") ? "Özellikler panelini göster" : "Özellikler panelini gizle"), "pcPanel('pcOz')"], PC_EXE ? null : "-", PC_EXE ? null : ["Telefon görünümüne geç", "localStorage.setItem('pcKapali','1');location.reload()"] ],
-    araclar:[ ["✦ Claude'a sor", "pcGit('yz')"], ["Vekalet / muvafakat (Ekler)", "pcGit('ekler')"], ["Takvim · yaklaşanlar", "pcGit('yaklasan')"], "-", ["Yedek al / geri yükle", "pcGit('yedek')"], adm && ["Marka kimliği", "pcGit('marka')"], ["Ayarlar", "pcGit('ayarlar')"] ],
+    araclar:[ ["✦ Claude'a sor", "pcGit('yz')"], ["Vekalet / muvafakat (Ekler)", "pcGit('ekler')"], "-", ["Yedek al / geri yükle", "pcGit('yedek')"], adm && ["Marka kimliği", "pcGit('marka')"], ["Ayarlar", "pcGit('ayarlar')"] ],
     yardim:[ [surumYazi() + " · masaüstü", ""], ["Veriler telefonla ortak (Supabase)", ""], PC_SON_YEDEK && ["Son otomatik yedek: " + new Date(PC_SON_YEDEK).toLocaleString("tr-TR"), ""] ]
   }[k].filter(x => x !== false && x !== null && x !== undefined && x !== "");
   btn.classList.add("on");
@@ -20008,7 +20102,7 @@ function pcDurumCiz(){
   const pid = pcParselId(PC_SIMDI.r, PC_SIMDI.arg), p = pid && PC_P.find(x => x.id === pid);
   const on = navigator.onLine;
   k.innerHTML = `<span class="${on ? "ok" : "uy"}"><i></i>${on ? "Senkron · Supabase" : "Bağlantı yok"}</span><span>${esc(ME?.full_name || "")} · ${ME?.role === "admin" ? "Admin" : "Üye"}</span>
-    ${window.__pcYak ? `<span class="kirmizi" onclick="pcGit('yaklasan')">${window.__pcYak} yaklaşan</span>` : ""}
+    ${window.__pcYak ? `<span class="kirmizi" onclick="pcGit('hesap')">${window.__pcYak} yaklaşan</span>` : ""}
     <span class="bos"></span>
     ${p ? `<span>${esc(duzgun(p.mahalle))} ${esc((p.ada || "—") + "/" + p.parsel)}${p._parca ? " · " + p._parca + " parça" : ""}</span>` : `<span>${PC_P.filter(x => x._y).length} parsel · ${YEAR}</span>`}
     ${PC_SON_YEDEK ? `<span title="Otomatik yedek">yedek ${new Date(PC_SON_YEDEK).toLocaleDateString("tr-TR")}</span>` : ""}
@@ -20090,12 +20184,12 @@ async function pcPano(){
     <div class="pcHero"><div><small id="stamp"></small><h2>${selam}${ad ? ", " + esc(ad) : ""}</h2><p>Portföyün ${yil} özeti</p></div>
       <div class="pcHeroTus">${adm ? `<button class="btn" onclick="go('yeni')">${svg("pin")}Yeni parsel</button>` : ""}
         <button class="btn ghost" onclick="pcGit('harita')">${svg("pusula")}Parsel sorgula</button>
-        <button class="btn ghost" onclick="pcGit('hesap')">${svg("money")}Hesap - Kitap</button>
+        <button class="btn ghost" onclick="pcGit('hesap')">${svg("money")}Hesap & Takvim</button>
         <button class="btn ghost" onclick="pcGit('yz')">${svg("spark")}Claude'a sor</button></div></div>
     <div class="pcKpi" id="pcKpi">${"<div class='pcK'><span>—</span><b>…</b></div>".repeat(5)}</div>
     <div class="pcPano3">
-      ${kutu("pcYak", "Yaklaşanlar · 30 gün", `<button class="pcLink" onclick="pcGit('yaklasan')">Takvim →</button>`)}
-      ${kutu("pcHsp", "Hesap durumu", `<button class="pcLink" onclick="pcGit('hesap')">Hesap - Kitap →</button>`)}
+      ${kutu("pcYak", "Yaklaşanlar · 30 gün", `<button class="pcLink" onclick="pcGit('hesap')">Takvim →</button>`)}
+      ${kutu("pcHsp", "Hesap durumu", `<button class="pcLink" onclick="pcGit('hesap')">Hesap & Takvim →</button>`)}
       ${kutu("pcHar", "Son hareketler", "")}
     </div>
     ${kutu("rates", "Piyasa", "", "", "pcBoxPiyasa pcPiyasaSerit")}`;
@@ -20806,15 +20900,14 @@ function yzSorAc(pid){ window.__yzPid = pid || null; if(typeof PC_ACIK !== "unde
   const eskiYz = yapayZeka;
   const yeniYz = async function(){
     const pc = typeof PC_ACIK !== "undefined" && PC_ACIK;
-    if(!pc) return eskiYz();
     const { data:P } = await sb.from("parcels").select("id,il,ilce,mahalle,ada,parsel").order("mahalle");
-    const sec = window.__yzPid || pcParselId(PC_SIMDI.r, PC_SIMDI.arg) || "";
-    app.innerHTML = head("Claude'a Sor", "go('ana')") + `
+    const sec = window.__yzPid || (pc ? pcParselId(PC_SIMDI.r, PC_SIMDI.arg) : "") || "";
+    app.innerHTML = head("Claude'a Sor", pc ? "pcGit('ana')" : "go('ana')") + `
       <div class="card yzKart">
         <div class="yzUst"><label>Parsel<select id="yzP"><option value="">— parselsiz, genel soru —</option>${(P || []).map(p => `<option value="${p.id}" ${p.id === sec ? "selected" : ""}>${esc(duzgun(p.mahalle))} ${esc((p.ada || "—") + "/" + p.parsel)} · ${esc(duzgun(p.ilce))}</option>`).join("")}</select></label></div>
         <div class="yzHazir">${YZ_HAZIR.map(([a], i) => `<button class="pill sade" onclick="yzHazirSec(${i})">${esc(a)}</button>`).join("")}</div>
         <textarea id="yzSoru" rows="7" placeholder="Ne sormak istiyorsun? Yukarıdan hazır bir iş seç ya da kendin yaz. Seçtiğin parselin bilgileri (konum, alan, parçalar, çevre, karne, emsaller) soruya otomatik eklenir."></textarea>
-        <div class="yzAlt"><small>Claude, programın içindeki kendi penceresinde açılır. İlk seferde Claude hesabınla giriş yapman yeter, sonra hatırlar.</small>
+        <div class="yzAlt"><small>${window.arsaPC?.yzAc ? "Claude, programın içindeki kendi penceresinde açılır. İlk seferde Claude hesabınla giriş yapman yeter, sonra hatırlar." : "Soru panoya kopyalanır ve Claude açılır; sohbete yapıştırıp gönder."}</small>
           <button class="btn" onclick="yzGonder()">${svg("spark")}Claude'a gönder</button></div>
       </div>
       <div class="yzDis"><span>Diğerleri tarayıcıda:</span>${AI_LER.filter(a => a.id !== "claude").map(a => `<a class="pill sade" href="${a.url}" target="_blank" rel="noopener">${esc(a.ad)}</a>`).join("")}</div>`;
@@ -20867,6 +20960,277 @@ async function yzGonder(){
 }
 // yedek dosyalari artik uygulamanin adini tasir (eski "parselparsel" adli yedekler de geri yuklenebilir; geri yukleme dosya adina bakmaz)
 yedekDosyaAdi = function(){ const d = new Date(), p = n => String(n).padStart(2, "0"); return `arsatakip-yedek-${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}.json`; };
+
+/* ---------- 5) telefon: PC'nin yan uygulamasi ---------- */
+// Melkor ekranlari (oyunlar, TV, carki, rehber, tema) kapandi: eski bir baglantidan gelinirse ana sayfaya doner
+["tv", "zindan", "carki", "rehber", "esas", "kule", "oyunlar", "tema"].forEach(r => { ekranlar[r] = () => ekranlar.ana(); });
+try{ UST_EKRAN.capAyar = "parsel"; UST_EKRAN.fiyatDuzen = "parsel"; }catch(e){}
+maskotAcikMi = () => false;
+try{ document.getElementById("maskot")?.remove(); }catch(e){}
+
+/* ================= v1.0 · PC: HESAP & TAKVIM (tek ekran) =================
+   Solda kayitlar tablosu (alacak + borc, suzgec, arama), sagda takvim (geciken / bu hafta / bu ay / 60 gune kadar, vekaletler dahil).
+   Yeni kayit ve duzenleme ayni pencerede: tur, kisi, not, tek odeme ya da taksit tablosu (tarih, tutar, odenen), Kaydet / Kapat / Sil.
+   Hata olursa pencerenin icinde kalici yazar (toast'ta kaybolmaz). Telefon ekranlari bu blokta degismez. */
+let HSP_SUZ = { tip:"hepsi", durum:"acik", q:"" }, HSP_VERI = null, HSP = null;
+const hspTl = n => nf(Math.round(+n || 0)) + " ₺";
+const hspGun = t => { const b = new Date(); b.setHours(0,0,0,0); return Math.round((new Date(t) - b)/86400000); };
+const hspDurum = g => g == null ? "" : g < 0 ? `${-g} gün geçti` : g === 0 ? "bugün" : g === 1 ? "yarın" : `${g} gün`;
+const hspYaz = () => ME?.role !== "uye";
+
+async function hspYukle(){
+  const [{ data:H, error }, { data:V }, { data:E }] = await Promise.all([ sb.from("hesap").select("*"), sb.from("hesap_vade").select("*"), sb.from("ekler").select("*") ]);
+  if(error) throw error;
+  const grup = {}; (V || []).forEach(v => (grup[v.hesap_id] = grup[v.hesap_id] || []).push(v));
+  const L = (H || []).map(k => ({ k, o: hesapOzet(k, grup[k.id] || []) }));
+  return HSP_VERI = { L, V: V || [], E: E || [], grup };
+}
+
+async function hspEkran(){
+  if(!(typeof PC_ACIK !== "undefined" && PC_ACIK)) return hesapEskiEkran();
+  app.innerHTML = head("Hesap & Takvim", "pcGit('ana')") + `<div class="hspKpi" id="hspKpi"></div>
+    <div class="hspIzgara">
+      <section class="pcBox hspListe"><header><b>Kayıtlar</b>
+        <div class="hspSuz" id="hspSuz"></div>
+        <input class="hspAra" placeholder="Kişi ya da not ara…" value="${esc(HSP_SUZ.q)}" oninput="HSP_SUZ.q=this.value;hspTablo()"></header>
+        <div class="pcBoxIc" id="hspTablo"><div class="spin"></div></div></section>
+      <section class="pcBox hspTakvim"><header><b>Takvim</b><small>60 gün · vadeler ve vekaletler</small></header>
+        <div class="pcBoxIc" id="hspTak"><div class="spin"></div></div></section>
+    </div>
+    ${hspYaz() ? `<button class="fab" onclick="hspDuzen()">+</button>` : ""}`;
+  try{ await hspYukle(); }catch(e){ document.getElementById("hspTablo").innerHTML = `<div class="pcBos">Kayıtlar okunamadı: ${esc(e.message || e)}</div>`; return; }
+  hspKpi(); hspTablo(); hspTakvim();
+}
+
+function hspKpi(){
+  const k = document.getElementById("hspKpi"); if(!k || !HSP_VERI) return;
+  const t = { alacak:{ kalan:0, n:0 }, borc:{ kalan:0, n:0 } }; let buAyA = 0, buAyB = 0, gecA = 0, gecB = 0;
+  HSP_VERI.L.forEach(({ k, o }) => { const b = k.tip === "borc"; const x = t[b ? "borc" : "alacak"]; x.kalan += o.kalan; if(o.kalan >= .5) x.n++;
+    o.buAy.forEach(v => b ? buAyB += v.kalan : buAyA += v.kalan); o.geciken.forEach(v => b ? gecB += v.kalan : gecA += v.kalan); });
+  const kart = (ad, deger, alt, cls, git) => `<div class="pcK ${git ? "tik" : ""}" ${git ? `onclick="${git}"` : ""}><span>${ad}</span><b class="mono ${cls || ""}">${deger}</b><small>${alt}</small></div>`;
+  k.innerHTML = kart("Kalan alacak", hspTl(t.alacak.kalan), `${t.alacak.n} açık kayıt`, "yesil", "HSP_SUZ.tip='alacak';HSP_SUZ.durum='acik';hspTablo()")
+    + kart("Kalan borç", hspTl(t.borc.kalan), `${t.borc.n} açık kayıt`, "kirmizi", "HSP_SUZ.tip='borc';HSP_SUZ.durum='acik';hspTablo()")
+    + kart("Bu ay", `<span class="yesil">+${hspTl(buAyA)}</span>`, `ödenecek borç ${hspTl(buAyB)}`, "")
+    + kart("Geciken", hspTl(gecA + gecB), `alacak ${hspTl(gecA)} · borç ${hspTl(gecB)}`, gecA + gecB >= .5 ? "kirmizi" : "");
+}
+
+function hspTablo(){
+  const k = document.getElementById("hspTablo"); if(!k || !HSP_VERI) return;
+  const s = document.getElementById("hspSuz");
+  const seg = (alan, L) => `<span class="hspSeg">${L.map(([v, a]) => `<button class="${HSP_SUZ[alan] === v ? "on" : ""}" onclick="HSP_SUZ.${alan}='${v}';hspTablo()">${a}</button>`).join("")}</span>`;
+  if(s) s.innerHTML = seg("tip", [["hepsi", "Tümü"], ["alacak", "Alacaklar"], ["borc", "Borçlar"]]) + seg("durum", [["acik", "Açık"], ["kapali", "Kapanan"], ["hepsi", "Hepsi"]]);
+  const q = HSP_SUZ.q.toLocaleLowerCase("tr").trim();
+  const L = HSP_VERI.L.filter(({ k, o }) => (HSP_SUZ.tip === "hepsi" || k.tip === HSP_SUZ.tip)
+      && (HSP_SUZ.durum === "hepsi" || (HSP_SUZ.durum === "acik" ? o.kalan >= .5 : o.kalan < .5))
+      && (!q || `${k.kisi} ${k.notu || ""}`.toLocaleLowerCase("tr").includes(q)))
+    .sort((a, b) => ((a.o.kalan >= .5) === (b.o.kalan >= .5) ? 0 : a.o.kalan >= .5 ? -1 : 1) || String(a.o.sonraki?.tarih || "9999").localeCompare(String(b.o.sonraki?.tarih || "9999")));
+  if(!L.length){ k.innerHTML = `<div class="pcBos">${HSP_VERI.L.length ? "Bu süzgeçte kayıt yok." : "Henüz kayıt yok. Sağ üstteki “Yeni kayıt” ile başla."}</div>`; return; }
+  k.innerHTML = `<table class="pcTablo hspT"><thead><tr><th>Kişi / kurum</th><th>Tür</th><th class="sag">Toplam</th><th>Ödeme</th><th class="sag">Kalan</th><th>Sıradaki</th></tr></thead><tbody>
+    ${L.map(({ k, o }) => { const kap = o.kalan < .5, s = o.sonraki, g = s?.tarih ? hspGun(s.tarih) : null, yz = o.toplam ? Math.round(o.odenen/o.toplam*100) : 0, b = k.tip === "borc";
+      return `<tr class="${kap ? "kapali" : ""}" onclick="hspDuzen('${k.id}')"><td><b>${esc(k.kisi)}</b>${k.notu ? `<small>${esc(k.notu)}</small>` : ""}</td>
+        <td><span class="hspTur ${b ? "borc" : "alacak"}">${b ? "Borç" : "Alacak"}</span></td>
+        <td class="sag mono">${hspTl(o.toplam)}</td>
+        <td><div class="hspBar"><i style="width:${yz}%" class="${b ? "borc" : "alacak"}"></i></div><small>${k.vadeli ? `${o.odenenAdet}/${o.adet} taksit` : "tek ödeme"} · %${yz}</small></td>
+        <td class="sag mono hspKalan ${kap ? "" : b ? "kirmizi" : "yesil"}">${kap ? "—" : hspTl(o.kalan)}</td>
+        <td>${kap ? `<span class="hspOk">✓ kapandı</span>` : s ? `<span class="mono">${trTarih(s.tarih)}</span><small class="${g != null && g < 0 ? "gecti" : g != null && g <= 7 ? "yakin" : ""}">${hspDurum(g)}${o.geciken.length > 1 ? ` · ${o.geciken.length} taksit gecikti` : ""}</small>` : `<small>tarih yok</small>`}</td></tr>`; }).join("")}
+    </tbody></table>`;
+}
+
+function hspTakvim(){
+  const k = document.getElementById("hspTak"); if(!k || !HSP_VERI) return;
+  const hk = Object.fromEntries(HSP_VERI.L.map(x => [x.k.id, x.k])), S = [];
+  HSP_VERI.V.forEach(v => { const h = hk[v.hesap_id]; if(!h || h.kapandi || vadeKalan(v) < .5 || !v.tarih) return;
+    const sira = (HSP_VERI.grup[h.id] || []).slice().sort((a, b) => String(a.tarih).localeCompare(String(b.tarih))).findIndex(x => x.id === v.id) + 1;
+    S.push({ t:v.tarih, tur: h.tip === "borc" ? "borc" : "alacak", b:h.kisi, alt:`${hspTl(vadeKalan(v))} · taksit ${sira}/${(HSP_VERI.grup[h.id] || []).length}`, git:`hspDuzen('${h.id}')`, ode:`hspHizliOde('${v.id}','${h.id}')` }); });
+  HSP_VERI.L.forEach(({ k, o }) => { if(k.vadeli || k.kapandi || !k.tarih || o.kalan < .5) return; S.push({ t:k.tarih, tur: k.tip === "borc" ? "borc" : "alacak", b:k.kisi, alt:`${hspTl(o.kalan)} · tek ödeme`, git:`hspDuzen('${k.id}')`, ode:`hspHizliOde(null,'${k.id}')` }); });
+  HSP_VERI.E.forEach(e => { if(e.suresiz || !e.gecerlilik_tarihi) return; S.push({ t:e.gecerlilik_tarihi, tur:"vekalet", b:e.ad_soyad, alt:"vekalet geçerliliği bitiyor", git:"go('ekler')" }); });
+  const L = S.map(x => ({ ...x, g: hspGun(x.t) })).filter(x => x.g <= 60).sort((a, b) => a.g - b.g);
+  if(!L.length){ k.innerHTML = `<div class="pcBos">Önümüzdeki 60 günde vade ya da vekalet bitişi yok.</div>`; return; }
+  const gruplar = [["Gecikmiş", x => x.g < 0], ["Bu hafta", x => x.g >= 0 && x.g <= 7], ["Bu ay", x => x.g > 7 && x.g <= 31], ["Sonra", x => x.g > 31]];
+  const ay = ["Oca","Şub","Mar","Nis","May","Haz","Tem","Ağu","Eyl","Eki","Kas","Ara"];
+  k.innerHTML = gruplar.map(([ad, f]) => { const G = L.filter(f); if(!G.length) return "";
+    return `<div class="hspTakG"><div class="hspTakB ${ad === "Gecikmiş" ? "gecti" : ""}">${ad}<em>${G.length}</em></div>${G.map(x => { const d = new Date(x.t);
+      return `<div class="hspTakS" onclick="${x.git}"><span class="hspTarih ${x.g < 0 ? "gecti" : x.g <= 7 ? "yakin" : ""}"><b>${d.getDate()}</b><small>${ay[d.getMonth()]}</small></span>
+        <div><b>${esc(x.b)}</b><small><span class="hspTur ${x.tur}">${x.tur === "borc" ? "Borç" : x.tur === "alacak" ? "Alacak" : "Vekalet"}</span>${esc(x.alt)}</small></div>
+        <em class="${x.g < 0 ? "gecti" : ""}">${hspDurum(x.g)}</em>
+        ${x.ode && hspYaz() ? `<button title="${x.tur === "borc" ? "Ödendi" : "Tahsil edildi"} olarak işaretle" onclick="event.stopPropagation();${x.ode}">✓</button>` : ""}</div>`; }).join("")}</div>`; }).join("");
+}
+
+async function hspHizliOde(vid, hid){
+  const h = HSP_VERI?.L.find(x => x.k.id === hid)?.k; if(!h) return;
+  if(!confirm(`${h.kisi}: bu ${vid ? "taksit" : "ödeme"} bugün ${h.tip === "borc" ? "ödendi" : "tahsil edildi"} olarak işaretlensin mi?`)) return;
+  let error;
+  if(vid){ const v = HSP_VERI.V.find(x => x.id === vid); ({ error } = await sb.from("hesap_vade").update({ odenen:+v.tutar || 0, odendi:true, odeme_tarihi:bugunISO() }).eq("id", vid)); if(!error) await kapanisTazele(hid); }
+  else ({ error } = await sb.from("hesap").update({ odenen:+h.tutar || 0, odeme_tarihi:bugunISO(), kapandi:true }).eq("id", hid));
+  if(error) return dbHatasi(error);
+  toast("İşaretlendi"); await hspYukle(); hspKpi(); hspTablo(); hspTakvim(); try{ pcRozet(); }catch(e){}
+}
+
+/* ---- yeni kayit / duzenleme penceresi ---- */
+async function hspDuzen(id){
+  let k = null, vs = [];
+  if(id){ const [{ data:a }, { data:b }] = await Promise.all([ sb.from("hesap").select("*").eq("id", id).single(), sb.from("hesap_vade").select("*").eq("hesap_id", id).order("tarih") ]);
+    if(!a) return toast("Kayıt bulunamadı"); k = a; vs = b || []; }
+  HSP = { id: id || null, k, tip: k?.tip || (HSP_SUZ.tip === "borc" ? "borc" : "alacak"), vadeli: k ? !!k.vadeli : false,
+    satir: vs.map(v => ({ id:v.id, tarih:v.tarih, tutar:+v.tutar || 0, odenen: v.odendi ? (+v.odenen || +v.tutar || 0) : (+v.odenen || 0), ilkOdenen: v.odendi ? (+v.odenen || +v.tutar || 0) : (+v.odenen || 0), odeme_tarihi:v.odeme_tarihi })),
+    silinen: [] };
+  document.querySelector(".hspModal")?.remove();
+  const yaz = hspYaz(), adm = ME?.role === "admin";
+  const d = document.createElement("div"); d.className = "ekOnizle hspModal";
+  d.innerHTML = `<div class="hspPen">
+    <div class="hspPenBas"><b>${id ? "Kaydı düzenle" : "Yeni kayıt"}</b>${k?.kapandi ? `<span class="hspOk">kapandı</span>` : ""}<span style="flex:1"></span><button class="hspX" onclick="hspKapatPen()">✕</button></div>
+    <div class="hspPenIc">
+      <div class="hspSatir2">
+        <div class="hspAlan"><label>Tür</label><span class="hspSeg buyuk" id="hspTip">${[["alacak","Alacağım"],["borc","Borcum"]].map(([v, a]) => `<button type="button" data-v="${v}" class="${HSP.tip === v ? "on" : ""}" onclick="HSP.tip='${v}';hspSegYak('hspTip','${v}')">${a}</button>`).join("")}</span></div>
+        <div class="hspAlan"><label>Ödeme biçimi</label><span class="hspSeg buyuk" id="hspBicim">${[["0","Tek ödeme"],["1","Taksitli"]].map(([v, a]) => `<button type="button" data-v="${v}" class="${(HSP.vadeli ? "1" : "0") === v ? "on" : ""}" onclick="hspBicim(${v === "1"})">${a}</button>`).join("")}</span></div>
+      </div>
+      <div class="hspSatir2">
+        <div class="hspAlan"><label>Kişi / kurum</label><input id="hspKisi" value="${esc(k?.kisi || "")}" placeholder="Ad soyad ya da banka" autocomplete="off"></div>
+        <div class="hspAlan"><label>Not</label><input id="hspNot" value="${esc(k?.notu || "")}" placeholder="İsteğe bağlı, tek satır"></div>
+      </div>
+      <div id="hspTek" style="${HSP.vadeli ? "display:none" : ""}"><div class="hspSatir3">
+        <div class="hspAlan"><label>Tutar (₺)</label><input id="hspTutar" inputmode="decimal" value="${k && !k.vadeli ? ham(k.tutar) : ""}" placeholder="0" oninput="hspOzetYaz()"></div>
+        <div class="hspAlan"><label>Vade tarihi</label><input id="hspTarih" type="date" value="${k && !k.vadeli ? (k.tarih || "") : ""}"></div>
+        <div class="hspAlan"><label>Ödenen / tahsil edilen (₺)</label><div class="hspIc"><input id="hspOdenen" inputmode="decimal" value="${k && !k.vadeli && +k.odenen ? ham(k.odenen) : ""}" placeholder="0" oninput="hspOzetYaz()"><button type="button" onclick="document.getElementById('hspOdenen').value=document.getElementById('hspTutar').value;hspOzetYaz()">Tamamı</button></div></div>
+      </div></div>
+      <div id="hspTaksit" style="${HSP.vadeli ? "" : "display:none"}">
+        <details class="hspUret" ${HSP.satir.length ? "" : "open"}><summary>${HSP.satir.length ? "Kalan tutarı yeniden taksitlendir" : "Taksitleri oluştur"}</summary>
+          <div class="hspSatir4"><div class="hspAlan"><label>${HSP.satir.length ? "Toplam borç/alacak (₺)" : "Toplam tutar (₺)"}</label><input id="hspGTop" inputmode="decimal" value="${HSP.satir.length ? ham(HSP.satir.reduce((t, s) => t + s.tutar, 0)) : ""}"></div>
+            <div class="hspAlan"><label>Taksit sayısı</label><input id="hspGAdet" type="number" min="1" max="120" value="${Math.max(1, HSP.satir.filter(s => s.odenen < s.tutar - .5).length || 6)}"></div>
+            <div class="hspAlan"><label>İlk taksit</label><input id="hspGIlk" type="date" value="${(HSP.satir.find(s => s.odenen < s.tutar - .5) || {}).tarih || bugunISO()}"></div>
+            <div class="hspAlan"><label>Aralık</label><select id="hspGAra"><option value="1">Her ay</option><option value="2">2 ayda bir</option><option value="3">3 ayda bir</option><option value="6">6 ayda bir</option><option value="12">Yılda bir</option></select></div>
+            <button type="button" class="btn ghost" onclick="hspUret()">${HSP.satir.length ? "Yeniden böl" : "Oluştur"}</button></div>
+          <small class="hspIpuc">${HSP.satir.length ? "Ödenmiş taksitler korunur; toplamdan ödenenler düşülür, kalan yeni taksitlere eşit bölünür." : "Tutar taksitlere eşit bölünür, kuruşlar son taksite. Sonra her satırı tek tek değiştirebilirsin."}</small></details>
+        <div id="hspSatirlar"></div>
+        <button type="button" class="hspEkle" onclick="hspSatirEkle()">+ Taksit ekle</button>
+      </div>
+      <div class="hspOzetB" id="hspOzetB"></div>
+      <div class="hspHata" id="hspHata"></div>
+    </div>
+    <div class="hspPenAlt">
+      ${id && adm ? `<button class="btn ghost hspSil" onclick="hspSil('${id}')">${svg("trash")}Sil</button>` : ""}
+      ${id && yaz ? `<button class="btn ghost" onclick="hspElleKapat('${id}', ${!k.kapandi})">${k.kapandi ? "Yeniden aç" : k.tip === "borc" ? "Kapat (ödendi say)" : "Kapat (tahsil edildi say)"}</button>` : ""}
+      <span style="flex:1"></span>
+      <button class="btn ghost" onclick="hspKapatPen()">Vazgeç</button>
+      ${yaz ? `<button class="btn" id="hspKaydet" onclick="hspKaydet()">Kaydet</button>` : ""}
+    </div></div>`;
+  document.body.appendChild(d); d.onmousedown = e => { if(e.target === d) d.__dis = true; }; d.onclick = e => { if(e.target === d && d.__dis) hspKapatPen(); d.__dis = false; };
+  if(!yaz) d.querySelectorAll("input,select,.hspSeg button,.hspEkle,.hspUret").forEach(x => x.disabled = true);
+  d.addEventListener("keydown", e => { if(e.key === "Enter" && e.target.tagName === "INPUT" && yaz){ e.preventDefault(); hspKaydet(); } });
+  hspSatirCiz(); hspOzetYaz(); setTimeout(() => document.getElementById("hspKisi")?.focus(), 30);
+}
+function hspKapatPen(){ document.querySelector(".hspModal")?.remove(); HSP = null; }
+function hspSegYak(id, v){ document.querySelectorAll(`#${id} button`).forEach(b => b.classList.toggle("on", b.dataset.v === v)); }
+function hspBicim(vadeli){ HSP.vadeli = vadeli; hspSegYak("hspBicim", vadeli ? "1" : "0");
+  document.getElementById("hspTek").style.display = vadeli ? "none" : ""; document.getElementById("hspTaksit").style.display = vadeli ? "" : "none";
+  if(vadeli && !HSP.satir.length){ const t = sayiCoz(document.getElementById("hspTutar").value); if(t > 0) document.getElementById("hspGTop").value = ham(t); }
+  hspOzetYaz(); }
+function hspFormdanOku(){ document.querySelectorAll("#hspSatirlar .hspTS:not(.bas)").forEach((r, i) => { const s = HSP.satir[i]; if(!s) return;
+  s.tarih = r.querySelector('[data-a="tarih"]').value; s.tutar = sayiCoz(r.querySelector('[data-a="tutar"]').value) || 0; s.odenen = Math.min(s.tutar, sayiCoz(r.querySelector('[data-a="odenen"]').value) || 0); }); }
+function hspSatirCiz(){
+  const k = document.getElementById("hspSatirlar"); if(!k) return; const yaz = hspYaz();
+  k.innerHTML = HSP.satir.length ? `<div class="hspTS bas"><span>#</span><span>Vade</span><span>Tutar (₺)</span><span>Ödenen (₺)</span><span>Durum</span><span></span></div>` + HSP.satir.map((s, i) => { const kl = s.tutar - s.odenen, g = s.tarih ? hspGun(s.tarih) : null;
+    const dur = s.tutar > 0 && kl < .5 ? `<span class="hspOk">ödendi</span>` : s.odenen > 0 ? `<span class="yakin">kısmi · kalan ${hspTl(kl)}</span>` : g != null && g < 0 ? `<span class="gecti">${-g} gün gecikti</span>` : `<span>${hspDurum(g) || "—"}</span>`;
+    return `<div class="hspTS ${s.tutar > 0 && kl < .5 ? "odendi" : ""}"><span class="mono">${i + 1}</span><input type="date" data-a="tarih" value="${s.tarih || ""}" onchange="hspFormdanOku();hspOzetYaz()">
+      <input data-a="tutar" inputmode="decimal" value="${ham(s.tutar)}" oninput="hspFormdanOku();hspOzetYaz()" onchange="hspSatirCiz()">
+      <input data-a="odenen" inputmode="decimal" value="${s.odenen ? ham(s.odenen) : ""}" placeholder="0" oninput="hspFormdanOku();hspOzetYaz()" onchange="hspSatirCiz()">
+      <span class="hspDur">${dur}</span>
+      <span class="hspTsT">${yaz ? `${kl >= .5 ? `<button type="button" title="Tamamı ödendi" onclick="hspFormdanOku();HSP.satir[${i}].odenen=HSP.satir[${i}].tutar;hspSatirCiz();hspOzetYaz()">✓</button>` : `<button type="button" title="Ödemeyi geri al" onclick="hspFormdanOku();HSP.satir[${i}].odenen=0;hspSatirCiz();hspOzetYaz()">↺</button>`}<button type="button" title="Satırı sil" onclick="hspSatirSil(${i})">${svg("trash")}</button>` : ""}</span></div>`; }).join("")
+    : `<div class="hspBosT">Henüz taksit yok. Yukarıdan oluştur ya da tek tek ekle.</div>`;
+}
+function hspSatirEkle(){ hspFormdanOku(); const son = HSP.satir[HSP.satir.length - 1]; let t = son?.tarih ? new Date(son.tarih) : new Date();
+  if(son?.tarih){ const g = t.getDate(); t.setDate(1); t.setMonth(t.getMonth() + 1); t.setDate(Math.min(g, new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate())); }
+  HSP.satir.push({ id:null, tarih: hspISO(t), tutar: son?.tutar || 0, odenen:0, ilkOdenen:0 }); hspSatirCiz(); hspOzetYaz(); }
+function hspSatirSil(i){ hspFormdanOku(); const s = HSP.satir[i]; if(s.odenen > 0 && !confirm("Bu taksitte ödeme var. Yine de silinsin mi?")) return; if(s.id) HSP.silinen.push(s.id); HSP.satir.splice(i, 1); hspSatirCiz(); hspOzetYaz(); }
+const hspISO = t => { const d = new Date(t); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+function hspUret(){
+  hspFormdanOku();
+  const top = sayiCoz(document.getElementById("hspGTop").value) || 0, adet = Math.max(1, Math.min(120, parseInt(document.getElementById("hspGAdet").value) || 1));
+  const ilk = document.getElementById("hspGIlk").value || bugunISO(), ara = +document.getElementById("hspGAra").value || 1;
+  const odenmis = HSP.satir.filter(s => s.odenen > 0), odenenTop = odenmis.reduce((t, s) => t + s.odenen, 0);
+  // kismi odenmis satirlar odenen kadarina indirilir (kapanir), kalan yeni taksitlere
+  odenmis.forEach(s => { s.tutar = s.odenen; });
+  HSP.satir.filter(s => !(s.odenen > 0) && s.id).forEach(s => HSP.silinen.push(s.id));
+  const kalan = Math.round((top - odenenTop)*100)/100;
+  if(!(kalan > 0)) return hspHata(top > 0 ? "Toplam tutar ödenenden fazla olmalı." : "Toplam tutarı yaz.");
+  const pay = Math.floor(kalan/adet), yeni = [];
+  for(let i = 0; i < adet; i++){ const t = new Date(ilk); const g = t.getDate(); t.setDate(1); t.setMonth(t.getMonth() + i*ara); t.setDate(Math.min(g, new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate()));
+    yeni.push({ id:null, tarih: hspISO(t), tutar: i === adet - 1 ? Math.round((kalan - pay*(adet - 1))*100)/100 : pay, odenen:0, ilkOdenen:0 }); }
+  HSP.satir = odenmis.concat(yeni).sort((a, b) => String(a.tarih).localeCompare(String(b.tarih)));
+  document.querySelector(".hspUret").open = false; hspHata(""); hspSatirCiz(); hspOzetYaz();
+}
+function hspOzetYaz(){
+  const k = document.getElementById("hspOzetB"); if(!k || !HSP) return;
+  let top, od;
+  if(HSP.vadeli){ top = HSP.satir.reduce((t, s) => t + (+s.tutar || 0), 0); od = HSP.satir.reduce((t, s) => t + Math.min(+s.tutar || 0, +s.odenen || 0), 0); }
+  else { top = sayiCoz(document.getElementById("hspTutar")?.value) || 0; od = Math.min(top, sayiCoz(document.getElementById("hspOdenen")?.value) || 0); }
+  const yz = top ? Math.round(od/top*100) : 0;
+  k.innerHTML = `<span>Toplam <b class="mono">${hspTl(top)}</b></span><span>${HSP.tip === "borc" ? "Ödenen" : "Tahsil edilen"} <b class="mono">${hspTl(od)}</b></span><span>Kalan <b class="mono ${HSP.tip === "borc" ? "kirmizi" : "yesil"}">${hspTl(top - od)}</b></span><div class="hspBar"><i style="width:${yz}%" class="${HSP.tip}"></i></div>`;
+}
+function hspHata(m){ const k = document.getElementById("hspHata"); if(k){ k.textContent = m || ""; k.style.display = m ? "block" : "none"; } }
+
+async function hspKaydet(){
+  if(!HSP) return; hspHata(""); hspFormdanOku();
+  const tus = document.getElementById("hspKaydet"), kisi = document.getElementById("hspKisi").value.trim(), notu = document.getElementById("hspNot").value.trim() || null;
+  if(!kisi) return hspHata("Kişi ya da kurum adını yaz."), document.getElementById("hspKisi").focus();
+  const bugun = bugunISO(); let alan;
+  if(HSP.vadeli){
+    if(!HSP.satir.length) return hspHata("Taksit yok. “Taksitleri oluştur” ile oluştur ya da “+ Taksit ekle”ye bas.");
+    const bozuk = HSP.satir.findIndex(s => !s.tarih || !(s.tutar > 0)); if(bozuk >= 0) return hspHata(`${bozuk + 1}. taksitte tarih ya da tutar eksik.`);
+    const top = HSP.satir.reduce((t, s) => t + s.tutar, 0), kalan = HSP.satir.reduce((t, s) => t + Math.max(0, s.tutar - s.odenen), 0);
+    alan = { tip:HSP.tip, kisi, notu, vadeli:true, tutar: Math.round(top*100)/100, tarih:null, kapandi: kalan < .5 };
+  }else{
+    const tutar = sayiCoz(document.getElementById("hspTutar").value), odenen = Math.min(tutar || 0, sayiCoz(document.getElementById("hspOdenen").value) || 0);
+    if(!(tutar > 0)) return hspHata("Tutarı yaz (sadece rakam, örn. 25000 ya da 25.000)."), document.getElementById("hspTutar").focus();
+    const once = HSP.k && !HSP.k.vadeli ? (+HSP.k.odenen || 0) : 0;
+    alan = { tip:HSP.tip, kisi, notu, vadeli:false, tutar, tarih: document.getElementById("hspTarih").value || null, odenen,
+      odeme_tarihi: odenen > 0 ? (Math.abs(odenen - once) > .005 ? bugun : (HSP.k?.odeme_tarihi || bugun)) : null, kapandi: tutar - odenen < .5 };
+  }
+  if(HSP.k?.kapandi && !alan.kapandi && HSP.k.vadeli === alan.vadeli && Math.abs((+HSP.k.tutar || 0) - alan.tutar) < .5) alan.kapandi = true;   // elle kapatilmissa acik kalmasin
+  if(tus){ tus.disabled = true; tus.textContent = "Kaydediliyor…"; }
+  try{
+    let id = HSP.id;
+    if(id){ const { error } = await sb.from("hesap").update(alan).eq("id", id); if(error) throw error; }
+    else { const { data, error } = await sb.from("hesap").insert({ ...alan, team_id:ME.team_id, created_by:ME.id }).select().single(); if(error) throw error; id = data.id; }
+    if(HSP.vadeli){
+      if(HSP.silinen.length){ const { error } = await sb.from("hesap_vade").delete().in("id", HSP.silinen); if(error) throw error; }
+      for(const s of HSP.satir){ const odendi = s.odenen >= s.tutar - .005;
+        const satir = { tarih:s.tarih, tutar:s.tutar, odenen:s.odenen, odendi, odeme_tarihi: s.odenen > 0 ? (Math.abs(s.odenen - s.ilkOdenen) > .005 || !s.odeme_tarihi ? bugun : s.odeme_tarihi) : null };
+        const { error } = s.id ? await sb.from("hesap_vade").update(satir).eq("id", s.id) : await sb.from("hesap_vade").insert({ ...satir, hesap_id:id, team_id:ME.team_id });
+        if(error) throw error; }
+    }else if(HSP.k?.vadeli){ const { error } = await sb.from("hesap_vade").delete().eq("hesap_id", id); if(error) throw error; }
+    try{ await sb.from("activity_log").insert({ team_id:ME.team_id, user_id:ME.id, action: HSP.id ? "hesap güncellendi" : "hesap eklendi", entity:"hesap", entity_id:id, detail:`${kisi} · ${hspTl(alan.tutar)}` }); }catch(e){}
+    hspKapatPen(); toast("Kaydedildi"); if(app.dataset.ekran === "hesap") hspEkran(); try{ pcRozet(); }catch(e){}
+  }catch(e){
+    if(tus){ tus.disabled = false; tus.textContent = "Kaydet"; }
+    const m = e?.message || String(e);
+    hspHata(/column|schema cache/i.test(m) ? `Veritabanında eksik sütun var (${m}). Supabase'de arsatakip-guncelleme-8.sql dosyasını çalıştırman lazım.` : /row-level security|permission/i.test(m) ? `Yetki hatası: bu kaydı yazma iznin yok (${m}).` : "Kaydedilemedi: " + m);
+  }
+}
+async function hspElleKapat(id, deger){
+  if(deger && !confirm("Kayıt kapatılsın mı? Kalan tutar takipten çıkar, “Kapanan” süzgecinde görünür.")) return;
+  const { error } = await sb.from("hesap").update({ kapandi: deger }).eq("id", id); if(error) return hspHata("Olmadı: " + error.message);
+  hspKapatPen(); toast(deger ? "Kapatıldı" : "Yeniden açıldı"); hspEkran(); try{ pcRozet(); }catch(e){}
+}
+async function hspSil(id){
+  const k = HSP?.k; if(!confirm(`${k ? k.kisi + ": " : ""}Bu kayıt ve bütün taksitleri kalıcı olarak silinsin mi?`)) return;
+  const { error:e1 } = await sb.from("hesap_vade").delete().eq("hesap_id", id); if(e1) return hspHata("Taksitler silinemedi: " + e1.message);
+  const { error } = await sb.from("hesap").delete().eq("id", id); if(error) return hspHata("Silinemedi: " + error.message);
+  try{ await sb.from("activity_log").insert({ team_id:ME.team_id, user_id:ME.id, action:"hesap silindi", entity:"hesap", entity_id:id, detail:k?.kisi || "" }); }catch(e){}
+  hspKapatPen(); toast("Silindi"); hspEkran(); try{ pcRozet(); }catch(e){}
+}
+
+/* ---- baglama: PC'de hesap + yaklasanlar tek ekran; eski fonksiyonlar telefonda aynen ---- */
+const hesapEskiEkran = hesap;
+{
+  const eskiYak = yaklasanlar, eskiAc = hesapAc, eskiYeni = hesapYeni;
+  const pcMi = () => typeof PC_ACIK !== "undefined" && PC_ACIK;
+  ekranlar.hesap = hspEkran; hesap = hspEkran;
+  ekranlar.yaklasan = function(){ if(pcMi()){ GEZINTI = [{ r:"ana" }]; return go("hesap"); } return eskiYak.apply(this, arguments); };
+  hesapAc = function(id){ if(pcMi()){ if(app.dataset.ekran !== "hesap") go("hesap"); return hspDuzen(id); } return eskiAc(id); };
+  hesapYeni = function(){ if(pcMi()) return hspDuzen(); return eskiYeni(); };
+}
+try{ PC_AD.hesap = "Hesap & Takvim"; PC_BASLIK_IKON.hesap = "money"; }catch(e){}
 
 baslat();
 

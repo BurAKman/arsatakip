@@ -1,9 +1,9 @@
-// Çapsız Çapçı — servis calisani
+// Arsa Takip — servis calisani
 // Amac: uygulamanin kurulabilir olmasi ve internet yokken de acilmasi.
 // Strateji: HTML her zaman once agdan (guncelleme aninda gelsin),
 // gorseller ve kutuphaneler once onbellekten (hizli acilsin).
 
-const SURUM = "cc-v200";
+const SURUM = "cc-v202";
 const TEMEL = [
   "./",
   "./index.html",
