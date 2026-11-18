@@ -3735,6 +3735,23 @@ body.pc .pzOnHes{display:flex;flex-direction:column;align-items:center;gap:8px;p
 body.pc .pzOnBar{width:320px;height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}body.pc .pzOnBar i{display:block;height:100%;background:#E8B661}
 @media (max-width:1300px){body.pc .pzOnUc{grid-template-columns:1fr}body.pc .pzTemIki,body.pc .pzGunIki{grid-template-columns:1fr}}
 body.pc .pzOturum{margin-top:10px;font-size:11.5px;color:#7E7C84}
+body.pc .pzPay{font-style:normal;font-size:10.5px;padding:1px 7px;border-radius:8px;background:rgba(91,141,239,.15);color:#9DB8F5;margin-left:4px}
+body.pc .pzAltSeg{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 10px}body.pc .pzAltSeg small{color:#8E8C93;font-size:11.5px}
+body.pc .pzGgA{font-size:10.5px;color:#7E7C84;padding:2px 8px 6px;line-height:1.35}
+body.pc .pzRadEt{font-style:normal;font-size:10px!important;padding:1px 7px;border-radius:8px;border:1px solid}
+body.pc .pzRadEt.kisa{color:#FF8A92;border-color:rgba(255,74,85,.45)}body.pc .pzRadEt.orta{color:#E8C98A;border-color:rgba(232,182,97,.45)}
+body.pc .pzKarne{display:flex;flex-direction:column;gap:5px;font-size:12px;color:#C9C7CC;padding:10px 14px;margin-bottom:12px;border-radius:10px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07)}
+body.pc .pzKarne b{color:#fff}body.pc .pzKarne em{font-style:normal;color:#E8C98A}
+body.pc .pzKarne i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}body.pc .pzKarne i.kisa{background:#FF4A55}body.pc .pzKarne i.orta{background:#E8B661}body.pc .pzKarne i.uzun{background:#5BD08B}
+body.pc .pzOnSimdi{margin-top:6px;font-size:11.5px;font-weight:600;padding:4px 8px;border-radius:7px}
+body.pc .pzOnSimdi.art{color:#7FE0A6;background:rgba(91,208,139,.1)}body.pc .pzOnSimdi.bek{color:#E8C98A;background:rgba(232,182,97,.1)}body.pc .pzOnSimdi.dk{color:#FF8A92;background:rgba(255,74,85,.1)}
+.pzUl{display:inline-block;font-style:normal;font-size:9px;font-weight:800;letter-spacing:.03em;line-height:13px;padding:0 4px;border-radius:4px;margin-right:5px;vertical-align:1px;color:#0B0D11;background:#C9C7CC}
+.pzUl.tr{background:#E30A17;color:#fff}.pzUl.us{background:#3C6EDB;color:#fff}.pzUl.kr{background:#F7931A;color:#111}.pzUl.dg{background:#5BD08B;color:#0B0D11}
+body.pc .pzOnUc.iki{grid-template-columns:repeat(2,minmax(0,1fr))}
+body.pc .pzRiskUyar{font-size:12.5px;color:#F3D9A6;line-height:1.5;padding:10px 14px;margin-bottom:12px;border-radius:10px;background:rgba(255,74,85,.08);border:1px solid rgba(255,74,85,.35)}
+body.pc .pzAcik i.pzUl{width:auto;height:auto;line-height:13px;font-size:9px;padding:0 4px;border-radius:4px;text-align:left;color:#fff}
+body.pc .pzAcik i.pzUl.kr,body.pc .pzAcik i.pzUl.dg{color:#111}body.pc .pzAcik i.pzUl:hover{background:inherit}
+body.pc .pzAcik i.pzUl.tr:hover{background:#E30A17}body.pc .pzAcik i.pzUl.us:hover{background:#3C6EDB}body.pc .pzAcik i.pzUl.kr:hover{background:#F7931A}body.pc .pzAcik i.pzUl.dg:hover{background:#5BD08B}
 </style>
 </head>
 <body>
@@ -3787,7 +3804,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.2.0";
+const SURUM_MORDOR = "v 1.2.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -21914,7 +21931,11 @@ const PZM = {
     if(f >= hi*0.97 && s50 != null && f > s50) ekle(5, "52 haftalık zirveye yakın, güçlü trend");
     if(tv != null && isFinite(tv)) ekle(Math.round(tv*14), `TradingView teknik özeti: ${tv >= .5 ? "güçlü al" : tv >= .1 ? "al" : tv > -.1 ? "nötr" : tv > -.5 ? "sat" : "güçlü sat"}`);
     p = Math.max(-100, Math.min(100, Math.round(p)));
-    return { puan:p, karar: p >= 60 ? "GÜÇLÜ AL" : p >= 30 ? "AL" : p <= -60 ? "GÜÇLÜ SAT" : p <= -30 ? "SAT" : "TUT", nedenler:N.sort((a, b) => Math.abs(b.d) - Math.abs(a.d)) };
+    // SAT sadece dusus donemi teyitliyse: 40 varlik / 6 yillik testte teyitsiz teknik SAT yazi-tura cikti (%50), teyitli olan daha isabetli
+    // Hisselerde (BIST TL'de enflasyonla, NASDAQ uzun vadede yukari egilimli) teknik SAT sinyali testte cogunlukla yanildi (%38-47): orada SAT yok, "TUT / yeni alma"
+    const ayi = !!D.satAcik && D.s200[i] != null && s50 != null && f < D.s200[i] && s50 < D.s200[i] && D.s200[i - 20] != null && D.s200[i] < D.s200[i - 20];
+    if(p <= -30 && !ayi) N.unshift({ d:0, m: D.satAcik ? "Puan olumsuz ama düşüş dönemi teyitli değil: SAT yerine TUT, yeni alım yapma" : "Puan olumsuz: yeni alım yapma (hissede teknik SAT sinyali geçmişte çoğunlukla yanıldığı için SAT demiyorum)" });
+    return { puan:p, karar: p >= 60 ? "GÜÇLÜ AL" : p >= 30 ? "AL" : p <= -60 && ayi ? "GÜÇLÜ SAT" : p <= -30 && ayi ? "SAT" : "TUT", nedenler:N.sort((a, b) => Math.abs(b.d) - Math.abs(a.d)) };
   },
 
   rejim(D, i){
@@ -21952,7 +21973,8 @@ const PZM = {
 
   analiz(R, tv, ayGun = 21){
     if(!R || !R.c || R.c.length < 30) return null;
-    const D = PZM.hazirla(R), i = D.c.length - 1, f = D.c[i], S = PZM.seviyeler(D, i), at = S.atr, P = PZM.puan(D, i, tv);
+    const D = PZM.hazirla(R); D.satAcik = ayGun === 30;
+    const i = D.c.length - 1, f = D.c[i], S = PZM.seviyeler(D, i), at = S.atr, P = PZM.puan(D, i, tv);
     const d1 = S.destek[0]?.f, d2 = S.destek[1]?.f, r1 = S.direnc[0]?.f, r2 = S.direnc[1]?.f;
     const alAlt = d1 ? d1 - at*0.3 : f - at*1.5, alUst = d1 ? Math.min(f, d1 + at*0.5) : f - at*0.5;
     return { D, i, fiyat:f, puan:P, rejim:PZM.rejim(D, i), sev:S,
@@ -23267,10 +23289,10 @@ pzYzTek = async function(k, sadece){
   PZ_YZ_IS = true; const L = sadece ? [sadece] : ["claude", "gpt"]; PZ.yzIs = Object.fromEntries(L.map(x => [x, "sırada"]));
   try{
     pzYzDurum(`${pzKod(k)} · veriler hazırlanıyor`); const oz = await pzOzet(k);
-    pzYzDurum(`${pzKod(k)} · hızlı analiz (en fazla 6 dk)`);
+    pzYzDurum(`${pzKod(k)} · hızlı analiz (en fazla 6-8 dk)`);
     const tek = async kay => { PZ.yzIs[kay] = "çalışıyor";
       try{ PZ_HIZLI = true; const ist = pzIstem([oz], kay, false); PZ_HIZLI = false;
-        const t = await pzYzSor(kay, ist, 6); const J = pzJsonBul(t, PZ_ANAHTAR); if(!J) throw new Error("cevapta analiz bloğu bulunamadı");
+        const t = await pzYzSor(kay, ist, kay === "gpt" ? 8 : 6); const J = pzJsonBul(t, PZ_ANAHTAR); if(!J) throw new Error("cevapta analiz bloğu bulunamadı");
         const n = await pzYzKaydet(J, kay, [k]); if(!n) throw new Error("analiz boş geldi");
         PZ.yzIs[kay] = "bitti ✓"; toast(`${pzYzAd(kay)} analizi kaydedildi ✓`);
         await pzAnalizOku(k); delete PZ.eylem?.[k];
@@ -23326,7 +23348,12 @@ function pzVeriDurumu(){
 
 /* ---------- 6) "ne yapmali" saglamasi ---------- */
 { const eski = pzOrtak;
-  pzOrtak = function(A, Y){ const O = eski(A, Y), f = A?.fiyat, at = A?.sev?.atr || (f ? f*0.02 : 0); if(!f) return O;
+  pzOrtak = function(A, Y){ const f0 = A?.fiyat, n = v => +String(v ?? "").replace(",", ".") || null, red = [];
+    if(f0 && Y){ const sinir = PZD.s && pzTur(PZD.s.k) === "KRIPTO" ? [.35, 3] : [.45, 2.2]; Y = { ...Y };
+      for(const kay of ["claude", "gpt"]){ const v = Y[kay]?.[0]?.veri; if(!v) continue;
+        const L = [...(v.al_bolgesi || []), ...(v.sat_bolgesi || []), v.stop].map(n).filter(Boolean);
+        if(L.some(x => x/f0 < sinir[0] || x/f0 > sinir[1])){ red.push(pzYzAd(kay)); Y[kay] = [{ ...Y[kay][0], veri:{ ...v, al_bolgesi:null, sat_bolgesi:null, stop:null } }].concat(Y[kay].slice(1)); } } }
+    const O = eski(A, Y), f = A?.fiyat, at = A?.sev?.atr || (f ? f*0.02 : 0); O.reddedilen = red; if(!f) return O;
     O.duzeltme = [];
     if(O.stop && O.al[0] && O.stop >= O.al[0]){ O.stop = O.al[0] - at*0.5; O.duzeltme.push("zarar kes al bölgesinin altına çekildi"); }
     if(O.sat[0] && O.al[1] && O.sat[0] <= O.al[1]){ O.sat[0] = O.al[1] + at; O.duzeltme.push("sat bölgesi al bölgesinin üstüne alındı"); }
@@ -23347,7 +23374,7 @@ function pzVeriDurumu(){
       al.insertAdjacentHTML("afterend", `<div class="pzSevNot">Düşüş döneminde bu bölgeye inince hemen alma: birkaç gün tutunup yukarı dönmesini bekle, sonra kademeli al.</div>`); }
     const kontrol = document.createElement("div"); kontrol.className = "pzSaglama";
     const ok = [O.stop < O.al[0], O.al[1] < O.sat[0], O.kaynak ? "program + " + O.kaynak + " yapay zekâ" : "sadece program"];
-    kontrol.innerHTML = `✓ Sağlama: zarar kes &lt; al bölgesi &lt; sat bölgesi sırası ${ok[0] && ok[1] ? "doğru" : "düzeltildi"} · seviyeler ${ok[2]}${O.duzeltme?.length ? " · " + esc(O.duzeltme.join(", ")) : ""}`;
+    kontrol.innerHTML = `✓ Sağlama: zarar kes &lt; al bölgesi &lt; sat bölgesi sırası ${ok[0] && ok[1] ? "doğru" : "düzeltildi"} · seviyeler ${ok[2]}${O.duzeltme?.length ? " · " + esc(O.duzeltme.join(", ")) : ""}${O.reddedilen?.length ? ` · <b class="az">${esc(O.reddedilen.join(" ve "))} seviyeleri fiyatla tutarsız (yanlış birim ya da eski veri), hesaba katılmadı</b>` : ""}`;
     document.querySelector("#pzdMasa .pzSev2")?.insertAdjacentElement("afterend", kontrol);
     pzSinyalKaydet(s.k, A.puan.karar, f, O.karar);
   }; }
@@ -23369,7 +23396,8 @@ PZM.test1y = (D, ayGun) => {
   const ort = L => L.reduce((t, x) => t + x, 0)/(L.length || 1);
   for(let i = bas; i < n - ufuk; i++){ const k = PZM.puan(D, i).karar, g = c[i + ufuk]/c[i] - 1; tum.push(g); (/AL/.test(k) ? A : /SAT/.test(k) ? S : T).push(g); }
   const oz = (L, yuk) => L.length ? { n:L.length, ort:ort(L)*100, isabet:(yuk ? L.filter(x => x > 0) : L.filter(x => x < 0)).length/L.length*100 } : null;
-  return { al:oz(A, 1), sat:oz(S, 0), tut:oz(T, 1), taban:ort(tum)*100, gun:tum.length, ufuk, basT:D.t?.[bas] };
+  const A3 = []; for(let i = bas; i < n - ufuk*3; i++){ if(/AL/.test(PZM.puan(D, i).karar)) A3.push(c[i + ufuk*3]/c[i] - 1); }
+  return { al:oz(A, 1), al3:oz(A3, 1), sat:oz(S, 0), tut:oz(T, 1), taban:ort(tum)*100, gun:tum.length, ufuk, basT:D.t?.[bas] };
 };
 function pzSinyalKaydet(k, karar, f, ortak){ if(!k || !karar || !f) return; const B = pzLS.oku("pzSinyal", {}), L = B[k] || [], g = pzGun();
   if(L.length && L[L.length - 1].g === g){ L[L.length - 1] = { g, k:karar, o:ortak, f }; } else L.push({ g, k:karar, o:ortak, f });
@@ -23393,11 +23421,14 @@ function pzSinyalSonuc(k, D, ayGun){
       h = al.isabet >= 55 && fark > 1 ? ["yesil", `✓ Program şu an ${su} diyor ve bu varlıkta AL sinyali işe yaramış`] : al.isabet < 45 || fark < -1 ? ["kirmizi", `✗ Program şu an ${su} diyor ama bu varlıkta AL sinyaline güvenme`] : ["turuncu", `≈ Program şu an ${su} diyor; AL sinyali burada ortalama iş çıkarıyor`]; }
     else if(satS && sat && sat.n >= 8){ const fark = t.taban - sat.ort;
       h = sat.isabet >= 55 && fark > 1 ? ["yesil", `✓ Program şu an ${su} diyor ve bu varlıkta SAT sinyali işe yaramış`] : sat.isabet < 45 || fark < -1 ? ["kirmizi", `✗ Program şu an ${su} diyor ama bu varlıkta SAT sinyaline güvenme`] : ["turuncu", `≈ Program şu an ${su} diyor; SAT sinyali burada ortalama iş çıkarıyor`]; }
+    else if(!alS && !satS && al && al.n >= 8){ const fark = al.ort - t.taban;
+      h = al.isabet >= 55 && fark > 0 ? ["yesil", `✓ Program şu an TUT diyor; AL dediği günlerde %${al.isabet.toFixed(0)} isabetliydi`] : al.isabet < 45 ? ["kirmizi", `✗ Program şu an TUT diyor; bu varlıkta AL sinyali de son 1 yılda tutmadı`] : ["turuncu", `≈ Program şu an TUT diyor; AL sinyali burada yarı yarıya tuttu`]; }
     else if(genel != null && isN >= 10) h = genel >= 55 ? ["yesil", `✓ Bu varlıkta program genelde doğru çıkmış (%${genel.toFixed(0)})`] : genel < 45 ? ["kirmizi", `✗ Bu varlıkta program genelde yanılmış (isabet %${genel.toFixed(0)})`] : ["turuncu", `≈ Bu varlıkta program yarı yarıya tutturmuş (%${genel.toFixed(0)})`];
     else h = ["gri", "Son 1 yılda program bu varlıkta çok az net sinyal vermiş"];
     const aciklama = [al ? `Son 1 yılda ${al.n} gün AL dedi: o günlerde alsaydın 1 ay sonra ortalama ${y(al.ort)} (günlerin %${al.isabet.toFixed(0)}'inde kârdaydın).` : "Son 1 yılda hiç AL demedi.",
-      sat ? `${sat.n} gün SAT dedi: o günlerden 1 ay sonra fiyat ortalama ${y(sat.ort)} gitti (günlerin %${sat.isabet.toFixed(0)}'inde gerçekten düştü).` : "Hiç SAT demedi.",
-      `Hiç bakmadan rastgele bir günde alsaydın 1 ay sonra ortalama ${y(t.taban)} olurdu.`].join(" ");
+      t.al3 && t.al3.n >= 8 ? `Aynı AL günlerinde 3 ay beklesen günlerin %${t.al3.isabet.toFixed(0)}'inde kârdaydın (ortalama ${y(t.al3.ort)}).` : "",
+      sat ? `${sat.n} gün SAT dedi: o günlerden 1 ay sonra fiyat ortalama ${y(sat.ort)} gitti (günlerin %${sat.isabet.toFixed(0)}'inde gerçekten düştü).` : pzTur(s.k) === "KRIPTO" ? "Hiç SAT demedi." : "Hisselerde program teknik SAT demiyor (geçmiş testte çoğunlukla yanıldı); satışı zarar kes ve hedef seviyeleri belirliyor.",
+      `Hiç bakmadan rastgele bir günde alsaydın 1 ay sonra ortalama ${y(t.taban)} olurdu.`].filter(Boolean).join(" ");
     const C = pzSinyalSonuc(s.k, A.D, ag);
     const canli = C.n ? `Canlı takip (${trTarih(C.ilk)}'den beri): ${C.n} sinyal sonuçlandı, ${C.dogru}'i doğru çıktı (%${(C.dogru/C.n*100).toFixed(0)}).`
       : `Canlı takip ${C.ilk ? trTarih(C.ilk) : "bugün"} başladı: program her gün ne dediğini kaydediyor, 1 ay sonra gerçekte ne olduğuyla karşılaştırıp bu kutuyu kendisi günceller.`;
@@ -23407,7 +23438,8 @@ function pzSinyalSonuc(k, D, ayGun){
         <span>AL dediğinde<b class="mono ${pzYon(al?.ort)}">${al ? y(al.ort) : "—"}</b><em>${al ? `${al.n} gün · %${al.isabet.toFixed(0)}'inde kâr` : "sinyal yok"}</em></span>
         <span>SAT dediğinde<b class="mono ${pzYon(sat?.ort)}">${sat ? y(sat.ort) : "—"}</b><em>${sat ? `${sat.n} gün · %${sat.isabet.toFixed(0)}'inde düştü` : "sinyal yok"}</em></span>
         <span>Rastgele bir gün<b class="mono ${pzYon(t.taban)}">${y(t.taban)}</b><em>1 ay sonra</em></span></div>
-      <div class="pzCanliK">📈 ${esc(canli)}</div>`;
+      <div class="pzCanliK">📈 ${esc(canli)}</div>
+      <div class="pzNot">Programın genel karnesi (40 hisse ve coin, 6 yılı aşkın geçmiş testi): AL dediğinde 1 ay sonra %59, 3 ay sonra %64 ihtimalle kârdaydın. Hiçbir teknik sistem her zaman tutmaz; bu kutu sadece bu varlığın son 1 yılını gösterir, kötü bir yıl olabilir.</div>`;
   }; }
 
 /* ---------- 8) temettu, bedelsiz, bedelli ---------- */
@@ -23603,6 +23635,285 @@ async function pzOturumSifirla(site){
 const pzOlayUygun = o => !(o?.sembol && /^(KRIPTO|MADEN|DOVIZ|ENDEKS)$/.test(pzTur(o.sembol)) && /^(bedelsiz|bedelli|temettu|bolunme)$/.test(o.tur || ""));
 { const eski = pzOlayKaydet; pzOlayKaydet = async function(o){ if(!pzOlayUygun(o)) return; return eski.apply(this, arguments); }; }
 { const eski = pzDuyurular; pzDuyurular = function(){ return eski.apply(this, arguments).filter(pzOlayUygun); }; }
+
+/* ---------- aile paylasimi: ana hesabin (admin) Claude/GPT analizleri herkese gorunur; digerleri sadece bos ya da eskimis olanlari analiz eder,
+   onlarin analizleri sadece kendilerinde kalir. Takip listesi, portfoy, alarmlar herkesin kendine ozel. (Supabase: piyasa-paylasim.sql) ---------- */
+const PZ_TAZE_GUN = 3;
+const pzYonetici = () => !ME?.id || ME.role === "admin";
+const pzTaze = r => r && Date.now() - new Date(r.created_at).getTime() < PZ_TAZE_GUN*86400000;
+{ const eski = pzAnalizOku;
+  pzAnalizOku = async function(sembol){ const r = await eski.apply(this, arguments); if(!ME?.id) return r;
+    for(const kay of ["claude", "gpt"]){ const L = r[kay] || [], pay = L.filter(x => x.user_id && x.user_id !== ME.id), ben = L.filter(x => !x.user_id || x.user_id === ME.id);
+      pay.forEach(x => { x.paylasilan = true; });
+      r[kay] = pzTaze(pay[0]) ? pay : L.slice().sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))); }
+    return r; }; }
+const pzPayDolu = (k, kay) => (PZ.analiz[k]?.[kay] || []).some(x => x.paylasilan && pzTaze(x));
+{ const eski = pzYzTek;
+  pzYzTek = async function(k, sadece){ if(pzYonetici()) return eski.apply(this, arguments);
+    if(!PZ.analiz[k]) await pzAnalizOku(k).catch(() => {});
+    const L = (sadece ? [sadece] : ["claude", "gpt"]).filter(kay => !pzPayDolu(k, kay));
+    if(!L.length) return toast("Bu varlığın güncel analizi ana hesaptan zaten geliyor, sende otomatik görünüyor ✓");
+    return L.length === 1 ? eski.call(this, k, L[0]) : eski.call(this, k); }; }
+{ const eski = pzdYzCiz;
+  pzdYzCiz = function(){ eski.apply(this, arguments); const k = PZD.s?.k; if(!k) return;
+    [["claude", "pzdYzcT", "pzdYzc"], ["gpt", "pzdYzgT", "pzdYzg"]].forEach(([kay, tid, id]) => { const r = PZ.analiz[k]?.[kay]?.[0], t = document.getElementById(tid);
+      if(t && r?.paylasilan) t.innerHTML += ` <em class="pzPay">ana hesaptan</em>`;
+      const tus = document.getElementById(id)?.closest("section")?.querySelector("header .pcLink"); if(tus) tus.style.display = !pzYonetici() && pzPayDolu(k, kay) ? "none" : ""; }); }; }
+// gece analizi: ana hesap disindakiler sadece guncel ortak analizi olmayan varliklari sorar
+{ const eski = pzGeceCalis;
+  pzGeceCalis = async function(elle){ if(pzYonetici()) return eski.apply(this, arguments);
+    if(PZ_YZ_IS) return toast("Analiz zaten çalışıyor"); if(!window.arsaPC?.yzOto && !elle) return;
+    PZ_YZ_IS = true; const bas = Date.now();
+    try{ await pzKisiselYukle();
+      const S = [...new Set(PZ.portfoy.map(p => p.sembol).concat(PZ.takip.map(t => t.sembol)))].slice(0, 24);
+      for(const k of S) await pzAnalizOku(k).catch(() => {});
+      const sonuc = { claude:0, gpt:0, hata:[], ortak:0 };
+      for(const kay of ["claude", "gpt"]){ const B = S.filter(k => !pzPayDolu(k, kay)); sonuc.ortak += S.length - B.length; if(!B.length) continue;
+        pzYzDurum(`Gece analizi · ${pzYzAd(kay)}: ${B.length} varlık hazırlanıyor…`);
+        const OZ = []; for(const k of B){ try{ OZ.push(await pzOzet(k)); }catch(e){} }
+        for(let i = 0; i < OZ.length; i += 8){ const P = OZ.slice(i, i + 8); pzYzDurum(`Gece analizi · ${pzYzAd(kay)} ${i/8 + 1}/${Math.ceil(OZ.length/8)} paket yazıyor…`);
+          try{ const t = await pzYzSor(kay, pzIstem(P, kay, false), 18); const J = pzJsonBul(t, PZ_ANAHTAR); if(!J) throw new Error("analiz bloğu yok"); sonuc[kay] += await pzYzKaydet(J, kay, P.map(o => o.k)); }
+          catch(e){ sonuc.hata.push(`${kay}: ${e.message}`); } } }
+      await pzAyarYaz({ gece:{ tarih:new Date().toISOString(), sure:Math.round((Date.now() - bas)/60000), claude:sonuc.claude, gpt:sonuc.gpt, hata:sonuc.hata } });
+      toast(`Gece analizi bitti · Claude ${sonuc.claude}, ChatGPT ${sonuc.gpt} varlık · ana hesaptan gelen ${sonuc.ortak}`);
+      if(/^piyasa/.test(app.dataset.ekran || "")) ekraniCiz(app.dataset.ekran, app.dataset.pid || undefined); }
+    finally{ PZ_YZ_IS = null; pzYzDurum(""); } }; }
+// ana hesabin firsat onerileri ve genel piyasa yorumu da gorunsun
+{ const eski = pzAyarOku;
+  pzAyarOku = async function(){ const r = await eski.apply(this, arguments); if(pzYonetici() || PZ.dbYok) return r;
+    try{ const L = await pzOku("piyasa_ayar", q => q.neq("user_id", ME.id)); const v = L[0]?.veri;
+      if(v){ PZ.ayarPay = v; ["firsatlar", "firsatTarih", "genel_claude", "genel_gpt"].forEach(a => { if(v[a] && !PZ.ayar[a]) PZ.ayar[a] = v[a]; }); } }catch(e){}
+    return PZ.ayar; }; }
+
+/* ================= v3.1 · listeler, gezgin, radar, oneriler karnesi ================= */
+// endeks uyeligi: TradingView "indexes" alani (varsa) -> gercek BIST 30 / BIST 100. Yoksa piyasa degeri x halka aciklik ile yaklasik (ekranda "≈" yazar)
+if(!PZ_TV_KOLON.includes("indexes")) PZ_TV_KOLON.push("indexes");
+const pzEndeksVar = () => (PZ.liste.bist || []).some(s => Array.isArray(s.tv?.indexes) && s.tv.indexes.length);
+const pzEndeksUye = (s, kod) => (s.tv?.indexes || []).some(x => { const t = typeof x === "string" ? x : `${x?.proname || ""} ${x?.name || ""}`; return kod === "XU030" ? /XU030|BIST 30\b/.test(t) : kod === "XU100" ? /XU100|BIST 100\b/.test(t) : t.includes(kod); });
+const pzSerbest = s => (s.tv?.market_cap_basic || 0)*Math.min(1, (s.tv?.float_shares_outstanding || 0)/(s.tv?.total_shares_outstanding || 1) || .3);
+function pzBistAlt(alt){
+  const B = (PZ.liste.bist || []).slice(), gercek = pzEndeksVar(), likit = s => (s.tv?.average_volume_10d_calc || s.tv?.volume || 0)*(s.f || 0) > 1e7;
+  const sirala = L => L.sort((a, b) => (b.tv?.market_cap_basic || 0) - (a.tv?.market_cap_basic || 0));
+  if(alt === "b30") return { L: gercek ? sirala(B.filter(s => pzEndeksUye(s, "XU030"))) : B.filter(likit).sort((a, b) => pzSerbest(b) - pzSerbest(a)).slice(0, 30), yak:!gercek, ad:"BIST 30" };
+  if(alt === "b100") return { L: gercek ? sirala(B.filter(s => pzEndeksUye(s, "XU100"))) : B.filter(likit).sort((a, b) => pzSerbest(b) - pzSerbest(a)).slice(0, 100), yak:!gercek, ad:"BIST 100" };
+  if(alt === "tem") return { L: B.filter(s => (s.tv?.dividends_yield_current || 0) >= 3 && (s.tv?.market_cap_basic || 0) > 3e9).sort((a, b) => b.tv.dividends_yield_current - a.tv.dividends_yield_current), yak:false, ad:"Temettü hisseleri (son 12 ay verim %3+)" };
+  if(alt === "ucuz") return { L: B.filter(s => s.tv?.price_earnings_ttm > 0 && s.tv.price_earnings_ttm < 8 && s.tv?.price_book_ratio > 0 && s.tv.price_book_ratio < 1.5 && (s.tv?.market_cap_basic || 0) > 3e9 && s.tv?.net_income > 0).sort((a, b) => a.tv.price_earnings_ttm - b.tv.price_earnings_ttm), yak:false, ad:"Ucuz görünenler (F/K < 8, PD/DD < 1,5, kârlı)" };
+  return { L:sirala(B), yak:false, ad:"Tüm BIST" };
+}
+PZ.bistAlt = PZ.bistAlt || "tum"; PZ.nasAlt = PZ.nasAlt || "sec";
+{ const eski = pzTablo;
+  pzTablo = function(){ const T = PZ.sekme, k = document.getElementById("pzTablo");
+    if(k && T === "bist" && PZ.liste.bist){ const orj = PZ.liste.bist, X = pzBistAlt(PZ.bistAlt); PZ.liste.bist = X.L; try{ eski.apply(this, arguments); } finally { PZ.liste.bist = orj; }
+      k.insertAdjacentHTML("afterbegin", `<div class="pzAltSeg"><span class="hspSeg">${[["tum", `Tümü ${orj.length}`], ["b30", "BIST 30"], ["b100", "BIST 100"], ["tem", "Temettü %3+"], ["ucuz", "Ucuz görünenler"]].map(([v, a]) => `<button class="${PZ.bistAlt === v ? "on" : ""}" onclick="PZ.bistAlt='${v}';pzTablo()">${a}</button>`).join("")}</span>
+        <small>${esc(X.ad)} · ${X.L.length} hisse${X.yak ? " · ≈ endeks listesi alınamadı, piyasa değeri × halka açıklık sırasıyla yaklaşık gösteriliyor" : ""}</small></div>`); return; }
+    if(k && T === "nasdaq" && PZ.nasAlt === "genis"){ if(!PZ.liste.nasGenis){ k.innerHTML = `<div class="spin"></div>`; pzNasGenis().then(() => PZ.sekme === "nasdaq" && pzTablo()).catch(e => { k.innerHTML = pzKaynakHata(e.message); }); return; }
+      const orj = PZ.liste.nasdaq; PZ.liste.nasdaq = PZ.liste.nasGenis; try{ eski.apply(this, arguments); } finally { PZ.liste.nasdaq = orj; } }
+    else eski.apply(this, arguments);
+    if(k && T === "nasdaq") k.insertAdjacentHTML("afterbegin", `<div class="pzAltSeg"><span class="hspSeg">${[["sec", `Önemli büyükler ${(PZ.liste.nasdaq || []).length}`], ["genis", "Tüm büyük NASDAQ (2 Mr $+)"]].map(([v, a]) => `<button class="${PZ.nasAlt === v ? "on" : ""}" onclick="PZ.nasAlt='${v}';pzTablo()">${a}</button>`).join("")}</span><small>${PZ.nasAlt === "genis" ? "Piyasa değeri 2 milyar $ üstü NASDAQ hisseleri" : "Apple, Microsoft, Nvidia gibi NASDAQ'ın en önemli 40 şirketi + takibindekiler"}</small></div>`);
+    if(k && T === "kripto") k.insertAdjacentHTML("afterbegin", `<div class="pzAltSeg"><small>Piyasa değerine göre en büyük ${(PZ.liste.kripto || []).length} coin (USDT, USDC gibi sabit coinler ve paketlenmiş coinler hariç)</small></div>`);
+  }; }
+
+// sol gezgin: acik isimli gruplar
+pzGezginCiz = function(){
+  const g = document.getElementById("pcGezgin"); if(!g) return;
+  let k = document.getElementById("pzGez");
+  if(!k){ k = document.createElement("div"); k.id = "pzGez"; g.appendChild(k);
+    k.innerHTML = `<div class="pcPbas"><b>PİYASALAR</b><button title="Ana ekran" onclick="pcGit('piyasa')">⌂</button></div>
+      <div class="pcGezAra"><input placeholder="Ara: TTRAK, BTC, Apple…" value="${esc(PZ_GEZ_ARA)}" oninput="PZ_GEZ_ARA=this.value;pzGezginCiz()"></div>
+      <div class="pzGezHizli"><button onclick="PZ.sekme='oneri';pcGit('piyasa')">💡 Öneriler</button><button onclick="PZ.sekme='gunluk';pcGit('piyasa')">📊 Günün en çokları</button></div><div class="pzGezIc"></div>`; }
+  const ic = k.querySelector(".pzGezIc"); if(!ic) return;
+  const aktif = app.dataset.ekran === "piyasaDetay" ? app.dataset.pid : "";
+  const q = PZ_GEZ_ARA.toLocaleLowerCase("tr").trim(), ara = L => q ? L.filter(s => `${s.kod} ${s.ad}`.toLocaleLowerCase("tr").includes(q)) : L;
+  const sat = s => { const c = s.bn && PZ.canli[s.bn], f = c?.f ?? s.f, d = c?.deg ?? s.deg;
+    return `<button class="pzGs ${s.k === aktif ? "on" : ""}" onclick="go('piyasaDetay','${s.k}')" title="${esc(s.ad || "")}"><span>${esc(s.kod)}</span><b class="mono" ${s.bn ? `data-canli="${s.bn}"` : ""}>${pzPara(f, "")}</b><em class="mono ${pzYon(d)}" ${s.bn ? `data-canlid="${s.bn}"` : ""}>${pzYuzde(d, 1)}</em></button>`; };
+  const bul = k2 => pzBul(k2) || { k:k2, kod:pzKod(k2), ad:"" };
+  const grup = (id, ad, L, tum, aciklama) => { const kap = (PZ_GEZ_KAPALI[id] ?? !["takip", "portfoy"].includes(id)) && !q;
+    return `<div class="pzGg ${kap ? "kapali" : ""}"><button class="pzGgB" title="${esc(aciklama || "")}" onclick="PZ_GEZ_KAPALI['${id}']=!(PZ_GEZ_KAPALI['${id}'] ?? ${!["takip", "portfoy"].includes(id)});try{localStorage.setItem('pzGez',JSON.stringify(PZ_GEZ_KAPALI))}catch(e){};pzGezginCiz()"><i>▾</i>${ad}<em>${L.length}</em></button>
+      <div class="pzGgL">${aciklama ? `<div class="pzGgA">${esc(aciklama)}</div>` : ""}${L.length ? L.map(sat).join("") : `<div class="pzNot">boş</div>`}${tum ? `<button class="pzGsTum" onclick="${tum};pcGit('piyasa')">tümünü tabloda gör →</button>` : ""}</div></div>`; };
+  const b30 = pzBistAlt("b30"), tem = pzBistAlt("tem");
+  const bistTum = (PZ.liste.bist || []).slice().sort((a, b) => (b.tv?.market_cap_basic || 0) - (a.tv?.market_cap_basic || 0));
+  const altin = (PZ.liste.maden || []).concat(PZ.liste.doviz || []);
+  ic.innerHTML = grup("takip", "★ Takip listem", ara(PZ.takip.map(t => bul(t.sembol))), "PZ.sekme='takip'")
+    + grup("portfoy", "💼 Portföyüm", ara([...new Set(PZ.portfoy.map(p => p.sembol))].map(bul)), "PZ.sekme='portfoy'")
+    + grup("b30", `BIST 30${b30.yak ? " ≈" : ""}`, ara(b30.L), "PZ.sekme='bist';PZ.bistAlt='b30'", b30.yak ? "Endeks listesi alınamadı: piyasa değeri × halka açıklık sırasıyla en büyük 30" : "Borsa İstanbul'un en büyük ve en çok işlem gören 30 hissesi")
+    + grup("tem", "BIST temettü %3+", ara(tem.L.slice(0, 40)), "PZ.sekme='bist';PZ.bistAlt='tem'", "Son 12 ayda fiyatının %3'ünden fazla temettü veren hisseler, verime göre sıralı")
+    + grup("bist", "BIST · tümü", ara(q ? bistTum : bistTum.slice(0, 60)), "PZ.sekme='bist';PZ.bistAlt='tum'", `Borsa İstanbul'daki ${bistTum.length} hissenin piyasa değerine göre ilk 60'ı (aramada hepsi)`)
+    + grup("nasdaq", "NASDAQ · önemli büyükler", ara(PZ.liste.nasdaq || []), "PZ.sekme='nasdaq';PZ.nasAlt='sec'", "NASDAQ'ın en önemli 40 şirketi (Apple, Microsoft, Nvidia…) + takibindekiler")
+    + grup("kripto", "Kripto · en büyük 30", ara((PZ.liste.kripto || []).slice(0, 30)), "PZ.sekme='kripto'", "Piyasa değerine göre ilk 30 coin, sabit coinler hariç")
+    + grup("maden", "Altın, gümüş & döviz", ara(altin), "PZ.sekme='maden'");
+};
+
+// fırsat radari: artik tek kaynak = Oneriler ekrani (test edilmis kurallar) + Claude/GPT; ne ise yaradigi ustunde yazar
+pzRadarCiz = function(){
+  const k = document.getElementById("pzRadar"); if(!k) return; const V = pzLS.oku("pzOneri", null), F = PZ.ayar?.firsatlar || {};
+  const h = k.closest("section")?.querySelector("header"); if(h) h.innerHTML = `<b>Fırsat radarı</b><button class="pcLink" onclick="PZ.sekme='oneri';pzTablo();pzSekmeCiz()">Tümü →</button>`;
+  const yz = ["claude", "gpt"].flatMap(kay => (F[kay] || []).slice(0, 3).map(x => ({ ...x, kay })));
+  const sat = (x, et) => `<button class="pzRadarS" onclick="go('piyasaDetay','${x.k}')"><span><b>${esc(x.kod)}</b><small>${esc((x.neden || []).slice(0, 2).join(" · "))}</small></span><em class="pzRadEt ${et[0]}">${et[1]}</em></button>`;
+  const L = V ? [].concat(Object.values(V.kisa || {}).flat().slice(0, 4).map(x => sat(x, ["kisa", "1-2 ay"])), Object.values(V.orta || {}).flat().slice(0, 3).map(x => sat(x, ["orta", "5-6 ay"]))) : [];
+  k.innerHTML = `<div class="pzNot">Programın test edilmiş kurallarıyla bugün öne çıkanlar${V ? " · " + trTarih(V.tarih) : ""}. Ayrıntı ve al/hedef/zarar kes seviyeleri “Öneriler”de.</div>`
+    + (L.length ? L.join("") : `<div class="pzNot">${V ? "Bugün kurala uyan yok." : "Öneriler henüz hesaplanmadı."} <button class="pcLink" onclick="PZ.sekme='oneri';pzTablo();pzSekmeCiz()">Şimdi hesapla →</button></div>`)
+    + (yz.length ? `<div class="pzMini">Claude / ChatGPT'nin gece önerileri${PZ.ayar?.firsatTarih ? " · " + esc(PZ.ayar.firsatTarih) : ""}</div>` + yz.map(x => `<button class="pzRadarS" onclick="go('piyasaDetay','${esc(x.sembol)}')"><span><b>${esc(pzKod(x.sembol) || x.sembol)}</b><small>${esc(x.neden || "")}</small></span><em class="pzKay ${x.kay}">${x.kay === "claude" ? "Claude" : "GPT"}</em></button>`).join("") : "");
+};
+
+// Oneriler: her oneride "simdi girilir mi?" + kuralin gecmis karnesi
+{ const eski = pzOneriHtml;
+  pzOneriHtml = function(V){ let h = eski(V);
+    h = h.replace('<div class="pzOnUc">', `<div class="pzKarne"><b>Bu kurallar geçmişte ne yaptı?</b> 40 hisse ve coinin 2014-2025 arası fiyatlarıyla, her seferinde sadece o güne kadarki veriyi kullanarak test ettim:
+      <span><i class="kisa"></i>Kısa vade kuralı: 2 ay sonra <b>%61</b> ihtimalle kârdaydın (rastgele alımda %55). Hedefe değme %46, zarar kese değme %41 · kazanç/risk oranı 1,3+ olduğu için hesap artıda kalıyor.</span>
+      <span><i class="orta"></i>Orta vade kuralı: 6 ay sonra <b>%67</b> ihtimalle kârdaydın (rastgele alımda %64).</span>
+      <span><i class="uzun"></i>Uzun vade: kalite ve büyüklük filtresi, kısa vadeli tahmin değil · aylara bölerek topla.</span>
+      <em>Yani bu ekran sihirli değnek değil; zar atmaktan belirgin şekilde iyi. Kazandıran şey kurala uymak: al bölgesinde gir, hedefte sat, zarar keste çık.</em></div><div class="pzOnUc">`);
+    return h; }; }
+{ const eski = pzOneriHtml;
+  pzOneriHtml = function(V){ const h = eski(V); setTimeout(() => document.querySelectorAll(".pzOnK").forEach(b => { if(b.querySelector(".pzOnSimdi")) return;
+      const k = (b.getAttribute("onclick") || "").match(/'([A-Z]+:[^']+)'/)?.[1]; const x = ["kisa", "orta", "uzun"].flatMap(v => Object.values(V[v] || {}).flat()).find(y => y.k === k); if(!x?.al?.[0]) return;
+      const c = PZ.canli[pzKod(x.k) + "USDT"], f = c?.f ?? pzBul(x.k)?.f ?? x.f, ic = f >= x.al[0]*0.995 && f <= x.al[1]*1.005, ust = f > x.al[1], uz = ust ? (f/x.al[1] - 1)*100 : (1 - f/x.al[0])*100;
+      b.insertAdjacentHTML("beforeend", `<div class="pzOnSimdi ${ic ? "art" : ust ? "bek" : "dk"}">${ic ? "✓ Şu an al bölgesinde: girilebilir" : ust ? `⏳ Al bölgesinin %${pzVirgul(uz)} üstünde: inmesini bekle ya da küçük gir` : `⚠ Al bölgesinin %${pzVirgul(uz)} altına sarktı: toparlanmasını bekle`}</div>`); }), 0); return h; }; }
+// "indexes" kolonu TradingView'da reddedilirse liste bozulmasin: kolonu cikarip bir kez daha dene
+["pzBist", "pzNasdaq", "pzNasGenis"].forEach(ad => { const eski = window[ad]; if(typeof eski !== "function") return;
+  window[ad] = async function(){ try{ return await eski.apply(this, arguments); }
+    catch(e){ const i = PZ_TV_KOLON.indexOf("indexes"); if(i < 0) throw e; PZ_TV_KOLON.splice(i, 1); console.log("indexes kolonu kaldirildi", e.message);
+      delete PZ.cache.bist; delete PZ.cache.nasdaq; delete PZ.cache.nasGenis; return await eski.apply(this, arguments); } }; });
+
+/* ================= ABD: NASDAQ + NYSE buyukleri + ETF'ler (hepsi Midas'tan alinip satilabilir) ================= */
+const PZ_NYSE = ["BRK.B","JPM","V","MA","LLY","UNH","JNJ","XOM","CVX","WMT","PG","KO","HD","BAC","ORCL","CRM","DIS","MCD","NKE","IBM","GE","CAT","BA","TSM","BABA","UBER","SHOP","NVO","SPOT","GS","MS","T","VZ","PFE","ABBV","MRK","NOW","ANET","DELL","RTX","LMT"];
+const PZ_ETF = [["AMEX","SPY","S&P 500 (ABD'nin en büyük 500 şirketi)"],["AMEX","VOO","S&P 500 · düşük masraflı"],["NASDAQ","QQQ","NASDAQ 100 (teknoloji ağırlıklı)"],["AMEX","VTI","Tüm ABD borsası"],["AMEX","DIA","Dow Jones 30"],["AMEX","IWM","ABD küçük şirketler"],
+  ["AMEX","SCHD","ABD temettü şirketleri"],["AMEX","VYM","Yüksek temettü"],["AMEX","JEPI","Aylık gelir (opsiyon primli)"],["NASDAQ","SMH","Çip şirketleri"],["NASDAQ","SOXX","Yarı iletkenler"],["AMEX","XLK","Teknoloji sektörü"],["AMEX","XLF","Bankalar & finans"],
+  ["AMEX","XLE","Enerji & petrol"],["AMEX","XLV","Sağlık"],["AMEX","GLD","Altın (ons)"],["AMEX","IAU","Altın · düşük masraflı"],["AMEX","SLV","Gümüş"],["AMEX","GDX","Altın madencileri"],["AMEX","TLT","ABD 20+ yıl tahvil"],["AMEX","VNQ","ABD gayrimenkul (REIT)"],
+  ["AMEX","EEM","Gelişmekte olan ülkeler"],["AMEX","VEA","Gelişmiş ülkeler (ABD hariç)"],["AMEX","ARKK","Yıkıcı yenilik (yüksek risk)"],["NASDAQ","IBIT","Bitcoin ETF"],["AMEX","ETHA","Ethereum ETF"],["NASDAQ","TQQQ","NASDAQ 100 × 3 kaldıraç (çok riskli)"],["AMEX","USO","Petrol"],["AMEX","URA","Uranyum & nükleer"],["AMEX","ITA","Savunma sanayi"]];
+const PZ_ETF_AD = Object.fromEntries(PZ_ETF.map(([, k, a]) => [k, a]));
+PZ_SEKMELER.forEach(x => { if(x[0] === "nasdaq") x[1] = "ABD (NASDAQ · NYSE · ETF)"; });
+pzNasdaq = async function(zorla, ek){ if(zorla) delete PZ.cache.nasdaq;
+  const bilinen = new Set(PZ_NASDAQ.concat(PZ_NYSE, PZ_ETF.map(x => x[1])));
+  const diger = [...new Set((ek || []).concat(PZ.takip.concat(PZ.portfoy).filter(x => pzTur(x.sembol) === "NASDAQ").map(x => pzKod(x.sembol))))].filter(k => !bilinen.has(k));
+  const T = PZ_NASDAQ.map(k => "NASDAQ:" + k).concat(PZ_NYSE.map(k => "NYSE:" + k), PZ_ETF.map(([b, k]) => b + ":" + k), diger.flatMap(k => ["NASDAQ:" + k, "NYSE:" + k, "AMEX:" + k])).slice(0, 300);
+  return pzOnbellek("nasdaq", 45000, async () => { const r = await pzFn({ mod:"tvtara", pazar:"america", tickers:T, kolonlar:PZ_TV_KOLON, sinir:300 });
+    const g = {}; r.veri.forEach(x => { const s = pzTvSatir(x, r.kolon, "nasdaq"); s.grup = PZ_ETF_AD[s.kod] ? "etf" : s.borsa === "NASDAQ" ? "nasdaq" : "nyse"; if(PZ_ETF_AD[s.kod]) s.ad = `${s.kod} · ${PZ_ETF_AD[s.kod]}`;
+      if(!g[s.kod] || s.borsa === "NASDAQ") g[s.kod] = s; });
+    return PZ.liste.nasdaq = Object.values(g).filter(x => x.f != null).sort((a, b) => (b.tv.market_cap_basic || 0) - (a.tv.market_cap_basic || 0)); }); };
+{ const eski = pzTablo;
+  pzTablo = function(){ const T = PZ.sekme, k = document.getElementById("pzTablo");
+    if(!(k && T === "nasdaq" && PZ.liste.nasdaq && ["sec", "nyse", "etf"].includes(PZ.nasAlt))) return eski.apply(this, arguments);
+    const orj = PZ.liste.nasdaq, f = { sec:s => s.grup === "nasdaq", nyse:s => s.grup === "nyse", etf:s => s.grup === "etf" }[PZ.nasAlt];
+    PZ.liste.nasdaq = orj.filter(f); const a = PZ.nasAlt; try{ eski.apply(this, arguments); } finally { PZ.liste.nasdaq = orj; }
+    const seg = k.querySelector(".pzAltSeg"); if(seg) seg.outerHTML = `<div class="pzAltSeg"><span class="hspSeg">${[["sec", `NASDAQ önemliler ${orj.filter(s => s.grup === "nasdaq").length}`], ["nyse", `NYSE büyükleri ${orj.filter(s => s.grup === "nyse").length}`], ["etf", `ETF'ler ${orj.filter(s => s.grup === "etf").length}`], ["genis", "Tüm büyük NASDAQ"]].map(([v, x]) => `<button class="${a === v ? "on" : ""}" onclick="PZ.nasAlt='${v}';pzTablo()">${x}</button>`).join("")}</span>
+      <small>${{ sec:"Apple, Microsoft, Nvidia gibi NASDAQ'ın en önemli şirketleri", nyse:"JPMorgan, Visa, Coca-Cola, Berkshire gibi New York borsasının devleri", etf:"Tek alımla yüzlerce şirkete, altına, tahvile ya da bir sektöre yatırım yapan fonlar · hepsi Midas'ta alınıp satılabilir" }[a]}</small></div>`; }; }
+{ const eski = pzGezginCiz;
+  pzGezginCiz = function(){ eski.apply(this, arguments); const ic = document.querySelector("#pzGez .pzGezIc"); if(!ic) return;
+    const L = PZ.liste.nasdaq || [], q = PZ_GEZ_ARA.toLocaleLowerCase("tr").trim(), ara = Z => q ? Z.filter(s => `${s.kod} ${s.ad}`.toLocaleLowerCase("tr").includes(q)) : Z;
+    // NASDAQ grubunu sadece NASDAQ hisseleriyle yeniden yaz, NYSE ve ETF gruplarini ekle
+    const gr = [...ic.querySelectorAll(".pzGg")].find(g => /NASDAQ/.test(g.querySelector(".pzGgB")?.textContent || "")); if(!gr) return;
+    const yap = (id, ad, Z, tum, ac) => { const kap = (PZ_GEZ_KAPALI[id] ?? true) && !q, aktif = app.dataset.ekran === "piyasaDetay" ? app.dataset.pid : "";
+      return `<div class="pzGg ${kap ? "kapali" : ""}"><button class="pzGgB" onclick="PZ_GEZ_KAPALI['${id}']=!(PZ_GEZ_KAPALI['${id}'] ?? true);try{localStorage.setItem('pzGez',JSON.stringify(PZ_GEZ_KAPALI))}catch(e){};pzGezginCiz()"><i>▾</i>${ad}<em>${Z.length}</em></button>
+        <div class="pzGgL"><div class="pzGgA">${esc(ac)}</div>${Z.map(s => `<button class="pzGs ${s.k === aktif ? "on" : ""}" onclick="go('piyasaDetay','${s.k}')" title="${esc(s.ad || "")}"><span>${esc(s.kod)}</span><b class="mono">${pzPara(s.f, "")}</b><em class="mono ${pzYon(s.deg)}">${pzYuzde(s.deg, 1)}</em></button>`).join("") || `<div class="pzNot">boş</div>`}<button class="pzGsTum" onclick="${tum};pcGit('piyasa')">tümünü tabloda gör →</button></div></div>`; };
+    gr.outerHTML = yap("nasdaq", "ABD · NASDAQ önemliler", ara(L.filter(s => s.grup === "nasdaq")), "PZ.sekme='nasdaq';PZ.nasAlt='sec'", "Apple, Microsoft, Nvidia… (fiyatlar $)")
+      + yap("nyse", "ABD · NYSE büyükleri", ara(L.filter(s => s.grup === "nyse")), "PZ.sekme='nasdaq';PZ.nasAlt='nyse'", "JPMorgan, Visa, Coca-Cola, Berkshire…")
+      + yap("etf", "ABD · ETF'ler (fonlar)", ara(L.filter(s => s.grup === "etf")), "PZ.sekme='nasdaq';PZ.nasAlt='etf'", "S&P 500, NASDAQ 100, altın, gümüş, tahvil, temettü, sektör fonları"); }; }
+// uzun vade onerilerine cekirdek ETF'ler: piyasanin geneli + altin + temettu
+{ const eski = pzOneriHesap;
+  pzOneriHesap = async function(ilerle){ const V = await eski.apply(this, arguments);
+    try{ const E = ["VOO", "QQQ", "SCHD", "GLD", "SMH"].map(k => (PZ.liste.nasdaq || []).find(s => s.kod === k)).filter(Boolean);
+      const R = (await pzHavuz(E, 3, async s => { const A = PZM.analiz(await pzGecmis(s, "2Y"), s.tv?.["Recommend.All"], 21); if(!A) return null; const O = pzOrtak(A, PZ.analiz[s.k] || {}), G = PZM.getiri(A.D.c, A.i);
+        return { k:s.k, kod:s.kod, ad:s.ad, para:"USD", f:A.fiyat, karar:A.puan.karar, puan:A.puan.puan, rejim:A.rejim.ad, al:O.al, sat:O.sat, stop:O.stop, rr:O.rr, logo:s.logo, deg:s.deg,
+          ihtimal:PZM.ihtimal(A.fiyat, G.mu, G.sd, 252).yuk, getiri:null, skor:1, neden:[PZ_ETF_AD[s.kod], "ETF: tek alımla yüzlerce şirket / varlık, tek şirket riski yok", A.rejim.ad === "ayı" ? "şu an düşüşte: kademeli topla" : A.ind.s200 && A.fiyat > A.ind.s200 ? "uzun vadeli ortalamanın üstünde" : null].filter(Boolean) }; })).filter(Boolean);
+      V.uzun.nasdaq = R.concat(V.uzun.nasdaq || []).slice(0, 7); pzLS.yaz("pzOneri", V); }catch(e){ console.log("etf oneri", e); }
+    return V; }; }
+{ const eski = pzOneriHtml; pzOneriHtml = function(V){ return eski(V).replace('<div class="pzMini">NASDAQ</div>', '<div class="pzMini">ABD · ETF + hisse</div>'); }; }
+
+/* ================= Dunya devleri (Avrupa / Asya / Latin Amerika sirketleri, ABD borsasinda islem goren halleri: Midas'ta alinabilir) ================= */
+const PZ_DUNYA = [["NASDAQ","ASML","NL","ASML · çip makineleri"],["NYSE","TSM","TW","TSMC · dünyanın çip fabrikası"],["NYSE","NVO","DK","Novo Nordisk · obezite ilacı"],["NYSE","SAP","DE","SAP · kurumsal yazılım"],["NYSE","TM","JP","Toyota"],["NYSE","SONY","JP","Sony"],
+  ["NYSE","SHEL","GB","Shell · petrol"],["NASDAQ","AZN","GB","AstraZeneca · ilaç"],["NYSE","HSBC","GB","HSBC · banka"],["NYSE","UL","GB","Unilever"],["NYSE","BHP","AU","BHP · madencilik"],["NYSE","RIO","GB","Rio Tinto · madencilik"],
+  ["NYSE","BABA","CN","Alibaba"],["NASDAQ","PDD","CN","PDD (Temu)"],["NASDAQ","JD","CN","JD.com"],["NASDAQ","BIDU","CN","Baidu"],["NYSE","NIO","CN","NIO · elektrikli araç"],["NYSE","INFY","IN","Infosys"],["NYSE","HDB","IN","HDFC Bank"],
+  ["NASDAQ","MELI","AR","MercadoLibre"],["NYSE","SE","SG","Sea Ltd"],["NYSE","CPNG","KR","Coupang"],["NYSE","NU","BR","Nubank"],["NYSE","STLA","NL","Stellantis"],["NYSE","RACE","IT","Ferrari"],["NYSE","DEO","GB","Diageo"],["NYSE","TTE","FR","TotalEnergies"],["NYSE","BTI","GB","British American Tobacco"],["NYSE","MUFG","JP","Mitsubishi UFJ"],["NASDAQ","ARM","GB","Arm · çip tasarımı"]];
+const PZ_DUNYA_UL = Object.fromEntries(PZ_DUNYA.map(([, k, u, a]) => [k, { u, a }]));
+{ const eski = pzNasdaq;
+  pzNasdaq = async function(zorla, ek){ return eski.call(this, zorla, (ek || []).concat(PZ_DUNYA.map(x => x[1]).filter(k => !PZ_NASDAQ.includes(k) && !PZ_NYSE.includes(k)))).then(L => {
+    (L || []).forEach(s => { const d = PZ_DUNYA_UL[s.kod]; if(d){ s.grup = "dunya"; s.ulke = d.u; s.ad = d.a; } }); return L; }); }; }
+// ulke kodu: hangi ulkenin sirketi / borsasi
+const PZ_ULKE_AD = { TR:"Türkiye", US:"ABD", NL:"Hollanda", TW:"Tayvan", DK:"Danimarka", DE:"Almanya", JP:"Japonya", GB:"İngiltere", AU:"Avustralya", CN:"Çin", IN:"Hindistan", AR:"Arjantin", SG:"Singapur", KR:"Güney Kore", BR:"Brezilya", IT:"İtalya", FR:"Fransa" };
+function pzUlke(k){ const t = pzTur(k), s = pzBul(k); if(t === "BIST") return "TR"; if(t === "NASDAQ") return s?.ulke || PZ_DUNYA_UL[pzKod(k)]?.u || "US"; if(t === "KRIPTO") return "₿"; if(t === "MADEN") return "AU"; return ""; }
+const pzUlkeCip = k => { const u = pzUlke(k); if(!u) return ""; return `<i class="pzUl ${u === "₿" ? "kr" : u === "TR" ? "tr" : u === "US" ? "us" : "dg"}" title="${u === "₿" ? "Kripto para" : u === "AU" ? "Altın / emtia" : (PZ_ULKE_AD[u] || u) + (u !== "TR" && u !== "US" ? " şirketi · ABD borsasında işlem görür" : u === "TR" ? " · Borsa İstanbul" : " · ABD borsası")}">${u === "AU" ? "Au" : u}</i>`; };
+// ekrana cizilen her varlik satirina ulke kodunu ekle (gezgin, tablolar, sekmeler, oneriler, detay basligi)
+function pzUlkeBoya(kok){
+  (kok || document).querySelectorAll('[onclick*="piyasaDetay"]').forEach(el => { if(el.dataset.ul) return; el.dataset.ul = 1;
+    const k = (el.getAttribute("onclick").match(/'([A-Z]+:[^']+)'/) || [])[1]; if(!k) return;
+    if(el.closest(".pzHarIki, .pzSeritK")) return;
+    let hedef = null; for(const sec of [":scope.pzGs > span", ".pzSem b", ".pzOnKu b", ":scope > span > b", ":scope > b", ":scope > span:first-child", "b"]){ hedef = el.querySelector(sec); if(hedef) break; }
+    if(hedef && !hedef.querySelector(".pzUl")) hedef.insertAdjacentHTML("afterbegin", pzUlkeCip(k)); });
+  const h = document.querySelector(".pzdKim h2"); if(h && !h.querySelector(".pzUl") && PZD.s?.k) h.insertAdjacentHTML("afterbegin", pzUlkeCip(PZD.s.k));
+}
+let __pzUlT = null; const __pzUlG = new MutationObserver(() => { clearTimeout(__pzUlT); __pzUlT = setTimeout(() => { if(/^piyasa|^ana$/.test(app?.dataset?.ekran || "") || document.body.classList.contains("pzMod")) pzUlkeBoya(); }, 60); });
+setTimeout(() => { try{ __pzUlG.observe(document.body, { childList:true, subtree:true }); }catch(e){} }, 0);
+// tablo ve gezginde dunya devleri grubu
+{ const eski = pzTablo;
+  pzTablo = function(){ const T = PZ.sekme, k = document.getElementById("pzTablo");
+    if(k && T === "nasdaq" && PZ.nasAlt === "dunya" && PZ.liste.nasdaq){ const orj = PZ.liste.nasdaq; PZ.liste.nasdaq = orj.filter(s => s.grup === "dunya"); PZ.nasAlt = "sec"; try{ eski.apply(this, arguments); } finally { PZ.liste.nasdaq = orj; PZ.nasAlt = "dunya"; }
+      k.querySelectorAll(".pzAltSeg .hspSeg button").forEach(b => b.classList.remove("on")); k.querySelector(".pzAltSeg small").textContent = "Avrupa, Asya ve Latin Amerika'nın dev şirketleri · ABD borsasında dolarla işlem görür, Midas'tan alınabilir"; }
+    else eski.apply(this, arguments);
+    const seg = k?.querySelector(".pzAltSeg .hspSeg"); if(seg && T === "nasdaq" && !seg.querySelector("[data-d]")) seg.insertAdjacentHTML("beforeend", `<button data-d="1" class="${PZ.nasAlt === "dunya" ? "on" : ""}" onclick="PZ.nasAlt='dunya';pzTablo()">🌍 Dünya devleri ${(PZ.liste.nasdaq || []).filter(s => s.grup === "dunya").length}</button>`); }; }
+{ const eski = pzGezginCiz;
+  pzGezginCiz = function(){ eski.apply(this, arguments); const ic = document.querySelector("#pzGez .pzGezIc"); if(!ic || ic.querySelector('[data-g="dunya"]')) return;
+    const q = PZ_GEZ_ARA.toLocaleLowerCase("tr").trim(), L = (PZ.liste.nasdaq || []).filter(s => s.grup === "dunya" && (!q || `${s.kod} ${s.ad}`.toLocaleLowerCase("tr").includes(q))), kap = (PZ_GEZ_KAPALI.dunya ?? true) && !q;
+    const etf = [...ic.querySelectorAll(".pzGg")].find(g => /ETF/.test(g.querySelector(".pzGgB")?.textContent || ""));
+    (etf || ic.lastElementChild)?.insertAdjacentHTML("afterend", `<div class="pzGg ${kap ? "kapali" : ""}" data-g="dunya"><button class="pzGgB" onclick="PZ_GEZ_KAPALI.dunya=!(PZ_GEZ_KAPALI.dunya ?? true);try{localStorage.setItem('pzGez',JSON.stringify(PZ_GEZ_KAPALI))}catch(e){};pzGezginCiz()"><i>▾</i>🌍 Dünya devleri<em>${L.length}</em></button>
+      <div class="pzGgL"><div class="pzGgA">Avrupa, Asya, Latin Amerika şirketleri · ABD borsasında, Midas'ta alınabilir</div>${L.map(s => `<button class="pzGs" onclick="go('piyasaDetay','${s.k}')" title="${esc(s.ad)}"><span>${esc(s.kod)}</span><b class="mono">${pzPara(s.f, "")}</b><em class="mono ${pzYon(s.deg)}">${pzYuzde(s.deg, 1)}</em></button>`).join("")}<button class="pzGsTum" onclick="PZ.sekme='nasdaq';PZ.nasAlt='dunya';pcGit('piyasa')">tümünü tabloda gör →</button></div></div>`); }; }
+
+/* ================= 🚀 Risk & kazanç: yuksek risk, yuksek getiri potansiyeli (kripto orta-kucuk coinler + BIST kucuk/orta hisseler) ================= */
+PZ_SEKMELER.splice(3, 0, ["risk", "🚀 Risk & kazanç"]);
+{ const eski = pzTablo; pzTablo = function(){ const k = document.getElementById("pzTablo"); if(k && PZ.sekme === "risk") return pzRiskCiz(k); return eski.apply(this, arguments); }; }
+let PZ_RISK_IS = null;
+async function pzRiskHesap(ilerle){
+  await Promise.all([pzBist().catch(() => {}), pzKripto().catch(() => {}), pzMadenDoviz().catch(() => {})]);
+  // kripto: piyasa degerinde 25-250. siradakiler (CoinGecko)
+  let C = []; try{ const r = await pzJson("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&price_change_percentage=7d,30d,1y", 15000);
+    C = (r || []).filter(c => !PZ_STABIL.has(String(c.symbol).toLowerCase()) && !PZ_STABIL.has(c.id) && !/usd|eur|gold|wrapped|staked|bridged/i.test(c.name) && c.market_cap_rank >= 20 && c.market_cap_rank <= 250 && (c.total_volume || 0) > 5e6)
+      .map(c => ({ k:"KRIPTO:" + c.symbol.toUpperCase(), tur:"kripto", kod:c.symbol.toUpperCase(), ad:c.name, f:c.current_price, deg:c.price_change_percentage_24h, para:"USD", gec:"anlık", cg:c, logo:c.image, bn:c.symbol.toUpperCase() + "USDT" })); }catch(e){ console.log("risk cg", e); }
+  const kOn = C.map(s => { const c = s.cg, m7 = c.price_change_percentage_7d_in_currency || 0, m30 = c.price_change_percentage_30d_in_currency || 0, vh = (c.total_volume || 0)/(c.market_cap || 1);
+    return { s, on: (m30 > 0 ? Math.min(m30, 80)/40 : m30/60) + (m7 > 0 ? Math.min(m7, 40)/40 : m7/50) + Math.min(vh, .5)*2 + (c.ath_change_percentage < -70 ? .3 : 0) }; }).sort((a, b) => b.on - a.on).slice(0, 28).map(x => x.s);
+  // BIST: piyasa degeri 1-25 milyar TL, yeterince islem goren, oynak
+  const B = (PZ.liste.bist || []).filter(s => s.tv && (s.tv.market_cap_basic || 0) > 1e9 && (s.tv.market_cap_basic || 0) < 2.5e10 && (s.tv.average_volume_10d_calc || 0)*(s.f || 0) > 1.5e7);
+  const bOn = B.map(s => { const t = s.tv; return { s, on: (t["Recommend.All"] || 0)*2 + ((t["Perf.1M"] || 0) > 0 ? Math.min(t["Perf.1M"], 40)/40 : 0) + ((t["Perf.3M"] || 0) > 0 ? Math.min(t["Perf.3M"], 80)/80 : -.3) + Math.min(t.relative_volume_10d_calc || 1, 3)/3 + (t.net_income > 0 ? .3 : 0) }; })
+    .sort((a, b) => b.on - a.on).slice(0, 28).map(x => x.s);
+  const aday = kOn.concat(bOn); let bitti = 0;
+  const S = (await pzHavuz(aday, 4, async s => { let R; try{ R = await pzGecmis(s, "2Y"); }catch(e){ R = null; } ilerle?.(++bitti, aday.length);
+    if(!R?.c || R.c.length < 120) return null; const ag = pzAyGun(s), A = PZM.analiz(R, s.tv?.["Recommend.All"], ag); if(!A) return null;
+    const G = PZM.getiri(A.D.c, A.i), f = A.fiyat, O = pzOrtak(A, {}), I2 = PZM.ihtimal(f, G.mu, G.sd, 2*ag, O.sat[1] || O.sat[0], O.stop), I6 = PZM.ihtimal(f, G.mu, G.sd, 6*ag, f*1.5, O.stop*0.9);
+    const yOyn = G.sd*Math.sqrt(ag*12)*100;
+    return { s, A, O, I2, I6, f, yOyn }; })).filter(Boolean);
+  const kayit = (x, vade) => { const { s, A, O, f } = x, tv = s.tv || {}, cg = s.cg || {};
+    const neden = [A.rejim.ad === "boğa" ? "yükseliş döneminde" : A.rejim.ad === "ayı" ? "dipten dönüş denemesi" : "yatay, kırılım bekliyor",
+      cg.price_change_percentage_30d_in_currency != null ? `30 günde ${pzYuzde(cg.price_change_percentage_30d_in_currency, 0)}` : tv["Perf.1M"] != null ? `1 ayda ${pzYuzde(tv["Perf.1M"], 0)}` : null,
+      cg.ath_change_percentage != null ? `zirvesine ${pzYuzde(-cg.ath_change_percentage/(1 + cg.ath_change_percentage/100), 0)} yükselme payı` : tv.price_52_week_high ? `52 hafta zirvesine ${pzYuzde((tv.price_52_week_high/f - 1)*100, 0)}` : null,
+      (tv.relative_volume_10d_calc || 0) > 1.5 ? `hacim normalin ${pzVirgul(tv.relative_volume_10d_calc)} katı` : (cg.total_volume || 0)/(cg.market_cap || 1) > .15 ? "işlem hacmi piyasa değerine göre çok yüksek" : null,
+      `yıllık oynaklık %${Math.round(x.yOyn)}`].filter(Boolean);
+    const hedef = vade === "kisa" ? (O.sat[1] || O.sat[0]) : f*1.5;
+    return { k:s.k, kod:s.kod, ad:s.ad, para:s.para, f, logo:s.logo, deg:s.deg, al:O.al, sat:[hedef], stop:vade === "kisa" ? O.stop : O.stop*0.9, getiri:(hedef/f - 1)*100,
+      ihtimal: vade === "kisa" ? x.I2.hedef : x.I6.hedef, zk: vade === "kisa" ? x.I2.stop : x.I6.stop, puan:A.puan.puan, neden, rank:s.cg?.market_cap_rank, oyn:x.yOyn }; };
+  const kisa = S.filter(x => x.A.puan.puan >= 25 && (x.A.ind.rsi || 50) < 75 && x.A.ind.hist > 0).map(x => ({ x, sk: x.I2.hedef*((x.O.sat[1] || x.O.sat[0])/x.f - 1) - x.I2.stop*(1 - x.O.stop/x.f) })).filter(y => y.sk > 0 && y.x.I2.hedef >= .3).sort((a, b) => b.sk - a.sk).map(y => kayit(y.x, "kisa"));
+  const orta = S.filter(x => x.A.puan.puan >= 0 && x.A.ind.s50 && x.f > x.A.ind.s50 && x.A.rejim.ad !== "ayı" && x.I6.hedef >= .25 && x.I6.hedef > x.I6.stop).map(x => ({ x, sk: x.I6.hedef - x.I6.stop*.6 })).sort((a, b) => b.sk - a.sk).map(y => kayit(y.x, "orta"));
+  const ayir = L => ({ kripto:L.filter(x => pzTur(x.k) === "KRIPTO").slice(0, 6), bist:L.filter(x => pzTur(x.k) === "BIST").slice(0, 6) });
+  const V = { tarih:pzGun(), saat:new Date().toLocaleTimeString("tr-TR", { hour:"2-digit", minute:"2-digit" }), kisa:ayir(kisa), orta:ayir(orta), taranan:S.length, coin:C.length };
+  pzLS.yaz("pzRisk", V); return V;
+}
+async function pzRiskCiz(k, zorla){
+  let V = pzLS.oku("pzRisk", null); const ciz = () => { const el = document.getElementById("pzTablo"); if(el && PZ.sekme === "risk" && V) el.innerHTML = pzRiskHtml(V); };
+  if(V && !zorla){ ciz(); if(V.tarih === pzGun()) return; } if(PZ_RISK_IS) return; PZ_RISK_IS = true;
+  const ilerle = (a, b) => { const el = document.getElementById("pzTablo"); if(el && PZ.sekme === "risk" && (!V || zorla)) el.innerHTML = `<div class="pzOnHes"><i class="pzDon"></i><b>Yüksek risk / yüksek kazanç taraması…</b><span>${a}/${b} adayın grafiği inceleniyor</span><div class="pzOnBar"><i style="width:${Math.round(a/b*100)}%"></i></div></div>`; };
+  if(!V || zorla) ilerle(0, 1);
+  try{ V = await pzRiskHesap(ilerle); }catch(e){ toast("Tarama olmadı: " + e.message); } finally { PZ_RISK_IS = null; } ciz();
+}
+function pzRiskHtml(V){
+  const kart = (x, vade) => `<button class="pzOnK" onclick="go('piyasaDetay','${x.k}')"><div class="pzOnKu">${pzLogo(x)}<b>${esc(x.kod)}</b><small>${esc(x.ad || "")}${x.rank ? " · #" + x.rank : ""}</small><span class="mono">${pzIki(x.f, x.para)}</span></div>
+    <div class="pzOnSev"><span class="al">Al <b class="mono">${pzPara(x.al[0], x.para)} – ${pzPara(x.al[1], x.para)}</b></span><span class="st">Hedef <b class="mono">${pzPara(x.sat[0], x.para)}</b> <em class="art">${pzYuzde(x.getiri, 0)}</em></span><span class="zk">Zarar kes <b class="mono">${pzPara(x.stop, x.para)}</b></span></div>
+    <div class="pzOnSev"><span>${vade === "kisa" ? "2 ayda" : "6 ayda"} hedefe değme <b class="art">%${Math.round((x.ihtimal || 0)*100)}</b></span><span>zarar kese değme <b class="az">%${Math.round((x.zk || 0)*100)}</b></span></div>
+    <div class="pzOnNd">${x.neden.slice(0, 4).map(n => `<i>${esc(n)}</i>`).join("")}</div></button>`;
+  const sut = (vade, bas, alt, ac) => { const X = V[vade] || {}; const g = (ad, L) => L?.length ? `<div class="pzOnG"><div class="pzMini">${ad}</div>${L.map(x => kart(x, vade)).join("")}</div>` : "";
+    return `<section class="pzOnS ${vade === "kisa" ? "kisa" : "orta"}"><header><b>${bas}</b><small>${alt}</small></header><p class="pzNot">${ac}</p>${g("Kripto · orta ve küçük coinler", X.kripto) + g("BIST · küçük ve orta hisseler", X.bist) || `<div class="pcBos">Bugün kurala uyan yok.</div>`}</section>`; };
+  return `<div class="pzOnTarih">🚀 ${trTarih(V.tarih)} ${V.saat} · ${V.taranan} aday incelendi (${V.coin} coin + BIST küçük/orta hisseler) · her gün yenilenir <button class="pcLink" onclick="pzRiskCiz(document.getElementById('pzTablo'), true)">↻ Şimdi yenile</button></div>
+    <div class="pzRiskUyar"><b>⚠ Burası kumarhaneye en yakın köşe.</b> Burada %50-100 kazanma ihtimali de var, %30-60 kaybetme ihtimali de. <b>Kural:</b> buraya portföyünün en fazla %5-10'unu ayır, tek bir varlığa toplamın %2'sinden fazlasını koyma, zarar kesi mutlaka uygula. Hedefe yaklaşınca yarısını sat, kalanı için zarar kesi maliyete çek.</div>
+    <div class="pzOnUc iki">${sut("kisa", "⚡ Kısa vade · 1-2 ay", "hızlı al-sat", "Momentum başlamış (yön göstergesi yukarı, alıcılar güçlü), kazanç beklentisi riskten büyük olanlar. Hedef: programın sat bölgesinin üst ucu.")}
+      ${sut("orta", "📈 Orta vade · 5-6 ay", "%50 hedefli", "Kısa vadeli ortalamanın üstünde, düşüş döneminde olmayan, 6 ayda %50 yükselme ihtimali en yüksek olanlar.")}</div>`;
+}
 
 baslat();
 
