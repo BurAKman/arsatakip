@@ -3168,7 +3168,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.8.0";
+const SURUM_MORDOR = "v 3.8.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -15505,6 +15505,7 @@ function capEditorHtml(){
         <button class="pill gold" onclick="PARCA.yeniAcik=!PARCA.yeniAcik;PARCA.sec=null;PARCA.secKesim=null;PARCA.bosSec=null;secimCiz()">+ Yeni parça / grup</button>
         <button class="pill sade" onclick="esitDagit(null)">Eşit dağıt</button>
         <button class="pill sade" onclick="capSifirla()">Sıfırla</button>
+        <button class="pill gold" onclick="capTarifAc()" title="Nasıl bölüneceğini yaz; Claude ya da ChatGPT planı kurar, program çizer">✦ Tarif ile çiz</button>
       </div>
       <div style="position:relative">
         <canvas id="capEditor" style="width:100%;border-radius:10px;background:#fff;display:block;touch-action:none"></canvas>
@@ -15918,8 +15919,10 @@ function yolUcDikUygula(M, C, yollar, bolgeler, yapr, gercek){
       for(const i of adaylar){ const nn = disNormal(M, i), c2 = a[0]*nn[0] + a[1]*nn[1]; if(c2 > .35 && c2 <= Math.cos(6*Math.PI/180)){ ki = i; no = nn; cs = c2; break; } }
       if(ki < 0 && adaylar.every(i=>{ const nn = disNormal(M, i); return a[0]*nn[0]+a[1]*nn[1] > Math.cos(6*Math.PI/180); })){ neden.push('zaten dik'); continue; }
       if(ki < 0){ neden.push('açı uygun değil (' + adaylar.map(i=>{ const nn = disNormal(M, i); return Math.round(Math.acos(Math.max(-1, Math.min(1, a[0]*nn[0]+a[1]*nn[1])))*180/Math.PI) + '°'; }).join(', ') + ')'); continue; }
-      let Ld = Math.max(2*g, 6), u = Ld/cs;
-      if(u > La*.35){ u = La*.35; Ld = u*cs; }
+      // yumusak donus (haritaci usulu): duz yol -> R yaricapli yay -> sinira dik kisa kol
+      const del = Math.acos(Math.max(-1, Math.min(1, cs)));
+      let R = Math.max(6*g, 20), T = R*Math.tan(del/2), Ls = Math.max(g, 4), Ld = Ls + T, u = Ld/cs;
+      if(u + T > La*.45){ const k = (La*.45)/(u + T); R *= k; T *= k; Ld = Ls*k + T; u = Ld/cs; }
       const A = [E[0]-a[0]*u, E[1]-a[1]*u];
       // A'dan sinira dik isin: en yakin sinir kesisimi (kose yakininda komsu kenara da dusebilir)
       let Ep = null, enT = 1e9; const R2 = [A[0]+no[0]*(Ld*2+g), A[1]+no[1]*(Ld*2+g)];
@@ -15928,13 +15931,22 @@ function yolUcDikUygula(M, C, yollar, bolgeler, yapr, gercek){
         const t = ((c[0]-A[0])*sy - (c[1]-A[1])*sx)/den, w = ((c[0]-A[0])*ry - (c[1]-A[1])*rx)/den;
         if(t > 0 && t <= 1 && w >= -1e-9 && w <= 1+1e-9 && t < enT){ if(resmiK.has(i)){ enT = -1; break; } enT = t; Ep = [A[0]+rx*t, A[1]+ry*t]; } }
       if(!Ep || enT < 0){ neden.push('sınıra dik ışın bulunamadı'); continue; }
-      const kesik = kirp(W, a, A[0]*a[0] + A[1]*a[1]); if(kesik.length < 3){ neden.push('şerit kesilemedi'); continue; }
-      const r = g/2, px = -no[1]*r, py = no[0]*r, B = [Ep[0]+no[0]*g*1.5, Ep[1]+no[1]*g*1.5];
-      const kol = [[A[0]+px,A[1]+py],[B[0]+px,B[1]+py],[B[0]-px,B[1]-py],[A[0]-px,A[1]-py]];
-      const hal = []; for(let k=0;k<28;k++){ const t = k/28*Math.PI*2; hal.push([A[0]+Math.cos(t)*r, A[1]+Math.sin(t)*r]); }
-      const yeni = enBuyuk(PC.intersection(PC.union([kapat(kesik)], [kapat(kol)], [kapat(hal)]), [kapat(M)]));
+      if(Math.hypot(Ep[0]-A[0], Ep[1]-A[1]) < T + .5){ neden.push('dönüş için yer yok'); continue; }
+      const T1 = [A[0]-a[0]*T, A[1]-a[1]*T], T2 = [A[0]+no[0]*T, A[1]+no[1]*T];
+      let pcx = no[0] - a[0]*cs, pcy = no[1] - a[1]*cs; const pL = Math.hypot(pcx, pcy) || 1; pcx /= pL; pcy /= pL;
+      const Cm = [T1[0]+pcx*R, T1[1]+pcy*R], a1 = Math.atan2(T1[1]-Cm[1], T1[0]-Cm[0]); let a2 = Math.atan2(T2[1]-Cm[1], T2[0]-Cm[0]);
+      while(a2 - a1 > Math.PI) a2 -= 2*Math.PI; while(a2 - a1 < -Math.PI) a2 += 2*Math.PI;
+      const adim = Math.max(2, Math.ceil(Math.abs(a2 - a1)*R/1.5)), cizgi = [T1];
+      for(let k=1;k<adim;k++){ const t = a1 + (a2-a1)*k/adim; cizgi.push([Cm[0]+Math.cos(t)*R, Cm[1]+Math.sin(t)*R]); }
+      cizgi.push(T2, Ep);
+      const kesik = kirp(W, a, T1[0]*a[0] + T1[1]*a[1]); if(kesik.length < 3){ neden.push('şerit kesilemedi'); continue; }
+      const r = g/2, uzun = cizgi.concat([[Ep[0]+no[0]*g*1.5, Ep[1]+no[1]*g*1.5]]), parca = [[kapat(kesik)]];
+      for(let k=0;k<uzun.length-1;k++){ const p = uzun[k], q = uzun[k+1], dx = q[0]-p[0], dy = q[1]-p[1], L = Math.hypot(dx, dy); if(L < 1e-6) continue;
+        const ox = -dy/L*r, oy = dx/L*r; parca.push([kapat([[p[0]+ox,p[1]+oy],[q[0]+ox,q[1]+oy],[q[0]-ox,q[1]-oy],[p[0]-ox,p[1]-oy]])]);
+        if(k > 0){ const hal = []; for(let j=0;j<16;j++){ const t = j/16*Math.PI*2; hal.push([p[0]+Math.cos(t)*r, p[1]+Math.sin(t)*r]); } parca.push([kapat(hal)]); } }
+      const yeni = enBuyuk(PC.intersection(PC.union(...parca), [kapat(M)]));
       if(!yeni){ neden.push('birleşim başarısız'); continue; }
-      W = yeni; uclar[uc] = { A, Ep };
+      W = yeni; uclar[uc] = { cizgi };
     }
     if(!uclar[0] && !uclar[1]) return;
     const yeniR = [kapat(W)], eski = [kapat(y.poly)];
@@ -15972,8 +15984,8 @@ function yolUcDikUygula(M, C, yollar, bolgeler, yapr, gercek){
       if(q){ bolgeler.set(en.id, q); gercek.set(en.id, polyAlan(q)); } });
     // eksen: kirik cizgi
     const pts = [];
-    if(uclar[0]) pts.push(uclar[0].Ep, uclar[0].A); else pts.push(y.eksen[0]);
-    if(uclar[1]) pts.push(uclar[1].A, uclar[1].Ep); else pts.push(y.eksen[1]);
+    if(uclar[0]) pts.push(...uclar[0].cizgi.slice().reverse()); else pts.push(y.eksen[0]);
+    if(uclar[1]) pts.push(...uclar[1].cizgi); else pts.push(y.eksen[1]);
     const seg = []; for(let i=0;i<pts.length-1;i++) seg.push([pts[i], pts[i+1]]);
     y.poly = W; y.eksenler = seg; y.eksen = seg.slice().sort((p,q)=>Math.hypot(q[1][0]-q[0][0], q[1][1]-q[0][1]) - Math.hypot(p[1][0]-p[0][0], p[1][1]-p[0][1]))[0]; y.dik = true;
   }
@@ -17835,13 +17847,7 @@ function capCizPng(p, cfg, kucuk, kat, cercevesiz){
       const o2 = [ (Z.ic[en+1][0]+Z.dis[en+1][0])/2, (Z.ic[en+1][1]+Z.dis[en+1][1])/2 ];
       for(let i=0;i<Z.ic.length-1;i++){
         eksenDolu([ (Z.ic[i][0]+Z.dis[i][0])/2, (Z.ic[i][1]+Z.dis[i][1])/2 ], [ (Z.ic[i+1][0]+Z.dis[i+1][0])/2, (Z.ic[i+1][1]+Z.dis[i+1][1])/2 ]); }
-      yolYazisi(o1, o2, "RESMİ YOL", 17, asfalt ? ["#FFFFFF", "#2A2C30"] : null);
-      if(+RY.g > 0 && !kucuk){ const o3 = [o1[0] + (o2[0]-o1[0])*.0, o1[1] + (o2[1]-o1[1])*.0];
-        const L = Math.hypot(o2[0]-o1[0], o2[1]-o1[1]) || 1, ux = (o2[0]-o1[0])/L, uy = (o2[1]-o1[1])/L, kay = Math.min(L*.36, 26);
-        const e1 = E([o1[0]+ux*(L/2+kay), o1[1]+uy*(L/2+kay)]), e0 = E(o1), e2 = E(o2);
-        let ac = Math.atan2(e2[1]-e0[1], e2[0]-e0[0]); if(ac > Math.PI/2) ac -= Math.PI; if(ac < -Math.PI/2) ac += Math.PI;
-        x.save(); x.translate(e1[0], e1[1]); x.rotate(ac); x.textAlign = "center"; x.textBaseline = "middle"; x.font = `400 ${S(10.5)}px Arial`;
-        x.lineWidth = 3; x.strokeStyle = "#FFFFFF"; x.lineJoin = "round"; const m = "(" + (+RY.g).toFixed(2).replace(".", ",") + " m)"; x.strokeText(m, 0, S(14)); x.fillStyle = "#1A1A1A"; x.fillText(m, 0, S(14)); x.restore(); }
+      yolYazisi(o1, o2, (+RY.g > 0 && !kucuk) ? "RESMİ YOL (" + (+RY.g).toFixed(2).replace(".", ",") + " m)" : "RESMİ YOL", 17, asfalt ? ["#FFFFFF", "#2A2C30"] : null);
     }
     });
 
@@ -20299,6 +20305,249 @@ async function pcUyduCiz(cv, p){
 
 // Ctrl+K: arama kutusuna odaklan
 window.addEventListener("keydown", e => { if(PC_ACIK && (e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")){ e.preventDefault(); const a = document.getElementById("pcAra"); a?.focus(); a?.select(); } });
+
+/* ================= CAP · TARIF ILE CIZ =================
+   Kullanici "nasil bolunsun" diye yazar; parselin sekli (yerel koordinatlar + sema gorseli) ve programin bolme dili ile
+   birlikte Claude'a (ya da ChatGPT'ye) gider. Gelen "cap_plan" JSON'u denetlenip cap agacina cevrilir; motor cizer.
+   Yerel cerceve: ON = resmi yol tarafi (Y=0), Y icerı dogru artar, X resmi yola bakarken (parselin icine donuk) SAGA dogru artar. */
+function capTarifCerceve(){
+  const C = PARCA.yer && PARCA.yer.cerceve, M = PARCA.geometri; if(!C || !M) return null;
+  const R = [-C.u[0], -C.u[1]], V = C.v;
+  const L0 = M.map(p => [p[0]*R[0] + p[1]*R[1], p[0]*V[0] + p[1]*V[1]]);
+  const x0 = Math.min(...L0.map(q => q[0])), y0 = Math.min(...L0.map(q => q[1]));
+  const L = L0.map(q => [q[0] - x0, q[1] - y0]);
+  const resmiK = new Set(); (C.resmiler || []).forEach(r => (r.kenarlar || []).forEach(i => resmiK.add(i)));
+  const isaret = alanIsaretli(L) > 0 ? 1 : -1, n = L.length;
+  const kenarlar = L.map((a, i) => { const b = L[(i+1)%n], dx = b[0]-a[0], dy = b[1]-a[1], uz = Math.hypot(dx, dy) || 1;
+    const nx = isaret > 0 ? dy/uz : -dy/uz, ny = isaret > 0 ? -dx/uz : dx/uz;
+    const yon = ny < -.7 ? "ÖN" : ny > .7 ? "ARKA" : nx < -.7 ? "SOL" : nx > .7 ? "SAĞ" : (ny < 0 ? "ÖN-" : "ARKA-") + (nx < 0 ? "SOL" : "SAĞ") + " çapraz";
+    return { i, a, b, uz, yon, resmi: resmiK.has(i) }; });
+  const W = Math.max(...L.map(q => q[0])), D = Math.max(...L.map(q => q[1]));
+  const kesit = f => { const y = D*f, xs = []; for(let i=0;i<n;i++){ const a = L[i], b = L[(i+1)%n]; if((a[1]-y)*(b[1]-y) < 0){ const t = (y-a[1])/(b[1]-a[1]); xs.push(a[0] + (b[0]-a[0])*t); } }
+    return xs.length >= 2 ? Math.max(...xs) - Math.min(...xs) : 0; };
+  return { C, M, L, kenarlar, W, D, genislik: [.1, .3, .5, .7, .9].map(f => [f, kesit(f)]), resmiVar: (C.resmiler || []).length > 0, onYon: pusulaAdi([-C.v[0], -C.v[1]]) };
+}
+function capTarifGorsel(F){
+  const c = document.createElement("canvas"); c.width = 1000; c.height = 1000; const x = c.getContext("2d");
+  x.fillStyle = "#FFFFFF"; x.fillRect(0, 0, 1000, 1000);
+  const pay = 130, k = Math.min((1000 - 2*pay)/(F.W || 1), (1000 - 2*pay)/(F.D || 1));
+  const ox = (1000 - F.W*k)/2, oy = 1000 - (1000 - F.D*k)/2;
+  const E = q => [ox + q[0]*k, oy - q[1]*k];
+  x.beginPath(); F.L.forEach((q, i) => { const e = E(q); i ? x.lineTo(e[0], e[1]) : x.moveTo(e[0], e[1]); }); x.closePath();
+  x.fillStyle = "#E4EFD2"; x.fill(); x.lineWidth = 2; x.strokeStyle = "#333"; x.stroke();
+  F.kenarlar.forEach(K => { const a = E(K.a), b = E(K.b);
+    if(K.resmi){ x.save(); x.lineWidth = 9; x.strokeStyle = "#C8282E"; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke(); x.restore(); }
+    if(K.uz >= 3){ const mx = (a[0]+b[0])/2, my = (a[1]+b[1])/2; x.font = "600 17px Arial"; x.fillStyle = "#1A1A1A"; x.textAlign = "center"; x.textBaseline = "middle";
+      const cx = 500, cy = 500, d = Math.hypot(mx-cx, my-cy) || 1; x.fillText(K.uz.toFixed(1).replace(".", ",") + " m", mx + (mx-cx)/d*26, my + (my-cy)/d*26); } });
+  F.L.forEach((q, i) => { const e = E(q); x.beginPath(); x.arc(e[0], e[1], 5, 0, 7); x.fillStyle = "#1A1A1A"; x.fill();
+    x.font = "700 15px Arial"; x.fillStyle = "#1B4FA0"; x.textAlign = "left"; x.fillText("K" + (i+1), e[0] + 7, e[1] - 9); });
+  x.font = "800 30px Arial"; x.textAlign = "center"; x.textBaseline = "middle";
+  x.fillStyle = "#C8282E"; x.fillText(F.resmiVar ? "ÖN · RESMİ YOL (" + F.onYon + ")" : "ÖN (" + F.onYon + ")", 500, 965);
+  x.fillStyle = "#333"; x.fillText("ARKA", 500, 40);
+  x.save(); x.translate(38, 500); x.rotate(-Math.PI/2); x.fillText("SOL", 0, 0); x.restore();
+  x.save(); x.translate(962, 500); x.rotate(Math.PI/2); x.fillText("SAĞ", 0, 0); x.restore();
+  x.font = "400 15px Arial"; x.fillStyle = "#555"; x.textAlign = "left";
+  x.fillText(`Genişlik (X) ≈ ${F.W.toFixed(1)} m · Derinlik (Y) ≈ ${F.D.toFixed(1)} m · resmi yola bakarken (parselin içine dönük) sol/sağ`, 20, 80);
+  return c.toDataURL("image/png");
+}
+function capTarifIstem(metin, F){
+  const p = PARCA.p || {}, tapu = +p.alan_m2 || Math.round(PARCA.toplam || 0), yolV = yolVarsayilan(), rg = +PARCA.resmiGenislik || 0;
+  const kose = F.L.map((q, i) => `K${i+1}(${q[0].toFixed(1)}, ${q[1].toFixed(1)})`).join(" ");
+  const ken = F.kenarlar.map(K => `K${K.i+1}→K${(K.i+1)%F.L.length+1}: ${K.uz.toFixed(1)} m · ${K.yon}${K.resmi ? " · RESMİ YOL" : ""}`).join("\n");
+  return `Bir tarla/arsa için PARSELASYON PLANI (hisse bölüşüm krokisi) hazırlamanı istiyorum. Planı benim programım çizecek; senden SADECE bölme düzenini, programın anladığı JSON biçiminde istiyorum. Çizim, metrekare hesabı, yol şeritleri, köşe pahları programda otomatik yapılıyor; sen bunları hesaplamaya çalışma.
+
+=== KULLANICININ TARİFİ ===
+${metin.trim()}
+
+=== PARSEL ===
+- ${duzgun(p.il || "")} / ${duzgun(p.ilce || "")} / ${duzgun(p.mahalle || "")} · ada ${p.ada || "-"} parsel ${p.parsel || "-"} · tapu alanı ${nf2(tapu)} m²
+- ${F.resmiVar ? `Resmî (kadastro) yol parselin ÖN kenarında, ${F.onYon} tarafında${rg ? `, genişliği ${String(rg).replace(".", ",")} m` : ""}. Resmî yol parselin DIŞINDA; alanından düşülmez.` : `Resmî yol programda TANIMLI DEĞİL. ÖN kenar olarak parselin ${F.onYon} tarafı alındı. Yol bağlantısını buna göre düşün ve açıklamada kullanıcıya "önce resmî yolu tanımla" diye hatırlat.`}
+- Parsel yolu (iç yol) varsayılan genişliği: ${String(yolV).replace(".", ",")} m
+- YEREL KOORDİNAT SİSTEMİ (metre): ÖN kenar = Y≈0 tarafı (resmî yol). Y içeri, ARKA'ya doğru artar. X, resmî yolda durup parselin içine bakarken SAĞA doğru artar. SOL = küçük X, SAĞ = büyük X. Ekteki şema görseli aynı sistemle çizildi (ÖN altta, kırmızı kalın çizgi resmî yol).
+- Genişlik (X) ≈ ${F.W.toFixed(1)} m, derinlik (Y) ≈ ${F.D.toFixed(1)} m
+- Derinliğe göre parsel genişliği: ${F.genislik.map(([f, g]) => `Y=${(F.D*f).toFixed(0)} m'de ${g.toFixed(0)} m`).join(" · ")}
+- Köşeler (X, Y): ${kose}
+- Kenarlar:
+${ken}
+
+=== PROGRAMIN BÖLME DİLİ ===
+Parsel bir AĞAÇ gibi bölünür. Kök düğüm bütün parseldir. Her düğüm ya bir PARÇA (hisse) ya da bir GRUP'tur.
+PARÇA: {"parca":"7","m2":499.33}
+  - "parca": kâğıtta yazacak parça numarası (metin). "m2": kullanıcının söylediği metrekare, AYNEN (yuvarlama, düşme yapma).
+  - Tek bir parça kalan alanın tamamını alacaksa {"parca":"13","kalan":true} yaz (m2 verme).
+GRUP: {"dizilis":"yan_yana"|"arka_arkaya","parcalar":[...],"aradaki_yollar":[...],"kenar_yolu":[...]}
+  - "yan_yana": alt düğümler ÖN kenar boyunca SOLDAN SAĞA dizilir; her biri grubun önünden arkasına kadar uzanır. Aralarındaki yollar ÖN'den ARKA'ya doğru uzanır, yani resmî yola bağlanır. (Resmî yola dik sıralar/yollar böyle kurulur.)
+  - "arka_arkaya": alt düğümler ÖN'den ARKA'ya dizilir (ilki resmî yola en yakın olan); her biri grubun solundan sağına kadar uzanır. Aralarındaki yollar resmî yola PARALEL uzanır; kendi başına resmî yola BAĞLANMAZ.
+  - "aradaki_yollar": (alt düğüm sayısı − 1) elemanlı dizi; i. eleman i. ile (i+1). alt düğüm arasındaki parsel yolunun genişliği (metre). 0 = yol yok. Alan dağıtımı ve yol şeridi otomatik.
+  - "kenar_yolu" (isteğe bağlı): [{"taraf":"SOL"|"SAĞ"|"ÖN"|"ARKA","m":4}] grubun o kenarı boyunca parsel yolu. Gerekmedikçe kullanma.
+  - Gruplar iç içe olabilir (ör. yan_yana sıralar, her sıranın içi arka_arkaya parçalar).
+Parçaların sırası önemlidir: yan_yana'da soldan sağa, arka_arkaya'da önden arkaya.
+
+=== KURALLAR (bir harita mühendisi gibi düşün) ===
+1) Her parça ya resmî yola ya da resmî yola bağlanan bir parsel yoluna mutlaka cephe almalı. Yolsuz, "arkada kalan" parça OLMAZ.
+   Örnek: arka_arkaya dizilen 3 parçanın 2. ve 3.'sü, ancak yanlarından ÖN'den ARKA'ya giden bir parsel yolu geçiyorsa (yan_yana grubun aradaki_yollar'ı) yola ulaşır.
+2) Parçalar mümkün olduğunca dikdörtgen, cephe/derinlik oranı dengeli olsun (derinlik ≤ 3 × cephe). Dar-uzun şerit parça yapma. Tek bir parçanın yol cephesi 10 m'den az olmasın.
+3) Büyük metrekareli parçaları, kullanıcı aksini söylemedikçe resmî yola yakın/ön tarafa koy. Parselin yamuk/sivri uçlarına mümkünse daha büyük parça gelsin.
+4) Parsel yollarını gereksiz çoğaltma; yol kaybı az olsun. Yol genişliği belirtilmemişse ${String(yolV).replace(".", ",")} m kullan.
+5) Metrekareler kullanıcının yazdığı gibi kalsın. Toplam (parçalar + yollar) tapu alanını aşıyorsa değerleri DEĞİŞTİRME; açıklamada "yazılan toplam X m², yollarla birlikte parsele sığmıyor, çizim oranlı küçülür" diye belirt.
+6) Kullanıcı "resmî yol cepheleri eşit olsun" ya da benzeri bir şey derse ayarlar.cepheleri_esitle = true yap (programa en üstteki yan_yana grubun yollarını açılandırarak cepheleri eşitletir).
+7) Parça numarası verilmemişse 1'den başla: ön-soldan başlayıp önce resmî yola yakın sırayı, sonra arkadakileri numarala.
+8) Programın kendisi şunları otomatik yapar, sen ayrıca bir şey yazma: parsel yollarının resmî yola ağız pahı, iç kesimlerin yola dik olması, yol uçlarının sınıra dik bağlanması.
+
+=== CEVAP BİÇİMİ (ÇOK ÖNEMLİ) ===
+Önce en fazla 6 satır Türkçe kısa açıklama yaz (düzeni neden böyle kurduğun). Sonra TEK bir \`\`\`json kod bloğu ver. Artifact/dosya/canvas OLUŞTURMA; JSON cevabın içinde dursun. JSON'da yorum, sondaki virgül olmasın; ondalık ayırıcı nokta.
+"tur" ilk anahtar olsun:
+{"tur":"cap_plan","surum":1,
+ "plan": <KÖK DÜĞÜM ya da tarif uygulanamıyorsa null>,
+ "ayarlar":{"cepheleri_esitle":false},
+ "aciklama":"kısa açıklama (uyarılar dahil)",
+ "adimlar":["Kullanıcı elle yapmak isterse programda adım adım ne yapacağı (ör. 'Bütün parsele dokun → Böl → Yan yana · yola cepheli → 3 parça', 'Kesime dokun → Parsel yolu: Var, 4 m')"]}
+
+=== ÖRNEK ===
+Tarif: "12 parça. Resmî yoldan içeri doğru 3 sıra olsun, her sırada önden arkaya 740, 647,5, 499,33, 499,33 m². Sıraların arasında 4 metre yol. Resmî yol cepheleri eşit olsun."
+\`\`\`json
+{"tur":"cap_plan","surum":1,"plan":{"dizilis":"yan_yana","aradaki_yollar":[4,4],"parcalar":[
+ {"dizilis":"arka_arkaya","aradaki_yollar":[0,0,0],"parcalar":[{"parca":"1","m2":740},{"parca":"2","m2":647.5},{"parca":"3","m2":499.33},{"parca":"4","m2":499.33}]},
+ {"dizilis":"arka_arkaya","aradaki_yollar":[0,0,0],"parcalar":[{"parca":"5","m2":740},{"parca":"6","m2":647.5},{"parca":"7","m2":499.33},{"parca":"8","m2":499.33}]},
+ {"dizilis":"arka_arkaya","aradaki_yollar":[0,0,0],"parcalar":[{"parca":"9","m2":740},{"parca":"10","m2":647.5},{"parca":"11","m2":499.33},{"parca":"12","m2":499.33}]}]},
+"ayarlar":{"cepheleri_esitle":true},"aciklama":"3 sıra resmî yola dik; aradaki iki 4 m yol her parçaya cephe veriyor. Büyük parçalar resmî yol önünde.",
+"adimlar":["Bütün parsele dokun → Böl → Yan yana · yola cepheli → 3 parça","İki kesime dokun → Parsel yolu: Var, 4 m","Her sıraya dokun → Böl → Üst üste · yoldan geriye → 4 parça, metrekareleri yaz","Gruba dokun → Resmî yola cepheleri eşitle"]}
+\`\`\`
+(Bu sadece biçim örneği; kendi cevabını yukarıdaki tarife ve bu parselin şekline göre kur.)`;
+}
+
+// ---- cevaptan JSON ----
+function capPlanCoz(t){
+  if(!t) return null;
+  t = String(t).replace(/[“”„]/g, '"').replace(/[‘’]/g, "'");
+  const idx = t.lastIndexOf('"cap_plan"'); if(idx < 0) return null;
+  const kapat = bas => { let d = 0, ic = false, ka = false;
+    for(let i=bas;i<t.length;i++){ const ch = t[i];
+      if(ic){ if(ka) ka = false; else if(ch === "\\") ka = true; else if(ch === '"') ic = false; continue; }
+      if(ch === '"') ic = true; else if(ch === "{") d++; else if(ch === "}"){ d--; if(d === 0) return i; } }
+    return -1; };
+  for(let bas = t.lastIndexOf("{", idx), dene = 0; bas >= 0 && dene < 40; bas = t.lastIndexOf("{", bas - 1), dene++){
+    const son = kapat(bas); if(son < idx) continue;
+    let s = t.slice(bas, son + 1).replace(/,\s*([}\]])/g, "$1");
+    try{ const o = JSON.parse(s); if(o && o.tur === "cap_plan") return o; }catch(e){}
+  }
+  return null;
+}
+// ---- plan -> cap agaci (denetimli) ----
+function capPlanAgac(dg, yol, hata){
+  if(!dg || typeof dg !== "object"){ hata.push(`${yol}: düğüm boş`); return null; }
+  if(dg.parca != null || dg.m2 != null || dg.kalan){
+    const m2 = sayiCoz(String(dg.m2 ?? ""));
+    if(!dg.kalan && !(m2 > 0)){ hata.push(`${yol}: ${dg.parca ?? "?"} nolu parçanın metrekaresi yok`); return null; }
+    const d = dugumYap(dg.kalan ? 100 : m2); d.no = String(dg.parca ?? "").trim(); d.noElle = !!d.no; d.kalan = !!dg.kalan; return d; }
+  const L = Array.isArray(dg.parcalar) ? dg.parcalar : null;
+  if(!L || !L.length){ hata.push(`${yol}: grubun parçaları yok`); return null; }
+  const di = String(dg.dizilis || "").toLowerCase().replace(/[^a-z_]/g, "");
+  if(!/^(yan_yana|arka_arkaya)$/.test(di)){ hata.push(`${yol}: dizilis "${dg.dizilis}" anlaşılmadı`); return null; }
+  const cocuk = L.map((c, i) => capPlanAgac(c, `${yol}.${i+1}`, hata)).filter(Boolean);
+  if(cocuk.length !== L.length) return null;
+  if(cocuk.length === 1) return cocuk[0];
+  const g = dugumYap(1), yollar = {};
+  (Array.isArray(dg.aradaki_yollar) ? dg.aradaki_yollar : []).forEach((v, i) => { const m = sayiCoz(String(v ?? "")); if(m > 0 && i < cocuk.length - 1) yollar[i] = Math.max(.5, Math.min(30, m)); });
+  // yan_yana: soldan saga (cercevede u sola bakar -> ters), arka_arkaya: onden arkaya
+  g.bol = { eksen: di === "yan_yana" ? "dik" : "par", aci:0, ters: di === "yan_yana", yollar };
+  g.cocuk = cocuk;
+  const TARAF = { "SOL":"sag", "SAĞ":"sol", "SAG":"sol", "ÖN":"on", "ON":"on", "ARKA":"arka" };
+  (Array.isArray(dg.kenar_yolu) ? dg.kenar_yolu : []).forEach(k => { const tr = TARAF[String(k && k.taraf || "").toUpperCase().replace("İ", "I")] || TARAF[String(k && k.taraf || "").toLocaleUpperCase("tr")];
+    const m = sayiCoz(String(k && k.m || "")) || yolVarsayilan(); if(tr) g.kenarYol.push({ taraf: tr, g: m }); });
+  return g;
+}
+
+// ---- pencere (panel) ----
+function capTarifAc(){
+  if(!PARCA.geometri || !PARCA.yer) return toast("Önce çap ekranında parsel yüklensin");
+  document.getElementById("tarifPen")?.remove();
+  let son = ""; try{ son = localStorage.getItem("capTarifMetin") || ""; }catch(e){}
+  let model = "claude"; try{ model = localStorage.getItem("capTarifModel") || "claude"; }catch(e){}
+  const d = document.createElement("div"); d.id = "tarifPen";
+  d.style.cssText = "position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px";
+  d.innerHTML = `<div class="card" style="width:min(720px,100%);max-height:92vh;overflow:auto;margin:0;padding:18px">
+    <div class="bolum" style="display:flex;align-items:center;gap:8px"><b style="flex:1">✦ Tarif ile çiz</b>
+      <button class="pill sade" onclick="document.getElementById('tarifPen').remove()">Kapat</button></div>
+    <p class="ipuc" style="margin:4px 2px 10px">Parselin nasıl bölünmesini istediğini düz yazıyla anlat: kaç parça, kaçar metrekare, sıralar, yollar, hangi parça nereye. Parselin şekli, resmî yol ve haritacı kuralları talimata kendiliğinden eklenir.</p>
+    <textarea id="tarifMetin" rows="6" style="width:100%;box-sizing:border-box;resize:vertical" placeholder="Örnek: 12 parça olsun. Resmî yoldan içeri 3 sıra; her sırada önden arkaya 740, 647,5, 499,33, 499,33 m². Sıralar arasında 4 m yol. Resmî yol cepheleri eşit olsun.">${esc(son)}</textarea>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">
+      <label style="font-size:13px">Yapay zekâ</label>
+      <select id="tarifModel" style="width:auto"><option value="claude" ${model === "claude" ? "selected" : ""}>Claude</option><option value="chatgpt" ${model === "chatgpt" ? "selected" : ""}>ChatGPT</option></select>
+      <span style="flex:1"></span>
+      <button class="btn" style="width:auto" onclick="capTarifGonder()">Gönder</button>
+      <button class="btn ghost" style="width:auto" onclick="capTarifYapistirAc()">Cevabı yapıştır</button></div>
+    <div id="tarifYapistir" style="display:none;margin-top:10px">
+      <textarea id="tarifCevap" rows="5" style="width:100%;box-sizing:border-box" placeholder="Claude / ChatGPT cevabının tamamını buraya yapıştır"></textarea>
+      <button class="btn" style="margin-top:6px" onclick="capTarifCevabi(document.getElementById('tarifCevap').value)">Planı yükle</button></div>
+    <div id="tarifDurum" style="margin-top:12px;font-size:13px"></div>
+    <div id="tarifSonuc" style="margin-top:8px"></div></div>`;
+  document.body.appendChild(d);
+  d.addEventListener("click", e => { if(e.target === d) d.remove(); });
+}
+function capTarifYapistirAc(){ const k = document.getElementById("tarifYapistir"); if(k){ k.style.display = "block"; document.getElementById("tarifCevap")?.focus(); } }
+function capTarifDurum(h){ const k = document.getElementById("tarifDurum"); if(k) k.innerHTML = h; }
+async function capTarifGonder(){
+  const metin = (document.getElementById("tarifMetin")?.value || "").trim();
+  if(metin.length < 8) return toast("Nasıl bölünmesini istediğini yaz");
+  const model = document.getElementById("tarifModel")?.value || "claude";
+  try{ localStorage.setItem("capTarifMetin", metin); localStorage.setItem("capTarifModel", model); }catch(e){}
+  const F = capTarifCerceve(); if(!F) return toast("Parsel şekli okunamadı");
+  const istem = capTarifIstem(metin, F), gorsel = capTarifGorsel(F);
+  GPT_MOD = { tur:"capTarif", parsel: PARCA.p && PARCA.p.id }; try{ localStorage.setItem("capTarifSon", JSON.stringify({ id: PARCA.p && PARCA.p.id, t: Date.now() })); }catch(e){}
+  let kop = false; try{ await navigator.clipboard.writeText(istem); kop = true; }catch(e){}
+  const PCk = window.arsaPC;
+  if(model === "claude" && PCk?.yzAc){
+    capTarifDurum("⏳ Claude penceresi açılıyor… Talimat ve şema kutuya yazılacak; <b>Enter'a basıp gönder</b>. Plan hazır olunca buraya kendiliğinden gelir. (Gelmezse Claude penceresinin menüsünden “Cevabı Arsa Takip'e gönder”.)");
+    const ok = await PCk.yzAc("claude", gorsel, istem, null, true);
+    if(ok === false) capTarifDurum("Claude'un yazma kutusuna ulaşılamadı (giriş yapılmamış olabilir). Giriş yaptıktan sonra tekrar <b>Gönder</b>'e bas" + (kop ? " ya da kutuya Ctrl+V ile yapıştır (talimat panoda)." : "."));
+    return; }
+  if(model === "chatgpt" && PCk?.gptAc){
+    capTarifDurum("⏳ ChatGPT penceresine talimat ve şema yazılıyor. Gönder; cevap bitince alttaki çubuktan <b>Cevabı al</b>'a bas.");
+    gptBekleBar("ChatGPT çap planını hazırlıyor · bitince “Cevabı al”");
+    const ok = await PCk.gptAc(gorsel, istem); if(ok === false) toast("ChatGPT'ye yazılamadı · talimat panoda, Ctrl+V ile yapıştır");
+    return; }
+  // tarayici / telefon: kopyala-yapistir
+  window.open(model === "claude" ? "https://claude.ai/new" : "https://chatgpt.com/", "_blank");
+  capTarifDurum((kop ? "📋 Talimat panoya kopyalandı. " : "⚠ Pano kullanılamadı. ") + `Açılan ${model === "claude" ? "Claude" : "ChatGPT"} sohbetine yapıştır ve gönder. Cevap gelince tamamını kopyalayıp burada <b>Cevabı yapıştır</b>'a bas.` +
+    ` <a href="#" onclick="event.preventDefault();capTarifSemaIndir()">Şema görselini indir</a> (isteğe bağlı, sohbete ekleyebilirsin).`);
+  capTarifYapistirAc();
+}
+function capTarifSemaIndir(){ const F = capTarifCerceve(); if(!F) return; const a = document.createElement("a"); a.href = capTarifGorsel(F); a.download = "parsel-sema.png"; a.click(); }
+async function capTarifCevabi(t){
+  if(!PARCA.geometri) return toast("Çap planı geldi ama çap ekranı açık değil · parselin çap ekranını açıp “Cevabı yapıştır” ile yükle");
+  if(!document.getElementById("tarifPen")) capTarifAc();
+  const o = capPlanCoz(t);
+  const sonuc = document.getElementById("tarifSonuc");
+  const adimHtml = A => (A && A.length) ? `<details style="margin-top:8px"><summary style="cursor:pointer">Elle yapmak istersen adım adım</summary><ol style="margin:8px 0 0 18px;padding:0;line-height:1.6">${A.map(x => `<li>${esc(String(x))}</li>`).join("")}</ol></details>` : "";
+  if(!o){ capTarifDurum("⚠ Cevapta program planı (cap_plan JSON) bulunamadı. Cevabın tamamını kopyalayıp yapıştırdığından emin ol.");
+    if(sonuc) sonuc.innerHTML = `<details><summary>Gelen metin</summary><pre style="white-space:pre-wrap;font-size:12px;max-height:240px;overflow:auto">${esc(String(t || "").slice(-4000))}</pre></details>`; return; }
+  if(!o.plan){ capTarifDurum("ℹ Yapay zekâ bu tarifle otomatik plan kuramadı; açıklamasına ve adımlarına bak.");
+    if(sonuc) sonuc.innerHTML = `<div class="ipuc" style="white-space:pre-wrap">${esc(o.aciklama || "")}</div>${adimHtml(o.adimlar)}`; return; }
+  const hata = [], kok = capPlanAgac(o.plan, "plan", hata);
+  if(!kok || hata.length){ capTarifDurum("⚠ Plan programın diline uymuyor, yüklenmedi:<br>" + hata.slice(0, 6).map(esc).join("<br>"));
+    if(sonuc) sonuc.innerHTML = `<div class="ipuc" style="white-space:pre-wrap">${esc(o.aciklama || "")}</div>${adimHtml(o.adimlar)}`; return; }
+  if(yaprakMi(kok)){ kok.no = kok.no || "1"; }
+  degisim(() => { PARCA.agac = kok; PARCA.sec = null; PARCA.secKesim = null; PARCA.bosSec = null; });
+  const yap = yapraklar(kok);
+  let esit = "";
+  if(o.ayarlar && o.ayarlar.cepheleri_esitle && cepheEsitlenir(kok)){ cepheEsitle(kok.id); esit = " · resmî yol cepheleri eşitleniyor"; }
+  setTimeout(() => {
+    const D = PARCA.denetim || { uyari:[] }, uy = D.uyari.filter(u => u.tur !== "bilgi");
+    capTarifDurum(`✓ Plan yüklendi: <b>${yap.length} parça</b>, ${nf2(yap.reduce((t2, y) => t2 + (+y.hedef || 0), 0))} m² yazıldı${esit}. Çizimde istediğin parçayı yine elle düzeltebilirsin; beğenmezsen <b>↶ Geri</b>.`);
+    if(sonuc) sonuc.innerHTML = `<div class="ipuc" style="white-space:pre-wrap">${esc(o.aciklama || "")}</div>` +
+      (uy.length ? `<div style="margin-top:8px;font-size:12.5px;color:var(--gold, #E0A82E)">${uy.slice(0, 8).map(u => "• " + esc(u.metin)).join("<br>")}</div>` : "") + adimHtml(o.adimlar);
+  }, esit ? 2500 : 300);
+}
+{ // gelen cevaplari dagit: cap plani ise buraya
+  const eskiCG3 = gptCevapGeldi;
+  gptCevapGeldi = async function(t){
+    if(GPT_MOD?.tur === "capTarif" || (!GPT_MOD && /"cap_plan"/.test(t || "")) || (/"cap_plan"/.test(t || "") && !/"emsaller"/.test(t || ""))){
+      GPT_MOD = null; document.getElementById("ekGptBar")?.remove(); return capTarifCevabi(t); }
+    return eskiCG3(t);
+  };
+  if(window.arsaPC?.gptCevap) window.arsaPC.gptCevap(t => gptCevapGeldi(t));
+}
 
 baslat();
 
