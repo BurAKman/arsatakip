@@ -1,0 +1,27 @@
+# Arsa Takip · Piyasa botu: 15 dakikada bir calisir (bilgisayar acik/kapali fark etmez).
+# Sadece herkese acik piyasa verisi okur, SANAL islem yapar; gercek para ile hicbir islem yapmaz.
+name: piyasa-bot
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+concurrency:
+  group: piyasa-bot
+  cancel-in-progress: false
+jobs:
+  bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: bot
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Botu calistir
+        run: node bot/piyasa-bot.js
+        env:
+          SB_URL: ${{ secrets.SB_URL }}
+          SB_SERVICE_KEY: ${{ secrets.SB_SERVICE_KEY }}
+          BOT_USER_ID: ${{ secrets.BOT_USER_ID }}
