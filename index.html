@@ -3888,7 +3888,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.8.0";
+const SURUM_MORDOR = "v 1.9.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -25461,6 +25461,83 @@ async function emsalKonumla(id, ilanId){ const { data:p } = await sb.from("parce
     return eski(id, yeniler, kaynak); }; }
 
 { const st = document.createElement("style"); st.textContent = `.em3Km{color:#7FE0A6;font-weight:600}`; document.head.appendChild(st); }
+
+/* ================= EMSAL v4 · OTOMATIK EKSPERTIZ SECIMI =================
+   Elle bir sey girmeden:
+   1) Parselin cevresindeki 25 km'deki butun koyler haritadan (OpenStreetMap) bir kez cekilir.
+   2) Her ilanin basligindan/konumundan hangi koyde oldugu bulunur -> o koyun bizim parsele uzakligi hesaplanir.
+   3) Degerlemeci mantigiyla KADEMELI secim: once ayni koy / 3 km ici VE benzer buyuklukte (1/3 - 3 kat) en az 3 emsal aranir;
+      yoksa 8 km / 1/5-5 kat; o da yoksa ilcedeki hepsi. Secilmeyenler yedekte kalir (gorunur ama hesaba neredeyse girmez).
+   4) "Sahibinden'den topla" artik dogrudan koyun adiyla arar (koydeki ilanlar ilk sayfaya gelsin diye). */
+
+const EM4_KOY = {};   // parsel id -> [{ n, lat, lng, km }]
+const em4Nrm = s => trNrm(s).replace(/[^a-z0-9 ]+/g, " ").replace(/\b(koyu|koy|mahallesi|mahalle|mah|mevkii|beldesi)\b/g, " ").replace(/\s+/g, " ").trim();
+async function em4KoyYukle(p){
+  if(EM4_KOY[p.id]) return EM4_KOY[p.id];
+  const biz = ekHalkaP(p) ? ekMerkez(ekHalkaP(p)) : (p.lng ? [+p.lng, +p.lat] : null); if(!biz) return EM4_KOY[p.id] = [];
+  const C = p.analiz?.koyler; let L = C?.L && Date.now() - (C.t || 0) < 90*86400000 ? C.L : null;
+  if(!L){ try{ const el = await cevreTekSorgu(`[out:json][timeout:25];node(around:25000,${biz[1].toFixed(5)},${biz[0].toFixed(5)})[place~"^(village|hamlet|town|suburb|neighbourhood|quarter)$"][name];out;`);
+      L = el.filter(e => e.tags?.name && isFinite(e.lat)).map(e => ({ n:e.tags.name, lat:+e.lat.toFixed(5), lng:+e.lon.toFixed(5) }));
+      if(L.length) analizYaz(p.id, { koyler:{ t:Date.now(), L } }).catch(() => {}); }catch(e){ L = []; } }
+  return EM4_KOY[p.id] = (L || []).map(k => ({ ...k, k:em4Nrm(k.n), km:Math.round(ekKusUcusu(biz, [k.lng, k.lat])*100)/100 })).filter(k => k.k.length >= 3).sort((a, b) => b.k.length - a.k.length); }
+// ilanin koyu: konum metninin son kismi ya da basliktaki koy adi (en uzun eslesme)
+function em4IlanKoy(p, x){ const K = EM4_KOY[p.id] || [], bizK = em4Nrm(p.mahalle), metin = " " + em4Nrm((x.yer || "") + " " + (x.baslik || "") + " " + decodeURIComponent((String(x.url || "").match(/\/ilan\/([^/]+)/) || [])[1] || "").replace(/-/g, " ")) + " ";
+  if(bizK && metin.includes(" " + bizK + " ")) return { ad:duzgun(p.mahalle), ayni:true, km:K.find(k => k.k === bizK)?.km ?? 0 };
+  const k = K.find(k => k.k !== em4Nrm(p.ilce) && k.k !== em4Nrm(p.il) && metin.includes(" " + k.k + " ")); return k ? { ad:k.n, ayni:false, km:k.km } : null; }
+
+// kademeli secim + agirlik: dgHesap'in ilan yontemini bastan kurar
+{ const eski = dgHesap; dgHesap = function(p, A, E){ // istatistiksel "aykiri" ayiklamasi koydeki kucuk parselleri atabiliyor; secimi kademe yapsin
+    const H = eski(p, A ? { ...A, gecerli:(E?.ilanlar || []).filter(x => !x.haric && x.birim > 0) } : A, E), il = H.Y.find(y => y.k === "ilan"); if(!il) return H;
+    const alan = +p.alan_m2 || 0;
+    il.liste.forEach(r => { const x = r.x, K = em4IlanKoy(p, x), km = x.konum?.km ?? K?.km ?? null, oran = alan && x.m2 ? x.m2/alan : 1;
+      r.koy = K?.ad || ""; r.ayni = r.ayni || !!K?.ayni; r.km = km; r.kmKaynak = x.konum?.km != null ? "tkgm" : K ? "koy" : null;
+      const yak = r.ayni ? 3 : km == null ? .5 : km < 3 ? 2 : km < 6 ? 1.3 : km < 12 ? .8 : .4;
+      const boy = Math.exp(-Math.abs(Math.log(oran))*1.2), taze = Math.exp(-r.ayf/18), kay = x.elle ? 1.5 : x.gpt && !x.konum ? .7 : 1;
+      r.w = yak*boy*taze*kay; r.oran = oran; });
+    const kade = [["aynı köy ya da 3 km içinde, benzer büyüklükte (⅓–3 kat)", r => (r.ayni || (r.km != null && r.km <= 3)) && r.oran >= 1/3 && r.oran <= 3],
+                  ["8 km içinde, büyüklük ⅕–5 kat", r => (r.ayni || (r.km != null && r.km <= 8)) && r.oran >= .2 && r.oran <= 5],
+                  ["ilçedeki bütün geçerli ilanlar", r => true]];
+    let sec = kade.length - 1; for(let i = 0; i < kade.length; i++){ if(il.liste.filter(kade[i][1]).length >= 3){ sec = i; break; } }
+    il.liste.forEach(r => { r.secili = kade[sec][1](r); if(!r.secili) r.w *= .03; });
+    const S = il.liste.filter(r => r.secili), v = dgAgirlikliMedyan(il.liste);
+    if(v){ il.v = v; il.alt = dgYuzdelikW(il.liste, .25); il.ust = dgYuzdelikW(il.liste, .75); il.dag = (il.ust - il.alt)/v;
+      il.w = Math.min(1.2, S.length/4)*(il.dag < .5 ? 1 : .7)*(sec === 0 ? 1.3 : sec === 1 ? 1 : .6);
+      il.not = `Seçim: ${kade[sec][0]} · ${S.length} emsal kullanıldı${il.liste.length > S.length ? `, ${il.liste.length - S.length} ilan yedekte` : ""} · %${Math.round(H.ay.ilanIndirim*100)} pazarlık payı, enflasyon ve büyüklük düzeltmeli`;
+      il.kademe = sec; }
+    // yeniden uzlastir + guven
+    if(H.sonuc){ const T = H.Y.reduce((t, y) => t + y.w, 0), m = Math.exp(H.Y.reduce((t, y) => t + y.w*Math.log(y.v), 0)/T), yay = Math.max(...H.Y.map(y => y.v))/Math.min(...H.Y.map(y => y.v));
+      const gen = Math.min(.25, Math.max(.08, il.dag/2.5, H.Y.length > 1 ? (yay - 1)/4 : 0));
+      H.sonuc.v = Math.round(m); H.sonuc.bant = [Math.round(m*(1 - gen)/10)*10, Math.round(m*(1 + gen)/10)*10]; H.sonuc.toplam = H.sonuc.bant.map(b => b*alan);
+      H.sonuc.neden = H.sonuc.neden.filter(n => !/ilan|yakın ve konumu/.test(n)).concat([sec === 0 ? `${S.length} yakın ve benzer emsal` : sec === 1 ? `en yakın emsaller 3–8 km'de (${S.length})` : "yakında benzer emsal yok, ilçe geneli kullanıldı"]);
+      const sa = (H.SA || []).length; let puan = (sa >= 2 ? 2 : sa) + (sec === 0 ? (S.length >= 4 && il.dag < .5 ? 3 : 2) : sec === 1 ? 1 : 0) + (H.Y.length >= 2 ? (yay < 1.35 ? 1 : -1) : 0) - (H.rayicNot && /⚠/.test(H.rayicNot) ? 1 : 0);
+      H.sonuc.guven = puan >= 5 ? "Yüksek" : puan >= 2 ? "Orta" : "Düşük"; }
+    return H; }; }
+
+// on yukleme: kart ve rapor oncesi koyler hazir olsun
+{ const eski = emsalKartiHtml; emsalKartiHtml = async function(id, p, a){ await em4KoyYukle(p).catch(() => {}); return eski(id, p, a); }; }
+{ const eski = emsalPdf; emsalPdf = async function(id){ try{ const { data:p } = await sb.from("parcels").select("*").eq("id", id).single(); await em4KoyYukle(p); }catch(e){} return eski(id); }; }
+
+// duzeltme tablosu: secilen/yedek ayrimi ve koy adi
+{ const eski = dgPanelHtml; dgPanelHtml = function(id, p, A, E){ let h = eski(id, p, A, E); const il = A?.deger?.Y?.find(y => y.k === "ilan"); if(!il) return h;
+    // tabloyu bastan yaz: secililer ustte
+    const L = il.liste.slice().sort((a, b) => (b.secili - a.secili) || (b.w - a.w));
+    const tablo = `<table class="dgT"><thead><tr><th>Köy · ilan</th><th>m²</th><th>İlan ₺/m²</th><th>Düzeltilmiş</th><th>Uzaklık</th><th>Ağırlık</th></tr></thead><tbody>${L.map(r => `<tr class="${r.secili ? "" : "em4Yedek"}"><td>${esc(r.koy || String(r.x.yer || "").split("/").pop().trim() || "?")}${r.ayni ? " ★" : ""}${r.x.elle ? " ✍" : ""}${r.secili ? "" : " <small>yedek</small>"}</td><td>${nf(Math.round(r.x.m2))}</td><td>${nf(r.x.birim)}</td><td><b>${nf(Math.round(r.v))}</b></td><td>${r.km != null ? (r.kmKaynak === "koy" ? "~" : "") + nf2(r.km) + " km" : "—"}</td><td>${nf2(r.w)}</td></tr>`).join("")}</tbody></table>`;
+    h = h.replace(/<table class="dgT">[\s\S]*?<\/table>/, tablo).replace(/<small>★ aynı köy[^<]*<\/small>/, `<small>★ aynı köy · ✍ elle eklendi · ~ köy merkezine göre uzaklık, diğerleri TKGM ada/parselden · sıra: değerlemeci gibi önce yakın ve benzer büyüklüktekiler, yetmezse halka genişler</small>`);
+    return h; }; }
+
+// sahibinden toplama: koy adiyla ara, 50'li sayfa
+{ const eski = emsalSahibindenUrl; emsalSahibindenUrl = function(p){ const u = eski(p), koy = String(p.mahalle || "").replace(/\s*(köyü|koyu|mahallesi)$/i, "").trim();
+    return koy ? `${u}?pagingSize=50&query_text=${encodeURIComponent(koy.toLocaleLowerCase("tr"))}` : u + "?pagingSize=50"; }; }
+
+{ const st = document.createElement("style"); st.textContent = `.em4Yedek{opacity:.45}.em4Yedek small{font-size:10px;color:#E8A33A}`; document.head.appendChild(st); }
+
+// buyukluk farki artik eleme nedeni degil (kademe ve buyukluk duzeltmesi halleder); sadece 50 kattan asiri farklar elenir
+{ const eski = emsalUygunluk; emsalUygunluk = function(p, x){ const u = eski(p, x), alan = +p.alan_m2 || 0, r = alan && x.m2 ? x.m2/alan : 1;
+    if(r >= 1/50 && r <= 50) u.neden = u.neden.filter(n => !/^çok (büyük|küçük)/.test(n)); u.ok = !u.neden.length; return u; }; }
+async function em4Gozden(id, p, a){ const E = a?.emsal; if(!E?.ilanlar?.length) return; let d = 0;
+  E.ilanlar.forEach(x => { if(x.haric && x.otoRed?.length && x.otoRed.every(n => /^çok (büyük|küçük)/.test(n)) && emsalUygunluk(p, x).ok){ x.haric = false; delete x.otoRed; d++; } });
+  if(d) await analizYaz(id, { emsal:E }).catch(() => {}); }
+{ const eski = emsalKartiHtml; emsalKartiHtml = async function(id, p, a){ await em4Gozden(id, p, a); return eski(id, p, a); }; }
 
 baslat();
 
