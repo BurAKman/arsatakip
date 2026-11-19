@@ -3800,6 +3800,25 @@ body.pc .pzKatUst b.art,body.pc .pzKatUst em.art{color:#7FE0A6}body.pc .pzKatUst
 body.pc .pzKatPlan{display:flex;flex-direction:column;gap:5px;font-size:12.5px;line-height:1.45;color:#D9D7DC;padding:11px 13px;margin-bottom:8px;border-radius:10px;background:#0F1115;border:1px solid rgba(255,255,255,.08);border-left:4px solid #E8B661}
 body.pc .pzKatPB{display:flex;align-items:baseline;gap:10px}body.pc .pzKatPB b{font-size:15px;color:#fff}body.pc .pzKatPB small{color:#8E8C93}body.pc .pzKatPB span{margin-left:auto;color:#E8C98A;font-weight:700}
 body.pc .pzKatPlan .btn{align-self:flex-start;margin-top:4px}
+/* ---- v6 katlama ---- */
+body.pc .pzKatBar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:11.5px;color:#8E8C93}
+body.pc .pzTurlar{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#A9A7AE;margin-bottom:10px}body.pc .pzTurlar b.art{color:#7FE0A6}body.pc .pzTurlar b.az{color:#FF8A92}
+body.pc .pzMasrafS{font-size:12px;color:#C9C7CC}body.pc .pzMasrafS b.art{color:#7FE0A6}body.pc .pzMasrafS b.az{color:#FF8A92}
+body.pc .pzOgrEngel,body.pc .pzOgrIyi{display:flex;flex-direction:column;gap:3px;font-size:12px;padding:8px 12px;border-radius:9px;margin-bottom:8px}
+body.pc .pzOgrEngel{background:rgba(255,74,85,.08);color:#FFB3B8}body.pc .pzOgrIyi{background:rgba(91,208,139,.08);color:#B7EFCB}
+/* ---- v7 algoritma ---- */
+body.pc .pzAlgoIki{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+body.pc .pzAlgoK{padding:12px 14px;border-radius:12px;background:#0F1115;border:1px solid rgba(255,255,255,.08);display:flex;flex-direction:column;gap:6px}
+body.pc .pzAlgoK.acik{border-color:rgba(91,208,139,.45)}body.pc .pzAlgoK.kapali{border-color:rgba(255,74,85,.35)}
+body.pc .pzAlgoK header{display:flex;align-items:center;justify-content:space-between}body.pc .pzAlgoK header b{font-size:15px;color:#fff}
+body.pc .pzAlgoKural{font-size:12.5px;color:#E6E4E8;line-height:1.5;padding:7px 9px;border-radius:8px;background:rgba(255,255,255,.03)}body.pc .pzAlgoKural small{display:block;color:#8E8C93;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase}
+body.pc .pzAlgoK .pzKv{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:#A9A7AE}body.pc .pzAlgoK .pzKv b.art{color:#7FE0A6}body.pc .pzAlgoK .pzKv b.az{color:#FF8A92}
+body.pc .pzAlgoBar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;margin-bottom:10px;border-radius:10px;background:rgba(232,182,97,.08);color:#E8C98A;font-size:12.5px}body.pc .pzAlgoBar .pzOnBar{flex:1;min-width:200px}
+body.pc .pzAlgoGrafik{display:flex;align-items:flex-end;gap:6px;height:80px;padding:6px 8px;margin-bottom:12px;border-radius:10px;background:rgba(255,255,255,.02);overflow-x:auto}
+body.pc .pzAlgoGrafik div{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:1px;min-width:26px}body.pc .pzAlgoGrafik div{flex-direction:row;align-items:flex-end;flex-wrap:wrap;justify-content:center}
+body.pc .pzAlgoGrafik i{width:9px;border-radius:2px}body.pc .pzAlgoGrafik i.art{background:#5BD08B}body.pc .pzAlgoGrafik i.az{background:#FF4A55}body.pc .pzAlgoGrafik small{width:100%;text-align:center;font-size:9px;color:#7E7C84}
+body.pc .pzAlgoNot{font-size:12px;padding:7px 10px;border-radius:8px;margin-bottom:8px}body.pc .pzAlgoNot.art{background:rgba(91,208,139,.08);color:#B7EFCB}body.pc .pzAlgoNot.az{background:rgba(255,74,85,.08);color:#FFB3B8}
+@media (max-width:1200px){body.pc .pzAlgoIki{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -3852,7 +3871,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.3.0";
+const SURUM_MORDOR = "v 1.4.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -24421,7 +24440,7 @@ function pzKatlaHtml(V){
       ${S2 ? `<span>Senin gerçek başarı oranınla (%${Math.round(gercek*100)}, ${kap.length} işlem): ikiye katlama %${Math.round(S2.kat*100)}, yarıya düşme %${Math.round(S2.yarim*100)}.</span>` : `<span>5 işlem kapattıktan sonra hesap senin gerçek başarı oranınla yapılır.</span>`}
       <em>Yani katlamak mümkün ama garanti değil; kuralı bozmak (zarar kesi kaydırmak, kaybı kovalamak) bu oranları hızla kötüleştirir.</em></div>
     <div class="pzMini">Sıradaki işlem planı · ${bos ? `${bos} boş yer` : "açık işlemler dolu: önce birini kapat"}</div>
-    ${bos ? (plan.join("") || `<div class="pcBos">${V ? "Şu an kurallara uyan kısa vadeli fırsat yok. Beklemek de bir işlemdir." : "Tarama sürüyor…"}</div>`) : ""}
+    ${bos ? (plan.join("") || `<div class="pcBos">${V ? "Şu an masraflar düşüldükten sonra artı beklentili kısa vadeli fırsat yok. Beklemek de bir işlemdir; yarım saatte bir yeniden bakılıyor." : "Tarama sürüyor…"}</div>`) : ""}
     ${ac ? `<div class="pzMini">Açık işlemler (hedef / zarar kes gelince bildirim gelir)</div><table class="pzT"><thead><tr><th>Varlık</th><th class="sag">Alış</th><th class="sag">Şimdi</th><th class="sag">K/Z</th><th class="sag">Hedef / Zarar kes</th><th>En geç satış</th><th>Durum</th><th></th></tr></thead><tbody>${acikH}</tbody></table>` : ""}
     ${kap.length ? `<details class="pzGecmisA"><summary>Kapanan işlemler (${kap.length})</summary>${kap.slice().reverse().map(o => `<div><b>${esc(pzKod(o.k))}</b> ${pzPara(o.giris, "")} → ${pzPara(o.cikis, "")} <span class="${pzYon(o.sonuc)}">${pzYuzde(o.sonuc, 1)} (${o.tl >= 0 ? "+" : ""}${Math.round(o.tl).toLocaleString("tr-TR")} ₺)</span> · ${new Date(o.ct).toLocaleDateString("tr-TR")}</div>`).join("")}</details>` : ""}
     <div class="pzNot">Kurallar: aynı anda en fazla ${K.maks} işlem · her işlemde bakiyenin en fazla %${K.risk}'i riske girer (zarar kese gelirsen kaybın bu kadar) · kazandıkça işlem büyüklüğü kendiliğinden büyür, kaybettikçe küçülür. Bakiye ve defter hesabına kaydedilir.</div></div>`;
@@ -24446,6 +24465,298 @@ setTimeout(() => setInterval(async () => { try{ const K = pzKatla(); if(!K.acik.
       toast(m); try{ new Notification("Arsa Takip · katlama planı", { body:m }); }catch(e){} } }); pzLS.yaz("pzKatlaBil", not); }catch(e){} }, 60000), 0);
 // ekstrem: program acikken yarim saatte bir tazele (eski saatlik dongunun yerine)
 setTimeout(() => setInterval(() => { try{ const V = pzLS.oku("pzEkstrem", null); if(ME?.id && typeof PC_ACIK !== "undefined" && PC_ACIK && (!V || V.v !== 5 || Date.now() - V.t > 30*60000) && !PZ_EKS_IS){ PZ_EKS_IS = true; pzEks5Hesap().catch(() => {}).finally(() => { PZ_EKS_IS = null; }); } }catch(e){} }, 10*60000), 0);
+
+/* ================= PIYASALAR v6 · KATLAMA: masraflar + otomatik sanal deneme + ogrenen kurallar + turlar =================
+   1) Midas masraflari (BIST komisyon, kripto %0,15, ABD 1,5 $ + doviz cevirme, kayma) her planda ve defterde hesaplanir.
+   2) Sanal deneme: her taramada en iyi firsatlar otomatik "sanal islem" olarak deftere yazilir, fiyat verisiyle sonuclandirilir
+      (once hedef mi, once zarar kes mi, sure mi doldu). Para koymadan yuzlerce ornek birikir.
+   3) Ogrenme: her islemin giris anindaki ozellikleri (sure, pazar, RSI, hacim kati, kirilim, gunluk degisim, saat) kaydedilir;
+      masraflar dusuldukten sonra zarar ettiren kurulumlar otomatik elenir, kazandiranlar one alinir.
+   4) Turlar: 5.000 -> 5.000 -> 10.000 gibi yeni para yukleyince yeni tur; her turun sonucu saklanir. */
+
+/* ---------- masraflar ---------- */
+const PZ_MASRAF_VARS = { bist:0, kripto:0.15, abdUsd:1.5, doviz:0.25, kayma:0.10 };   // % (abdUsd: islem basi $)
+const pzMasrafAyar = () => ({ ...PZ_MASRAF_VARS, ...(pzKatla().masraf || {}) });
+// bir al + sat icin toplam masraf (TL ve islem tutarina oran)
+function pzMasraf(k, tl){ const M = pzMasrafAyar(), t = pzTur(k), kay = M.kayma/100*2;
+  if(t === "KRIPTO") return { tl: tl*(M.kripto/100*2 + kay), oran: M.kripto/100*2 + kay, aciklama:`kripto %${pzVirgul(M.kripto, 2)} × 2 + kayma` };
+  if(t === "NASDAQ"){ const sabit = M.abdUsd*2*(PZ.usd || 42); return { tl: sabit + tl*(M.doviz/100*2 + kay), oran: (sabit + tl*(M.doviz/100*2 + kay))/(tl || 1), aciklama:`2 × ${M.abdUsd} $ + döviz çevirme %${pzVirgul(M.doviz, 2)} × 2 + kayma` }; }
+  return { tl: tl*(M.bist/100*2 + kay), oran: M.bist/100*2 + kay, aciklama: M.bist ? `komisyon %${pzVirgul(M.bist, 2)} × 2 + kayma` : "Midas'ta BIST komisyonu yok · sadece kayma" }; }
+
+/* ---------- islemin giris anindaki ozellikleri (ogrenme icin) ---------- */
+function pzOzellik(x){ const n = (x.neden || []).join(" | "), rsi = +((n.match(/RSI[^0-9]*(\d+)/) || [])[1]) || null, hk = +String((n.match(/normalin ([\d.,]+) kat/) || [])[1] || "").replace(",", ".") || null;
+  const saat = pzIst().getHours(), d = x.deg ?? null;
+  return { alt:x.alt, pazar: pzTur(x.k) === "KRIPTO" ? "kripto" : pzTur(x.k) === "BIST" ? "bist" : "abd", rsi, hk, kir: /kırdı/.test(n), deg:d, saat, ih:x.ihtimal ?? null }; }
+const PZ_KOVA = {
+  alt:o => ({ g1:"Bugün", g3:"2-3 gün", h1:"1 hafta", a1:"1 ay", k2:"1-2 ay", o6:"5-6 ay" })[o.alt] || o.alt,
+  pazar:o => o.pazar,
+  rsi:o => o.rsi == null ? null : o.rsi < 60 ? "RSI <60" : o.rsi < 70 ? "RSI 60-70" : o.rsi < 80 ? "RSI 70-80" : "RSI 80+",
+  hk:o => o.hk == null ? null : o.hk < 1.5 ? "hacim <1,5×" : o.hk < 3 ? "hacim 1,5-3×" : "hacim 3×+",
+  kir:o => o.kir ? "kırılım var" : "kırılım yok",
+  deg:o => o.deg == null ? null : o.deg < 5 ? "gün +%5'ten az" : o.deg < 15 ? "gün +%5-15" : "gün +%15+",
+  saat:o => o.pazar === "bist" ? null : o.saat < 8 ? "gece 00-08" : o.saat < 12 ? "sabah 08-12" : o.saat < 18 ? "öğlen 12-18" : "akşam 18-24",
+  ih:o => o.ih == null ? null : o.ih < .3 ? "ihtimal <%30" : o.ih < .45 ? "ihtimal %30-45" : "ihtimal %45+" };
+
+/* ---------- sanal defter ---------- */
+const pzSanal = () => pzLS.oku("pzSanal", { acik:[], kapali:[] });
+const pzSanalYaz = S => { S.kapali = S.kapali.slice(-3000); pzLS.yaz("pzSanal", S); };
+function pzSanalEkle(V){ if(!V) return; const S = pzSanal(), simdi = Date.now(), ayni = new Set(S.acik.map(o => o.k + "|" + o.alt)); let n = 0;
+  for(const a of ["g1", "g3", "h1", "a1"]) for(const t of ["kripto", "bist"]) (V[a]?.[t] || []).filter(x => x.stop && x.hedef > x.f).slice(0, 3).forEach(x => {
+    if(ayni.has(x.k + "|" + a)) return; const Z = pzZamanPlan({ ...x, alt:a });
+    S.acik.push({ k:x.k, alt:a, giris:x.f, hedef:x.hedef, stop:x.stop, t:simdi, son:Z.cikisT.getTime(), oz:pzOzellik({ ...x, alt:a }), bn:x.bn || null }); ayni.add(x.k + "|" + a); n++; });
+  pzSanalYaz(S); return n; }
+// sonuclandir: kripto 15 dk'lik mumlarla (once hangisine degdi), BIST gunluk mumlarla (ayni gun ikisine de degdiyse zarar kes sayilir: temkinli)
+async function pzSanalKontrol(){ const S = pzSanal(); if(!S.acik.length) return 0; let bitti = 0; const kalan = [];
+  for(const o of S.acik.slice(0, 150)){ let son = null;
+    try{ if(pzTur(o.k) === "KRIPTO"){ const bn = o.bn || pzKod(o.k) + "USDT", r = await pzJson(`https://api.binance.com/api/v3/klines?symbol=${bn}&interval=15m&startTime=${o.t}&limit=1000`, 12000);
+        for(const m of (r || [])){ const h = +m[2], l = +m[3], t = +m[0]; if(t > o.son){ break; } if(l <= o.stop){ son = { cikis:o.stop, neden:"zarar kes", ct:t }; break; } if(h >= o.hedef){ son = { cikis:o.hedef, neden:"hedef", ct:t }; break; } }
+        if(!son && Date.now() > o.son && r?.length){ const z = r.filter(m => +m[0] <= o.son).pop() || r[r.length - 1]; son = { cikis:+z[4], neden:"süre doldu", ct:o.son }; } }
+      else { const s = await pzSatirBul(o.k), R = await pzGecmis(s, "3A"); const gun0 = new Date(o.t); gun0.setHours(0, 0, 0, 0);
+        for(let i = 0; i < (R.t || []).length; i++){ const t = R.t[i]*1000; if(t < gun0.getTime() + 86400000 && o.alt !== "g1") continue; if(t < gun0.getTime()) continue; if(t > o.son + 86400000) break;
+          if(R.l[i] <= o.stop){ son = { cikis:o.stop, neden:"zarar kes", ct:t }; break; } if(R.h[i] >= o.hedef){ son = { cikis:o.hedef, neden:"hedef", ct:t }; break; } }
+        if(!son && Date.now() > o.son){ son = { cikis:s.f || R.c[R.c.length - 1], neden:"süre doldu", ct:o.son }; } } }catch(e){}
+    if(son){ const brut = (son.cikis/o.giris - 1)*100, masraf = pzMasraf(o.k, 1000).oran*100; S.kapali.push({ ...o, ...son, brut, net:brut - masraf, sanal:true }); bitti++; } else kalan.push(o); }
+  S.acik = kalan.concat(S.acik.slice(150)); pzSanalYaz(S); return bitti; }
+
+/* ---------- ogrenme: hangi kurulum masraflar dusulunce para kazandiriyor? ---------- */
+function pzOgren(){
+  const K = pzKatla(), gercek = (K.kapali || []).filter(x => x.oz).map(x => ({ oz:x.oz, net:x.net ?? x.sonuc, gercek:true })), sanal = pzSanal().kapali.map(x => ({ oz:x.oz, net:x.net }));
+  const L = sanal.concat(gercek, gercek);   // gercek islemler 2 kat agirlikli
+  const kovalar = {};
+  L.forEach(x => { if(!x.oz) return; for(const [ad, f] of Object.entries(PZ_KOVA)){ const v = f(x.oz); if(!v) continue; const anahtar = (ad === "alt" ? "" : PZ_KOVA.alt(x.oz) + " · ") + v;
+    const s = kovalar[anahtar] = kovalar[anahtar] || { ad:anahtar, tur:ad, alt:x.oz.alt, n:0, kaz:0, top:0 }; s.n++; s.top += x.net; if(x.net > 0) s.kaz++; } });
+  const Lk = Object.values(kovalar).map(s => ({ ...s, ort:s.top/s.n, isabet:(s.kaz + 1)/(s.n + 2) }));
+  // engel: en az 15 ornek, masraf sonrasi ortalama negatif ve isabet dusuk
+  const engel = Lk.filter(s => s.n >= 15 && s.ort < -0.3 && s.isabet < .5 && s.tur !== "pazar");
+  const iyi = Lk.filter(s => s.n >= 15 && s.ort > 0.3);
+  return { L:Lk.sort((a, b) => b.n - a.n), engel, iyi, toplam:L.length, sanalN:sanal.length, gercekN:gercek.length };
+}
+function pzOgrenSkor(x, O){ const oz = pzOzellik(x); let ceza = false, ek = 0, say = 0;
+  for(const [ad, f] of Object.entries(PZ_KOVA)){ const v = f(oz); if(!v) continue; const anahtar = (ad === "alt" ? "" : PZ_KOVA.alt(oz) + " · ") + v;
+    if(O.engel.some(e => e.ad === anahtar)) ceza = anahtar; const s = O.L.find(e => e.ad === anahtar && e.n >= 10); if(s){ ek += s.ort; say++; } }
+  return { ceza, ek: say ? ek/say : 0 }; }
+
+/* ---------- katlama: turlar ---------- */
+function pzKatlaYeniTur(){ const K = pzKatla(); const m = prompt("Bu tura kaç ₺ yükledin?", 5000); if(m == null) return;
+  K.turlar = K.turlar || []; if(K.kapali.length || K.acik.length) K.turlar.push({ no:K.turlar.length + 1, bas:K.bas, son:K.bakiye, islem:K.kapali.length, bitis:Date.now(), kapali:K.kapali });
+  K.bas = +m || 5000; K.bakiye = K.bas; K.kapali = []; K.acik = []; K.turBas = Date.now(); pzKatlaYaz(K).then(pzTablo); toast(`Tur ${K.turlar.length + 1} başladı · ${K.bas.toLocaleString("tr-TR")} ₺`); }
+function pzKatlaMasrafAyar(){ const K = pzKatla(), M = pzMasrafAyar();
+  const b = prompt("BIST komisyonu (% · Midas'ta şu an ücretsiz: 0)", M.bist); if(b == null) return;
+  const c = prompt("Kripto işlem ücreti (% · Midas aylık 0-10 milyon ₺ hacimde 0,15)", M.kripto); if(c == null) return;
+  const u = prompt("ABD hissesi işlem ücreti ($ / işlem · Midas 1,5)", M.abdUsd); if(u == null) return;
+  const d = prompt("Döviz çevirme farkı (% · TL→$ ve $→TL, Midas'ta kontrol et)", M.doviz); if(d == null) return;
+  const k = prompt("Kayma (% · emirin istediğin fiyattan biraz kötü gerçekleşmesi, her yönde)", M.kayma); if(k == null) return;
+  const sayi = v => +String(v).replace(",", ".") || 0; K.masraf = { bist:sayi(b), kripto:sayi(c), abdUsd:sayi(u), doviz:sayi(d), kayma:sayi(k) }; pzKatlaYaz(K).then(pzTablo); }
+
+// gercek islem: Aldim / Sattim masrafli + ozellik kaydi
+pzKatlaAldim = async function(k, alt, f, hedef, stop, para, son){ const K = pzKatla(); const g = prompt(`${pzKod(k)} kaçtan aldın? (birim fiyat · Midas'taki gerçekleşen fiyat)`, f); if(g == null) return;
+  const t = prompt("Kaç ₺'lik aldın? (masraf hariç tutar)", para); if(t == null) return; const tl = +t || para, M = pzMasraf(k, tl);
+  const x = (pzLS.oku("pzEkstrem", null) || {})[alt], kay = x ? [].concat(x.kripto || [], x.bist || []).find(y => y.k === k) : null;
+  K.acik.push({ k, alt, giris:+String(g).replace(",", ".") || f, hedef, stop, tl, masraf:M.tl, t:Date.now(), son, oz: kay ? pzOzellik({ ...kay, alt }) : null }); await pzKatlaYaz(K);
+  toast(`Deftere yazıldı · tahmini masraf ${Math.round(M.tl)} ₺ · hedefe limit satış emrini koymayı unutma`); pzTablo(); };
+pzKatlaSattim = async function(i){ const K = pzKatla(), o = K.acik[i]; if(!o) return; const s = pzBul(o.k), f = (s?.bn && PZ.canli[s.bn]?.f) || s?.f || o.giris;
+  const c = prompt(`${pzKod(o.k)} kaçtan sattın?`, f); if(c == null) return; const m = prompt("Midas'ın kestiği toplam masraf (₺) · bilmiyorsan tahmini bırak", Math.round(o.masraf ?? pzMasraf(o.k, o.tl).tl)); if(m == null) return;
+  const cikis = +String(c).replace(",", ".") || f, brut = (cikis/o.giris - 1)*100, masraf = +m || 0, tl = o.tl*brut/100 - masraf, net = tl/o.tl*100;
+  const neden = cikis >= o.hedef*0.995 ? "hedef" : cikis <= o.stop*1.005 ? "zarar kes" : Date.now() > new Date(o.son).getTime() ? "süre doldu" : "erken çıkış";
+  K.acik.splice(i, 1); K.kapali.push({ ...o, cikis, brut, sonuc:net, net, tl, masraf, neden, ct:Date.now() }); K.bakiye += tl; await pzKatlaYaz(K);
+  toast(`${tl >= 0 ? "Kâr" : "Zarar"} (masraf dahil): ${tl >= 0 ? "+" : ""}${Math.round(tl).toLocaleString("tr-TR")} ₺ · bakiye ${Math.round(K.bakiye).toLocaleString("tr-TR")} ₺`); pzTablo(); };
+
+// plan adaylari: masraf sonrasi net beklenti + ogrenilen kurallar
+pzKatlaAday = function(V){ const O = pzOgren(), L = [];
+  for(const a of ["g1", "g3", "h1"]) for(const t of ["kripto", "bist"]) (V?.[a]?.[t] || []).forEach(x => { if(x.stop && x.hedef > x.f) L.push({ ...x, alt:x.alt || a }); });
+  return L.map(x => { const m = pzMasraf(x.k, 2500).oran, kaz = x.hedef/x.f - 1 - m, kay = 1 - x.stop/x.f + m, p = x.ihtimal ?? .4, zk = x.zk ?? (1 - p), G = pzOgrenSkor(x, O);
+    return { x, kaz, kay, p, masraf:m, ceza:G.ceza, ogr:G.ek, bek:p*kaz - Math.min(1, zk)*kay + G.ek/100 }; })
+    .filter(y => y.kaz > 0 && !y.ceza && y.bek > 0).sort((a, b) => b.bek - a.bek); };
+
+// katlama ekrani: masraf, tur, sanal deneme ve ogrenilenler bolumleri
+{ const eski = pzKatlaHtml;
+  pzKatlaHtml = function(V){ let h = eski(V); const K = pzKatla(), O = pzOgren(), S = pzSanal(), M = pzMasrafAyar();
+    // planlara masraf satiri
+    h = h.replace(/<div>🎯 <b>Hedef:<\/b>/g, `<div class="pzMasrafS">💸 Masraf (al+sat): __M__</div><div>🎯 <b>Hedef:</b>`);
+    const A = pzKatlaAday(V).filter(y => !K.acik.some(o => o.k === y.x.k)); let i = 0; h = h.replace(/__M__/g, () => { const y = A[i++]; return y ? `%${pzVirgul(y.masraf*100, 2)} · ${esc(pzMasraf(y.x.k, 1).aciklama)} · masraf sonrası hedefte <b class="art">${pzYuzde(y.kaz*100, 1)}</b>, zarar keste <b class="az">−%${pzVirgul(y.kay*100)}</b>` : ""; });
+    const turlar = K.turlar || [], sK = S.kapali, sN = sK.length, sKaz = sK.filter(x => x.net > 0).length, sOrt = sN ? sK.reduce((t, x) => t + x.net, 0)/sN : 0;
+    const altOz = ["g1", "g3", "h1", "a1"].map(a => { const L = sK.filter(x => x.alt === a); const n = L.length; return n ? `<span><b>${PZ_KOVA.alt({ alt:a })}</b> ${n} işlem · isabet %${Math.round(L.filter(x => x.net > 0).length/n*100)} · net ort. ${pzYuzde(L.reduce((t, x) => t + x.net, 0)/n, 2)}</span>` : ""; }).join("");
+    const ust = `<div class="pzKatBar"><button class="pcLink" onclick="pzKatlaYeniTur()">🔄 Yeni tur (para yükledim)</button><button class="pcLink" onclick="pzKatlaMasrafAyar()">💸 Masraf ayarları</button><button class="pcLink" onclick="pzKatlaRapor()">📋 Claude'a rapor</button>
+      <span>Masraflar: BIST %${pzVirgul(M.bist, 2)} · kripto %${pzVirgul(M.kripto, 2)} · ABD ${pzVirgul(M.abdUsd, 1)} $ + döviz %${pzVirgul(M.doviz, 2)} · kayma %${pzVirgul(M.kayma, 2)} (her yön)</span></div>
+      ${turlar.length ? `<div class="pzTurlar">${turlar.map(t => `<span>Tur ${t.no}: ${Math.round(t.bas).toLocaleString("tr-TR")} → <b class="${t.son >= t.bas ? "art" : "az"}">${Math.round(t.son).toLocaleString("tr-TR")} ₺</b> (${t.islem} işlem)</span>`).join("")}<span>Şimdi: Tur ${turlar.length + 1}</span></div>` : ""}`;
+    const sanal = `<div class="pzMini">🧪 Sanal deneme (otomatik, para yok) · ${S.acik.length} açık · ${sN} sonuçlandı</div>
+      <div class="pzKarne"><b>Program her taramada en iyi fırsatları kendi kendine “sanal” alıyor ve gerçek fiyatla sonuçlandırıyor.</b> Masraflar düşülüyor. Sen para koymadan yüzlerce örnek birikiyor; gerçek parayı sadece burada kanıtlanmış kurulumlara koyuyoruz.
+        ${sN ? `<span>Toplam: ${sN} işlem · isabet <b class="${sKaz/sN >= .5 ? "art" : "az"}">%${Math.round(sKaz/sN*100)}</b> · masraf sonrası işlem başı ortalama <b class="${sOrt > 0 ? "art" : "az"}">${pzYuzde(sOrt, 2)}</b></span>${altOz}` : `<span>İlk sanal işlemler sonuçlandıkça burada istatistik oluşacak (24 saatlikler 1 gün içinde).</span>`}</div>`;
+    const ogr = `<div class="pzMini">📚 Öğrenilenler · ${O.toplam} örnek (${O.sanalN} sanal + ${O.gercekN} gerçek, gerçekler 2 kat sayılır)</div>
+      ${O.engel.length ? `<div class="pzOgrEngel"><b>⛔ Artık önermediğim kurulumlar</b> (masraf sonrası zarar ettirdi, en az 15 örnek):${O.engel.map(e => `<span>${esc(e.ad)} · ${e.n} örnek · ort. ${pzYuzde(e.ort, 2)}</span>`).join("")}</div>` : ""}
+      ${O.iyi.length ? `<div class="pzOgrIyi"><b>✅ İşe yarayan kurulumlar</b> (öne alınıyor):${O.iyi.map(e => `<span>${esc(e.ad)} · ${e.n} örnek · ort. ${pzYuzde(e.ort, 2)} · isabet %${Math.round(e.isabet*100)}</span>`).join("")}</div>` : ""}
+      ${O.L.length ? `<details class="pzGecmisA"><summary>Tüm kurulumların karnesi (${O.L.length})</summary><table class="pzT"><thead><tr><th>Kurulum</th><th class="sag">Örnek</th><th class="sag">İsabet</th><th class="sag">Net ort.</th></tr></thead><tbody>${O.L.slice(0, 60).map(s => `<tr><td>${esc(s.ad)}</td><td class="sag">${s.n}</td><td class="sag">%${Math.round(s.isabet*100)}</td><td class="sag ${pzYon(s.ort)}">${pzYuzde(s.ort, 2)}</td></tr>`).join("")}</tbody></table></details>`
+        : `<div class="pzNot">Henüz yeterli örnek yok. Sanal işlemler sonuçlandıkça program hangi kurulumların para kazandırdığını kendi kendine çıkaracak.</div>`}`;
+    return h.replace('<div class="pzKatla">', '<div class="pzKatla">' + ust).replace('<div class="pzMini">Sıradaki işlem planı', sanal + ogr + '<div class="pzMini">Sıradaki işlem planı'); }; }
+
+// Claude'a rapor: defteri + ogrenilenleri panoya kopyala, Claude penceresini ac
+async function pzKatlaRapor(){ const K = pzKatla(), O = pzOgren(), S = pzSanal(), M = pzMasrafAyar();
+  const sat = x => [new Date(x.t).toISOString().slice(0, 16), pzKod(x.k), x.alt, x.oz?.pazar, x.giris, x.hedef, x.stop, x.cikis, x.neden, (x.net ?? x.sonuc)?.toFixed(2), x.oz ? `rsi=${x.oz.rsi ?? "-"} hacim=${x.oz.hk ?? "-"} kir=${x.oz.kir ? 1 : 0} gun=${x.oz.deg != null ? x.oz.deg.toFixed(1) : "-"} saat=${x.oz.saat}` : ""].join(";");
+  const metin = `ARSA TAKİP · KATLAMA DEFTERİ RAPORU (${new Date().toLocaleString("tr-TR")})
+Bunu benim kişisel al-sat sistemim için analiz et: hangi kurulumlar masraf sonrası para kazandırıyor, hangileri kaybettiriyor; hedef/zarar kes/süre kurallarını, giriş zamanlamasını ve filtreleri nasıl değiştirmeliyim? Somut kural önerileri ver (ör. "kriptoda RSI 80 üstü girme", "BIST 2-3 günde hedefi %5'ten %4'e çek").
+Masraflar: ${JSON.stringify(M)} · Bakiye: ${Math.round(K.bakiye)} / başlangıç ${Math.round(K.bas)} ₺ · turlar: ${JSON.stringify((K.turlar || []).map(t => ({ bas:t.bas, son:Math.round(t.son), islem:t.islem })))}
+ÖĞRENİLENLER (kurulum; örnek; isabet; net ort %): ${O.L.slice(0, 40).map(s => `${s.ad};${s.n};${Math.round(s.isabet*100)};${s.ort.toFixed(2)}`).join(" | ")}
+GERÇEK İŞLEMLER (tarih;kod;süre;pazar;giriş;hedef;zarar kes;çıkış;neden;net %;özellikler):
+${K.kapali.map(sat).join("\n") || "yok"}
+SANAL İŞLEMLER (son 150):
+${S.kapali.slice(-150).map(sat).join("\n") || "yok"}`;
+  try{ await navigator.clipboard.writeText(metin); }catch(e){}
+  if(window.arsaPC?.yzAc){ try{ await window.arsaPC.yzAc("claude", null, metin, null, false); toast("Rapor Claude penceresine yazıldı · Enter'a bas"); return; }catch(e){} }
+  toast("Rapor panoya kopyalandı · Claude'a yapıştır (bu sohbete de atabilirsin)"); }
+
+// taramadan sonra sanal islemleri ekle; 10 dakikada bir sonuclandir
+{ const eski = pzEks5Hesap; pzEks5Hesap = async function(){ const V = await eski.apply(this, arguments); try{ pzSanalEkle(V); }catch(e){} return V; }; }
+setTimeout(() => { setInterval(() => { try{ if(ME?.id) pzSanalKontrol().then(n => { if(n && PZ.sekme === "ekstrem" && PZ.eksAlt === "katla" && document.getElementById("pzTablo")) pzTablo(); }).catch(() => {}); }catch(e){} }, 10*60000);
+  setTimeout(() => { try{ if(ME?.id) pzSanalKontrol().catch(() => {}); }catch(e){} }, 60000); }, 0);
+
+/* ================= PIYASALAR v7 · 🧠 KENDINI EGITEN KRIPTO ALGORITMASI =================
+   - Gecmis veriyle hizlandirilmis simulasyon: Binance'te en cok islem goren ~50 coinin son ~6 haftalik 1 saatlik ve ~6 aylik 4 saatlik
+     mumlari uzerinde ayni giris kurali her mumda yeniden oynatilir -> dakikalar icinde binlerce islem.
+   - Ayar taramasi (hedef, zarar kes, RSI siniri, hacim kati, kirilim penceresi, gunluk yukselis) + ileri test: ayarlar verinin ilk %65'inde
+     secilir, SONUC son %35'te (hic gormedigi donem) olculur -> ezber degil, gercek basari.
+   - Her gece (03:00-06:00 arasi, program aciksa) ve istenince yeniden egitilir; surum gecmisi tutulur.
+   - Canli sanal deneme: 10 dakikada bir hizli kripto taramasi, kurala uyan HER islem sanal deftere -> gunde yuzlerce islem.
+   - Katlama plani kripto oncelikli; egitilmis strateji ileri testte zarar ettiriyorsa o sureyi onermez. */
+
+const PZ_ALGO_IZGARA = { hedefK:[.6, .8, 1, 1.3, 1.7], stopK:[.5, .7, 1, 1.4], rsiMax:[70, 80, 95], hk:[1, 1.5, 2.5], L:[1, 2, 4], dMin:[-1, .03] };   // L: pencere carpani
+const PZ_ALGO_TF = { g1:{ iv:"1h", ad:"Bugün (24 saat)", H:24, Lb:12, olcek:8, tMin:.015, tMax:.15, sMin:.01, sMax:.08, gun:24 }, g3:{ iv:"4h", ad:"2-3 gün", H:18, Lb:21, olcek:12, tMin:.03, tMax:.35, sMin:.02, sMax:.15, gun:6 } };
+
+/* ---- isci (Web Worker): agir hesap arayuzu kilitlemesin ---- */
+const PZ_ALGO_ISCI = `
+function rsi(c, n){ const r = new Float64Array(c.length).fill(NaN); let g = 0, l = 0; for(let i = 1; i < c.length; i++){ const d = c[i] - c[i-1], u = Math.max(d, 0), z = Math.max(-d, 0);
+  if(i <= n){ g += u; l += z; if(i === n){ g /= n; l /= n; r[i] = l === 0 ? 100 : 100 - 100/(1 + g/l); } } else { g = (g*(n-1) + u)/n; l = (l*(n-1) + z)/n; r[i] = l === 0 ? 100 : 100 - 100/(1 + g/l); } } return r; }
+function hazirla(R, Ls){ const n = R.c.length, c = R.c, sd = new Float64Array(n).fill(NaN), lr = new Float64Array(n);
+  for(let i = 1; i < n; i++) lr[i] = Math.log(c[i]/c[i-1]);
+  for(let i = 61; i < n; i++){ let o = 0; for(let j = i - 59; j <= i; j++) o += lr[j]; o /= 60; let v = 0; for(let j = i - 59; j <= i; j++) v += (lr[j] - o)*(lr[j] - o); sd[i] = Math.sqrt(v/59); }
+  const hi = {}, vo = {}; for(const L of Ls){ const a = new Float64Array(n).fill(NaN), b = new Float64Array(n).fill(NaN);
+    for(let i = L; i < n; i++){ let m = -Infinity, s = 0; for(let j = i - L; j < i; j++){ if(R.h[j] > m) m = R.h[j]; s += R.v[j]; } a[i] = m; b[i] = s/L; } hi[L] = a; vo[L] = b; }
+  const v3 = new Float64Array(n).fill(NaN); for(let i = 3; i < n; i++) v3[i] = (R.v[i] + R.v[i-1] + R.v[i-2])/3;
+  return { ...R, n, sd, hi, vo, v3, rsi:rsi(c, 14) }; }
+function sim(D, P, T, masraf, tBol){ const out = { tr:{ n:0, kaz:0, top:0 }, te:{ n:0, kaz:0, top:0 }, islemler:[] }, L = Math.round(T.Lb*P.L);
+  for(const d of D){ let bos = 0; const g = d.gunN;
+    for(let i = 100; i < d.n - 1; i++){ if(i < bos) continue; const c = d.c[i], sd = d.sd[i]; if(!(sd > 0)) continue;
+      if(!(c > d.hi[L][i])) continue; const hk = d.v3[i]/(d.vo[L][i] || 1e-12); if(hk < P.hk) continue; if(!(d.rsi[i] < P.rsiMax)) continue;
+      const dd = c/d.c[i - g] - 1; if(P.dMin > -1 && dd < P.dMin) continue; if(dd > .35) continue;
+      const hed = c*(1 + Math.min(T.tMax, Math.max(T.tMin, P.hedefK*sd*Math.sqrt(T.olcek)))), st = c*(1 - Math.min(T.sMax, Math.max(T.sMin, P.stopK*sd*Math.sqrt(T.olcek))));
+      let cik = null, son = Math.min(d.n - 1, i + T.H); if(i + T.H > d.n - 1) break;
+      for(let j = i + 1; j <= son; j++){ if(d.l[j] <= st){ cik = st; bos = j; break; } if(d.h[j] >= hed){ cik = hed; bos = j; break; } }
+      if(cik == null){ cik = d.c[son]; bos = son; }
+      const net = (cik/c - 1)*100 - masraf, k = d.t[i] < tBol ? out.tr : out.te; k.n++; k.top += net; if(net > 0) k.kaz++;
+      if(P.kayit) out.islemler.push({ kod:d.kod, t:d.t[i], net:+net.toFixed(2), te:d.t[i] >= tBol }); } }
+  return out; }
+onmessage = e => { const { veri, tf, T, izgara, masraf } = e.data; const Ls = [...new Set(izgara.L.map(x => Math.round(T.Lb*x)))];
+  const D = veri.map(v => ({ ...hazirla(v, Ls), kod:v.kod, gunN:T.gun })); let tMin = Infinity, tMax = -Infinity; D.forEach(d => { tMin = Math.min(tMin, d.t[0]); tMax = Math.max(tMax, d.t[d.n - 1]); });
+  const tBol = tMin + (tMax - tMin)*.65, kombi = []; for(const a of izgara.hedefK) for(const b of izgara.stopK) for(const r of izgara.rsiMax) for(const h of izgara.hk) for(const L of izgara.L) for(const dm of izgara.dMin) kombi.push({ hedefK:a, stopK:b, rsiMax:r, hk:h, L, dMin:dm });
+  const sonuc = []; kombi.forEach((P, i) => { const o = sim(D, P, T, masraf, tBol); sonuc.push({ P, tr:o.tr, te:o.te }); if(i % 40 === 0) postMessage({ ilerle:i/kombi.length }); });
+  const gec = sonuc.filter(s => s.tr.n >= 50 && s.te.n >= 15).map(s => ({ ...s, trOrt:s.tr.top/s.tr.n, teOrt:s.te.top/s.te.n }));
+  gec.sort((a, b) => (b.trOrt - a.trOrt) || (b.tr.n - a.tr.n)); const en = gec[0] || null;
+  const varsayilan = sonuc.find(s => s.P.hedefK === 1 && s.P.stopK === .7 && s.P.rsiMax === 80 && s.P.hk === 1.5 && s.P.L === 2 && s.P.dMin === .03);
+  let ornek = []; if(en){ const o = sim(D, { ...en.P, kayit:true }, T, masraf, tBol); ornek = o.islemler; }
+  postMessage({ bitti:true, tf, en, varsayilan, kombi:kombi.length, gecerli:gec.length, ornek:ornek.slice(-400), tBol, aralik:[tMin, tMax], coin:D.length }); };`;
+function pzAlgoIsci(){ return new Worker(URL.createObjectURL(new Blob([PZ_ALGO_ISCI], { type:"application/javascript" }))); }
+
+/* ---- veri: Binance'te en cok islem goren coinler (buyukler dahil), 1h ve 4h ---- */
+async function pzAlgoVeri(tf, ilerle){ const BN = await pzBinanceTum(); const L = BN.slice().sort((a, b) => b.hacim - a.hacim).filter(x => !/^(USDC|FDUSD|TUSD|USDP|EUR|TRY|BUSD|DAI|PAXG|WBTC)$/.test(x.kod)).slice(0, 50);
+  let i = 0; const V = (await pzHavuz(L, 4, async x => { const R = await pzKlines(x.bn, PZ_ALGO_TF[tf].iv, 1000); ilerle?.(++i/L.length); return R.c.length > 300 ? { ...R, kod:x.kod } : null; })).filter(Boolean); return V; }
+const pzAlgo = () => pzLS.oku("pzAlgo", { surum:0, gecmis:[] });
+let PZ_ALGO_IS = null;
+async function pzAlgoEgit(goster){
+  if(PZ_ALGO_IS) return; PZ_ALGO_IS = { asama:"veri", oran:0 }; const A = pzAlgo(), yeni = { surum:(A.surum || 0) + 1, t:Date.now(), gun:A.gun || pzGun(pzIst()), gecmis:A.gecmis || [] }, masraf = pzMasraf("KRIPTO:X", 1000).oran*100;
+  const ciz = () => { if(goster && PZ.sekme === "ekstrem" && PZ.eksAlt === "algo") pzTablo(); };
+  try{ for(const tf of ["g1", "g3"]){
+      PZ_ALGO_IS = { asama:`${PZ_ALGO_TF[tf].ad}: Binance'ten geçmiş mumlar indiriliyor`, oran:0 }; ciz();
+      const veri = await pzAlgoVeri(tf, o => { PZ_ALGO_IS.oran = o; if(goster) pzAlgoBar(); });
+      PZ_ALGO_IS = { asama:`${PZ_ALGO_TF[tf].ad}: ${veri.length} coinde binlerce ayar deneniyor`, oran:0 }; ciz();
+      const S = await new Promise((ok, no) => { const w = pzAlgoIsci(); w.onmessage = e => { if(e.data.ilerle != null){ PZ_ALGO_IS.oran = e.data.ilerle; if(goster) pzAlgoBar(); } if(e.data.bitti){ w.terminate(); ok(e.data); } };
+        w.onerror = er => { w.terminate(); no(new Error(er.message || "hesap hatası")); }; w.postMessage({ veri:veri.map(v => ({ kod:v.kod, t:v.t, o:v.o, h:v.h, l:v.l, c:v.c, v:v.v })), tf, T:PZ_ALGO_TF[tf], izgara:PZ_ALGO_IZGARA, masraf }); });
+      const en = S.en, ozet = s => s && s.n ? { n:s.n, ort:s.top/s.n, isabet:s.kaz/s.n } : null;
+      yeni[tf] = { P:en?.P || null, tr:ozet(en?.tr), te:ozet(en?.te), vars:{ tr:ozet(S.varsayilan?.tr), te:ozet(S.varsayilan?.te) }, kombi:S.kombi, gecerli:S.gecerli, coin:S.coin, aralik:S.aralik, tBol:S.tBol, ornek:S.ornek,
+        aktif: !!(en && en.te.n >= 15 && en.te.top/en.te.n > .05) };
+    }
+    yeni.gecmis = (A.gecmis || []).concat([{ surum:yeni.surum, t:yeni.t, g1:yeni.g1?.te, g3:yeni.g3?.te, g1a:yeni.g1?.aktif, g3a:yeni.g3?.aktif }]).slice(-60);
+    pzLS.yaz("pzAlgo", yeni); try{ await pzAyarYaz({ algo:{ surum:yeni.surum, t:yeni.t, g1:{ P:yeni.g1?.P, te:yeni.g1?.te, aktif:yeni.g1?.aktif }, g3:{ P:yeni.g3?.P, te:yeni.g3?.te, aktif:yeni.g3?.aktif } } }); }catch(e){}
+    const m = `🧠 Algoritma v${yeni.surum}: bugün ${yeni.g1?.aktif ? "açık" : "kapalı"} · 2-3 gün ${yeni.g3?.aktif ? "açık" : "kapalı"} (görmediği dönemde net ${yeni.g1?.te ? pzYuzde(yeni.g1.te.ort, 2) : "—"} / ${yeni.g3?.te ? pzYuzde(yeni.g3.te.ort, 2) : "—"} işlem başı)`;
+    toast(m); try{ new Notification("Arsa Takip · algoritma güncellendi", { body:m }); }catch(e){} }
+  catch(e){ toast("Eğitim olmadı: " + e.message); console.log("algo", e); }
+  finally { PZ_ALGO_IS = null; ciz(); } }
+function pzAlgoBar(){ const el = document.getElementById("pzAlgoBar"); if(el && PZ_ALGO_IS) el.innerHTML = `<i class="pzDon"></i><b>${esc(PZ_ALGO_IS.asama)}</b><div class="pzOnBar"><i style="width:${Math.round((PZ_ALGO_IS.oran || 0)*100)}%"></i></div>`; }
+
+/* ---- canli sinyal: egitilmis ayarlarla (gecmis simulasyondaki kuralin aynisi) ---- */
+function pzAlgoSinyal(R, P, T){ const n = R.c.length; if(n < 100 || !P) return null; const i = n - 1, c = R.c[i], L = Math.round(T.Lb*P.L);
+  let hi = -Infinity, vs = 0; for(let j = i - L; j < i; j++){ hi = Math.max(hi, R.h[j]); vs += R.v[j]; } const hk = ((R.v[i] + R.v[i-1] + R.v[i-2])/3)/(vs/L || 1e-12);
+  const lr = []; for(let j = i - 59; j <= i; j++) lr.push(Math.log(R.c[j]/R.c[j-1])); const o = lr.reduce((t, x) => t + x, 0)/60, sd = Math.sqrt(lr.reduce((t, x) => t + (x - o)**2, 0)/59);
+  const rsi = PZM.rsi(R.c)[i], dd = c/R.c[i - T.gun] - 1;
+  const ok = c > hi && hk >= P.hk && rsi < P.rsiMax && (P.dMin <= -1 || dd >= P.dMin) && dd <= .35;
+  return { ok, c, hk, rsi, dd, sd, hed:c*(1 + Math.min(T.tMax, Math.max(T.tMin, P.hedefK*sd*Math.sqrt(T.olcek)))), st:c*(1 - Math.min(T.sMax, Math.max(T.sMin, P.stopK*sd*Math.sqrt(T.olcek)))) }; }
+// hizli kripto taramasi (10 dakikada bir): kurala uyan her coin sanal deftere; ekstrem listesinin "Bugun" ve "2-3 gun" kripto kismi egitilmis algoritmadan gelir
+async function pzAlgoTara(){ const A = pzAlgo(); if(!A.g1?.P && !A.g3?.P) return null; const BN = await pzBinanceTum().catch(() => []);
+  const L = BN.filter(x => x.hacim > 3e6 && x.d > -5 && !/^(USDC|FDUSD|TUSD|USDP|EUR|TRY|BUSD|DAI|PAXG|WBTC)$/.test(x.kod)).sort((a, b) => b.hacim*Math.max(.5, Math.min(b.d, 20)) - a.hacim*Math.max(.5, Math.min(a.d, 20))).slice(0, 45);
+  const sonuc = { g1:[], g3:[] };
+  for(const tf of ["g1", "g3"]){ const P = A[tf]?.P, T = PZ_ALGO_TF[tf]; if(!P) continue;
+    const S = (await pzHavuz(L, 4, async x => { const R = await pzKlines(x.bn, T.iv, 150).catch(() => null); if(!R?.c?.length) return null; const s = pzAlgoSinyal(R, P, T); if(!s?.ok) return null;
+      const G = { mu:0, sd:s.sd }, I = PZM.ihtimal(s.c, 0, s.sd, T.H, s.hed, s.st);
+      return { k:"KRIPTO:" + x.kod, kod:x.kod, ad:x.kod, para:"USD", f:s.c, deg:x.d, hedef:s.hed, stop:s.st, ihtimal:I.hedef, zk:I.stop, bn:x.bn, alt:tf, sure:tf === "g1" ? "24 saat" : "2-3 gün", algo:A.surum,
+        neden:[`${tf === "g1" ? Math.round(T.Lb*P.L) + " saatlik" : Math.round(T.Lb*P.L*4/24) + " günlük"} tepesini kırdı`, `hacim normalin ${pzVirgul(s.hk)} katı`, `RSI ${Math.round(s.rsi)}`, `${tf === "g1" ? "24 saatte" : "1 günde"} ${pzYuzde(s.dd*100, 1)}`, `algoritma v${A.surum}`], sk:s.hk }; })).filter(Boolean);
+    sonuc[tf] = S.sort((a, b) => b.sk - a.sk); }
+  // sanal deftere: kurala uyan HER islem (ayni coin + sure acikken tekrar yok)
+  const SV = pzSanal(), ayni = new Set(SV.acik.map(o => o.k + "|" + o.alt)); let n = 0;
+  for(const tf of ["g1", "g3"]) sonuc[tf].forEach(x => { if(ayni.has(x.k + "|" + tf)) return; const son = Date.now() + PZ_ALGO_TF[tf].H*(tf === "g1" ? 1 : 4)*3600000;
+    SV.acik.push({ k:x.k, alt:tf, giris:x.f, hedef:x.hedef, stop:x.stop, t:Date.now(), son, oz:{ ...pzOzellik(x), rsi:Math.round(+x.neden[2].replace(/\D/g, "")) }, bn:x.bn, algo:A.surum }); ayni.add(x.k + "|" + tf); n++; });
+  pzSanalYaz(SV); pzLS.yaz("pzAlgoSon", { t:Date.now(), g1:sonuc.g1.slice(0, 10), g3:sonuc.g3.slice(0, 10), yeni:n });
+  return sonuc; }
+// ekstrem listesinde kripto "Bugun" ve "2-3 gun" egitilmis algoritmadan (kapaliysa bos + aciklama)
+{ const eski = pzEks5Hesap;
+  pzEks5Hesap = async function(){ const V = await eski.apply(this, arguments); const A = pzAlgo();
+    if(A.g1?.P || A.g3?.P){ try{ const S = await pzAlgoTara(); if(S){ if(A.g1?.P) V.g1.kripto = A.g1.aktif ? S.g1.slice(0, 8) : []; if(A.g3?.P) V.g3.kripto = A.g3.aktif ? S.g3.slice(0, 8) : [];
+      for(const a of ["g1", "g3"]) (V[a]?.kripto || []).forEach(x => { x.alt = a; x.girisUst = x.f*(a === "g1" ? 1.01 : 1.015); }); V.algo = { surum:A.surum, g1:A.g1?.aktif, g3:A.g3?.aktif }; pzLS.yaz("pzEkstrem", V); } }catch(e){} }
+    return V; }; }
+// katlama: kripto oncelikli (BIST'i acmak ayarda)
+{ const eski = pzKatlaAday; pzKatlaAday = function(V){ const K = pzKatla(); return eski(V).filter(y => K.bistDe || pzTur(y.x.k) === "KRIPTO"); }; }
+
+/* ---- 🧠 Algoritma ekrani (Ekstrem icinde) ---- */
+PZ_EKS_ALT.splice(PZ_EKS_ALT.length - 1, 0, ["algo", "🧠 Algoritma"]);
+{ const eski = pzEks5Html;
+  pzEks5Html = function(V){ if(PZ.eksAlt !== "algo"){ let h = eski(V);
+      if(V?.algo && (PZ.eksAlt === "g1" || PZ.eksAlt === "g3")){ const ac = V.algo[PZ.eksAlt]; h = h.replace('<p class="pzNot">', `<div class="pzAlgoNot ${ac ? "art" : "az"}">🧠 Kripto listesi algoritma v${V.algo.surum}'den: ${ac ? "bu süre ileri testte artıda, açık." : "bu süre ileri testte masraf sonrası ekside kaldı, o yüzden kripto önerisi yok. Bu gece yeniden denenecek."}</div><p class="pzNot">`); }
+      return h; }
+    const seg = `<div class="pzEksSeg">${PZ_EKS_ALT.map(([v, ad]) => `<button class="${PZ.eksAlt === v ? "on" : ""}" onclick="PZ.eksAlt='${v}';pzLS.yaz('pzEksAlt','${v}');pzTablo()">${ad}</button>`).join("")}</div>`;
+    return seg + pzAlgoHtml(); }; }
+function pzAlgoHtml(){
+  const A = pzAlgo(), S = pzSanal(), son = pzLS.oku("pzAlgoSon", null), ac = !!PZ_ALGO_IS;
+  const P2 = (P, T) => P ? `${Math.round(T.Lb*P.L)} ${T.iv === "1h" ? "saatlik" : "mumluk (4 saatlik)"} tepeyi kırınca gir · hacim en az normalin ${pzVirgul(P.hk)} katı · RSI ${P.rsiMax}'in altında · ${P.dMin > -1 ? `son ${T.iv === "1h" ? "24 saatte" : "1 günde"} en az %${Math.round(P.dMin*100)} yükselmiş` : "günlük yükseliş şartı yok"} · hedef oynaklığın ${pzVirgul(P.hedefK)} katı · zarar kes ${pzVirgul(P.stopK)} katı` : "henüz eğitilmedi";
+  const st = s => s ? `<b class="${s.ort > 0 ? "art" : "az"}">${pzYuzde(s.ort, 2)}</b> net / işlem · isabet %${Math.round(s.isabet*100)} · ${s.n.toLocaleString("tr-TR")} işlem` : "—";
+  const kart = tf => { const X = A[tf], T = PZ_ALGO_TF[tf], canli = S.kapali.filter(x => x.alt === tf && x.algo === A.surum), cn = canli.length, co = cn ? canli.reduce((t, x) => t + x.net, 0)/cn : null;
+    return `<section class="pzAlgoK ${X?.aktif ? "acik" : "kapali"}"><header><b>${T.ad}</b><span class="pzNeK ${X?.aktif ? "yesil" : "kirmizi"}">${X?.aktif ? "AÇIK · öneriyor" : X ? "KAPALI · önermiyor" : "eğitilmedi"}</span></header>
+      <div class="pzAlgoKural"><small>Şu anki kural</small>${esc(P2(X?.P, T))}</div>
+      <div class="pzKv"><span>Eğitim dönemi (ayarları seçtiği)</span><span>${st(X?.tr)}</span></div>
+      <div class="pzKv"><span><b>İleri test (hiç görmediği dönem)</b></span><span>${st(X?.te)}</span></div>
+      <div class="pzKv"><span>Eski sabit kural, aynı dönem</span><span>${st(X?.vars?.te)}</span></div>
+      <div class="pzKv"><span>Canlı sanal (bu sürümle)</span><span>${cn ? `<b class="${co > 0 ? "art" : "az"}">${pzYuzde(co, 2)}</b> · isabet %${Math.round(canli.filter(x => x.net > 0).length/cn*100)} · ${cn} işlem` : "birikiyor…"}</span></div>
+      ${X ? `<div class="pzNot">${X.coin} coin · ${X.kombi} ayar denendi · ${new Date(X.aralik[0]*1000).toLocaleDateString("tr-TR")} – ${new Date(X.aralik[1]*1000).toLocaleDateString("tr-TR")} · ileri test ${new Date(X.tBol*1000).toLocaleDateString("tr-TR")} sonrası</div>` : ""}</section>`; };
+  const G = A.gecmis || [], maks = Math.max(.5, ...G.flatMap(g => [Math.abs(g.g1?.ort || 0), Math.abs(g.g3?.ort || 0)]));
+  const grafik = G.length ? `<div class="pzAlgoGrafik">${G.slice(-30).map(g => `<div title="v${g.surum} · ${new Date(g.t).toLocaleString("tr-TR")}"><i class="g1 ${(g.g1?.ort || 0) >= 0 ? "art" : "az"}" style="height:${Math.round(Math.abs(g.g1?.ort || 0)/maks*46) + 2}px"></i><i class="g3 ${(g.g3?.ort || 0) >= 0 ? "art" : "az"}" style="height:${Math.round(Math.abs(g.g3?.ort || 0)/maks*46) + 2}px"></i><small>v${g.surum}</small></div>`).join("")}</div>` : "";
+  const sK = S.kapali.filter(x => x.algo), sbugun = sK.filter(x => Date.now() - x.ct < 86400000);
+  return `<div class="pzAlgo"><div class="pzOnTarih">🧠 Algoritma ${A.surum ? `v${A.surum} · son eğitim ${new Date(A.t).toLocaleString("tr-TR", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })}` : "henüz eğitilmedi"} · her gece 03:00-06:00 arası kendini yeniden eğitir (program açıksa)
+      <button class="btn" ${ac ? "disabled" : ""} onclick="pzAlgoEgit(true)">${ac ? "Eğitiliyor…" : "🧠 Şimdi eğit (birkaç dakika)"}</button></div>
+    ${ac ? `<div class="pzAlgoBar" id="pzAlgoBar"></div>` : ""}
+    <div class="pzKarne"><b>Nasıl çalışıyor?</b><span>Binance'te en çok işlem gören 50 coinin geçmiş mumlarında giriş kuralını her saatte yeniden oynatıp ${PZ_ALGO_IZGARA.hedefK.length*PZ_ALGO_IZGARA.stopK.length*PZ_ALGO_IZGARA.rsiMax.length*PZ_ALGO_IZGARA.hk.length*PZ_ALGO_IZGARA.L.length*PZ_ALGO_IZGARA.dMin.length} farklı ayarı deniyor. Ayarı verinin ilk %65'inde seçiyor, başarısını HİÇ GÖRMEDİĞİ son %35'te ölçüyor; ezber değil, gerçek sınav. Masraflar (%${pzVirgul(pzMasraf("KRIPTO:X", 1000).oran*100, 2)} al+sat) düşülüyor.</span>
+      <em>Bir süre ileri testte artıda değilse o süre için kripto önerisi kapanıyor. Kendini kandırmasın diye.</em></div>
+    <div class="pzAlgoIki">${kart("g1")}${kart("g3")}</div>
+    ${grafik ? `<div class="pzMini">Sürümlerin ileri test sonucu (net % / işlem · sol: bugün, sağ: 2-3 gün)</div>${grafik}` : ""}
+    <div class="pzMini">Canlı sanal deneme · 10 dakikada bir tarama${son ? ` · son ${new Date(son.t).toLocaleTimeString("tr-TR", { hour:"2-digit", minute:"2-digit" })} (+${son.yeni} yeni)` : ""}</div>
+    <div class="pzKarne"><span>Açık sanal işlem: <b>${S.acik.length}</b> · son 24 saatte sonuçlanan: <b>${sbugun.length}</b>${sbugun.length ? ` · isabet %${Math.round(sbugun.filter(x => x.net > 0).length/sbugun.length*100)} · net ort. ${pzYuzde(sbugun.reduce((t, x) => t + x.net, 0)/sbugun.length, 2)}` : ""}</span>
+      <span>Algoritmalı toplam: ${sK.length} işlem${sK.length ? ` · net ort. ${pzYuzde(sK.reduce((t, x) => t + x.net, 0)/sK.length, 2)}` : ""}</span></div>
+    ${son?.g1?.length || son?.g3?.length ? `<div class="pzMini">Şu an kurala uyanlar</div><div class="pzHacim">${(son.g1 || []).map(x => `<button onclick="go('piyasaDetay','${x.k}')">${esc(x.kod)} <em>24 saat</em></button>`).join("")}${(son.g3 || []).map(x => `<button onclick="go('piyasaDetay','${x.k}')">${esc(x.kod)} <em>2-3 gün</em></button>`).join("")}</div>` : ""}
+    <label class="pzOto"><input type="checkbox" ${pzKatla().bistDe ? "checked" : ""} onchange="(async()=>{const K=pzKatla();K.bistDe=this.checked;await pzKatlaYaz(K);})()"> Katlama planına BIST hisselerini de kat (varsayılan: sadece kripto · BIST verisi 15 dk gecikmeli)</label></div>`;
+}
+{ const eski = pzTablo; pzTablo = function(){ const r = eski.apply(this, arguments); if(PZ.sekme === "ekstrem" && PZ.eksAlt === "algo" && PZ_ALGO_IS) setTimeout(pzAlgoBar, 30); return r; }; }
+
+/* ---- zamanlama: gece egitimi + 10 dakikada bir canli tarama ---- */
+setTimeout(() => {
+  setInterval(() => { try{ if(!ME?.id || typeof PC_ACIK === "undefined" || !PC_ACIK) return; const A = pzAlgo(), h = pzIst().getHours(), bugun = pzGun(pzIst());
+    if(!PZ_ALGO_IS && ((h >= 3 && h < 6 && A.gun !== bugun) || !A.surum && Date.now() - (window.__pzAcilis || 0) > 180000)){ const B = pzAlgo(); B.gun = bugun; pzLS.yaz("pzAlgo", B); pzAlgoEgit(false); }
+    if(A.surum && !PZ_ALGO_IS && Date.now() - (pzLS.oku("pzAlgoSon", { t:0 }).t) > 10*60000) pzAlgoTara().then(() => { if(PZ.sekme === "ekstrem" && PZ.eksAlt === "algo") pzTablo(); }).catch(() => {});
+  }catch(e){} }, 60000); window.__pzAcilis = Date.now(); }, 0);
 
 baslat();
 
