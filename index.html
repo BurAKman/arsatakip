@@ -3821,6 +3821,21 @@ body.pc .pzAlgoNot{font-size:12px;padding:7px 10px;border-radius:8px;margin-bott
 @media (max-width:1200px){body.pc .pzAlgoIki{grid-template-columns:1fr}}
 body.pc .pzAlgo .pzOto{display:flex;align-items:center;justify-content:flex-start;gap:8px;text-align:left}body.pc .pzAlgo .pzOto input{width:auto;flex:0 0 auto;margin:0}
 body.pc .pzYaris td{padding:6px 8px!important;font-size:12px}body.pc .pzYaris small{color:#A9A7AE}body.pc .pzYaris .art{color:#7FE0A6}body.pc .pzYaris .az{color:#FF8A92}
+/* ---- v9 bot + sanal katlama ---- */
+body.pc .pzBot{font-size:12px;color:#C9C7CC;padding:9px 12px;margin-bottom:10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);line-height:1.5}
+body.pc .pzBot.ok{border-color:rgba(91,208,139,.45);background:rgba(91,208,139,.06)}body.pc .pzBot.ok b{color:#7FE0A6}body.pc .pzBot.kapali{border-color:rgba(232,182,97,.4)}
+body.pc .pzBot code{background:#0B0D11;padding:1px 6px;border-radius:5px;font-size:11px;color:#E8C98A}
+body.pc .pzSk{margin-bottom:12px}
+body.pc .pzSkUst{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:8px}
+body.pc .pzSkB{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-radius:12px;background:#0F1115;border:1px solid rgba(255,255,255,.08)}
+body.pc .pzSkB small{font-size:11px;color:#A9A7AE}body.pc .pzSkB b{font-size:21px}body.pc .pzSkB b.art,body.pc .pzSkB em.art{color:#7FE0A6}body.pc .pzSkB b.az,body.pc .pzSkB em.az{color:#FF8A92}
+body.pc .pzSkB em{font-style:normal;font-weight:700;font-size:13px}body.pc .pzSkB span{font-size:11px;color:#8E8C93}body.pc .pzEgri{margin-top:4px;max-width:100%}
+@media (max-width:1300px){body.pc .pzSkUst{grid-template-columns:1fr}}
+body.pc .pzSkUst.iki{grid-template-columns:repeat(2,minmax(0,1fr))}
+body.pc .pzGecis{display:flex;flex-direction:column;gap:5px;padding:12px 14px;margin:8px 0 14px;border-radius:12px;border:1px solid rgba(232,182,97,.4);background:rgba(232,182,97,.05);font-size:12.5px;color:#D9D7DC}
+body.pc .pzGecis.hazir{border-color:#5BD08B;background:rgba(91,208,139,.08)}body.pc .pzGecis > b{font-size:14px;color:#fff;margin-bottom:4px}
+body.pc .pzGecis > div{display:flex;align-items:center;gap:10px}body.pc .pzGecis i{font-style:normal;width:18px;text-align:center;color:#8E8C93}body.pc .pzGecis div.ok i{color:#7FE0A6}
+body.pc .pzGecis span{flex:1}body.pc .pzGecis em{font-style:normal;color:#A9A7AE;font-size:12px}body.pc .pzGecis small{color:#8E8C93;font-size:11.5px;margin-top:4px}
 </style>
 </head>
 <body>
@@ -3873,7 +3888,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.4.1";
+const SURUM_MORDOR = "v 1.5.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -23302,7 +23317,7 @@ const pzYzAd = kay => kay === "claude" ? "Claude" : "ChatGPT";
 const pzGun = (d = new Date()) => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`; };
 const pzLS = { oku(k, v){ try{ const x = localStorage.getItem(k); return x ? JSON.parse(x) : v; }catch(e){ return v; } }, yaz(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} } };
 const pzVirgul = (v, d = 1) => (+v).toFixed(d).replace(".", ",");
-const pzTumListe = () => [].concat(PZ.liste.bist || [], PZ.liste.nasdaq || [], PZ.liste.nasGenis || [], PZ.liste.kripto || [], PZ.liste.maden || [], PZ.liste.doviz || []);
+const pzTumListe = () => [].concat(PZ.liste.bist || [], PZ.liste.nasdaq || [], PZ.liste.nasGenis || [], PZ.liste.kripto || [], PZ.liste.maden || [], PZ.liste.doviz || [], PZ.liste.ek || []);
 const pzBul = k => pzTumListe().find(x => x.k === k) || null;
 
 /* ---------- 1) Claude / ChatGPT: hizli mod, ayni anda, sure siniri ---------- */
@@ -24500,8 +24515,8 @@ const PZ_KOVA = {
   ih:o => o.ih == null ? null : o.ih < .3 ? "ihtimal <%30" : o.ih < .45 ? "ihtimal %30-45" : "ihtimal %45+" };
 
 /* ---------- sanal defter ---------- */
-const pzSanal = () => pzLS.oku("pzSanal", { acik:[], kapali:[] });
-const pzSanalYaz = S => { S.kapali = S.kapali.slice(-3000); pzLS.yaz("pzSanal", S); };
+let pzSanal = () => pzLS.oku("pzSanal", { acik:[], kapali:[] });
+let pzSanalYaz = S => { S.kapali = S.kapali.slice(-3000); pzLS.yaz("pzSanal", S); };
 function pzSanalEkle(V){ if(!V) return; const S = pzSanal(), simdi = Date.now(), ayni = new Set(S.acik.map(o => o.k + "|" + o.alt)); let n = 0;
   for(const a of ["g1", "g3", "h1", "a1"]) for(const t of ["kripto", "bist"]) (V[a]?.[t] || []).filter(x => x.stop && x.hedef > x.f).slice(0, 3).forEach(x => {
     if(ayni.has(x.k + "|" + a)) return; const Z = pzZamanPlan({ ...x, alt:a });
@@ -24661,7 +24676,7 @@ function pzAlgoIsci(){ return new Worker(URL.createObjectURL(new Blob([PZ_ALGO_I
 /* ---- veri: Binance'te en cok islem goren coinler (buyukler dahil), 1h ve 4h ---- */
 async function pzAlgoVeri(tf, ilerle){ const BN = await pzBinanceTum(); const L = BN.slice().sort((a, b) => b.hacim - a.hacim).filter(x => !/^(USDC|FDUSD|TUSD|USDP|EUR|TRY|BUSD|DAI|PAXG|WBTC)$/.test(x.kod)).slice(0, 50);
   let i = 0; const V = (await pzHavuz(L, 4, async x => { const R = await pzKlines(x.bn, PZ_ALGO_TF[tf].iv, 1000); ilerle?.(++i/L.length); return R.c.length > 300 ? { ...R, kod:x.kod } : null; })).filter(Boolean); return V; }
-const pzAlgo = () => pzLS.oku("pzAlgo", { surum:0, gecmis:[] });
+let pzAlgo = () => pzLS.oku("pzAlgo", { surum:0, gecmis:[] });
 let PZ_ALGO_IS = null;
 async function pzAlgoEgit(goster){
   if(PZ_ALGO_IS) return; PZ_ALGO_IS = { asama:"veri", oran:0 }; const A = pzAlgo(), yeni = { surum:(A.surum || 0) + 1, t:Date.now(), gun:A.gun || pzGun(pzIst()), gecmis:A.gecmis || [] }, masraf = pzMasraf("KRIPTO:X", 1000).oran*100;
@@ -24806,6 +24821,116 @@ pzAlgoTara = async function(){ const A = pzAlgo(); if(!A.g1?.P && !A.g3?.P) retu
     h = h.replace('<div class="pzMini">Canlı sanal deneme · 10 dakikada bir tarama', tablo("g1") + tablo("g3") + `<div class="pzNot">Bir ayar canlı sanalda en az 30 işlemde masraf sonrası işlem başı +%0,10'un üstüne çıkarsa, ileri test kapalı dese bile o ayar “canlı kanıtla” açılır ve önerilere girer. Canlıda bozulursa kendiliğinden kapanır.</div><div class="pzMini">Canlı sanal deneme · 10 dakikada bir tarama`);
     if(son?.taranan) h = h.replace(` (+${son.yeni} yeni)`, ` (${son.taranan} coin tarandı · +${son.yeni} yeni)`);
     return h; }; }
+
+/* ================= PIYASALAR v9 · 7/24 BULUT BOTU + "5.000 ₺ kac ₺ oldu?" =================
+   - Bot GitHub Actions'ta 15 dakikada bir calisir (bilgisayar kapali olsa da): egitir (6 saatte bir), tarar, sanal islem acar/sonuclandirir,
+     sonuclari Supabase'e (piyasa_bot, piyasa_sanal) yazar. Uygulama buradan okur; bot calisiyorsa bilgisayardaki tarama/egitim kendini durdurur.
+   - Sanal katlama: sonuclanan sanal islemler katlama kurallariyla (5.000 ₺, ayni anda en fazla 2 islem, islem basi %5 risk, masraflar dahil)
+     zaman sirasiyla yeniden oynatilir: "5.000 ₺ ile baslasaydik su an X ₺". Her ayar icin ayri, onerilen ayar icin ayri. */
+
+PZ.bot = null; let PZ_BOT_IS = null;
+const pzBotAktif = () => !!(PZ.bot?.row?.son_tarama && Date.now() - new Date(PZ.bot.row.son_tarama).getTime() < 45*60000);
+const pzMs = v => v ? new Date(v).getTime() : null;
+async function pzBotYukle(zorla){
+  if(PZ_BOT_IS || PZ.dbYok || !ME?.id) return PZ.bot; if(!zorla && PZ.bot && Date.now() - PZ.bot.t < 4*60000) return PZ.bot; PZ_BOT_IS = true;
+  try{ const r = await sb.from("piyasa_bot").select("*").eq("user_id", ME.id).maybeSingle(); if(r.error) throw r.error;
+    if(!r.data){ PZ.bot = { row:null, acik:[], kapali:[], t:Date.now() }; return PZ.bot; }
+    const esle = x => ({ id:x.id, k:x.k, alt:x.alt, ai:x.ai ?? 0, algo:x.algo, giris:+x.giris, hedef:+x.hedef, stop:+x.stop, t:pzMs(x.t), son:pzMs(x.son), oz:x.oz, cikis:x.cikis != null ? +x.cikis : null, neden:x.neden, ct:pzMs(x.ct), net:x.net != null ? +x.net : null, bn:x.oz?.bn, kaynak:x.kaynak });
+    const [a, k] = await Promise.all([ sb.from("piyasa_sanal").select("*").eq("user_id", ME.id).eq("durum", "acik").order("t", { ascending:true }).limit(5000),
+      sb.from("piyasa_sanal").select("*").eq("user_id", ME.id).eq("durum", "kapali").order("ct", { ascending:false }).limit(8000) ]);
+    PZ.bot = { row:r.data, acik:(a.data || []).map(esle), kapali:(k.data || []).map(esle).reverse(), t:Date.now() }; }
+  catch(e){ const m = String(e?.message || e); PZ.bot = { row:null, acik:[], kapali:[], t:Date.now(), hata: /exist|schema cache|piyasa_bot|404/i.test(m) ? "Supabase'de piyasa-bot.sql henüz çalıştırılmamış" : m }; }
+  finally { PZ_BOT_IS = null; } return PZ.bot; }
+// bot calisiyorsa: sanal defter = bulut, algoritma = botunki (daha yeniyse), bilgisayardaki tarama sanal yazmaz
+{ const eskiS = pzSanal, eskiY = pzSanalYaz, eskiA = pzAlgo;
+  pzSanal = function(){ if(pzBotAktif()) return { acik:PZ.bot.acik, kapali:PZ.bot.kapali, bulut:true }; return eskiS(); };
+  pzSanalYaz = function(S){ if(S?.bulut || pzBotAktif()) return; return eskiY(S); };
+  pzAlgo = function(){ const L = eskiA(), B = PZ.bot?.row?.algo; if(B?.surum && (pzBotAktif() || !L.surum || (B.t || 0) > (L.t || 0))) return { ...B, gun:L.gun, bulut:true }; return L; }; }
+{ const eski = pzAlgoEgit; pzAlgoEgit = async function(goster){ if(pzBotAktif()){ if(goster) toast("Eğitimi bulut botu yapıyor (6 saatte bir). Hemen eğitmek için: GitHub > Actions > piyasa-bot > Run workflow"); return; } return eski.apply(this, arguments); }; }
+{ const eski = pzSanalKontrol; pzSanalKontrol = async function(){ if(pzBotAktif()) return 0; return eski.apply(this, arguments); }; }
+
+/* ---------- sanal katlama: 5.000 ₺ ile baslasaydik ---------- */
+function pzKatlaTekrar(L, o = {}){ const bas = o.bas || 5000, risk = o.risk || 5, maks = o.maks || 2, masraf = o.masraf ?? pzMasraf("KRIPTO:X", 1000).oran*100;
+  const T = L.filter(x => x.ct && x.net != null && x.giris && x.stop).slice().sort((a, b) => a.t - b.t);
+  let bakiye = bas, tepe = bas, maxDus = 0, alinan = 0, kazan = 0; const acik = [], egri = [{ t:T[0]?.t || Date.now(), b:bas }];
+  const kapat = sinir => { acik.sort((a, b) => a.ct - b.ct); while(acik.length && acik[0].ct <= sinir){ const p = acik.shift(); bakiye += p.para*p.net/100; if(p.net > 0) kazan++; egri.push({ t:p.ct, b:bakiye }); tepe = Math.max(tepe, bakiye); maxDus = Math.max(maxDus, 1 - bakiye/tepe); } };
+  for(const x of T){ kapat(x.t); if(acik.length >= maks || bakiye <= 50 || acik.some(p => p.k === x.k)) continue;
+    const kay = Math.max(.005, 1 - x.stop/x.giris) + masraf/100, kullan = acik.reduce((t, p) => t + p.para, 0), para = Math.min(bakiye - kullan, bakiye/maks, bakiye*risk/100/kay);
+    if(para < 10) continue; acik.push({ ...x, para }); alinan++; }
+  kapat(Infinity); return { bas, son:bakiye, kz:(bakiye/bas - 1)*100, n:alinan, kazan, maxDus:maxDus*100, egri, ilk:T[0]?.t, sonT:T[T.length - 1]?.ct }; }
+function pzEgriSvg(egri, gen = 220, yuk = 46){ if(!egri || egri.length < 2) return ""; const t0 = egri[0].t, t1 = egri[egri.length - 1].t || t0 + 1, b = egri.map(e => e.b), lo = Math.min(...b, 5000)*.98, hi = Math.max(...b, 5000)*1.02;
+  const x = t => ((t - t0)/((t1 - t0) || 1))*gen, y = v => yuk - (v - lo)/((hi - lo) || 1)*yuk, son = b[b.length - 1];
+  return `<svg class="pzEgri" viewBox="0 0 ${gen} ${yuk}" width="${gen}" height="${yuk}"><line x1="0" x2="${gen}" y1="${y(5000).toFixed(1)}" y2="${y(5000).toFixed(1)}" stroke="rgba(255,255,255,.18)" stroke-dasharray="3 3"/>
+    <polyline fill="none" stroke="${son >= 5000 ? "#5BD08B" : "#FF4A55"}" stroke-width="1.8" points="${egri.map(e => `${x(e.t).toFixed(1)},${y(e.b).toFixed(1)}`).join(" ")}"/></svg>`; }
+function pzSanalKatlaHtml(){
+  const A = pzAlgo(), S = pzSanal(), K = pzKatla(), oz = { bas:5000, risk:K.risk || 5, maks:K.maks || 2 }, satirlar = [];
+  const kap = S.kapali.filter(x => x.algo != null);
+  // onerilen: her sure icin o an onerilen ayar (canli kanitli ya da ileri testte acik olan 0. ayar)
+  const oner = kap.filter(x => { const k = pzCanliKanit(A, x.alt); return x.algo === A.surum && (k ? (x.ai ?? 0) === k.i : A[x.alt]?.aktif && (x.ai ?? 0) === 0); });
+  const tum = pzKatlaTekrar(kap, oz);
+  for(const tf of ["g1", "g3"]) for(let i = 0; i < 5; i++){ const L = kap.filter(x => x.alt === tf && (x.ai ?? 0) === i && x.algo === A.surum); if(L.length < 3) continue; satirlar.push({ ad:`${PZ_ALGO_TF[tf].ad} · ayar ${i + 1}`, R:pzKatlaTekrar(L, oz), n:L.length }); }
+  satirlar.sort((a, b) => b.R.son - a.R.son); const en = satirlar[0], O = oner.length ? pzKatlaTekrar(oner, oz) : null;
+  const buyuk = (bas, R, alt) => `<div class="pzSkB"><small>${bas}</small><b class="${R.son >= 5000 ? "art" : "az"}">5.000 ₺ → ${Math.round(R.son).toLocaleString("tr-TR")} ₺</b><em class="${R.son >= 5000 ? "art" : "az"}">${pzYuzde(R.kz, 1)}</em><span>${alt}</span>${pzEgriSvg(R.egri)}</div>`;
+  const ac = R => `${R.n} işlem · ${R.kazan} kazanç · en derin düşüş %${R.maxDus.toFixed(0)}`;
+  if(!kap.length) return `<div class="pzSk"><div class="pzMini">💰 Sanal katlama · 5.000 ₺ ile başlasaydık</div><div class="pzNot">Sonuçlanan sanal işlem birikince burada 5.000 ₺'nin ne olduğunu göreceksin (24 saatlikler ilk gün, 2-3 günlükler 3 gün içinde sonuçlanır).</div></div>`;
+  return `<div class="pzSk"><div class="pzMini">💰 Sanal katlama · 5.000 ₺ ile başlasaydık (aynı anda en fazla ${oz.maks} işlem · işlem başı %${oz.risk} risk · masraflar dahil · zaman sırasıyla)</div>
+    <div class="pzSkUst">${O ? buyuk("Programın önerdiği ayarlarla", O, ac(O)) : `<div class="pzSkB"><small>Programın önerdiği ayarlarla</small><b class="soluk">henüz öneri yok</b><span>Şu an iki süre de kapalı: program “bekle” diyor, 5.000 ₺ cepte duruyor.</span></div>`}
+      ${en ? buyuk(`En iyi ayar: ${esc(en.ad)}`, en.R, ac(en.R) + " · geriye dönüp bakınca en iyisi, önceden bilinemezdi") : ""}
+      ${buyuk("Her sinyale girseydik (tüm ayarlar karışık)", tum, ac(tum))}</div>
+    ${satirlar.length ? `<details class="pzGecmisA"><summary>Ayar ayar sonuçlar (${satirlar.length})</summary><table class="pzT"><thead><tr><th>Ayar</th><th class="sag">5.000 ₺ →</th><th class="sag">Getiri</th><th class="sag">İşlem</th><th class="sag">En derin düşüş</th><th></th></tr></thead><tbody>
+      ${satirlar.map(s => `<tr><td>${esc(s.ad)}</td><td class="sag mono ${s.R.son >= 5000 ? "art" : "az"}">${Math.round(s.R.son).toLocaleString("tr-TR")} ₺</td><td class="sag ${pzYon(s.R.kz)}">${pzYuzde(s.R.kz, 1)}</td><td class="sag">${s.R.n}/${s.n}</td><td class="sag">%${s.R.maxDus.toFixed(0)}</td><td>${pzEgriSvg(s.R.egri, 120, 26)}</td></tr>`).join("")}</tbody></table></details>` : ""}
+    <div class="pzNot">${tum.ilk ? `${new Date(tum.ilk).toLocaleString("tr-TR", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })} – ${new Date(tum.sonT).toLocaleString("tr-TR", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })} arası sonuçlanan sanal işlemler. ` : ""}Gerçek hayatta emirler birkaç dakika gecikmeli ve biraz farklı fiyattan gerçekleşir; bu yüzden gerçek sonuç biraz daha kötü olur.</div></div>`;
+}
+
+/* ---------- algoritma ekrani: bot durumu + sanal katlama ---------- */
+{ const eski = pzAlgoHtml;
+  pzAlgoHtml = function(){ let h = eski(); const B = PZ.bot, r = B?.row, akt = pzBotAktif(), d = r?.durum || {};
+    const dk = v => { const m = Math.round((Date.now() - pzMs(v))/60000); return m < 60 ? `${m} dk önce` : `${Math.round(m/60)} saat önce`; };
+    const durum = akt ? `<div class="pzBot ok"><b>☁️ Bulut botu çalışıyor</b> · bilgisayar kapalı olsa da 15 dakikada bir · son tarama ${dk(r.son_tarama)} (${d.taranan || 0} coin, +${d.yeni || 0} yeni, ${d.bitti || 0} sonuçlandı, ${d.sure || 0} sn) · son eğitim ${r.son_egitim ? dk(r.son_egitim) : "—"} · 6 saatte bir yeniden eğitir</div>`
+      : `<div class="pzBot ${r ? "kapali" : ""}"><b>☁️ Bulut botu ${r ? "son " + dk(r.son_tarama) + " çalıştı · şu an çalışmıyor" : "kurulmadı"}</b> · şimdilik tarama bu bilgisayardan yapılıyor (sadece program açıkken). Kurulum: paketteki OKU-BENI-BOT.txt · GitHub'a gireceğin kimlik: <code>${esc(ME?.id || "")}</code> <button class="pcLink" onclick="navigator.clipboard.writeText('${esc(ME?.id || "")}');toast('Kopyalandı')">kopyala</button>${B?.hata ? ` · <span class="az">${esc(B.hata.slice(0, 120))}</span>` : ""}</div>`;
+    h = h.replace('<div class="pzKarne"><b>Nasıl çalışıyor?</b>', durum + pzSanalKatlaHtml() + '<div class="pzKarne"><b>Nasıl çalışıyor?</b>');
+    if(akt) h = h.replace(/<button class="btn"[^>]*onclick="pzAlgoEgit\(true\)">[^<]*<\/button>/, `<span class="soluk">Eğitimi bulut botu yapıyor</span>`).replace("her gece 03:00-06:00 arası kendini yeniden eğitir (program açıksa)", "bulut botu 6 saatte bir yeniden eğitir");
+    return h; }; }
+// katlama planinin ustunde de sanal katlama sonucu
+{ const eski = pzKatlaHtml; pzKatlaHtml = function(V){ const h = eski(V); return h.replace('<div class="pzMini">🧪 Sanal deneme', pzSanalKatlaHtml() + '<div class="pzMini">🧪 Sanal deneme'); }; }
+// piyasa ekranlarinda bot verisini 5 dakikada bir tazele
+{ const eski = pzEkran; pzEkran = async function(){ pzBotYukle().then(() => { if(PZ.sekme === "ekstrem" && ["algo", "katla"].includes(PZ.eksAlt)) pzTablo(); }).catch(() => {}); return eski.apply(this, arguments); }; ekranlar.piyasa = pzEkran; }
+setTimeout(() => setInterval(() => { try{ if(ME?.id && /^piyasa/.test(app?.dataset?.ekran || "")) pzBotYukle(true).then(() => { if(PZ.sekme === "ekstrem" && ["algo", "katla"].includes(PZ.eksAlt) && !document.querySelector(".pzKatla input:focus")) pzTablo(); }); }catch(e){} }, 5*60000), 0);
+
+/* ---------- BOT KASASI (bulutta 7/24) + GERCEGE GECIS KONTROL LISTESI ---------- */
+function pzKasaKart(ad, alt, K){ if(!K) return "";
+  const kz = (K.bakiye/K.bas - 1)*100, turlar = K.turlar || [], toplamYuk = (turlar.length + 1)*5000, toplamSon = turlar.reduce((t, x) => t + x.son, 0) + K.bakiye;
+  return `<div class="pzSkB"><small>${ad}</small><b class="${K.bakiye >= K.bas ? "art" : "az"}">Tur ${K.tur}: 5.000 ₺ → ${Math.round(K.bakiye).toLocaleString("tr-TR")} ₺</b><em class="${pzYon(kz)}">${pzYuzde(kz, 1)}</em>
+    <span>${alt} · ${K.islem} işlem${K.islem ? ` · ${K.kazan} kazanç (%${Math.round(K.kazan/K.islem*100)})` : ""} · açık ${K.acik?.length || 0} · en derin düşüş %${Math.round((K.maxDus || 0)*100)}</span>
+    ${turlar.length ? `<span>Önceki turlar: ${turlar.map(t => `Tur ${t.tur} ${Math.round(t.son).toLocaleString("tr-TR")} ₺ (${t.neden})`).join(" · ")} · toplam yüklenen ${toplamYuk.toLocaleString("tr-TR")} ₺ → şu an ${Math.round(toplamSon).toLocaleString("tr-TR")} ₺</span>` : ""}
+    ${pzEgriSvg((K.egri || []).filter(e => !e.yeniTur || true).slice(-600))}</div>`; }
+function pzGecisKontrol(){
+  const r = PZ.bot?.row, K = r?.kasa?.disiplin, A = pzAlgo(), S = pzSanal(), kap = S.kapali.filter(x => x.ct && x.net != null);
+  const oner = kap.filter(x => { const k = r?.kasa?.kanit?.[x.alt]; return k ? (x.ai ?? 0) === k.i && x.algo === A.surum : (x.ai ?? 0) === 0; });
+  const gun = kap.length ? (Date.now() - Math.min(...kap.map(x => x.t)))/86400000 : 0, ort = oner.length ? oner.reduce((t, x) => t + x.net, 0)/oner.length : null;
+  const son7 = oner.filter(x => Date.now() - x.ct < 7*86400000), ort7 = son7.length ? son7.reduce((t, x) => t + x.net, 0)/son7.length : null;
+  const L = [
+    [oner.length >= 200, `En az 200 sonuçlanmış işlem (önerilen ayarla)`, `${oner.length}/200`],
+    [gun >= 14, "En az 14 günlük veri (farklı piyasa günleri)", `${Math.floor(gun)}/14 gün`],
+    [ort != null && ort >= .2, "Masraf sonrası işlem başı ortalama +%0,20 üstü", ort != null ? pzYuzde(ort, 2) : "—"],
+    [!!K && K.bakiye > K.bas && !(K.turlar || []).length, "Disiplinli kasa artıda ve hiç batmadı", K ? `${Math.round(K.bakiye).toLocaleString("tr-TR")} ₺ · tur ${K.tur}` : "—"],
+    [!!K && (K.maxDus || 0) < .25, "Kasada en derin düşüş %25'in altında", K ? `%${Math.round((K.maxDus || 0)*100)}` : "—"],
+    [ort7 != null && ort7 > 0 && son7.length >= 20, "Son 7 gün de artıda (en az 20 işlem)", ort7 != null ? `${pzYuzde(ort7, 2)} · ${son7.length} işlem` : "—"] ];
+  const tamam = L.every(x => x[0]);
+  return `<div class="pzGecis ${tamam ? "hazir" : ""}"><b>${tamam ? "✅ Sistem gerçek paraya hazır: Binance bağlantısını açabiliriz" : "🚦 Gerçek paraya geçiş kontrol listesi"}</b>
+    ${L.map(([ok, ad, d]) => `<div class="${ok ? "ok" : ""}"><i>${ok ? "✓" : "○"}</i><span>${ad}</span><em>${d}</em></div>`).join("")}
+    ${tamam ? "" : `<small>Hepsi ✓ olana kadar bot sanal devam eder. Bu liste benim de kriterim; hepsi tamamlanmadan gerçek paraya geç demeyeceğim.</small>`}</div>`; }
+{ const eski = pzSanalKatlaHtml;
+  pzSanalKatlaHtml = function(){ const K = PZ.bot?.row?.kasa; if(!pzBotAktif() || !K) return eski();
+    return `<div class="pzSk"><div class="pzMini">💰 Bot kasası · 7/24 bulutta · 5.000 ₺, aynı anda en fazla 2 işlem, işlem başı %5 risk, masraflar dahil · batarsa yeni tur 5.000 ₺</div>
+      <div class="pzSkUst iki">${pzKasaKart("Disiplinli kasa", "sadece programın önerdiği ayarla · program “bekle” diyorsa nakitte bekler", K.disiplin)}${pzKasaKart("Her fırsata giren kasa", "her sürenin en iyi ayarıyla her sinyale girer · karşılaştırma için", K.her)}</div>
+      ${pzGecisKontrol()}</div>` + eski().replace("💰 Sanal katlama · 5.000 ₺ ile başlasaydık", "📊 Geriye dönük hesap · sonuçlanan tüm sanal işlemler 5.000 ₺ ile oynatılsaydı"); }; }
+
+// sol menu: listeler sonradan yuklenince (BIST 30, kripto, takip fiyatlari) kendini yenilesin
+["pzBist", "pzKripto", "pzNasdaq", "pzMadenDoviz", "pzKisiselYukle"].forEach(ad => { const eski = window[ad]; if(typeof eski !== "function") return;
+  window[ad] = async function(){ const r = await eski.apply(this, arguments); clearTimeout(window.__pzGezT); window.__pzGezT = setTimeout(() => { try{ if(document.getElementById("pzGez") && document.body.classList.contains("pzMod")) pzGezginCiz(); }catch(e){} }, 200); return r; }; });
+// takip listesindeki varliklarin fiyati sol menude "–" kalmasin: piyasa acilinca takip fiyatlarini da cek
+{ const eski = pzEkran; pzEkran = async function(){ const r = await eski.apply(this, arguments); try{ const S = PZ.takip.map(t => t.sembol).filter(k => !pzBul(k)); if(S.length){ const F = await pzFiyatlar(S); PZ.liste.ek = Object.values(F || {}); pzGezginCiz(); } }catch(e){} return r; }; ekranlar.piyasa = pzEkran; }
 
 baslat();
 
