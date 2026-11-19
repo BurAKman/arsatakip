@@ -3888,7 +3888,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.11.0";
+const SURUM_MORDOR = "v 1.11.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -25144,7 +25144,7 @@ const emsalRedler = E => (E?.ilanlar || []).filter(x => x.haric && x.otoRed);
 
 // kendi portfoyunle akil kontrolu: ayni il+ilce'deki diger parsellerin m2 fiyati ve emsal medyani
 async function emsalPortfoyRef(p){
-  try{ const { data:L } = await sb.from("parcels").select("id,ilce,il,nitelik,analiz").eq("il", p.il).eq("ilce", p.ilce).neq("id", p.id);
+  try{ let L = null; try{ ({ data:L } = await sb.from("parcels").select("id,nitelik,gecmis:analiz->emsal->gecmis").eq("il", p.il).eq("ilce", p.ilce).neq("id", p.id)); L = (L || []).map(x => ({ ...x, analiz:{ emsal:{ gecmis:x.gecmis } } })); }catch(e){} if(!L) ({ data:L } = await sb.from("parcels").select("id,ilce,il,nitelik,analiz").eq("il", p.il).eq("ilce", p.ilce).neq("id", p.id));
     const ayniTur = (L || []).filter(x => /arsa/i.test(x.nitelik || "") === /arsa/i.test(p.nitelik || "")); if(!ayniTur.length) return null;
     const { data:Y } = await sb.from("parcel_years").select("parcel_id,m2_fiyat").in("parcel_id", ayniTur.map(x => x.id)).eq("yil", YEAR);
     const v = []; ayniTur.forEach(x => { const f = +(Y || []).find(y => y.parcel_id === x.id)?.m2_fiyat; const g = (x.analiz?.emsal?.gecmis || []).slice(-1)[0]?.medyan;
@@ -25524,7 +25524,14 @@ function em4IlanKoy(p, x){ const K = EM4_KOY[p.id] || [], bizK = em4Nrm(p.mahall
     return H; }; }
 
 // on yukleme: kart ve rapor oncesi koyler hazir olsun
-{ const eski = emsalKartiHtml; emsalKartiHtml = async function(id, p, a){ await em4KoyYukle(p).catch(() => {}); return eski(id, p, a); }; }
+{ const eski = emsalKartiHtml; emsalKartiHtml = async function(id, p, a){
+    // koy listesi kayitliysa hemen kullan; degilse karti BEKLETME: arka planda cek, gelince karti yenile
+    if(!EM4_KOY[p.id] && a?.emsal?.ilanlar?.length){ const C = p.analiz?.koyler;
+      if(C?.L?.length && Date.now() - (C.t || 0) < 90*86400000) await em4KoyYukle(p).catch(() => {});
+      else if(!EM4_YUK[p.id]){ EM4_YUK[p.id] = 1; em4KoyYukle(p).then(async L => { if(!L?.length) return; const k = document.getElementById("ekEmsal"); if(!k || app.dataset.pid !== String(id)) return;
+          const { data:p2 } = await sb.from("parcels").select("*").eq("id", id).single(); const h = await emsalKartiHtml(id, p2, p2.analiz || {}); const k2 = document.getElementById("ekEmsal"); if(h && k2) k2.outerHTML = h; }).catch(() => {}); } }
+    return eski(id, p, a); }; }
+const EM4_YUK = {};
 
 // duzeltme tablosu: secilen/yedek ayrimi ve koy adi
 { const eski = dgPanelHtml; dgPanelHtml = function(id, p, A, E){ let h = eski(id, p, A, E); const il = A?.deger?.Y?.find(y => y.k === "ilan"); if(!il) return h;
@@ -25613,6 +25620,11 @@ ${emsalKuralMetni(p)}
 Sonuçları programım okuyacak. DOSYA OLUŞTURMA. Aşağıdaki JSON'u cevabın EN SONUNA tek bir \`\`\`json kod bloğunda, TEK SATIR yaz; önceki satıra sadece ARSATAKIP-JSON yaz. En fazla 15 emsal, 10 mesafe. Sayıları düz yaz.
 ARSATAKIP-JSON
 {"emsaller":[{"baslik":"","m2":0,"fiyat_tl":0,"konum":"","tarih":"","url":"","site":"","il":"","ilce":"","mahalle":"","nitelik":"","imar":""}],"mesafeler":[{"hedef":"","enlem":0,"boylam":0,"km":0,"kaynak":""}],"bant":[0,0]}`; }
+// ChatGPT icin kisa is: sadece ilan listesi (mesafe/degerlendirme yok) -> uzun dusunup zaman asimina dusmesin
+function em5IstemKisa(p){ return `HIZLI GÖREV (uzun düşünme, değerlendirme yazma): ${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)} köyü ve komşu köylerde GÜNCEL satılık tarla ilanlarını web'de bul. Küçük (500–3.000 m²) ve büyük (3.000 m² üstü) ilanların ikisini de getir. Başlıkta ilandaki konum ifadesini (köy içi, köye yakın, yola cepheli vb.) koru.
+${emsalKuralMetni(p)}
+Sadece şu JSON'u tek satır olarak bir \`\`\`json kod bloğunda yaz, başka hiçbir şey yazma. En fazla 12 ilan. Sayıları düz yaz.
+{"emsaller":[{"baslik":"","m2":0,"fiyat_tl":0,"konum":"","tarih":"","url":"","site":"","il":"","ilce":"","mahalle":"","nitelik":"","imar":""}],"mesafeler":[],"bant":[0,0]}`; }
 function em5Bar(){ let e = document.getElementById("em5Bar"); const I = EM5.is; if(!I){ e?.remove(); return; }
   if(!e){ e = document.createElement("div"); e.id = "em5Bar"; document.body.appendChild(e); }
   const sure = s => { const d = Math.floor((Date.now() - I.t)/1000); return `${Math.floor(d/60)}:${String(d%60).padStart(2, "0")}`; };
@@ -25622,11 +25634,11 @@ let EM5_KUYRUK = Promise.resolve();
 async function em5Calistir(id){
   if(EM5.is && !EM5.is.bitti) return toast("Emsal araştırması zaten çalışıyor");
   const { data:p } = await sb.from("parcels").select("*").eq("id", id).single(); const h = ekHalkaP(p); if(!h) return toast("Parselin sınır çizimi yok");
-  const istem = em5Istem(p, h), M = { tur:"emsalArastir", id, merkez:ekMerkez(h) };
+  const istem = em5Istem(p, h), istemK = em5IstemKisa(p), M = { tur:"emsalArastir", id, merkez:ekMerkez(h) };
   EM5.is = { id, ad:`${duzgun(p.mahalle)} ${p.ada || 0}/${p.parsel}`, t:Date.now(), d:{ claude:{}, gpt:{} } }; em5Bar();
   const tik = setInterval(async () => { if(!EM5.is || EM5.is.bitti) return clearInterval(tik);
     for(const s of ["claude", "gpt"]){ const d = EM5.is.d[s]; if(d.durum) continue; try{ const r = await window.arsaPC.yzOtoDurum(s); if(r){ d.asama = r.asama; d.uzunluk = r.uzunluk; } }catch(e){} } em5Bar(); }, 2000);
-  const bir = async s => { try{ const r = await window.arsaPC.yzOto(s, istem, "emsaller", false, 12); if(r?.hata) throw new Error(r.mesaj || r.hata);
+  const bir = async s => { try{ const r = await window.arsaPC.yzOto(s, s === "gpt" ? istemK : istem, "emsaller", false, s === "gpt" ? 10 : 12); if(r?.hata) throw new Error(r.mesaj || r.hata);
       const t = r.t || "", J = emsalJsonBul(t); if(!J) throw new Error("cevapta emsal listesi yok");
       const once = (await analizOku(id).catch(() => ({}))).emsal?.ilanlar?.length || 0;
       await (EM5_KUYRUK = EM5_KUYRUK.then(() => { window.__em5Sessiz = true; return emsalArastirCevabi(t, { ...M }); }).finally(() => { window.__em5Sessiz = false; window.__em5PdfYok = Date.now() + 5000; }));
