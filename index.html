@@ -3888,7 +3888,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.9.0";
+const SURUM_MORDOR = "v 1.10.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -25082,6 +25082,19 @@ pzGecisKontrol = function(){
     const acik = ["g1", "g3", "d1", "d3"].filter(tf => A?.[tf]?.aktif || K[tf]).map(pzStratAd);
     return h.replace("Şu an iki süre de kapalı: program “bekle” diyor, 5.000 ₺ cepte duruyor.", acik.length ? `Açık strateji: ${acik.join(", ")}. Sinyal gelince disiplinli kasa girer; ilk işlemler sonuçlanınca burada görünür.` : "Şu an hiçbir strateji açık değil: program “bekle” diyor, 5.000 ₺ cepte duruyor."); }; }
 
+// canli sonuc AYARIN KENDISINE gore (bot 1.9.1+): her egitimde surum degisse de ayni ayarin canli islemleri birikir
+const pzAyarKimlik = (tf, P) => tf + ":" + Object.keys(P || {}).sort().map(k => k + "=" + P[k]).join(",");
+{ const eski = pzAyarCanli; pzAyarCanli = function(A, tf, i){ const P = A?.[tf]?.ilk5?.[i]?.P; if(!P) return eski(A, tf, i);
+    const pk = pzAyarKimlik(tf, P), L = pzSanal().kapali.filter(x => x.oz?.pk === pk), n = L.length; if(!n && !pzSanal().kapali.some(x => x.oz?.pk)) return eski(A, tf, i);
+    return { n, ort: n ? L.reduce((t, x) => t + x.net, 0)/n : null, isabet: n ? L.filter(x => x.net > 0).length/n : null }; }; }
+{ const eski = pzAlgoHtml; pzAlgoHtml = function(){ let h = eski(); const A = pzAlgo(); if(!A?.surum) return h;
+    // strateji yarisi tablosundaki "canli sanal": en iyi ayarin (ayar 1) kendi canli sonucu
+    ["g1", "g3", "d1", "d3"].forEach(tf => { const c = A[tf]?.ilk5?.length ? pzAyarCanli(A, tf, 0) : null; if(!c) return;
+      const ad = pzStratAd(tf), i = h.indexOf(`<b>${ad}</b>`); if(i < 0) return; const j = h.indexOf("</tr>", i), satir = h.slice(i, j);
+      const yeni = satir.replace(/(<td class="sag">)(?:birikiyor|<span[^>]*>[^<]*<\/span> <small>\(\d+\)<\/small>)(<\/td><td>(?:<span class="soluk">|<span class="pzNeK))/, `$1${c.n ? `<span class="${c.ort > 0 ? "art" : "az"}">${pzYuzde(c.ort, 2)}</span> <small>(${c.n} · %${Math.round(c.isabet*100)})</small>` : "birikiyor"}$2`);
+      h = h.slice(0, i) + yeni + h.slice(j); });
+    return h.replace("CANLI SANAL</th>", "CANLI SANAL</th>").replace("<th class=\"sag\">Canlı sanal</th><th>Durum</th>", "<th class=\"sag\">Canlı sanal (bu ayar)</th><th>Durum</th>"); }; }
+
 /* ================= EMSAL v2 · ALAKASIZ / UYDURMA EMSALE KARSI KORUMA =================
    ChatGPT bazen baska ildeki, imarli arsa olan, cok kucuk/buyuk ya da hic var olmayan ilanlari emsal diye getiriyor.
    Burada her ilan hesaba girmeden once denetlenir; tutmayan hesaptan cikar ve nedeni yazilir (istersen "yine de kat" dersin).
@@ -25128,8 +25141,6 @@ const emsalRedler = E => (E?.ilanlar || []).filter(x => x.haric && x.otoRed);
 // analiz: 3'ten az gecerli ilan kalirsa bant verilmez
 { const eski = emsalAnaliz; emsalAnaliz = function(p, E, kendiFiyat){
     if((E?.ilanlar || []).filter(x => !x.haric && x.birim > 0).length < 3) return null; return eski(p, E, kendiFiyat); }; }
-// rapor (PDF) oncesi de denetle
-{ const eski = emsalPdf; emsalPdf = async function(id){ try{ const { data:p } = await sb.from("parcels").select("*").eq("id", id).single(); await emsalDenetleKaydet(id, p, p.analiz || {}); }catch(e){} return eski(id); }; }
 
 // kendi portfoyunle akil kontrolu: ayni il+ilce'deki diger parsellerin m2 fiyati ve emsal medyani
 async function emsalPortfoyRef(p){
@@ -25291,7 +25302,6 @@ function dgHesap(p, A, E){
     if(i >= 0){ D.adim.splice(i, 1, ...ek, [`Uzlaştırılmış değer · güven: ${H.sonuc.guven}`, tl(H.sonuc.v) + "/m²"]); }
     if(H.rayic) D.adim.push([`Emlak vergisi rayiç değeri (${H.rayic.yil || ""})`, tl(H.rayic.m2) + "/m² · " + H.rayicNot]);
     D.eks.push(`Değer güveni: ${H.sonuc.guven} (${H.sonuc.neden.join(", ")}).`); return D; }; }
-{ const eski = emsalPdf; emsalPdf = async function(id){ try{ const { data:p } = await sb.from("parcels").select("*").eq("id", id).single(); await dgOnYukle(p); }catch(e){} return eski(id); }; }
 
 // --- karttaki panel ---
 function dgPanelHtml(id, p, A, E){
@@ -25306,7 +25316,7 @@ function dgPanelHtml(id, p, A, E){
     ${H.rayic ? `<div class="kv dgSat"><span>Emlak vergisi rayiç değeri ${H.rayic.yil ? "(" + H.rayic.yil + ")" : ""}<small>${esc(H.rayicNot || "taban kontrolü")}</small></span><b class="mono">${nf(Math.round(H.rayic.m2))} ₺/m²</b><em>kontrol</em></div>` : ""}
     ${D.kira?.dekar ? "" : ""}${ilT}${saL}${tusl}</div>`; }
 
-{ const eski = emsalKartiHtml; emsalKartiHtml = async function(id, p, a){ await dgOnYukle(p); let h = await eski(id, p, a); if(!h) return h;
+{ const eski = emsalKartiHtml; emsalKartiHtml = async function(id, p, a){ let h = await eski(id, p, a); if(!h) return h;
     const E = a.emsal, A = emsalAnaliz(p, E, null); let pan;
     if(A) pan = dgPanelHtml(id, p, A, E); else { const H = dgHesap(p, null, E); pan = dgPanelHtml(id, p, { deger:H }, E); }
     if(!E?.ilanlar?.length){ // hic emsal yoksa da satis/kira/rayic girilebilsin
@@ -25497,7 +25507,7 @@ function em4IlanKoy(p, x){ const K = EM4_KOY[p.id] || [], bizK = em4Nrm(p.mahall
     const kade = [["aynı köy ya da 3 km içinde, benzer büyüklükte (⅓–3 kat)", r => (r.ayni || (r.km != null && r.km <= 3)) && r.oran >= 1/3 && r.oran <= 3],
                   ["8 km içinde, büyüklük ⅕–5 kat", r => (r.ayni || (r.km != null && r.km <= 8)) && r.oran >= .2 && r.oran <= 5],
                   ["ilçedeki bütün geçerli ilanlar", r => true]];
-    let sec = kade.length - 1; for(let i = 0; i < kade.length; i++){ if(il.liste.filter(kade[i][1]).length >= 3){ sec = i; break; } }
+    let sec = kade.length - 1; for(let i = 0; i < kade.length; i++){ const Lk = il.liste.filter(kade[i][1]); if(Lk.length >= 3 || (i === 0 && Lk.length >= 2 && Lk.every(r => r.ayni))){ sec = i; break; } }
     il.liste.forEach(r => { r.secili = kade[sec][1](r); if(!r.secili) r.w *= .03; });
     const S = il.liste.filter(r => r.secili), v = dgAgirlikliMedyan(il.liste);
     if(v){ il.v = v; il.alt = dgYuzdelikW(il.liste, .25); il.ust = dgYuzdelikW(il.liste, .75); il.dag = (il.ust - il.alt)/v;
@@ -25515,7 +25525,6 @@ function em4IlanKoy(p, x){ const K = EM4_KOY[p.id] || [], bizK = em4Nrm(p.mahall
 
 // on yukleme: kart ve rapor oncesi koyler hazir olsun
 { const eski = emsalKartiHtml; emsalKartiHtml = async function(id, p, a){ await em4KoyYukle(p).catch(() => {}); return eski(id, p, a); }; }
-{ const eski = emsalPdf; emsalPdf = async function(id){ try{ const { data:p } = await sb.from("parcels").select("*").eq("id", id).single(); await em4KoyYukle(p); }catch(e){} return eski(id); }; }
 
 // duzeltme tablosu: secilen/yedek ayrimi ve koy adi
 { const eski = dgPanelHtml; dgPanelHtml = function(id, p, A, E){ let h = eski(id, p, A, E); const il = A?.deger?.Y?.find(y => y.k === "ilan"); if(!il) return h;
@@ -25538,6 +25547,128 @@ async function em4Gozden(id, p, a){ const E = a?.emsal; if(!E?.ilanlar?.length) 
   E.ilanlar.forEach(x => { if(x.haric && x.otoRed?.length && x.otoRed.every(n => /^çok (büyük|küçük)/.test(n)) && emsalUygunluk(p, x).ok){ x.haric = false; delete x.otoRed; d++; } });
   if(d) await analizYaz(id, { emsal:E }).catch(() => {}); }
 { const eski = emsalKartiHtml; emsalKartiHtml = async function(id, p, a){ await em4Gozden(id, p, a); return eski(id, p, a); }; }
+
+/* ================= EMSAL v5 · SADE EKRAN + CLAUDE & CHATGPT BIRLIKTE + HISSE BAZLI EMSAL =================
+   - Emsal kartinda sadece: "Emsal araştır" ve "Değerleme raporu". Elle giris, varsayim, yer imi, panodan alma tuslari kalkti.
+   - "Emsal araştır" masaustunde Claude ve ChatGPT'yi AYNI ANDA arka planda calistirir (piyasalardaki gibi), altta durum cubugu.
+     Cevaplar gelince JSON kendiliginden okunur, ilanlar denetlenip hesaba katilir. "Sonucu al"a gerek yok.
+   - Hisseli satis: her hisse KENDI buyuklugundeki emsallerle fiyatlanir (816 m2'lik hisse 1.000 m2'lik koy ilanlariyla, buyuk parca buyuk tarlalarla).
+   - Ilan m2'si sahibinden baglantisinda yaziyorsa (..-840-m2-tarla-..) o esas alinir (yanlis girilmis m2 duzelir).
+   - Rayic / kira girdileri hesaba katilmaz (yanlis girilince sonucu bozuyordu). */
+
+// --- rayic / kira hesap disi ---
+{ const eski = dgHesap; dgHesap = function(p, A, E){ const D = p?.analiz?.deger;
+    const p2 = D && (D.rayic || D.kira) ? { ...p, analiz:{ ...p.analiz, deger:{ ...D, rayic:null, kira:null } } } : p; return eski(p2, A, E); }; }
+
+// --- ilan m2'sini baglantidan duzelt ---
+function em5M2Duzelt(E){ let d = 0; (E?.ilanlar || []).forEach(x => { const u = em3UrlCoz(x.url); if(u.m2 > 50 && x.m2 > 0 && Math.abs(u.m2/x.m2 - 1) > .05){ x.m2Eski = x.m2; x.m2 = u.m2; x.birim = Math.round(x.fiyat/x.m2); d++; if(x.haric && x.otoRed){ x.haric = false; delete x.otoRed; x.denetim = 0; } } }); return d; }
+{ const eski = emsalKartiHtml; emsalKartiHtml = async function(id, p, a){ if(em5M2Duzelt(a?.emsal)){ try{ await analizYaz(id, { emsal:a.emsal }); }catch(e){} } return eski(id, p, a); }; }
+
+// --- hisse bazli emsal ---
+{ const eski = emsalDegerleme; emsalDegerleme = function(p, A, E){ const D = eski(p, A, E); if(!D.hisse?.length) return D;
+    try{ const yuv = (v, s) => Math.round(v/s)*s;
+      D.hisse = D.hisse.map(h => { const H = dgHesap({ ...p, alan_m2:h.m2 }, A, E), il = H.Y.find(y => y.k === "ilan"); if(!il) return h;
+        const gen = Math.min(.2, Math.max(.07, (il.dag || .3)/2.5)), k = D.carpan*.95;   // yol/arazi carpani, hisseli tapu indirimi %5
+        const m2f = [il.v*(1 - gen)*k, il.v*(1 + gen)*k].map(v => yuv(v, 10));
+        return { ...h, m2f, fiyat:m2f.map(v => yuv(v*h.m2, 5000)), secim:il.not, kademe:il.kademe }; });
+      const hs = { toplamM2:D.hisse.reduce((t, h) => t + h.m2, 0), fiyat:[0, 1].map(i => D.hisse.reduce((t, h) => t + h.fiyat[i], 0)) };
+      hs.ilan = yuv(hs.fiyat[1], 50000); hs.m2Ort = hs.fiyat.map(v => Math.round(v/hs.toplamM2)); D.hs = hs;
+      const grup = []; D.hisse.forEach(h => { const g = grup.find(x => Math.abs(x.m2 - h.m2) < .01); if(g){ g.adet++; g.nolar.push(h.no); } else grup.push({ ...h, adet:1, nolar:[h.no] }); }); D.grup = grup;
+      const i = D.adim.findIndex(x => /Hisseli satış ortalaması/.test(x[0])); const ek = grup.map(g => [`Hisse ${g.nolar.join(", ")} (${nf2(g.m2)} m²): kendi büyüklüğündeki emsallerle`, `${nf(g.m2f[0])} – ${nf(g.m2f[1])} ₺/m²`]);
+      if(i >= 0) D.adim.splice(i, 1, ...ek, [`Hisseli satış ortalaması (${nf2(hs.toplamM2)} m²)`, `${nf(hs.m2Ort[0])} – ${nf(hs.m2Ort[1])} ₺/m²`]);
+      D.art = D.art.map(t => /^Hisse planı hazır/.test(t) ? t + " Her hisse kendi büyüklüğündeki köy emsalleriyle fiyatlandı." : t);
+    }catch(e){ console.log("hisse emsal", e); }
+    return D; }; }
+
+// --- sade kart: gereksiz tuslari kaldir ---
+{ const eski = emsalKartiHtml; emsalKartiHtml = async function(id, p, a){ let h = await eski(id, p, a); if(!h) return h;
+    h = h.replace(/<div class="dgTus">[\s\S]*?<\/div>/, "")
+         .replace(/<button class="btn ghost" onclick="emsalElleEkle\('[^']+'\)">＋ Emsal ilanı ekle<\/button>/g, "")
+         .replace(/<button class="btn ghost" onclick="emsalPanodan\('[^']+'\)"[^>]*>[\s\S]*?<\/button>/g, "")
+         .replace(/<button class="btn ghost" onclick="emsalTopla\('[^']+'\)">[\s\S]*?<\/button>/g, "")
+         .replace(/<details class="ekDiger">[\s\S]*?<\/details>/g, "")
+         .replace(/<button title="(Ada\/parsel ile konumla \(TKGM\)|Konum:[^"]*)" onclick="emsalKonumla\('[^']+','[^']+'\)">[^<]*<\/button>/g, "")
+         .replace(/<div class="kv dgSat"><span>Emlak vergisi rayiç değeri[\s\S]*?<\/em><\/div>/, "")
+         .replace(/Gerçek satış bildiğin varsa ekle: tek bir tapu satışı on ilandan daha değerlidir\./, "“Emsal araştır” ile ilan topla.")
+         .replace(/(<button class="btn"[^>]*onclick="emsalArastir\('[^']+'(?:, true)?\)"[^>]*>)[\s\S]*?(<\/button>)/, `$1${window.arsaPC?.yzOto ? "🔎 Emsal araştır · Claude + ChatGPT" : "🔎 Emsal araştır"}$2`);
+    return h; }; }
+
+// --- Claude + ChatGPT birlikte, otomatik ---
+const EM5 = { is:null };
+function em5Istem(p, h){ const m = ekMerkez(h), adim = Math.max(1, Math.ceil(h.length/40)), kose = h.filter((q, i) => i % adim === 0).map(q => `${q[1].toFixed(6)},${q[0].toFixed(6)}`).join(" ");
+  return `Bir arsa/tarla için internette EMSAL FİYAT ve MESAFE araştırması yapmanı istiyorum. Web aramasını kullan. Bugün: ${new Date().toLocaleDateString("tr-TR")}.
+
+PARSEL
+- İl / ilçe / mahalle: ${duzgun(p.il)} / ${duzgun(p.ilce)} / ${duzgun(p.mahalle)}
+- Ada ${p.ada || "-"} · Parsel ${p.parsel} · ${nf2(+p.alan_m2 || 0)} m² · nitelik: ${p.nitelik || "-"}
+- Merkez koordinatı (enlem, boylam): ${m[1].toFixed(6)}, ${m[0].toFixed(6)}
+- Sınır köşeleri (enlem,boylam): ${kose}
+
+YAPILACAKLAR
+1) ${duzgun(p.mahalle)} köyü ve komşu köylerde GÜNCEL satılık tarla/arsa ilanlarını bul (sahibinden, emlakjet, hepsiemlak, zingat vb.). KÜÇÜK (500–3.000 m²) ve BÜYÜK (3.000 m² üstü) ilanların İKİSİNİ de getir; sadece ucuz ilanları seçme. Her ilan için gerçek bağlantıyı ver.
+2) Parselin önemli yerlere kuş uçuşu uzaklığını ver (köy merkezi, ilçe merkezi, ana yol, varsa istasyon/OSB). Her noktanın koordinatını yaz.
+3) Kısa değerlendirme: en çok benzeyen emsaller, artılar/eksiler, gerçekçi m² fiyat bandı.
+
+${emsalKuralMetni(p)}
+Sonuçları programım okuyacak. DOSYA OLUŞTURMA. Aşağıdaki JSON'u cevabın EN SONUNA tek bir \`\`\`json kod bloğunda, TEK SATIR yaz; önceki satıra sadece ARSATAKIP-JSON yaz. En fazla 15 emsal, 10 mesafe. Sayıları düz yaz.
+ARSATAKIP-JSON
+{"emsaller":[{"baslik":"","m2":0,"fiyat_tl":0,"konum":"","tarih":"","url":"","site":"","il":"","ilce":"","mahalle":"","nitelik":"","imar":""}],"mesafeler":[{"hedef":"","enlem":0,"boylam":0,"km":0,"kaynak":""}],"bant":[0,0]}`; }
+function em5Bar(){ let e = document.getElementById("em5Bar"); const I = EM5.is; if(!I){ e?.remove(); return; }
+  if(!e){ e = document.createElement("div"); e.id = "em5Bar"; document.body.appendChild(e); }
+  const sure = s => { const d = Math.floor((Date.now() - I.t)/1000); return `${Math.floor(d/60)}:${String(d%60).padStart(2, "0")}`; };
+  e.innerHTML = `<b>🔎 Emsal araştırması · ${esc(I.ad)}</b>${["claude", "gpt"].map(s => { const d = I.d[s] || {}, ok = d.durum === "tamam", hata = d.durum === "hata";
+      return `<span class="em5P ${ok ? "ok" : hata ? "hata" : ""}"><b>${s === "claude" ? "Claude" : "ChatGPT"}</b>${ok ? `tamamlandı ✓ · ${d.n} ilan` : hata ? `olmadı · ${esc(d.mesaj || "")}` : `${esc(d.asama || "başlıyor")}${d.uzunluk ? ` (${nf(d.uzunluk)} harf)` : ""}`}${!ok && !hata && window.arsaPC?.yzOtoGoster ? `<button onclick="arsaPC.yzOtoGoster('${s}')">göster</button>` : ""}</span>`; }).join("")}<em>${sure()}</em>${I.bitti ? `<button onclick="EM5.is=null;em5Bar()">kapat</button>` : ""}`; }
+let EM5_KUYRUK = Promise.resolve();
+async function em5Calistir(id){
+  if(EM5.is && !EM5.is.bitti) return toast("Emsal araştırması zaten çalışıyor");
+  const { data:p } = await sb.from("parcels").select("*").eq("id", id).single(); const h = ekHalkaP(p); if(!h) return toast("Parselin sınır çizimi yok");
+  const istem = em5Istem(p, h), M = { tur:"emsalArastir", id, merkez:ekMerkez(h) };
+  EM5.is = { id, ad:`${duzgun(p.mahalle)} ${p.ada || 0}/${p.parsel}`, t:Date.now(), d:{ claude:{}, gpt:{} } }; em5Bar();
+  const tik = setInterval(async () => { if(!EM5.is || EM5.is.bitti) return clearInterval(tik);
+    for(const s of ["claude", "gpt"]){ const d = EM5.is.d[s]; if(d.durum) continue; try{ const r = await window.arsaPC.yzOtoDurum(s); if(r){ d.asama = r.asama; d.uzunluk = r.uzunluk; } }catch(e){} } em5Bar(); }, 2000);
+  const bir = async s => { try{ const r = await window.arsaPC.yzOto(s, istem, "emsaller", false, 12); if(r?.hata) throw new Error(r.mesaj || r.hata);
+      const t = r.t || "", J = emsalJsonBul(t); if(!J) throw new Error("cevapta emsal listesi yok");
+      const once = (await analizOku(id).catch(() => ({}))).emsal?.ilanlar?.length || 0;
+      await (EM5_KUYRUK = EM5_KUYRUK.then(() => { window.__em5Sessiz = true; return emsalArastirCevabi(t, { ...M }); }).finally(() => { window.__em5Sessiz = false; window.__em5PdfYok = Date.now() + 5000; }));
+      const sonra = (await analizOku(id).catch(() => ({}))).emsal?.ilanlar?.length || 0;
+      Object.assign(EM5.is.d[s], { durum:"tamam", n:J.J.emsaller?.length || 0, yeni:sonra - once }); }
+    catch(e){ Object.assign(EM5.is.d[s], { durum:"hata", mesaj:String(e.message || e).slice(0, 60) }); }
+    em5Bar(); };
+  await Promise.all([bir("claude"), bir("gpt")]); EM5.is.bitti = true; clearInterval(tik); em5Bar();
+  const D = EM5.is.d, yeni = (D.claude.yeni || 0) + (D.gpt.yeni || 0); toast(`Emsal araştırması bitti · ${yeni} yeni ilan eklendi`);
+  try{ PC_P_ZAMAN = 0; }catch(e){} if(app.dataset.ekran === "parsel" && app.dataset.pid === String(id)) ekraniCiz("parsel", id); }
+// emsalArastir: masaustunde ikisi birden; telefonda/eski surumde eskisi gibi
+{ const eski = emsalArastir; emsalArastir = async function(id, disari){ if(window.arsaPC?.yzOto) return em5Calistir(id); return eski(id, disari); }; }
+
+// --- PDF: tek seferde hazirlik (eskiden 3 ayri sorgu vardi), arastirma sonrasi otomatik acilmaz ---
+{ const eski = emsalPdf; emsalPdf = async function(id){ if(window.__em5Sessiz || Date.now() < (window.__em5PdfYok || 0)) return;
+    try{ const { data:p } = await sb.from("parcels").select("id,il,ilce,mahalle,lat,lng,geojson,alan_m2,nitelik,analiz").eq("id", id).single(); const a = p.analiz || {};
+      let d = em5M2Duzelt(a.emsal); d += emsalDenetle(p, a.emsal); if(d) await analizYaz(id, { emsal:a.emsal }); await em4KoyYukle(p); }catch(e){}
+    return eski(id); }; }
+
+{ const st = document.createElement("style"); st.textContent = `
+#em5Bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:8000;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;max-width:calc(100% - 24px);padding:10px 14px;border-radius:14px;background:#15161B;border:1px solid rgba(232,182,97,.45);box-shadow:0 10px 30px rgba(0,0,0,.5);font-size:12.5px;color:#E6E4E8}
+#em5Bar>b{color:#E8C98A}#em5Bar em{font-style:normal;color:#9C9AA2;font-variant-numeric:tabular-nums}
+.em5P{display:inline-flex;gap:6px;align-items:center;padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.05)}.em5P b{color:#fff}.em5P.ok{background:rgba(91,208,139,.12);color:#7FE0A6}.em5P.hata{background:rgba(255,74,85,.12);color:#FF8A92}
+#em5Bar button,.em5P button{background:none;border:1px solid rgba(255,255,255,.2);color:#ddd;border-radius:8px;padding:2px 8px;font-size:11.5px;cursor:pointer}`; document.head.appendChild(st); }
+
+// --- "Değer tespiti" paneli: ikinci bir rakam gostermesin (karisiklik); sadece "nasil hesaplandi" acilir kutusu ---
+{ const eski = dgPanelHtml; dgPanelHtml = function(id, p, A, E){ const h = eski(id, p, A, E), H = A?.deger, S = H?.sonuc, il = H?.Y?.find(y => y.k === "ilan");
+    const tablo = (h.match(/<table class="dgT">[\s\S]*?<\/table>/) || [""])[0], dip = (h.match(/<small>★ aynı köy[^<]*<\/small>/) || [""])[0];
+    if(!S && !tablo) return "";
+    return `<details class="dgPanel"><summary><b>📐 Nasıl hesaplandı?</b>${S ? `<span class="dgGuven g${S.guven[0]}">güven: ${S.guven}</span>` : ""}</summary>
+      ${il ? `<p class="dgAc">${esc(il.not)}</p>` : ""}${S ? `<p class="dgAc">${esc(S.neden.join(" · "))}</p>` : ""}${tablo}${dip}</details>`; }; }
+const em5Kisa = v => v >= 1e6 ? mnP(v) : nf(Math.round(v/1000)) + " bin ₺";
+{ const eski = emsalKartiHtml; emsalKartiHtml = async function(id, p, a){ let h = await eski(id, p, a); if(!h) return h;
+    try{ const A = emsalAnaliz(p, a.emsal, null); if(A){ const D = emsalDegerleme(p, A, a.emsal);
+      if(D.grup?.length){ const sat = D.grup.map(g => `<div><span>Hisse ${g.nolar.join(", ")} <small>${nf2(g.m2)} m²${g.adet > 1 ? " · her biri" : ""}</small></span><b>${em5Kisa(g.fiyat[0])} – ${em5Kisa(g.fiyat[1])}</b><em>${nf(g.m2f[0])}–${nf(g.m2f[1])} ₺/m²</em></div>`).join("");
+        h = h.replace(/(<svg class="ekEmsalSvg")/, `<div class="em5Hisse">${sat}<small>Her hisse kendi büyüklüğündeki köy emsalleriyle fiyatlandı (küçük hisse küçük ilanlarla, büyük parça büyük tarlalarla).</small></div>$1`); } } }catch(e){}
+    return h; }; }
+{ const st = document.createElement("style"); st.textContent = `
+details.dgPanel{padding:10px 14px}details.dgPanel>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none}details.dgPanel>summary::-webkit-details-marker{display:none}
+.dgAc{margin:8px 0 0;font-size:12px;color:var(--ink-2,#bbb);line-height:1.5}
+.em5Hisse{display:flex;flex-direction:column;gap:6px;margin:10px 0 4px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08)}
+.em5Hisse>div{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.em5Hisse span{flex:1 1 140px}.em5Hisse span small{color:var(--ink-3,#999);margin-left:6px}.em5Hisse b{font-size:15px;color:#F4E3C1}.em5Hisse em{font-style:normal;font-size:11.5px;color:var(--ink-3,#999)}.em5Hisse>small{font-size:11px;color:var(--ink-3,#999)}`; document.head.appendChild(st); }
 
 baslat();
 
