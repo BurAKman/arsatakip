@@ -3819,6 +3819,8 @@ body.pc .pzAlgoGrafik div{display:flex;flex-direction:column;align-items:center;
 body.pc .pzAlgoGrafik i{width:9px;border-radius:2px}body.pc .pzAlgoGrafik i.art{background:#5BD08B}body.pc .pzAlgoGrafik i.az{background:#FF4A55}body.pc .pzAlgoGrafik small{width:100%;text-align:center;font-size:9px;color:#7E7C84}
 body.pc .pzAlgoNot{font-size:12px;padding:7px 10px;border-radius:8px;margin-bottom:8px}body.pc .pzAlgoNot.art{background:rgba(91,208,139,.08);color:#B7EFCB}body.pc .pzAlgoNot.az{background:rgba(255,74,85,.08);color:#FFB3B8}
 @media (max-width:1200px){body.pc .pzAlgoIki{grid-template-columns:1fr}}
+body.pc .pzAlgo .pzOto{display:flex;align-items:center;justify-content:flex-start;gap:8px;text-align:left}body.pc .pzAlgo .pzOto input{width:auto;flex:0 0 auto;margin:0}
+body.pc .pzYaris td{padding:6px 8px!important;font-size:12px}body.pc .pzYaris small{color:#A9A7AE}body.pc .pzYaris .art{color:#7FE0A6}body.pc .pzYaris .az{color:#FF8A92}
 </style>
 </head>
 <body>
@@ -3871,7 +3873,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.4.0";
+const SURUM_MORDOR = "v 1.4.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -24516,7 +24518,7 @@ async function pzSanalKontrol(){ const S = pzSanal(); if(!S.acik.length) return 
           if(R.l[i] <= o.stop){ son = { cikis:o.stop, neden:"zarar kes", ct:t }; break; } if(R.h[i] >= o.hedef){ son = { cikis:o.hedef, neden:"hedef", ct:t }; break; } }
         if(!son && Date.now() > o.son){ son = { cikis:s.f || R.c[R.c.length - 1], neden:"süre doldu", ct:o.son }; } } }catch(e){}
     if(son){ const brut = (son.cikis/o.giris - 1)*100, masraf = pzMasraf(o.k, 1000).oran*100; S.kapali.push({ ...o, ...son, brut, net:brut - masraf, sanal:true }); bitti++; } else kalan.push(o); }
-  S.acik = kalan.concat(S.acik.slice(150)); pzSanalYaz(S); return bitti; }
+  S.acik = S.acik.slice(150).concat(kalan); pzSanalYaz(S); return bitti; }
 
 /* ---------- ogrenme: hangi kurulum masraflar dusulunce para kazandiriyor? ---------- */
 function pzOgren(){
@@ -24652,7 +24654,8 @@ onmessage = e => { const { veri, tf, T, izgara, masraf } = e.data; const Ls = [.
   gec.sort((a, b) => (b.trOrt - a.trOrt) || (b.tr.n - a.tr.n)); const en = gec[0] || null;
   const varsayilan = sonuc.find(s => s.P.hedefK === 1 && s.P.stopK === .7 && s.P.rsiMax === 80 && s.P.hk === 1.5 && s.P.L === 2 && s.P.dMin === .03);
   let ornek = []; if(en){ const o = sim(D, { ...en.P, kayit:true }, T, masraf, tBol); ornek = o.islemler; }
-  postMessage({ bitti:true, tf, en, varsayilan, kombi:kombi.length, gecerli:gec.length, ornek:ornek.slice(-400), tBol, aralik:[tMin, tMax], coin:D.length }); };`;
+  const ilk5 = []; for(const g of gec){ if(ilk5.length >= 5) break; if(ilk5.some(x => x.P.hedefK === g.P.hedefK && x.P.stopK === g.P.stopK && x.P.L === g.P.L)) continue; ilk5.push({ P:g.P, tr:g.tr, te:g.te }); }
+  postMessage({ bitti:true, tf, en, ilk5, varsayilan, kombi:kombi.length, gecerli:gec.length, ornek:ornek.slice(-400), tBol, aralik:[tMin, tMax], coin:D.length }); };`;
 function pzAlgoIsci(){ return new Worker(URL.createObjectURL(new Blob([PZ_ALGO_ISCI], { type:"application/javascript" }))); }
 
 /* ---- veri: Binance'te en cok islem goren coinler (buyukler dahil), 1h ve 4h ---- */
@@ -24670,7 +24673,7 @@ async function pzAlgoEgit(goster){
       const S = await new Promise((ok, no) => { const w = pzAlgoIsci(); w.onmessage = e => { if(e.data.ilerle != null){ PZ_ALGO_IS.oran = e.data.ilerle; if(goster) pzAlgoBar(); } if(e.data.bitti){ w.terminate(); ok(e.data); } };
         w.onerror = er => { w.terminate(); no(new Error(er.message || "hesap hatası")); }; w.postMessage({ veri:veri.map(v => ({ kod:v.kod, t:v.t, o:v.o, h:v.h, l:v.l, c:v.c, v:v.v })), tf, T:PZ_ALGO_TF[tf], izgara:PZ_ALGO_IZGARA, masraf }); });
       const en = S.en, ozet = s => s && s.n ? { n:s.n, ort:s.top/s.n, isabet:s.kaz/s.n } : null;
-      yeni[tf] = { P:en?.P || null, tr:ozet(en?.tr), te:ozet(en?.te), vars:{ tr:ozet(S.varsayilan?.tr), te:ozet(S.varsayilan?.te) }, kombi:S.kombi, gecerli:S.gecerli, coin:S.coin, aralik:S.aralik, tBol:S.tBol, ornek:S.ornek,
+      yeni[tf] = { ilk5:(S.ilk5 || []).map(x => ({ P:x.P, tr:ozet(x.tr), te:ozet(x.te) })), P:en?.P || null, tr:ozet(en?.tr), te:ozet(en?.te), vars:{ tr:ozet(S.varsayilan?.tr), te:ozet(S.varsayilan?.te) }, kombi:S.kombi, gecerli:S.gecerli, coin:S.coin, aralik:S.aralik, tBol:S.tBol, ornek:S.ornek,
         aktif: !!(en && en.te.n >= 15 && en.te.top/en.te.n > .05) };
     }
     yeni.gecmis = (A.gecmis || []).concat([{ surum:yeni.surum, t:yeni.t, g1:yeni.g1?.te, g3:yeni.g3?.te, g1a:yeni.g1?.aktif, g3a:yeni.g3?.aktif }]).slice(-60);
@@ -24757,6 +24760,52 @@ setTimeout(() => {
     if(!PZ_ALGO_IS && ((h >= 3 && h < 6 && A.gun !== bugun) || !A.surum && Date.now() - (window.__pzAcilis || 0) > 180000)){ const B = pzAlgo(); B.gun = bugun; pzLS.yaz("pzAlgo", B); pzAlgoEgit(false); }
     if(A.surum && !PZ_ALGO_IS && Date.now() - (pzLS.oku("pzAlgoSon", { t:0 }).t) > 10*60000) pzAlgoTara().then(() => { if(PZ.sekme === "ekstrem" && PZ.eksAlt === "algo") pzTablo(); }).catch(() => {});
   }catch(e){} }, 60000); window.__pzAcilis = Date.now(); }, 0);
+
+/* ================= PIYASALAR v8 · sanal deneme hizlandirma =================
+   - Tarama 45 yerine ~150 coin (Binance'te gunluk hacmi 1 milyon $ ustu, sabit coinler haric)
+   - Egitimin en iyi 5 ayari AYNI ANDA sanal deneniyor ("ayar yarisi"): ayni mum verisi, 5 farkli kural -> 5 kat ornek
+   - Canli kanit: bir ayar canli sanalda en az 30 islemde masraf sonrasi artidaysa (ve ortalamasi ileri testten bagimsiz olarak +%0,10 ustu),
+     o sure ileri testte kapali olsa bile "canli kanitla acik" olur ve o ayar kullanilir. Canlida bozulursa yine kapanir. */
+const PZ_SANAL_COIN = 150;
+function pzAyarlar(A, tf){ const X = A[tf]; if(!X) return []; const L = (X.ilk5?.length ? X.ilk5 : X.P ? [{ P:X.P, te:X.te }] : []); return L.map((x, i) => ({ ...x, i })); }
+// canli sanal sonuclari: surum + sure + ayar sirasina gore
+function pzAyarCanli(A, tf, i){ const L = pzSanal().kapali.filter(x => x.algo === A.surum && x.alt === tf && (x.ai ?? 0) === i); const n = L.length;
+  return { n, ort: n ? L.reduce((t, x) => t + x.net, 0)/n : null, isabet: n ? L.filter(x => x.net > 0).length/n : null }; }
+function pzCanliKanit(A, tf){ let en = null; pzAyarlar(A, tf).forEach(a => { const c = pzAyarCanli(A, tf, a.i); if(c.n >= 30 && c.ort > .1 && (!en || c.ort > en.c.ort)) en = { ...a, c }; }); return en; }
+pzAlgoTara = async function(){ const A = pzAlgo(); if(!A.g1?.P && !A.g3?.P) return null; const BN = await pzBinanceTum().catch(() => []);
+  const L = BN.filter(x => x.hacim > 1e6 && !/^(USDC|FDUSD|TUSD|USDP|EUR|TRY|BUSD|DAI|PAXG|WBTC|USD1|BFUSD|XUSD)$/.test(x.kod)).sort((a, b) => b.hacim - a.hacim).slice(0, PZ_SANAL_COIN);
+  const sonuc = { g1:[], g3:[] }, SV = pzSanal(), ayni = new Set(SV.acik.map(o => o.k + "|" + o.alt + "|" + (o.ai ?? 0))); let yeni = 0;
+  for(const tf of ["g1", "g3"]){ const T = PZ_ALGO_TF[tf], AY = pzAyarlar(A, tf); if(!AY.length) continue; const kanit = pzCanliKanit(A, tf);
+    // oneride kullanilacak ayar: ileri testte acik olan en iyi ayar ya da canli kanitli ayar
+    const oneriAyar = kanit ? kanit.i : A[tf].aktif ? 0 : -1;
+    await pzHavuz(L, 5, async x => { const R = await pzKlines(x.bn, T.iv, 150).catch(() => null); if(!R?.c?.length) return;
+      AY.forEach(a => { const s = pzAlgoSinyal(R, a.P, T); if(!s?.ok) return; const I = PZM.ihtimal(s.c, 0, s.sd, T.H, s.hed, s.st);
+        const kayit = { k:"KRIPTO:" + x.kod, kod:x.kod, ad:x.kod, para:"USD", f:s.c, deg:x.d, hedef:s.hed, stop:s.st, ihtimal:I.hedef, zk:I.stop, bn:x.bn, alt:tf, ai:a.i, sure:tf === "g1" ? "24 saat" : "2-3 gün", algo:A.surum,
+          neden:[`${tf === "g1" ? Math.round(T.Lb*a.P.L) + " saatlik" : Math.round(T.Lb*a.P.L*4/24) + " günlük"} tepesini kırdı`, `hacim normalin ${pzVirgul(s.hk)} katı`, `RSI ${Math.round(s.rsi)}`, `${tf === "g1" ? "24 saatte" : "1 günde"} ${pzYuzde(s.dd*100, 1)}`, `algoritma v${A.surum} · ayar ${a.i + 1}${kanit && kanit.i === a.i ? " · canlı kanıtlı" : ""}`], sk:s.hk };
+        if(a.i === oneriAyar) sonuc[tf].push(kayit);
+        const an = kayit.k + "|" + tf + "|" + a.i; if(ayni.has(an)) return; ayni.add(an); yeni++;
+        SV.acik.push({ k:kayit.k, alt:tf, ai:a.i, giris:s.c, hedef:s.hed, stop:s.st, t:Date.now(), son:Date.now() + T.H*(tf === "g1" ? 1 : 4)*3600000, oz:{ ...pzOzellik(kayit), rsi:Math.round(s.rsi), hk:+s.hk.toFixed(2) }, bn:x.bn, algo:A.surum }); }); });
+    sonuc[tf].sort((a, b) => b.sk - a.sk); sonuc[tf + "Kanit"] = kanit ? { i:kanit.i, n:kanit.c.n, ort:kanit.c.ort } : null; }
+  pzSanalYaz(SV); pzLS.yaz("pzAlgoSon", { t:Date.now(), g1:sonuc.g1.slice(0, 10), g3:sonuc.g3.slice(0, 10), yeni, taranan:L.length });
+  return sonuc; };
+// ekstrem listesi: canli kanitli ayar da acar
+{ const eski = pzEks5Hesap;
+  pzEks5Hesap = async function(){ const V = await eski.apply(this, arguments); const A = pzAlgo(); if(!V?.algo) return V;
+    for(const tf of ["g1", "g3"]){ const k = pzCanliKanit(A, tf); if(k){ V.algo[tf] = true; V.algo[tf + "Kanit"] = { i:k.i, n:k.c.n, ort:k.c.ort }; } }
+    pzLS.yaz("pzEkstrem", V); return V; }; }
+// sanal kontrol: daha cok acik islem oldugu icin tek seferde daha fazlasina bak (15 dk mumlar, sirayla)
+{ const eski = pzSanalKontrol; pzSanalKontrol = async function(){ let t = 0; for(let i = 0; i < 3; i++){ const n = await eski(); t += n; if(!n) break; } return t; }; }
+// algoritma ekrani: ayar yarisi tablosu + duzgun kutucuk
+{ const eski = pzAlgoHtml;
+  pzAlgoHtml = function(){ let h = eski(); const A = pzAlgo(), S = pzSanal(), son = pzLS.oku("pzAlgoSon", null);
+    const tablo = tf => { const AY = pzAyarlar(A, tf), T = PZ_ALGO_TF[tf], K = pzCanliKanit(A, tf); if(!AY.length) return "";
+      return `<div class="pzMini">Ayar yarışı · ${T.ad} · en iyi ${AY.length} ayar aynı anda sanal deneniyor</div><table class="pzT pzYaris"><thead><tr><th>#</th><th>Kural</th><th class="sag">İleri test</th><th class="sag">Canlı sanal</th><th class="sag">Açık</th><th>Durum</th></tr></thead><tbody>${AY.map(a => { const c = pzAyarCanli(A, tf, a.i), acik = S.acik.filter(o => o.alt === tf && (o.ai ?? 0) === a.i && o.algo === A.surum).length;
+        return `<tr><td>${a.i + 1}</td><td><small>${Math.round(T.Lb*a.P.L)} mum kırılım · hacim ${pzVirgul(a.P.hk)}× · RSI&lt;${a.P.rsiMax} · ${a.P.dMin > -1 ? "+%" + Math.round(a.P.dMin*100) + " şart" : "şart yok"} · hedef ${pzVirgul(a.P.hedefK)} · zk ${pzVirgul(a.P.stopK)}</small></td>
+          <td class="sag ${pzYon(a.te?.ort)}">${a.te ? pzYuzde(a.te.ort, 2) + ` <small>(${a.te.n})</small>` : "—"}</td><td class="sag ${pzYon(c.ort)}">${c.n ? pzYuzde(c.ort, 2) + ` <small>(${c.n} · %${Math.round(c.isabet*100)})</small>` : "birikiyor"}</td><td class="sag">${acik}</td>
+          <td>${K && K.i === a.i ? `<span class="pzNeK yesil">canlı kanıtlı · öneride</span>` : !K && a.i === 0 && A[tf]?.aktif ? `<span class="pzNeK yesil">öneride</span>` : c.n >= 30 && c.ort <= .1 ? `<span class="pzNeK kirmizi">canlıda tutmadı</span>` : `<span class="soluk">${Math.max(0, 30 - c.n)} işlem daha</span>`}</td></tr>`; }).join("")}</tbody></table>`; };
+    h = h.replace('<div class="pzMini">Canlı sanal deneme · 10 dakikada bir tarama', tablo("g1") + tablo("g3") + `<div class="pzNot">Bir ayar canlı sanalda en az 30 işlemde masraf sonrası işlem başı +%0,10'un üstüne çıkarsa, ileri test kapalı dese bile o ayar “canlı kanıtla” açılır ve önerilere girer. Canlıda bozulursa kendiliğinden kapanır.</div><div class="pzMini">Canlı sanal deneme · 10 dakikada bir tarama`);
+    if(son?.taranan) h = h.replace(` (+${son.yeni} yeni)`, ` (${son.taranan} coin tarandı · +${son.yeni} yeni)`);
+    return h; }; }
 
 baslat();
 
