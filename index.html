@@ -3888,7 +3888,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.5.2";
+const SURUM_MORDOR = "v 1.5.3";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -25077,6 +25077,10 @@ pzGecisKontrol = function(){
   return `<div class="pzGecis ${tamam ? "hazir" : ""}"><b>${tamam ? "✅ Sistem gerçek paraya hazır: Binance bağlantısını açabiliriz" : "🚦 Gerçek paraya geçiş kontrol listesi"}</b>
     ${L.map(([ok, ad, d]) => `<div class="${ok ? "ok" : ""}"><i>${ok ? "✓" : "○"}</i><span>${ad}</span><em>${d}</em></div>`).join("")}
     ${tamam ? "" : `<small>Hepsi ✓ olana kadar bot sanal devam eder. Ölçü disiplinli kasanın gerçekten yaptığı işlemler; hepsi tamamlanmadan gerçek paraya geç demeyeceğim.</small>`}</div>`; };
+// "onerilen ayarlarla" kutusu: artik 4 strateji var; acik olani adiyla soyle
+{ const eski = pzSanalKatlaHtml; pzSanalKatlaHtml = function(){ const h = eski(), A = pzAlgo(), K = PZ.bot?.row?.kasa?.kanit || {};
+    const acik = ["g1", "g3", "d1", "d3"].filter(tf => A?.[tf]?.aktif || K[tf]).map(pzStratAd);
+    return h.replace("Şu an iki süre de kapalı: program “bekle” diyor, 5.000 ₺ cepte duruyor.", acik.length ? `Açık strateji: ${acik.join(", ")}. Sinyal gelince disiplinli kasa girer; ilk işlemler sonuçlanınca burada görünür.` : "Şu an hiçbir strateji açık değil: program “bekle” diyor, 5.000 ₺ cepte duruyor."); }; }
 
 baslat();
 
