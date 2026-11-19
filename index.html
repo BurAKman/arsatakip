@@ -3888,7 +3888,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.5.1";
+const SURUM_MORDOR = "v 1.5.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -24969,7 +24969,7 @@ const bmTl = v => Math.round(+v || 0).toLocaleString("tr-TR") + " ₺";
 const bmKod = k => (pzKod(k) || String(k || "")).replace(/USDT$/, "");
 const bmSaat = t => t ? new Date(t).toLocaleString("tr-TR", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" }) : "—";
 const bmOnce = t => { if(!t) return "—"; const m = Math.round((Date.now() - new Date(t).getTime())/60000); return m < 1 ? "az önce" : m < 60 ? `${m} dk önce` : m < 1440 ? `${Math.floor(m/60)} sa ${m%60} dk önce` : `${Math.floor(m/1440)} gün önce`; };
-const bmSureAd = a => a === "g1" ? "24 saatlik" : a === "g3" ? "2-3 günlük" : (a || "");
+const bmSureAd = a => ({ g1:"kırılım 24 sa", g3:"kırılım 2-3 gün", d1:"dipten dönüş 24 sa", d3:"dipten dönüş 2-3 gün" })[a] || (a || "");
 
 function bmEgri(egri){ if(!egri || egri.length < 2) return ""; const G = 300, Y = 54, t0 = egri[0].t, t1 = egri[egri.length - 1].t || t0 + 1, b = egri.map(e => e.b), lo = Math.min(...b, 5000)*.985, hi = Math.max(...b, 5000)*1.015;
   const x = t => ((t - t0)/((t1 - t0) || 1))*G, y = v => Y - (v - lo)/((hi - lo) || 1)*Y, son = b[b.length - 1];
@@ -25006,12 +25006,12 @@ function bmCiz(){
   const bugunKap = B.kapali.filter(x => x.ct >= gun0.getTime()), bugunAc = [...B.acik, ...B.kapali].filter(x => x.t >= gun0.getTime());
   const ort = L => L.length ? L.reduce((t, x) => t + x.net, 0)/L.length : null, oB = ort(bugunKap), isa = L => L.length ? Math.round(L.filter(x => x.net > 0).length/L.length*100) : null;
   const son = B.kapali.slice(-12).reverse();
-  const sure = tf => { const a = A?.[tf]; const kn = r.kasa?.kanit?.[tf]; return `<div><b class="${a?.aktif || kn ? "on" : "off"}">${PZ_ALGO_TF[tf].ad}: ${a?.aktif || kn ? "AÇIK" : "KAPALI"}</b><small>${kn ? `canlıda kanıtlandı · ayar ${kn.i + 1} · ${kn.n} işlem` : a?.te ? `ileri test ${pzYuzde(a.te.ort, 2)} / işlem` : "eğitim bekleniyor"}</small></div>`; };
+  const sure = tf => { const a = A?.[tf]; const kn = r.kasa?.kanit?.[tf]; if(!a && tf[0] === "d") return `<div><b class="off">${pzStratAd(tf)}</b><small>bir sonraki eğitimde başlar</small></div>`; return `<div><b class="${a?.aktif || kn ? "on" : "off"}">${pzStratAd(tf)}: ${a?.aktif || kn ? "AÇIK" : "KAPALI"}</b><small>${kn ? `canlıda kanıtlandı · ayar ${kn.i + 1} · ${kn.n} işlem` : a?.te ? `ileri test ${pzYuzde(a.te.ort, 2)} / işlem` : "eğitim bekleniyor"}</small></div>`; };
   k.innerHTML = `
     <div class="bmDurum ${akt ? "ok" : "kapali"}"><b>${akt ? "☁️ Bot çalışıyor" : "☁️ Bot son " + bmOnce(r.son_tarama) + " çalıştı"}</b> · son tarama ${bmOnce(r.son_tarama)} · ${d.taranan || 0} coin · son eğitim ${bmOnce(r.son_egitim)}${A?.surum ? ` · algoritma v${A.surum}` : ""}</div>
     ${K ? bmKasa("Disiplinli kasa", "Sadece programın önerdiği ayarla girer. Program “bekle” diyorsa nakitte bekler. Gerçek paraya bu kasa örnek alınacak.", K.disiplin)
         + bmKasa("Her fırsata giren kasa", "Her sinyale girer, karşılaştırma için.", K.her) : `<div class="bmBos">Kasa bilgisi bir sonraki taramada gelir.</div>`}
-    <div class="bmBas">Program şu an ne diyor?</div><div class="bmSure">${sure("g1")}${sure("g3")}</div>
+    <div class="bmBas">Program şu an ne diyor?</div>${pzRejimHtml(d)}<div class="bmSure">${sure("g1")}${sure("g3")}</div><div class="bmSure" style="margin-top:8px">${sure("d1")}${sure("d3")}</div>
     <div class="bmBas">Açık pozisyonlar (kasalar)</div>
     <div class="bmL">${(bmPoz(K?.disiplin, "disiplinli") + bmPoz(K?.her, "her fırsat")) || `<div class="bmBos">Kasada açık pozisyon yok.</div>`}</div>
     ${(K?.disiplin?.gecmis?.length || K?.her?.gecmis?.length) ? `<div class="bmBas">Kasanın son işlemleri</div><div class="bmL">${bmGecmis(K.disiplin)}${bmGecmis(K.her)}</div>` : ""}
@@ -25039,6 +25039,44 @@ document.addEventListener("visibilitychange", () => { try{ if(document.visibilit
 
 // PC algoritma ekraninda "50 coin" yazisi: egitim 50 coinle, tarama ~150 coinle yapiliyor
 { const eski = pzAlgoHtml; pzAlgoHtml = function(){ return eski().replace("Binance'te en çok işlem gören 50 coinin geçmiş mumlarında", "Binance'te en çok işlem gören 50 coinin geçmiş mumlarında (tarama ise ~150 coinde)"); }; }
+
+
+/* ================= v1.5.2 · 4 STRATEJI + BTC TREND FILTRESI =================
+   Bot artik 2 strateji ailesini ayni anda dener: tepe kirilimi (g1/g3) ve dipten donus (d1/d3). Her ayarda BTC trend filtresi de denenir.
+   Kasalar ve gercege gecis listesi hepsini birlikte degerlendirir; hangi strateji ileri testte ve canlida tutarsa o acilir. */
+PZ_ALGO_TF.d1 = { ...PZ_ALGO_TF.g1, ad:"Dipten dönüş · 24 saat" }; PZ_ALGO_TF.d3 = { ...PZ_ALGO_TF.g3, ad:"Dipten dönüş · 2-3 gün" };
+const pzStratAd = tf => ({ g1:"Kırılım · 24 saat", g3:"Kırılım · 2-3 gün", d1:"Dipten dönüş · 24 saat", d3:"Dipten dönüş · 2-3 gün" })[tf] || tf;
+const pzRjAd = r => r === 1 ? "BTC yükselişteyken" : r === 2 ? "BTC düşüşteyken" : "BTC'ye bakmadan";
+function pzRejimHtml(d){ if(!d?.rejim) return ""; const y = d.rejim === 1;
+  return `<div class="bmDurum ${y ? "ok" : "kapali"}" style="margin:0 0 8px"><b>${y ? "🐂 BTC yükseliş trendinde" : "🐻 BTC düşüş trendinde"}</b> · 4 saatlik 50 mumluk ortalamanın ${d.btcFark != null ? `%${Math.abs(d.btcFark).toLocaleString("tr-TR", { maximumFractionDigits:1 })} ` : ""}${y ? "üstünde" : "altında"}${(d.acikStrateji || []).length ? "" : " · şu an hiçbir strateji açık değil: program nakitte bekliyor"}</div>`; }
+function pzKuralYazi(tf, P){ if(!P) return "henüz eğitilmedi"; const T = PZ_ALGO_TF[tf], s = T.iv === "1h" ? "saatlik" : "4 saatlik";
+  if(tf[0] === "d") return `RSI ${P.rsiMin}'in altına düşmüş · son ${T.Lb} ${s} mumun tepesinden oynaklığın ${pzVirgul(P.dusK)} katı aşağıda${P.yesil ? " · son mum yeşil kapanmış" : ""} · ${pzRjAd(P.rj)} · hedef ${pzVirgul(P.hedefK)}× · zarar kes ${pzVirgul(P.stopK)}×`;
+  return `${Math.round(T.Lb*P.L)} ${s} mumun tepesini kırınca · hacim ${pzVirgul(P.hk)}× · RSI<${P.rsiMax} · ${pzRjAd(P.rj)} · hedef ${pzVirgul(P.hedefK)}× · zarar kes ${pzVirgul(P.stopK)}×`; }
+// PC algoritma ekrani: 4 stratejinin yarisi
+{ const eski = pzAlgoHtml; pzAlgoHtml = function(){ let h = eski(); const A = pzAlgo(), S = pzSanal(), r = PZ.bot?.row, K = r?.kasa?.kanit || {}; if(!A?.surum) return h;
+    const st = x => x ? `<span class="${x.ort > 0 ? "art" : "az"}">${pzYuzde(x.ort, 2)}</span> <small>(${x.n} · %${Math.round(x.isabet*100)})</small>` : "—";
+    const sat = tf => { const X = A[tf], L = S.kapali.filter(x => x.alt === tf && x.algo === A.surum), n = L.length, o = n ? L.reduce((t, x) => t + x.net, 0)/n : null, ac = X?.aktif || K[tf];
+      return `<tr><td><b>${pzStratAd(tf)}</b><small class="pzAlt">${esc(pzKuralYazi(tf, X?.P))}</small></td><td class="sag">${st(X?.te)}</td><td class="sag">${n ? `<span class="${o > 0 ? "art" : "az"}">${pzYuzde(o, 2)}</span> <small>(${n})</small>` : "birikiyor"}</td><td>${!X ? `<span class="soluk">sonraki eğitimde</span>` : ac ? `<span class="pzNeK yesil">AÇIK</span>` : `<span class="pzNeK kirmizi">KAPALI</span>`}</td></tr>`; };
+    const tablo = `${pzRejimHtml(r?.durum).replace('class="bmDurum', 'class="pzBot').replace(/ style="[^"]*"/, "")}<div class="pzMini">🏁 Strateji yarışı · 4 strateji aynı anda sanal deneniyor · hangisi ileri testte ve canlıda kazandırırsa o açılır</div>
+      <table class="pzT"><thead><tr><th>Strateji · en iyi ayar</th><th class="sag">İleri test</th><th class="sag">Canlı sanal</th><th>Durum</th></tr></thead><tbody>${["g1", "g3", "d1", "d3"].map(sat).join("")}</tbody></table>`;
+    h = h.replace(/giriş kuralını her saatte yeniden oynatıp [0-9.]+ farklı ayarı deniyor/, "4 stratejiyi (tepe kırılımı ve dipten dönüş, 24 saat ve 2-3 gün) BTC trend filtresiyle birlikte toplam 6.048 farklı ayarla her saatte yeniden oynatıyor");
+    return h.replace('<div class="pzKarne"><b>Nasıl çalışıyor?</b>', tablo + '<div class="pzKarne"><b>Nasıl çalışıyor?</b>'); }; }
+// gercege gecis listesi: disiplinli kasanin GERCEKTEN yaptigi islemlerle olculur (hangi strateji olursa olsun)
+pzGecisKontrol = function(){
+  const r = PZ.bot?.row, K = r?.kasa?.disiplin, G = K?.gecmis || [], S = pzSanal(), kap = S.kapali.filter(x => x.ct);
+  const top = (K?.turlar || []).reduce((t, x) => t + (x.islem || 0), 0) + (K?.islem || 0), gun = kap.length ? (Date.now() - Math.min(...kap.map(x => x.t)))/86400000 : 0;
+  const ort = G.length ? G.reduce((t, x) => t + x.net, 0)/G.length : null, s7 = G.filter(x => Date.now() - x.ct < 7*86400000), o7 = s7.length ? s7.reduce((t, x) => t + x.kz, 0) : null;
+  const L = [
+    [top >= 200, "Disiplinli kasa en az 200 işlem yaptı", `${top}/200`],
+    [gun >= 14, "En az 14 günlük veri (farklı piyasa günleri)", `${Math.floor(gun)}/14 gün`],
+    [ort != null && ort >= .2, "Kasanın işlem başı ortalaması masraf sonrası +%0,20 üstü", ort != null ? pzYuzde(ort, 2) : "—"],
+    [!!K && K.bakiye > K.bas && !(K.turlar || []).length, "Disiplinli kasa artıda ve hiç batmadı", K ? `${Math.round(K.bakiye).toLocaleString("tr-TR")} ₺ · tur ${K.tur}` : "—"],
+    [!!K && top > 0 && (K.maxDus || 0) < .25, "Kasada en derin düşüş %25'in altında", K ? `%${Math.round((K.maxDus || 0)*100)}` : "—"],
+    [o7 != null && o7 > 0 && s7.length >= 20, "Son 7 günde de kasa kârda (en az 20 işlem)", o7 != null ? `${o7 >= 0 ? "+" : ""}${Math.round(o7).toLocaleString("tr-TR")} ₺ · ${s7.length} işlem` : "—"] ];
+  const tamam = L.every(x => x[0]);
+  return `<div class="pzGecis ${tamam ? "hazir" : ""}"><b>${tamam ? "✅ Sistem gerçek paraya hazır: Binance bağlantısını açabiliriz" : "🚦 Gerçek paraya geçiş kontrol listesi"}</b>
+    ${L.map(([ok, ad, d]) => `<div class="${ok ? "ok" : ""}"><i>${ok ? "✓" : "○"}</i><span>${ad}</span><em>${d}</em></div>`).join("")}
+    ${tamam ? "" : `<small>Hepsi ✓ olana kadar bot sanal devam eder. Ölçü disiplinli kasanın gerçekten yaptığı işlemler; hepsi tamamlanmadan gerçek paraya geç demeyeceğim.</small>`}</div>`; };
 
 baslat();
 
