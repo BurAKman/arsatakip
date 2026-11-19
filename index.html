@@ -3888,7 +3888,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.10.0";
+const SURUM_MORDOR = "v 1.11.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -24850,7 +24850,7 @@ async function pzBotYukle(zorla){
 { const eski = pzSanalKontrol; pzSanalKontrol = async function(){ if(pzBotAktif()) return 0; return eski.apply(this, arguments); }; }
 
 /* ---------- sanal katlama: 5.000 ₺ ile baslasaydik ---------- */
-function pzKatlaTekrar(L, o = {}){ const bas = o.bas || 5000, risk = o.risk || 5, maks = o.maks || 2, masraf = o.masraf ?? pzMasraf("KRIPTO:X", 1000).oran*100;
+function pzKatlaTekrar(L, o = {}){ const bas = o.bas || 50000, risk = o.risk || 5, maks = o.maks || 2, masraf = o.masraf ?? pzMasraf("KRIPTO:X", 1000).oran*100;
   const T = L.filter(x => x.ct && x.net != null && x.giris && x.stop).slice().sort((a, b) => a.t - b.t);
   let bakiye = bas, tepe = bas, maxDus = 0, alinan = 0, kazan = 0; const acik = [], egri = [{ t:T[0]?.t || Date.now(), b:bas }];
   const kapat = sinir => { acik.sort((a, b) => a.ct - b.ct); while(acik.length && acik[0].ct <= sinir){ const p = acik.shift(); bakiye += p.para*p.net/100; if(p.net > 0) kazan++; egri.push({ t:p.ct, b:bakiye }); tepe = Math.max(tepe, bakiye); maxDus = Math.max(maxDus, 1 - bakiye/tepe); } };
@@ -24858,27 +24858,27 @@ function pzKatlaTekrar(L, o = {}){ const bas = o.bas || 5000, risk = o.risk || 5
     const kay = Math.max(.005, 1 - x.stop/x.giris) + masraf/100, kullan = acik.reduce((t, p) => t + p.para, 0), para = Math.min(bakiye - kullan, bakiye/maks, bakiye*risk/100/kay);
     if(para < 10) continue; acik.push({ ...x, para }); alinan++; }
   kapat(Infinity); return { bas, son:bakiye, kz:(bakiye/bas - 1)*100, n:alinan, kazan, maxDus:maxDus*100, egri, ilk:T[0]?.t, sonT:T[T.length - 1]?.ct }; }
-function pzEgriSvg(egri, gen = 220, yuk = 46){ if(!egri || egri.length < 2) return ""; const t0 = egri[0].t, t1 = egri[egri.length - 1].t || t0 + 1, b = egri.map(e => e.b), lo = Math.min(...b, 5000)*.98, hi = Math.max(...b, 5000)*1.02;
+function pzEgriSvg(egri, gen = 220, yuk = 46){ if(!egri || egri.length < 2) return ""; const t0 = egri[0].t, t1 = egri[egri.length - 1].t || t0 + 1, b = egri.map(e => e.b), lo = Math.min(...b, (egri[0]?.b || 5000))*.98, hi = Math.max(...b, (egri[0]?.b || 5000))*1.02;
   const x = t => ((t - t0)/((t1 - t0) || 1))*gen, y = v => yuk - (v - lo)/((hi - lo) || 1)*yuk, son = b[b.length - 1];
-  return `<svg class="pzEgri" viewBox="0 0 ${gen} ${yuk}" width="${gen}" height="${yuk}"><line x1="0" x2="${gen}" y1="${y(5000).toFixed(1)}" y2="${y(5000).toFixed(1)}" stroke="rgba(255,255,255,.18)" stroke-dasharray="3 3"/>
-    <polyline fill="none" stroke="${son >= 5000 ? "#5BD08B" : "#FF4A55"}" stroke-width="1.8" points="${egri.map(e => `${x(e.t).toFixed(1)},${y(e.b).toFixed(1)}`).join(" ")}"/></svg>`; }
+  return `<svg class="pzEgri" viewBox="0 0 ${gen} ${yuk}" width="${gen}" height="${yuk}"><line x1="0" x2="${gen}" y1="${y((egri[0]?.b || 5000)).toFixed(1)}" y2="${y((egri[0]?.b || 5000)).toFixed(1)}" stroke="rgba(255,255,255,.18)" stroke-dasharray="3 3"/>
+    <polyline fill="none" stroke="${son >= (egri[0]?.b || 5000) ? "#5BD08B" : "#FF4A55"}" stroke-width="1.8" points="${egri.map(e => `${x(e.t).toFixed(1)},${y(e.b).toFixed(1)}`).join(" ")}"/></svg>`; }
 function pzSanalKatlaHtml(){
-  const A = pzAlgo(), S = pzSanal(), K = pzKatla(), oz = { bas:5000, risk:K.risk || 5, maks:K.maks || 2 }, satirlar = [];
+  const A = pzAlgo(), S = pzSanal(), K = pzKatla(), oz = { bas:50000, risk:K.risk || 5, maks:K.maks || 2 }, satirlar = [];
   const kap = S.kapali.filter(x => x.algo != null);
   // onerilen: her sure icin o an onerilen ayar (canli kanitli ya da ileri testte acik olan 0. ayar)
   const oner = kap.filter(x => { const k = pzCanliKanit(A, x.alt); return x.algo === A.surum && (k ? (x.ai ?? 0) === k.i : A[x.alt]?.aktif && (x.ai ?? 0) === 0); });
   const tum = pzKatlaTekrar(kap, oz);
   for(const tf of ["g1", "g3"]) for(let i = 0; i < 5; i++){ const L = kap.filter(x => x.alt === tf && (x.ai ?? 0) === i && x.algo === A.surum); if(L.length < 3) continue; satirlar.push({ ad:`${PZ_ALGO_TF[tf].ad} · ayar ${i + 1}`, R:pzKatlaTekrar(L, oz), n:L.length }); }
   satirlar.sort((a, b) => b.R.son - a.R.son); const en = satirlar[0], O = oner.length ? pzKatlaTekrar(oner, oz) : null;
-  const buyuk = (bas, R, alt) => `<div class="pzSkB"><small>${bas}</small><b class="${R.son >= 5000 ? "art" : "az"}">5.000 ₺ → ${Math.round(R.son).toLocaleString("tr-TR")} ₺</b><em class="${R.son >= 5000 ? "art" : "az"}">${pzYuzde(R.kz, 1)}</em><span>${alt}</span>${pzEgriSvg(R.egri)}</div>`;
+  const buyuk = (bas, R, alt) => `<div class="pzSkB"><small>${bas}</small><b class="${R.son >= 50000 ? "art" : "az"}">50.000 ₺ → ${Math.round(R.son).toLocaleString("tr-TR")} ₺</b><em class="${R.son >= 50000 ? "art" : "az"}">${pzYuzde(R.kz, 1)}</em><span>${alt}</span>${pzEgriSvg(R.egri)}</div>`;
   const ac = R => `${R.n} işlem · ${R.kazan} kazanç · en derin düşüş %${R.maxDus.toFixed(0)}`;
-  if(!kap.length) return `<div class="pzSk"><div class="pzMini">💰 Sanal katlama · 5.000 ₺ ile başlasaydık</div><div class="pzNot">Sonuçlanan sanal işlem birikince burada 5.000 ₺'nin ne olduğunu göreceksin (24 saatlikler ilk gün, 2-3 günlükler 3 gün içinde sonuçlanır).</div></div>`;
-  return `<div class="pzSk"><div class="pzMini">💰 Sanal katlama · 5.000 ₺ ile başlasaydık (aynı anda en fazla ${oz.maks} işlem · işlem başı %${oz.risk} risk · masraflar dahil · zaman sırasıyla)</div>
+  if(!kap.length) return `<div class="pzSk"><div class="pzMini">💰 Sanal katlama · 50.000 ₺ ile başlasaydık</div><div class="pzNot">Sonuçlanan sanal işlem birikince burada 50.000 ₺'nin ne olduğunu göreceksin (24 saatlikler ilk gün, 2-3 günlükler 3 gün içinde sonuçlanır).</div></div>`;
+  return `<div class="pzSk"><div class="pzMini">💰 Sanal katlama · 50.000 ₺ ile başlasaydık (aynı anda en fazla ${oz.maks} işlem · işlem başı %${oz.risk} risk · masraflar dahil · zaman sırasıyla)</div>
     <div class="pzSkUst">${O ? buyuk("Programın önerdiği ayarlarla", O, ac(O)) : `<div class="pzSkB"><small>Programın önerdiği ayarlarla</small><b class="soluk">henüz öneri yok</b><span>Şu an iki süre de kapalı: program “bekle” diyor, 5.000 ₺ cepte duruyor.</span></div>`}
       ${en ? buyuk(`En iyi ayar: ${esc(en.ad)}`, en.R, ac(en.R) + " · geriye dönüp bakınca en iyisi, önceden bilinemezdi") : ""}
       ${buyuk("Her sinyale girseydik (tüm ayarlar karışık)", tum, ac(tum))}</div>
-    ${satirlar.length ? `<details class="pzGecmisA"><summary>Ayar ayar sonuçlar (${satirlar.length})</summary><table class="pzT"><thead><tr><th>Ayar</th><th class="sag">5.000 ₺ →</th><th class="sag">Getiri</th><th class="sag">İşlem</th><th class="sag">En derin düşüş</th><th></th></tr></thead><tbody>
-      ${satirlar.map(s => `<tr><td>${esc(s.ad)}</td><td class="sag mono ${s.R.son >= 5000 ? "art" : "az"}">${Math.round(s.R.son).toLocaleString("tr-TR")} ₺</td><td class="sag ${pzYon(s.R.kz)}">${pzYuzde(s.R.kz, 1)}</td><td class="sag">${s.R.n}/${s.n}</td><td class="sag">%${s.R.maxDus.toFixed(0)}</td><td>${pzEgriSvg(s.R.egri, 120, 26)}</td></tr>`).join("")}</tbody></table></details>` : ""}
+    ${satirlar.length ? `<details class="pzGecmisA"><summary>Ayar ayar sonuçlar (${satirlar.length})</summary><table class="pzT"><thead><tr><th>Ayar</th><th class="sag">50.000 ₺ →</th><th class="sag">Getiri</th><th class="sag">İşlem</th><th class="sag">En derin düşüş</th><th></th></tr></thead><tbody>
+      ${satirlar.map(s => `<tr><td>${esc(s.ad)}</td><td class="sag mono ${s.R.son >= 500000 ? "art" : "az"}">${Math.round(s.R.son).toLocaleString("tr-TR")} ₺</td><td class="sag ${pzYon(s.R.kz)}">${pzYuzde(s.R.kz, 1)}</td><td class="sag">${s.R.n}/${s.n}</td><td class="sag">%${s.R.maxDus.toFixed(0)}</td><td>${pzEgriSvg(s.R.egri, 120, 26)}</td></tr>`).join("")}</tbody></table></details>` : ""}
     <div class="pzNot">${tum.ilk ? `${new Date(tum.ilk).toLocaleString("tr-TR", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })} – ${new Date(tum.sonT).toLocaleString("tr-TR", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })} arası sonuçlanan sanal işlemler. ` : ""}Gerçek hayatta emirler birkaç dakika gecikmeli ve biraz farklı fiyattan gerçekleşir; bu yüzden gerçek sonuç biraz daha kötü olur.</div></div>`;
 }
 
@@ -24899,8 +24899,8 @@ setTimeout(() => setInterval(() => { try{ if(ME?.id && /^piyasa/.test(app?.datas
 
 /* ---------- BOT KASASI (bulutta 7/24) + GERCEGE GECIS KONTROL LISTESI ---------- */
 function pzKasaKart(ad, alt, K){ if(!K) return "";
-  const kz = (K.bakiye/K.bas - 1)*100, turlar = K.turlar || [], toplamYuk = (turlar.length + 1)*5000, toplamSon = turlar.reduce((t, x) => t + x.son, 0) + K.bakiye;
-  return `<div class="pzSkB"><small>${ad}</small><b class="${K.bakiye >= K.bas ? "art" : "az"}">Tur ${K.tur}: 5.000 ₺ → ${Math.round(K.bakiye).toLocaleString("tr-TR")} ₺</b><em class="${pzYon(kz)}">${pzYuzde(kz, 1)}</em>
+  const kz = (K.bakiye/K.bas - 1)*100, turlar = K.turlar || [], toplamYuk = (turlar.length + 1)*K.bas, toplamSon = turlar.reduce((t, x) => t + x.son, 0) + K.bakiye;
+  return `<div class="pzSkB"><small>${ad}</small><b class="${K.bakiye >= K.bas ? "art" : "az"}">Tur ${K.tur}: ${Math.round(K.bas).toLocaleString("tr-TR")} ₺ → ${Math.round(K.bakiye).toLocaleString("tr-TR")} ₺</b><em class="${pzYon(kz)}">${pzYuzde(kz, 1)}</em>
     <span>${alt} · ${K.islem} işlem${K.islem ? ` · ${K.kazan} kazanç (%${Math.round(K.kazan/K.islem*100)})` : ""} · açık ${K.acik?.length || 0} · en derin düşüş %${Math.round((K.maxDus || 0)*100)}</span>
     ${turlar.length ? `<span>Önceki turlar: ${turlar.map(t => `Tur ${t.tur} ${Math.round(t.son).toLocaleString("tr-TR")} ₺ (${t.neden})`).join(" · ")} · toplam yüklenen ${toplamYuk.toLocaleString("tr-TR")} ₺ → şu an ${Math.round(toplamSon).toLocaleString("tr-TR")} ₺</span>` : ""}
     ${pzEgriSvg((K.egri || []).filter(e => !e.yeniTur || true).slice(-600))}</div>`; }
@@ -24922,9 +24922,9 @@ function pzGecisKontrol(){
     ${tamam ? "" : `<small>Hepsi ✓ olana kadar bot sanal devam eder. Bu liste benim de kriterim; hepsi tamamlanmadan gerçek paraya geç demeyeceğim.</small>`}</div>`; }
 { const eski = pzSanalKatlaHtml;
   pzSanalKatlaHtml = function(){ const K = PZ.bot?.row?.kasa; if(!pzBotAktif() || !K) return eski();
-    return `<div class="pzSk"><div class="pzMini">💰 Bot kasası · 7/24 bulutta · 5.000 ₺, aynı anda en fazla 2 işlem, işlem başı %5 risk, masraflar dahil · batarsa yeni tur 5.000 ₺</div>
-      <div class="pzSkUst iki">${pzKasaKart("Disiplinli kasa", "sadece programın önerdiği ayarla · program “bekle” diyorsa nakitte bekler", K.disiplin)}${pzKasaKart("Her fırsata giren kasa", "her sürenin en iyi ayarıyla her sinyale girer · karşılaştırma için", K.her)}</div>
-      ${pzGecisKontrol()}</div>` + eski().replace("💰 Sanal katlama · 5.000 ₺ ile başlasaydık", "📊 Geriye dönük hesap · sonuçlanan tüm sanal işlemler 5.000 ₺ ile oynatılsaydı"); }; }
+    return `<div class="pzSk"><div class="pzMini">💰 Bot kasası · 7/24 bulutta · 50.000 ₺ · disiplinli: en fazla 2 işlem, işlem başı %5 risk · riskli: piyango coinleri, en fazla 5 işlem, işlem başı %3 risk · masraflar dahil · batarsa yeni tur</div>
+      <div class="pzSkUst iki">${pzKasaKart("Disiplinli kasa", "sadece kendini kanıtlamış stratejilerle · program “bekle” diyorsa nakitte bekler · en fazla 2 işlem, işlem başı %5 risk", K.disiplin)}${pzKasaKart("Riskli kasa · piyango", "piyango stratejisinin sinyallerine girer · büyük hedef, büyük risk · en fazla 5 işlem, işlem başı %3 risk", K.her)}</div>
+      ${pzGecisKontrol()}</div>` + eski().replace("💰 Sanal katlama · 50.000 ₺ ile başlasaydık", "📊 Geriye dönük hesap · sonuçlanan tüm sanal işlemler 50.000 ₺ ile oynatılsaydı"); }; }
 
 // sol menu: listeler sonradan yuklenince (BIST 30, kripto, takip fiyatlari) kendini yenilesin
 ["pzBist", "pzKripto", "pzNasdaq", "pzMadenDoviz", "pzKisiselYukle"].forEach(ad => { const eski = window[ad]; if(typeof eski !== "function") return;
@@ -24969,22 +24969,22 @@ const bmTl = v => Math.round(+v || 0).toLocaleString("tr-TR") + " ₺";
 const bmKod = k => (pzKod(k) || String(k || "")).replace(/USDT$/, "");
 const bmSaat = t => t ? new Date(t).toLocaleString("tr-TR", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" }) : "—";
 const bmOnce = t => { if(!t) return "—"; const m = Math.round((Date.now() - new Date(t).getTime())/60000); return m < 1 ? "az önce" : m < 60 ? `${m} dk önce` : m < 1440 ? `${Math.floor(m/60)} sa ${m%60} dk önce` : `${Math.floor(m/1440)} gün önce`; };
-const bmSureAd = a => ({ g1:"kırılım 24 sa", g3:"kırılım 2-3 gün", d1:"dipten dönüş 24 sa", d3:"dipten dönüş 2-3 gün" })[a] || (a || "");
+const bmSureAd = a => ({ g1:"kırılım 24 sa", g3:"kırılım 2-3 gün", d1:"dipten dönüş 24 sa", d3:"dipten dönüş 2-3 gün", p4:"piyango 1 hafta" })[a] || (a || "");
 
-function bmEgri(egri){ if(!egri || egri.length < 2) return ""; const G = 300, Y = 54, t0 = egri[0].t, t1 = egri[egri.length - 1].t || t0 + 1, b = egri.map(e => e.b), lo = Math.min(...b, 5000)*.985, hi = Math.max(...b, 5000)*1.015;
+function bmEgri(egri){ if(!egri || egri.length < 2) return ""; const G = 300, Y = 54, t0 = egri[0].t, t1 = egri[egri.length - 1].t || t0 + 1, b = egri.map(e => e.b), lo = Math.min(...b, egri[0].b)*.985, hi = Math.max(...b, egri[0].b)*1.015;
   const x = t => ((t - t0)/((t1 - t0) || 1))*G, y = v => Y - (v - lo)/((hi - lo) || 1)*Y, son = b[b.length - 1];
-  return `<svg viewBox="0 0 ${G} ${Y}" preserveAspectRatio="none"><line x1="0" x2="${G}" y1="${y(5000).toFixed(1)}" y2="${y(5000).toFixed(1)}" stroke="rgba(255,255,255,.2)" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>
-    <polyline fill="none" stroke="${son >= 5000 ? "#5BD08B" : "#FF4A55"}" stroke-width="2" vector-effect="non-scaling-stroke" points="${egri.map(e => `${x(e.t).toFixed(1)},${y(e.b).toFixed(1)}`).join(" ")}"/></svg>`; }
+  return `<svg viewBox="0 0 ${G} ${Y}" preserveAspectRatio="none"><line x1="0" x2="${G}" y1="${y(egri[0].b).toFixed(1)}" y2="${y(egri[0].b).toFixed(1)}" stroke="rgba(255,255,255,.2)" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>
+    <polyline fill="none" stroke="${son >= egri[0].b ? "#5BD08B" : "#FF4A55"}" stroke-width="2" vector-effect="non-scaling-stroke" points="${egri.map(e => `${x(e.t).toFixed(1)},${y(e.b).toFixed(1)}`).join(" ")}"/></svg>`; }
 
 function bmKasa(ad, alt, K){ if(!K) return "";
   const kz = (K.bakiye/K.bas - 1)*100, turlar = K.turlar || [], acikPara = (K.acik || []).reduce((t, p) => t + (+p.para || 0), 0);
-  const yuklenen = (turlar.length + 1)*5000, simdi = turlar.reduce((t, x) => t + x.son, 0) + K.bakiye;
+  const yuklenen = (turlar.length + 1)*K.bas, simdi = turlar.reduce((t, x) => t + x.son, 0) + K.bakiye;
   return `<div class="bmKasa"><small>${ad}${K.tur > 1 ? ` · tur ${K.tur}` : ""}</small>
     <div class="bmB"><b class="${K.bakiye >= K.bas ? "art" : "az"}">${bmTl(K.bakiye)}</b><em class="${kz >= 0 ? "art" : "az"}">${pzYuzde(kz, 1)}</em></div>
     <div class="bmAlt">${alt}${turlar.length ? `<br>Batan turlar: ${turlar.map(t => `tur ${t.tur} → ${bmTl(t.son)}`).join(" · ")} · toplam yüklenen ${bmTl(yuklenen)} → şu an ${bmTl(simdi)}` : ""}</div>
     <div class="bmIki"><div><b>${K.islem || 0}</b><span>işlem</span></div><div><b>${K.islem ? "%" + Math.round(K.kazan/K.islem*100) : "—"}</b><span>kazanan</span></div><div><b>${(K.acik || []).length}</b><span>açık${acikPara ? " · " + bmTl(acikPara) : ""}</span></div></div>
     ${bmEgri((K.egri || []).slice(-600))}
-    <div class="bmAlt" style="margin-top:4px">En derin düşüş %${Math.round((K.maxDus || 0)*100)} · kesik çizgi = 5.000 ₺</div></div>`; }
+    <div class="bmAlt" style="margin-top:4px">En derin düşüş %${Math.round((K.maxDus || 0)*100)} · kesik çizgi = ${bmTl(K.bas)}${K.eski ? `<br>Önceki ${bmTl(K.eski.bas)}'lik deneme ${bmTl(K.eski.son)} ile kapandı (${K.eski.islem} işlem)` : ""}</div></div>`; }
 
 function bmPoz(K, ad){ const B = PZ.bot, L = (K?.acik || []).map(p => ({ p, s:B.acik.find(x => x.id === p.id) || {} }));
   if(!L.length) return "";
@@ -25006,14 +25006,14 @@ function bmCiz(){
   const bugunKap = B.kapali.filter(x => x.ct >= gun0.getTime()), bugunAc = [...B.acik, ...B.kapali].filter(x => x.t >= gun0.getTime());
   const ort = L => L.length ? L.reduce((t, x) => t + x.net, 0)/L.length : null, oB = ort(bugunKap), isa = L => L.length ? Math.round(L.filter(x => x.net > 0).length/L.length*100) : null;
   const son = B.kapali.slice(-12).reverse();
-  const sure = tf => { const a = A?.[tf]; const kn = r.kasa?.kanit?.[tf]; if(!a && tf[0] === "d") return `<div><b class="off">${pzStratAd(tf)}</b><small>bir sonraki eğitimde başlar</small></div>`; return `<div><b class="${a?.aktif || kn ? "on" : "off"}">${pzStratAd(tf)}: ${a?.aktif || kn ? "AÇIK" : "KAPALI"}</b><small>${kn ? `canlıda kanıtlandı · ayar ${kn.i + 1} · ${kn.n} işlem` : a?.te ? `ileri test ${pzYuzde(a.te.ort, 2)} / işlem` : "eğitim bekleniyor"}</small></div>`; };
+  const sure = tf => { const a = A?.[tf]; const kn = r.kasa?.kanit?.[tf]; if(!a && (tf[0] === "d" || tf === "p4")) return `<div><b class="off">${pzStratAd(tf)}</b><small>bir sonraki eğitimde başlar</small></div>`; return `<div><b class="${a?.aktif || kn ? "on" : "off"}">${pzStratAd(tf)}: ${a?.aktif || kn ? "AÇIK" : "KAPALI"}</b><small>${kn ? `canlıda kanıtlandı · ayar ${kn.i + 1} · ${kn.n} işlem` : a?.te ? `ileri test ${pzYuzde(a.te.ort, 2)} / işlem` : "eğitim bekleniyor"}</small></div>`; };
   k.innerHTML = `
     <div class="bmDurum ${akt ? "ok" : "kapali"}"><b>${akt ? "☁️ Bot çalışıyor" : "☁️ Bot son " + bmOnce(r.son_tarama) + " çalıştı"}</b> · son tarama ${bmOnce(r.son_tarama)} · ${d.taranan || 0} coin · son eğitim ${bmOnce(r.son_egitim)}${A?.surum ? ` · algoritma v${A.surum}` : ""}</div>
-    ${K ? bmKasa("Disiplinli kasa", "Sadece programın önerdiği ayarla girer. Program “bekle” diyorsa nakitte bekler. Gerçek paraya bu kasa örnek alınacak.", K.disiplin)
-        + bmKasa("Her fırsata giren kasa", "Her sinyale girer, karşılaştırma için.", K.her) : `<div class="bmBos">Kasa bilgisi bir sonraki taramada gelir.</div>`}
-    <div class="bmBas">Program şu an ne diyor?</div>${pzRejimHtml(d)}<div class="bmSure">${sure("g1")}${sure("g3")}</div><div class="bmSure" style="margin-top:8px">${sure("d1")}${sure("d3")}</div>
+    ${K ? bmKasa("Disiplinli kasa", "Sadece kendini kanıtlamış stratejilerle girer. Program “bekle” diyorsa nakitte bekler. Aynı anda en fazla 2 işlem, işlem başı kasanın %5'i riskte. Gerçek paraya bu kasa örnek alınacak.", K.disiplin)
+        + bmKasa("Riskli kasa · piyango", "Piyango stratejisinin sinyallerine girer: büyük hedef, büyük risk. Aynı anda en fazla 5 işlem, işlem başı kasanın %3'ü riskte.", K.her) : `<div class="bmBos">Kasa bilgisi bir sonraki taramada gelir.</div>`}
+    <div class="bmBas">Program şu an ne diyor?</div>${pzRejimHtml(d)}<div class="bmSure">${sure("g1")}${sure("g3")}</div><div class="bmSure" style="margin-top:8px">${sure("d1")}${sure("d3")}</div><div class="bmSure" style="margin-top:8px">${sure("p4")}</div>
     <div class="bmBas">Açık pozisyonlar (kasalar)</div>
-    <div class="bmL">${(bmPoz(K?.disiplin, "disiplinli") + bmPoz(K?.her, "her fırsat")) || `<div class="bmBos">Kasada açık pozisyon yok.</div>`}</div>
+    <div class="bmL">${(bmPoz(K?.disiplin, "disiplinli") + bmPoz(K?.her, "riskli")) || `<div class="bmBos">Kasada açık pozisyon yok.</div>`}</div>
     ${(K?.disiplin?.gecmis?.length || K?.her?.gecmis?.length) ? `<div class="bmBas">Kasanın son işlemleri</div><div class="bmL">${bmGecmis(K.disiplin)}${bmGecmis(K.her)}</div>` : ""}
     <div class="bmBas">Bugün tüm sanal denemeler (5 ayar birden)</div>
     <div class="bmOzet"><div><b>${bugunAc.length}</b><span>bugün açılan</span></div><div><b>${bugunKap.length}</b><span>bugün sonuçlanan</span></div>
@@ -25034,7 +25034,7 @@ document.addEventListener("visibilitychange", () => { try{ if(document.visibilit
       const b = document.createElement("div"); b.innerHTML = `<button class="serit kizil" onclick="go('botMob')"><div class="sDoku"></div><div class="sCizgi"></div><span class="sIkon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M4 16l5-5 4 3 7-8"/><path d="M15 6h5v5"/></svg></span><div class="sIcerik"><b>Bot Kasası</b><small class="bmSerit" id="bmSerit">5.000 ₺ ne oldu?</small></div><span class="sOk">${svg("chevron")}</span></button>`;
       const ilk = v.querySelector(".kurSerit"); ilk ? ilk.after(b.firstElementChild) : v.prepend(b.firstElementChild);
       sb.from("piyasa_bot").select("kasa").eq("user_id", ME.id).maybeSingle().then(({ data }) => { const K = data?.kasa, e = document.getElementById("bmSerit"); if(!e || !K) return;
-        e.textContent = `Disiplinli ${bmTl(K.disiplin?.bakiye)} · Her fırsat ${bmTl(K.her?.bakiye)} · ${(K.disiplin?.islem || 0) + (K.her?.islem || 0)} işlem`; }).catch(() => {});
+        e.textContent = `Disiplinli ${bmTl(K.disiplin?.bakiye)} · Riskli ${bmTl(K.her?.bakiye)} · ${(K.disiplin?.islem || 0) + (K.her?.islem || 0)} işlem`; }).catch(() => {});
     }catch(e){} return r; }; ekranlar.ana = anaMenu; }
 
 // PC algoritma ekraninda "50 coin" yazisi: egitim 50 coinle, tarama ~150 coinle yapiliyor
@@ -25044,8 +25044,8 @@ document.addEventListener("visibilitychange", () => { try{ if(document.visibilit
 /* ================= v1.5.2 · 4 STRATEJI + BTC TREND FILTRESI =================
    Bot artik 2 strateji ailesini ayni anda dener: tepe kirilimi (g1/g3) ve dipten donus (d1/d3). Her ayarda BTC trend filtresi de denenir.
    Kasalar ve gercege gecis listesi hepsini birlikte degerlendirir; hangi strateji ileri testte ve canlida tutarsa o acilir. */
-PZ_ALGO_TF.d1 = { ...PZ_ALGO_TF.g1, ad:"Dipten dönüş · 24 saat" }; PZ_ALGO_TF.d3 = { ...PZ_ALGO_TF.g3, ad:"Dipten dönüş · 2-3 gün" };
-const pzStratAd = tf => ({ g1:"Kırılım · 24 saat", g3:"Kırılım · 2-3 gün", d1:"Dipten dönüş · 24 saat", d3:"Dipten dönüş · 2-3 gün" })[tf] || tf;
+PZ_ALGO_TF.d1 = { ...PZ_ALGO_TF.g1, ad:"Dipten dönüş · 24 saat" }; PZ_ALGO_TF.p4 = { ...PZ_ALGO_TF.g3, ad:"Piyango · 1 hafta", Lb:42 }; PZ_ALGO_TF.d3 = { ...PZ_ALGO_TF.g3, ad:"Dipten dönüş · 2-3 gün" };
+const pzStratAd = tf => ({ g1:"Kırılım · 24 saat", g3:"Kırılım · 2-3 gün", d1:"Dipten dönüş · 24 saat", d3:"Dipten dönüş · 2-3 gün", p4:"Piyango · 1 hafta" })[tf] || tf;
 const pzRjAd = r => r === 1 ? "BTC yükselişteyken" : r === 2 ? "BTC düşüşteyken" : "BTC'ye bakmadan";
 function pzRejimHtml(d){ if(!d?.rejim) return ""; const y = d.rejim === 1;
   return `<div class="bmDurum ${y ? "ok" : "kapali"}" style="margin:0 0 8px"><b>${y ? "🐂 BTC yükseliş trendinde" : "🐻 BTC düşüş trendinde"}</b> · 4 saatlik 50 mumluk ortalamanın ${d.btcFark != null ? `%${Math.abs(d.btcFark).toLocaleString("tr-TR", { maximumFractionDigits:1 })} ` : ""}${y ? "üstünde" : "altında"}${(d.acikStrateji || []).length ? "" : " · şu an hiçbir strateji açık değil: program nakitte bekliyor"}</div>`; }
@@ -25057,9 +25057,9 @@ function pzKuralYazi(tf, P){ if(!P) return "henüz eğitilmedi"; const T = PZ_AL
     const st = x => x ? `<span class="${x.ort > 0 ? "art" : "az"}">${pzYuzde(x.ort, 2)}</span> <small>(${x.n} · %${Math.round(x.isabet*100)})</small>` : "—";
     const sat = tf => { const X = A[tf], L = S.kapali.filter(x => x.alt === tf && x.algo === A.surum), n = L.length, o = n ? L.reduce((t, x) => t + x.net, 0)/n : null, ac = X?.aktif || K[tf];
       return `<tr><td><b>${pzStratAd(tf)}</b><small class="pzAlt">${esc(pzKuralYazi(tf, X?.P))}</small></td><td class="sag">${st(X?.te)}</td><td class="sag">${n ? `<span class="${o > 0 ? "art" : "az"}">${pzYuzde(o, 2)}</span> <small>(${n})</small>` : "birikiyor"}</td><td>${!X ? `<span class="soluk">sonraki eğitimde</span>` : ac ? `<span class="pzNeK yesil">AÇIK</span>` : `<span class="pzNeK kirmizi">KAPALI</span>`}</td></tr>`; };
-    const tablo = `${pzRejimHtml(r?.durum).replace('class="bmDurum', 'class="pzBot').replace(/ style="[^"]*"/, "")}<div class="pzMini">🏁 Strateji yarışı · 4 strateji aynı anda sanal deneniyor · hangisi ileri testte ve canlıda kazandırırsa o açılır</div>
-      <table class="pzT"><thead><tr><th>Strateji · en iyi ayar</th><th class="sag">İleri test</th><th class="sag">Canlı sanal</th><th>Durum</th></tr></thead><tbody>${["g1", "g3", "d1", "d3"].map(sat).join("")}</tbody></table>`;
-    h = h.replace(/giriş kuralını her saatte yeniden oynatıp [0-9.]+ farklı ayarı deniyor/, "4 stratejiyi (tepe kırılımı ve dipten dönüş, 24 saat ve 2-3 gün) BTC trend filtresiyle birlikte toplam 6.048 farklı ayarla her saatte yeniden oynatıyor");
+    const tablo = `${pzRejimHtml(r?.durum).replace('class="bmDurum', 'class="pzBot').replace(/ style="[^"]*"/, "")}<div class="pzMini">🏁 Strateji yarışı · 5 strateji aynı anda sanal deneniyor · hangisi ileri testte ve canlıda kazandırırsa o açılır</div>
+      <table class="pzT"><thead><tr><th>Strateji · en iyi ayar</th><th class="sag">İleri test</th><th class="sag">Canlı sanal</th><th>Durum</th></tr></thead><tbody>${["g1", "g3", "d1", "d3", "p4"].map(sat).join("")}</tbody></table>`;
+    h = h.replace(/giriş kuralını her saatte yeniden oynatıp [0-9.]+ farklı ayarı deniyor/, "5 stratejiyi (tepe kırılımı ve dipten dönüş 24 saat / 2-3 gün, küçük coinlerde 1 haftalık piyango) BTC trend filtresiyle birlikte toplam 6.480 farklı ayarla her gün yeniden eğitiyor");
     return h.replace('<div class="pzKarne"><b>Nasıl çalışıyor?</b>', tablo + '<div class="pzKarne"><b>Nasıl çalışıyor?</b>'); }; }
 // gercege gecis listesi: disiplinli kasanin GERCEKTEN yaptigi islemlerle olculur (hangi strateji olursa olsun)
 pzGecisKontrol = function(){
@@ -25079,7 +25079,7 @@ pzGecisKontrol = function(){
     ${tamam ? "" : `<small>Hepsi ✓ olana kadar bot sanal devam eder. Ölçü disiplinli kasanın gerçekten yaptığı işlemler; hepsi tamamlanmadan gerçek paraya geç demeyeceğim.</small>`}</div>`; };
 // "onerilen ayarlarla" kutusu: artik 4 strateji var; acik olani adiyla soyle
 { const eski = pzSanalKatlaHtml; pzSanalKatlaHtml = function(){ const h = eski(), A = pzAlgo(), K = PZ.bot?.row?.kasa?.kanit || {};
-    const acik = ["g1", "g3", "d1", "d3"].filter(tf => A?.[tf]?.aktif || K[tf]).map(pzStratAd);
+    const acik = ["g1", "g3", "d1", "d3", "p4"].filter(tf => A?.[tf]?.aktif || K[tf]).map(pzStratAd);
     return h.replace("Şu an iki süre de kapalı: program “bekle” diyor, 5.000 ₺ cepte duruyor.", acik.length ? `Açık strateji: ${acik.join(", ")}. Sinyal gelince disiplinli kasa girer; ilk işlemler sonuçlanınca burada görünür.` : "Şu an hiçbir strateji açık değil: program “bekle” diyor, 5.000 ₺ cepte duruyor."); }; }
 
 // canli sonuc AYARIN KENDISINE gore (bot 1.9.1+): her egitimde surum degisse de ayni ayarin canli islemleri birikir
@@ -25089,7 +25089,7 @@ const pzAyarKimlik = (tf, P) => tf + ":" + Object.keys(P || {}).sort().map(k => 
     return { n, ort: n ? L.reduce((t, x) => t + x.net, 0)/n : null, isabet: n ? L.filter(x => x.net > 0).length/n : null }; }; }
 { const eski = pzAlgoHtml; pzAlgoHtml = function(){ let h = eski(); const A = pzAlgo(); if(!A?.surum) return h;
     // strateji yarisi tablosundaki "canli sanal": en iyi ayarin (ayar 1) kendi canli sonucu
-    ["g1", "g3", "d1", "d3"].forEach(tf => { const c = A[tf]?.ilk5?.length ? pzAyarCanli(A, tf, 0) : null; if(!c) return;
+    ["g1", "g3", "d1", "d3", "p4"].forEach(tf => { const c = A[tf]?.ilk5?.length ? pzAyarCanli(A, tf, 0) : null; if(!c) return;
       const ad = pzStratAd(tf), i = h.indexOf(`<b>${ad}</b>`); if(i < 0) return; const j = h.indexOf("</tr>", i), satir = h.slice(i, j);
       const yeni = satir.replace(/(<td class="sag">)(?:birikiyor|<span[^>]*>[^<]*<\/span> <small>\(\d+\)<\/small>)(<\/td><td>(?:<span class="soluk">|<span class="pzNeK))/, `$1${c.n ? `<span class="${c.ort > 0 ? "art" : "az"}">${pzYuzde(c.ort, 2)}</span> <small>(${c.n} · %${Math.round(c.isabet*100)})</small>` : "birikiyor"}$2`);
       h = h.slice(0, i) + yeni + h.slice(j); });
@@ -25669,6 +25669,75 @@ details.dgPanel{padding:10px 14px}details.dgPanel>summary{display:flex;align-ite
 .dgAc{margin:8px 0 0;font-size:12px;color:var(--ink-2,#bbb);line-height:1.5}
 .em5Hisse{display:flex;flex-direction:column;gap:6px;margin:10px 0 4px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08)}
 .em5Hisse>div{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.em5Hisse span{flex:1 1 140px}.em5Hisse span small{color:var(--ink-3,#999);margin-left:6px}.em5Hisse b{font-size:15px;color:#F4E3C1}.em5Hisse em{font-style:normal;font-size:11.5px;color:var(--ink-3,#999)}.em5Hisse>small{font-size:11px;color:var(--ink-3,#999)}`; document.head.appendChild(st); }
+
+/* ================= EMSAL v6 · KOY DIBI MANTIGI + IMAR POTANSIYELI + TABAN / TATLI NOKTA / ILAN FIYATI =================
+   Bir ekspertizcinin (ve senin) dusundugu gibi:
+   - Parsel koyun dibindeyse (koy merkezine 800 m icinde), "koye yakin / koy ici / koye sifir / yerlesime yakin / imara yakin" diye ilan edilen emsaller
+     cok daha agir basar; "issiz / tarla ici / koye uzak" olanlar neredeyse hic sayilmaz. Koyun uzak buyuk tarlalari kucuk hisseyi asagi cekmez.
+   - Yakindaki IMARLI arsalar bire bir kiyaslanmaz ama imar potansiyeli yok sayilmaz: imarli m2 fiyatinin %60'i ayri bir yontem olarak hesaba girer.
+   - Her hisse ve butun parsel icin uc rakam: TABAN (altina satilmaz), TATLI NOKTA (gercekci satis), ILAN FIYATI (ilana bu m2 fiyatiyla konur). */
+
+const EM6_YAKIN = /k[öo]y(e|[üu]n)?\s*(yak[ıi]n|i[çc]i|i[çc]inde|dibi|dibinde|s[ıi]f[ıi]r|kenar)|k[öo]ye\s*\d+\s*(m|mt|metre)\b|yerle[şs]i(m|me) (yak|alan)|imar(a|[ıi]n)? (yak[ıi]n|s[ıi]n[ıi]r|\d+\s*(m|mt))|imarl[ıi] alana|k[öo]y merkezine|okula yak[ıi]n|camiye yak[ıi]n/i;
+const EM6_UZAK = /[ıi]ss[ıi]z|tarla i[çc]i|yolsuz|k[öo]ye uzak|da[ğg] ba[şs]|orman i[çc]i|yolu yok/i;
+const em6Metin = x => (x.baslik || "") + " " + decodeURIComponent((String(x.url || "").match(/\/ilan\/([^/]+)/) || [])[1] || "").replace(/-/g, " ");
+function em6KoyKm(p){ const c = (p.analiz?.cevre?.satirlar || []).find(s => s.k === "koy" && !s.yok); if(c && (c.m != null)) return c.m/1000;
+  const K = EM4_KOY[p.id] || [], k = K.find(z => z.k === em4Nrm(p.mahalle)); return k ? k.km : null; }
+
+function em6Uzlastir(H, p){ const il = H.Y.find(y => y.k === "ilan"); if(!H.Y.length) return H;
+  if(il){ const v = dgAgirlikliMedyan(il.liste); if(v){ il.v = v; il.alt = dgYuzdelikW(il.liste, .25); il.ust = dgYuzdelikW(il.liste, .75); il.dag = (il.ust - il.alt)/v; } }
+  const T = H.Y.reduce((t, y) => t + y.w, 0), m = Math.exp(H.Y.reduce((t, y) => t + y.w*Math.log(y.v), 0)/T), yay = Math.max(...H.Y.map(y => y.v))/Math.min(...H.Y.map(y => y.v));
+  const gen = Math.min(.22, Math.max(.07, (il?.dag ?? .3)/2.5, H.Y.length > 1 ? (yay - 1)/5 : 0)), alan = +p.alan_m2 || 0;
+  H.sonuc = { ...(H.sonuc || { guven:"Düşük", neden:[] }), v:Math.round(m), bant:[Math.round(m*(1 - gen)/10)*10, Math.round(m*(1 + gen)/10)*10] }; H.sonuc.toplam = H.sonuc.bant.map(b => b*alan);
+  return H; }
+
+{ const eski = dgHesap; dgHesap = function(p, A, E){ const H = eski(p, A, E), il = H.Y.find(y => y.k === "ilan"), km = em6KoyKm(p), dibi = km != null && km <= .8;
+    if(il){ let nY = 0;
+      il.liste.forEach(r => { const t = em6Metin(r.x); r.yakin = EM6_YAKIN.test(t); r.uzak = EM6_UZAK.test(t);
+        if(dibi){ if(r.yakin){ r.w *= 2.2; nY++; } else if(r.uzak) r.w *= .15; else if(r.oran > 3) r.w *= .5; } else if(r.uzak) r.w *= .5; });
+      if(dibi) il.not += ` · parsel köyün dibinde (${nf2(km)} km): köye yakın ilan edilen ${nY} emsal daha ağır basıyor`; }
+    // imar potansiyeli: yakindaki imarli arsalar (hesaptan elenmis olsalar da) -> %60
+    if(dibi){ const IM = (p.analiz?.emsal?.ilanlar?.length ? p.analiz.emsal.ilanlar : E?.ilanlar || []).filter(x => x.birim > 0 && (/imarl[ıi]|imar[ıi] var|konut imar/i.test(em6Metin(x)) || (x.otoRed || []).some(n => /imarlı/.test(n))) && !/ticari|sanayi|villa/i.test(em6Metin(x)))
+        .filter(x => { const K = em4IlanKoy(p, x); return K?.ayni || (K?.km != null && K.km <= 6) || (x.konum?.km != null && x.konum.km <= 6); });
+      if(IM.length){ const med = yuzdelik(IM.map(x => x.birim), .5), ind = H.ay?.ilanIndirim ?? .1, alan = +p.alan_m2 || 0;
+        H.Y.push({ k:"imar", ad:"İmar potansiyeli", v:med*.6*(1 - ind), alt:med*.5*(1 - ind), ust:med*.7*(1 - ind), w:alan <= 3000 ? .5 : .25, not:`yakındaki ${IM.length} imarlı ilanın ortanca m² fiyatı ${nf(Math.round(med))} ₺ × %60 · köy dibi tarla imarlıya bire bir kıyaslanmaz ama potansiyeli fiyata girer` });
+        if(H.sonuc) H.sonuc.neden.push(`yakında ${IM.length} imarlı arsa var (imar potansiyeli)`); } }
+    em6Uzlastir(H, p);
+    if(H.sonuc && dibi && il && il.liste.filter(r => r.yakin).length >= 2 && H.sonuc.guven === "Düşük") H.sonuc.guven = "Orta";
+    return H; }; }
+
+// uc rakam: taban / tatli nokta / ilan fiyati (m2 basina)
+function em6Uc(H, k){ const S = H?.sonuc; if(!S) return null; const ind = H.ay?.ilanIndirim ?? .1, yuv = v => Math.round(v/10)*10;
+  return { taban:yuv(S.bant[0]*k), tatli:yuv(S.v*k), ust:yuv(S.bant[1]*k), ilan:yuv(S.bant[1]*k/(1 - ind)) }; }
+{ const eski = emsalDegerleme; emsalDegerleme = function(p, A, E){ const D = eski(p, A, E);
+    try{ const yuv = (v, s) => Math.round(v/s)*s; D.uc = em6Uc(A.deger, D.carpan);
+      if(D.hisse?.length){ D.hisse = D.hisse.map(h => { const H = dgHesap({ ...p, alan_m2:h.m2 }, A, E), U = em6Uc(H, D.carpan*.95); if(!U) return h;
+          return { ...h, uc:U, m2f:[U.taban, U.ust], fiyat:[yuv(U.taban*h.m2, 5000), yuv(U.ust*h.m2, 5000)], tatliTop:yuv(U.tatli*h.m2, 5000), ilanTop:yuv(U.ilan*h.m2, 5000) }; });
+        const hs = { toplamM2:D.hisse.reduce((t, h) => t + h.m2, 0), fiyat:[0, 1].map(i => D.hisse.reduce((t, h) => t + h.fiyat[i], 0)) };
+        hs.ilan = yuv(D.hisse.reduce((t, h) => t + (h.ilanTop || h.fiyat[1]), 0), 50000); hs.m2Ort = hs.fiyat.map(v => Math.round(v/hs.toplamM2)); D.hs = hs;
+        const grup = []; D.hisse.forEach(h => { const g = grup.find(x => Math.abs(x.m2 - h.m2) < .01); if(g){ g.adet++; g.nolar.push(h.no); } else grup.push({ ...h, adet:1, nolar:[h.no] }); }); D.grup = grup;
+        D.adim = D.adim.filter(x => !/^Hisse .*kendi büyüklüğündeki/.test(x[0]));
+        const i = D.adim.findIndex(x => /Hisseli satış ortalaması/.test(x[0])), ek = grup.filter(g => g.uc).map(g => [`Hisse ${g.nolar.join(", ")} (${nf2(g.m2)} m²) · taban / tatlı nokta / ilan`, `${nf(g.uc.taban)} / ${nf(g.uc.tatli)} / ${nf(g.uc.ilan)} ₺/m²`]);
+        if(i >= 0) D.adim.splice(i, 0, ...ek); }
+      if(D.uc) D.adim.push(["Bütün parsel · taban / tatlı nokta / ilan", `${nf(D.uc.taban)} / ${nf(D.uc.tatli)} / ${nf(D.uc.ilan)} ₺/m²`]);
+    }catch(e){ console.log("em6", e); }
+    return D; }; }
+
+// kart: hisse kutusu yerine "m2 fiyati" tablosu
+{ const eski = emsalKartiHtml; emsalKartiHtml = async function(id, p, a){ let h = await eski(id, p, a); if(!h) return h;
+    try{ const A = emsalAnaliz(p, a.emsal, null); if(!A) return h; const D = emsalDegerleme(p, A, a.emsal);
+      const sat = (ad, alt, U, tatliTop) => U ? `<tr><td>${ad}<small>${alt}</small></td><td>${nf(U.taban)}</td><td class="em6T">${nf(U.tatli)}</td><td>${nf(U.ilan)}</td><td>${tatliTop ? em5Kisa(tatliTop) : ""}</td></tr>` : "";
+      const satirlar = (D.grup || []).filter(g => g.uc).map(g => sat(`Hisse ${g.nolar.join(", ")}`, `${nf2(g.m2)} m²${g.adet > 1 ? " · her biri" : ""}`, g.uc, g.tatliTop)).join("") + sat("Bütün parsel", `tek tapu · ${nf2(+p.alan_m2 || 0)} m²`, D.uc, D.uc ? D.uc.tatli*(+p.alan_m2 || 0) : 0);
+      const tablo = `<div class="em6"><table><thead><tr><th>m² fiyatı (₺)</th><th>Taban</th><th>Tatlı nokta</th><th>İlan fiyatı</th><th>Tatlı nokta toplam</th></tr></thead><tbody>${satirlar}</tbody></table>
+        <small>Taban: altına satma · Tatlı nokta: gerçekçi satış · İlan fiyatı: pazarlık payıyla ilana yazılacak m² fiyatı${(A.deger?.Y || []).some(y => y.k === "imar") ? " · imar potansiyeli dahil" : ""}</small></div>`;
+      h = /<div class="em5Hisse">/.test(h) ? h.replace(/<div class="em5Hisse">[\s\S]*?<\/small><\/div>/, tablo) : h.replace(/(<svg class="ekEmsalSvg")/, tablo + "$1");
+    }catch(e){ console.log("em6 kart", e); }
+    return h; }; }
+
+{ const st = document.createElement("style"); st.textContent = `
+.em6{margin:10px 0 4px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);overflow-x:auto}
+.em6 table{width:100%;border-collapse:collapse;font-size:13px}.em6 th{font-size:11px;font-weight:600;color:var(--ink-3,#999);text-align:right;padding:4px 6px}.em6 th:first-child{text-align:left}
+.em6 td{padding:7px 6px;border-top:1px solid rgba(255,255,255,.06);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.em6 td:first-child{text-align:left;white-space:normal}.em6 td small{display:block;font-size:11px;color:var(--ink-3,#999)}
+.em6 td.em6T{font-weight:800;color:#F4E3C1;font-size:15px}.em6>small{display:block;margin-top:6px;font-size:11px;color:var(--ink-3,#999)}`; document.head.appendChild(st); }
 
 baslat();
 
