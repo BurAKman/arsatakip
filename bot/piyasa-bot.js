@@ -11,7 +11,7 @@
 
 const SB = (process.env.SB_URL || "").replace(/\/+$/, ""), KEY = process.env.SB_KEY || process.env.SB_SERVICE_KEY, UID = process.env.USER_ID || process.env.BOT_USER_ID;
 const BN = process.env.BINANCE_BASE || "https://data-api.binance.vision";
-const EGITIM_SAAT = +(process.env.EGITIM_SAAT || 6), TARAMA_COIN = +(process.env.TARAMA_COIN || 150), EGITIM_COIN = 50;
+const EGITIM_SAAT = +(process.env.EGITIM_SAAT || 24), TARAMA_COIN = +(process.env.TARAMA_COIN || 150), EGITIM_COIN = 50;
 if(!SB || !KEY || !UID){ console.error("SB_URL / SB_SERVICE_KEY / BOT_USER_ID eksik (GitHub > Settings > Secrets and variables > Actions)"); process.exit(1); }
 
 const IZGARA = { hedefK:[.6, .8, 1, 1.3, 1.7], stopK:[.5, .7, 1, 1.4], rsiMax:[70, 80, 95], hk:[1, 1.5, 2.5], L:[1, 2, 4], dMin:[-1, .03], rj:[0, 1] };
@@ -23,6 +23,7 @@ const ayarlar = T => { const S = [];
   if(T.tip === "kir"){ for(const a of IZGARA.hedefK) for(const b of IZGARA.stopK) for(const r of IZGARA.rsiMax) for(const h of IZGARA.hk) for(const L of IZGARA.L) for(const dm of IZGARA.dMin) for(const rj of IZGARA.rj) S.push({ hedefK:a, stopK:b, rsiMax:r, hk:h, L, dMin:dm, rj }); }
   else { const G = IZGARA_DIP; for(const r of G.rsiMin) for(const d of G.dusK) for(const a of G.hedefK) for(const b of G.stopK) for(const y of G.yesil) for(const rj of G.rj) S.push({ rsiMin:r, dusK:d, hedefK:a, stopK:b, yesil:y, rj, L:1 }); }
   return S; };
+const ayarKimlik = (tf, P) => tf + ":" + Object.keys(P || {}).sort().map(k => k + "=" + P[k]).join(",");
 const ayarAnahtar = (T, P) => T.tip === "kir" ? `${P.hedefK}|${P.stopK}|${P.L}` : `${P.rsiMin}|${P.dusK}|${P.stopK}`;
 const HARIC = /^(USDC|FDUSD|TUSD|USDP|EUR|TRY|BUSD|DAI|PAXG|WBTC|USD1|BFUSD|XUSD|AEUR|EURI|UST|USTC)$/;
 const bekle = ms => new Promise(r => setTimeout(r, ms));
@@ -105,7 +106,7 @@ async function tara(A, masraf, RJ){
       const d = hazirla(R, tumL(T), RJ, T.ms/1000);
       for(const a of AY){ const s = sinyal(d, a.P, T); if(!s?.ok) continue; const k = "KRIPTO:" + x.kod, an = `${k}|${tf}|${a.i}`; if(var_.has(an) || mumVar.has(`${an}|${tGiris}`)) continue; var_.add(an); mumVar.add(`${an}|${tGiris}`);
         yeni.push({ user_id:UID, k, alt:tf, ai:a.i, algo:A.surum, giris:s.c, hedef:s.hed, stop:s.st, t:new Date(tGiris).toISOString(), son:new Date(tGiris + T.H*T.ms).toISOString(),
-          oz:{ alt:tf, tip:T.tip, rj:s.rj, pazar:"kripto", rsi:Math.round(s.rsi), hk:+(s.hk || 0).toFixed(2), kir:T.tip === "kir", deg:x.d, saat:+new Date(tGiris).toLocaleString("en-US", { timeZone:"Europe/Istanbul", hour:"numeric", hour12:false }) % 24, ih:null, bn:x.bn }, kaynak:"bot", durum:"acik" }); } }); }
+          oz:{ alt:tf, tip:T.tip, pk:ayarKimlik(tf, a.P), rj:s.rj, pazar:"kripto", rsi:Math.round(s.rsi), hk:+(s.hk || 0).toFixed(2), kir:T.tip === "kir", deg:x.d, saat:+new Date(tGiris).toLocaleString("en-US", { timeZone:"Europe/Istanbul", hour:"numeric", hour12:false }) % 24, ih:null, bn:x.bn }, kaynak:"bot", durum:"acik" }); } }); }
   const eklenen = []; for(let i = 0; i < yeni.length; i += 200){ const r = await sb("piyasa_sanal", "POST", yeni.slice(i, i + 200), { Prefer:"return=representation" }); if(Array.isArray(r)) eklenen.push(...r); }
   return { taranan:C.length, yeni:yeni.length, eklenen }; }
 
@@ -124,8 +125,13 @@ async function sonuclandir(masraf){
    "disiplin": sadece programin ONERDIGI ayarla (ileri testte acik ya da canli kanitli); program "bekle" diyorsa nakitte bekler.
    "her"     : her surenin en iyi ayarina (ayar 1) her sinyalde girer. */
 const KASA_BAS = 5000, KASA_RISK = 5, KASA_MAKS = 2, KASA_BATTI = 500;
-async function canliKanit(A){ const L = await sb(`piyasa_sanal?user_id=eq.${UID}&durum=eq.kapali&algo=eq.${A.surum}&select=alt,ai,net&limit=20000`), k = {};
-  for(const tf of Object.keys(TF)){ let en = null; for(let i = 0; i < 5; i++){ const X = L.filter(x => x.alt === tf && (x.ai ?? 0) === i), n = X.length, ort = n ? X.reduce((t, x) => t + +x.net, 0)/n : 0; if(n >= 30 && ort > .1 && (!en || ort > en.ort)) en = { i, n, ort }; } k[tf] = en; } return k; }
+// canli kanit: ayarin KENDISINE gore (surum/sira degil). Egitim ayni ayari tekrar secerse gecmis canli sonuclari birikmeye devam eder.
+async function canliKanit(A){ const t0 = new Date(Date.now() - 45*86400000).toISOString();
+  const L = await sb(`piyasa_sanal?user_id=eq.${UID}&durum=eq.kapali&t=gte.${t0}&select=alt,net,oz&limit=20000`), k = {};
+  for(const tf of Object.keys(TF)){ let en = null; (A[tf]?.ilk5 || []).forEach((a, i) => { const pk = ayarKimlik(tf, a.P), X = L.filter(x => x.oz?.pk === pk), n = X.length, ort = n ? X.reduce((t, x) => t + +x.net, 0)/n : 0;
+      a.canli = { n, ort:+ort.toFixed(3), isabet:n ? +(X.filter(x => +x.net > 0).length/n).toFixed(3) : null };
+      if(n >= 30 && ort > .1 && (!en || ort > en.ort)) en = { i, n, ort }; }); if(en) k[tf] = en; }
+  return k; }
 function kasaYeni(){ return { tur:1, bas:KASA_BAS, bakiye:KASA_BAS, acik:[], turlar:[], egri:[{ t:Date.now(), b:KASA_BAS }], islem:0, kazan:0, tepe:KASA_BAS, maxDus:0 }; }
 function kasaIsle(K, kapanan, adaylar){
   // 1) kapanan islemler
