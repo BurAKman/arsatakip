@@ -3888,7 +3888,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.11.1";
+const SURUM_MORDOR = "v 1.12.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -22367,7 +22367,7 @@ function pzTablo(){
     <div class="pzMKf mono">${pzPara(s.f, s.para)}</div><div class="pzMKd mono">${pzYuzde(s.deg)}</div>${typeof pysSpark === "function" ? pysSpark(s.spark, 220, 46, pzYon(s.deg) === "art" ? "art" : pzYon(s.deg) === "az" ? "az" : "") : ""}</div>`).join("")}</div>
     ${T === "maden" ? `<div class="pzNot">Gram fiyatlar ons × dolar ÷ 31,1035 ile hesaplanır, Kapalıçarşı'dan biraz farklı olabilir.${PZ.altinGumus ? ` · Altın/gümüş oranı: <b>${PZ.altinGumus.toFixed(1).replace(".", ",")}</b> (tarihsel ortalama ~60-70; yüksekse gümüş görece ucuz)` : ""}</div>` : ""}`;
 }
-const pzKaynakHata = m => `<div class="pzSqlUyar">Liste alınamadı: ${esc(m || "")}. Supabase'deki fonksiyonun bu sürümle güncellenmesi gerekiyor (tkgm-fonksiyon.ts).</div>`;
+const pzKaynakHata = m => /Binance|CoinGecko|geçmişi/.test(m || "") ? `<div class="pzSqlUyar">${esc(m)}</div>` : `<div class="pzSqlUyar">Veri alınamadı: ${esc(m || "")}. Birazdan tekrar dene; sürerse Supabase'deki fonksiyon (tkgm-fonksiyon.ts) güncel mi kontrol edilmeli.</div>`;
 
 async function pzTakipTablo(k){
   if(!PZ.takip.length){ k.innerHTML = `<div class="pcBos">Takip listen boş. Listelerde ★'a basarak hisse, coin ya da maden ekle.</div>`; return; }
@@ -24823,7 +24823,7 @@ pzAlgoTara = async function(){ const A = pzAlgo(); if(!A.g1?.P && !A.g3?.P) retu
     return h; }; }
 
 /* ================= PIYASALAR v9 · 7/24 BULUT BOTU + "5.000 ₺ kac ₺ oldu?" =================
-   - Bot GitHub Actions'ta 15 dakikada bir calisir (bilgisayar kapali olsa da): egitir (6 saatte bir), tarar, sanal islem acar/sonuclandirir,
+   - Bot GitHub Actions'ta 15 dakikada bir calisir (bilgisayar kapali olsa da): egitir (günde bir), tarar, sanal islem acar/sonuclandirir,
      sonuclari Supabase'e (piyasa_bot, piyasa_sanal) yazar. Uygulama buradan okur; bot calisiyorsa bilgisayardaki tarama/egitim kendini durdurur.
    - Sanal katlama: sonuclanan sanal islemler katlama kurallariyla (5.000 ₺, ayni anda en fazla 2 islem, islem basi %5 risk, masraflar dahil)
      zaman sirasiyla yeniden oynatilir: "5.000 ₺ ile baslasaydik su an X ₺". Her ayar icin ayri, onerilen ayar icin ayri. */
@@ -24846,7 +24846,7 @@ async function pzBotYukle(zorla){
   pzSanal = function(){ if(pzBotAktif()) return { acik:PZ.bot.acik, kapali:PZ.bot.kapali, bulut:true }; return eskiS(); };
   pzSanalYaz = function(S){ if(S?.bulut || pzBotAktif()) return; return eskiY(S); };
   pzAlgo = function(){ const L = eskiA(), B = PZ.bot?.row?.algo; if(B?.surum && (pzBotAktif() || !L.surum || (B.t || 0) > (L.t || 0))) return { ...B, gun:L.gun, bulut:true }; return L; }; }
-{ const eski = pzAlgoEgit; pzAlgoEgit = async function(goster){ if(pzBotAktif()){ if(goster) toast("Eğitimi bulut botu yapıyor (6 saatte bir). Hemen eğitmek için: GitHub > Actions > piyasa-bot > Run workflow"); return; } return eski.apply(this, arguments); }; }
+{ const eski = pzAlgoEgit; pzAlgoEgit = async function(goster){ if(pzBotAktif()){ if(goster) toast("Eğitimi bulut botu yapıyor (günde bir). Hemen eğitmek için: GitHub > Actions > piyasa-bot > Run workflow"); return; } return eski.apply(this, arguments); }; }
 { const eski = pzSanalKontrol; pzSanalKontrol = async function(){ if(pzBotAktif()) return 0; return eski.apply(this, arguments); }; }
 
 /* ---------- sanal katlama: 5.000 ₺ ile baslasaydik ---------- */
@@ -24886,10 +24886,10 @@ function pzSanalKatlaHtml(){
 { const eski = pzAlgoHtml;
   pzAlgoHtml = function(){ let h = eski(); const B = PZ.bot, r = B?.row, akt = pzBotAktif(), d = r?.durum || {};
     const dk = v => { const m = Math.round((Date.now() - pzMs(v))/60000); return m < 60 ? `${m} dk önce` : `${Math.round(m/60)} saat önce`; };
-    const durum = akt ? `<div class="pzBot ok"><b>☁️ Bulut botu çalışıyor</b> · bilgisayar kapalı olsa da 15 dakikada bir · son tarama ${dk(r.son_tarama)} (${d.taranan || 0} coin, +${d.yeni || 0} yeni, ${d.bitti || 0} sonuçlandı, ${d.sure || 0} sn) · son eğitim ${r.son_egitim ? dk(r.son_egitim) : "—"} · 6 saatte bir yeniden eğitir</div>`
+    const durum = akt ? `<div class="pzBot ok"><b>☁️ Bulut botu çalışıyor</b> · bilgisayar kapalı olsa da 15 dakikada bir · son tarama ${dk(r.son_tarama)} (${d.taranan || 0} coin, +${d.yeni || 0} yeni, ${d.bitti || 0} sonuçlandı, ${d.sure || 0} sn) · son eğitim ${r.son_egitim ? dk(r.son_egitim) : "—"} · günde bir yeniden eğitir</div>`
       : `<div class="pzBot ${r ? "kapali" : ""}"><b>☁️ Bulut botu ${r ? "son " + dk(r.son_tarama) + " çalıştı · şu an çalışmıyor" : "kurulmadı"}</b> · şimdilik tarama bu bilgisayardan yapılıyor (sadece program açıkken). Kurulum: paketteki OKU-BENI-BOT.txt · GitHub'a gireceğin kimlik: <code>${esc(ME?.id || "")}</code> <button class="pcLink" onclick="navigator.clipboard.writeText('${esc(ME?.id || "")}');toast('Kopyalandı')">kopyala</button>${B?.hata ? ` · <span class="az">${esc(B.hata.slice(0, 120))}</span>` : ""}</div>`;
     h = h.replace('<div class="pzKarne"><b>Nasıl çalışıyor?</b>', durum + pzSanalKatlaHtml() + '<div class="pzKarne"><b>Nasıl çalışıyor?</b>');
-    if(akt) h = h.replace(/<button class="btn"[^>]*onclick="pzAlgoEgit\(true\)">[^<]*<\/button>/, `<span class="soluk">Eğitimi bulut botu yapıyor</span>`).replace("her gece 03:00-06:00 arası kendini yeniden eğitir (program açıksa)", "bulut botu 6 saatte bir yeniden eğitir");
+    if(akt) h = h.replace(/<button class="btn"[^>]*onclick="pzAlgoEgit\(true\)">[^<]*<\/button>/, `<span class="soluk">Eğitimi bulut botu yapıyor</span>`).replace("her gece 03:00-06:00 arası kendini yeniden eğitir (program açıksa)", "bulut botu günde bir yeniden eğitir");
     return h; }; }
 // katlama planinin ustunde de sanal katlama sonucu
 { const eski = pzKatlaHtml; pzKatlaHtml = function(V){ const h = eski(V); return h.replace('<div class="pzMini">🧪 Sanal deneme', pzSanalKatlaHtml() + '<div class="pzMini">🧪 Sanal deneme'); }; }
@@ -25094,6 +25094,126 @@ const pzAyarKimlik = (tf, P) => tf + ":" + Object.keys(P || {}).sort().map(k => 
       const yeni = satir.replace(/(<td class="sag">)(?:birikiyor|<span[^>]*>[^<]*<\/span> <small>\(\d+\)<\/small>)(<\/td><td>(?:<span class="soluk">|<span class="pzNeK))/, `$1${c.n ? `<span class="${c.ort > 0 ? "art" : "az"}">${pzYuzde(c.ort, 2)}</span> <small>(${c.n} · %${Math.round(c.isabet*100)})</small>` : "birikiyor"}$2`);
       h = h.slice(0, i) + yeni + h.slice(j); });
     return h.replace("CANLI SANAL</th>", "CANLI SANAL</th>").replace("<th class=\"sag\">Canlı sanal</th><th>Durum</th>", "<th class=\"sag\">Canlı sanal (bu ayar)</th><th>Durum</th>"); }; }
+
+/* ================= PIYASALAR v11 · ANALIZ KUYRUGU + GECE ANALIZI PARALEL + "UCUZ COIN" GERCEGI =================
+   - Gece analizi (takip listesi + portfoy, toplu) calisirken bir varligin detayinda "Claude + GPT analiz"e basinca artik reddedilmez:
+     o varligin analizi sıraya girer; Claude ve ChatGPT ellerindeki isi bitirince hemen o varligi yazar. Durumu detay ekraninda gorunur.
+   - Gece analizi Claude ve ChatGPT'yi sirayla degil AYNI ANDA calistirir (sure yariya iner).
+   - Gece analizi aksam saatlerinde kendiliginden baslamaz: 03:00-13:00 arasi calisir (ya da 36 saattir hic calismadiysa).
+   - Coin detayinda: "fiyati 1 $'in altinda" olmasi ucuz demek degildir; 2 katina cikmasi icin piyasa degerinin ne olmasi gerektigi yazilir. */
+
+PZ.yzYan = {};   // varlik -> { claude:"sırada|çalışıyor|bitti ✓|olmadı", gpt:... }
+async function pzYzTekYan(k, sadece){
+  const L = sadece ? [sadece] : ["claude", "gpt"]; PZ.yzYan[k] = Object.fromEntries(L.map(x => [x, "sırada (önce gece analizini bitiriyor)"])); pzdYanCiz();
+  toast(`${pzKod(k)} analizi sıraya alındı: gece analizi bitince hemen yazılacak, beklemene gerek yok`);
+  let oz; try{ oz = await pzOzet(k); }catch(e){ delete PZ.yzYan[k]; pzdYanCiz(); return toast("Veriler alınamadı: " + e.message); }
+  await Promise.all(L.map(async kay => {
+    try{ PZ_HIZLI = true; const ist = pzIstem([oz], kay, false); PZ_HIZLI = false;
+      const bekle = setInterval(async () => { try{ const d = await window.arsaPC?.yzOtoDurum?.(kay); if(d?.istem && String(d.istem).includes(pzKod(k)) && !/gece/i.test(PZ.yzDurum || "")){ PZ.yzYan[k][kay] = "çalışıyor"; pzdYanCiz(); } }catch(e){} }, 5000);
+      const t = await pzYzSor(kay, ist, kay === "gpt" ? 8 : 6).finally(() => clearInterval(bekle));
+      const J = pzJsonBul(t, PZ_ANAHTAR); if(!J) throw new Error("cevapta analiz bloğu yok");
+      if(!(await pzYzKaydet(J, kay, [k]))) throw new Error("analiz boş geldi");
+      PZ.yzYan[k][kay] = "bitti ✓"; toast(`${pzKod(k)} · ${pzYzAd(kay)} analizi kaydedildi ✓`); await pzAnalizOku(k);
+      if(app.dataset.ekran === "piyasaDetay" && app.dataset.pid === k){ pzdYzCiz(); pzdUzlasiCiz(); pzdMasaCiz?.(); } }
+    catch(e){ PZ.yzYan[k][kay] = "olmadı: " + String(e.message || e).slice(0, 50); }
+    finally{ PZ_HIZLI = false; pzdYanCiz(); } }));
+  setTimeout(() => { delete PZ.yzYan[k]; pzdYanCiz(); }, 60000); }
+function pzdYanCiz(){ const k = PZD?.s?.k; if(!k || app.dataset.ekran !== "piyasaDetay") return; const D = PZ.yzYan[k];
+  [["claude", "pzdYzc"], ["gpt", "pzdYzg"]].forEach(([kay, id]) => { const el = document.getElementById(id); if(!el) return; el.querySelector(".pzYan")?.remove();
+    if(D?.[kay]) el.insertAdjacentHTML("afterbegin", `<div class="pzYan ${/bitti/.test(D[kay]) ? "ok" : /olmadı/.test(D[kay]) ? "hata" : ""}">⏳ ${esc(pzYzAd(kay))}: ${esc(D[kay])}</div>`); }); }
+{ const eski = pzdYzCiz; pzdYzCiz = function(){ eski.apply(this, arguments); pzdYanCiz(); }; }
+{ const eski = pzYzTek; pzYzTek = async function(k, sadece){
+    if(PZ_YZ_IS && PZ.geceIs){ if(PZ.yzYan[k]) return toast("Bu varlığın analizi zaten sırada"); return pzYzTekYan(k, sadece); }
+    return eski.apply(this, arguments); }; }
+
+// gece analizi (ana hesap): Claude ve ChatGPT ayni anda
+{ const eski = pzGeceCalis; pzGeceCalis = async function(elle){
+    if(!pzYonetici()){ PZ.geceIs = true; try{ return await eski.apply(this, arguments); } finally{ PZ.geceIs = false; } }
+    if(PZ_YZ_IS) return toast("Analiz zaten çalışıyor"); if(!window.arsaPC?.yzOto && !elle) return;
+    PZ_YZ_IS = true; PZ.geceIs = true; const bas = Date.now();
+    try{ await pzKisiselYukle();
+      const S = [...new Set(PZ.portfoy.map(p => p.sembol).concat(PZ.takip.map(t => t.sembol)))].slice(0, 24);
+      if(!S.length){ if(elle) toast("Gece analizi için takip listesi ya da portföy boş"); return; }
+      pzYzDurum(`Gece analizi: ${S.length} varlığın verileri hazırlanıyor…`);
+      const OZ = []; for(const k of S){ try{ OZ.push(await pzOzet(k)); }catch(e){} }
+      const paket = []; for(let i = 0; i < OZ.length; i += 8) paket.push(OZ.slice(i, i + 8));
+      const sonuc = { claude:0, gpt:0, hata:[] }, dur = { claude:"başlıyor", gpt:"başlıyor" };
+      const yaz = () => pzYzDurum(`Gece analizi (${S.length} varlık) · Claude ${dur.claude} · ChatGPT ${dur.gpt}`);
+      await Promise.all(["claude", "gpt"].map(async kay => { for(let i = 0; i < paket.length; i++){ dur[kay] = `${i + 1}/${paket.length} paket yazıyor`; yaz();
+          try{ const t = await pzYzSor(kay, pzIstem(paket[i], kay, i === 0)); const J = pzJsonBul(t, PZ_ANAHTAR); if(!J) throw new Error("analiz bloğu yok");
+            sonuc[kay] += await pzYzKaydet(J, kay, paket[i].map(o => o.k)); }
+          catch(e){ sonuc.hata.push(`${kay}: ${e.message}`); } }
+        dur[kay] = "bitti ✓"; yaz(); }));
+      await pzAyarYaz({ gece:{ tarih:new Date().toISOString(), sure:Math.round((Date.now() - bas)/60000), ...sonuc } });
+      toast(`Gece analizi bitti · Claude ${sonuc.claude}, ChatGPT ${sonuc.gpt} varlık${sonuc.hata.length ? " · " + sonuc.hata.length + " hata" : ""}`);
+      try{ new Notification("Arsa Takip · gece analizi bitti", { body:`Claude ${sonuc.claude}, ChatGPT ${sonuc.gpt} varlık analiz etti.` }); }catch(e){}
+      if(/^piyasa/.test(app.dataset.ekran || "")) ekraniCiz(app.dataset.ekran, app.dataset.pid || undefined); }
+    finally{ PZ_YZ_IS = null; PZ.geceIs = false; pzYzDurum(""); } }; }
+
+// zamanlayici: aksam baslamasin
+pzZamanlayici = async function(){
+  if(!(typeof PC_ACIK !== "undefined" && PC_ACIK) || !window.arsaPC?.yzOto || !ME?.id || PZ_YZ_IS) return;
+  if(!PZ.ayarYuklendi){ await pzAyarOku(); PZ.ayarYuklendi = true; }
+  if(PZ.ayar?.oto === false) return;
+  const son = PZ.ayar?.gece?.tarih ? new Date(PZ.ayar.gece.tarih) : null, now = new Date(), bugun3 = new Date(now), saat = now.getHours(); bugun3.setHours(3, 0, 0, 0);
+  const bugunYok = !son || son < bugun3, cokEski = !son || now - son > 36*3600000;
+  if((bugunYok && saat >= 3 && saat < 13) || cokEski) pzGeceCalis(false); };
+
+// coin detayi: dusuk birim fiyat = ucuz degil
+{ const eski = pzdKriptoEk; pzdKriptoEk = function(s){ const r = eski.apply(this, arguments);
+    try{ const c = s.cg || {}, mc = +c.market_cap, f = +c.current_price || s.f; const k = document.getElementById("pzdKripto2"); if(!k || !(mc > 0) || !(f < 10)) return r; document.getElementById("pzdUcuz")?.remove();
+      const ornek = [[1e12, "Bitcoin'in tamamı kadar"], [3e11, "Ethereum'un tamamı kadar"], [1e11, "Türkiye'nin tüm borsası kadar (yaklaşık)"], [2e10, "dev bir şirket kadar"]].find(([v]) => mc*2 >= v);
+      k.insertAdjacentHTML("afterend", `<div class="pzNot" id="pzdUcuz">💡 <b>Fiyatı ${pzPara(f, "USD")} diye ucuz değil.</b> Coinin değeri birim fiyatla değil <b>piyasa değeriyle</b> ölçülür: şu an ${pzBuyuk(mc, "USD")}. Fiyatın 2 katına çıkması için piyasa değerinin <b>${pzBuyuk(mc*2, "USD")}</b> olması, yani coine ${pzBuyuk(mc, "USD")} yeni para girmesi gerekir${ornek ? ` (${ornek[1]} bir büyüklük)` : ""}. ${mc > 2e10 ? "Bu büyüklükte coinler kolay katlanmaz; 0,10 $'lık coin de 60.000 $'lık coin de aynı yüzdeyle oynar." : "Piyasa değeri küçük coinler daha hızlı katlanabilir ama aynı hızla da erir."}</div>`); }catch(e){}
+    return r; }; }
+
+{ const st = document.createElement("style"); st.textContent = `.pzYan{margin:0 0 8px;padding:6px 10px;border-radius:10px;font-size:12px;background:rgba(232,182,97,.08);border:1px solid rgba(232,182,97,.3);color:#E8C98A}.pzYan.ok{color:#7FE0A6;border-color:rgba(127,224,166,.35);background:rgba(127,224,166,.07)}.pzYan.hata{color:#FF8A92;border-color:rgba(255,138,146,.35);background:rgba(255,138,146,.07)}`; document.head.appendChild(st); }
+
+// ===== Binance'te olmayan coinler (BEAT gibi): fiyat, grafik ve bilgi CoinGecko'dan; "Binance'te yok" uyarisi =====
+async function pzCgBul(kod){ return pzOnbellek("cgara|" + kod, 6*3600000, async () => { const r = await pzJson(`https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(kod)}`, 10000);
+  const L = (r?.coins || []).filter(c => String(c.symbol).toUpperCase() === kod).sort((a, b) => (a.market_cap_rank || 1e9) - (b.market_cap_rank || 1e9)); if(!L[0]) return null;
+  const m = await pzJson(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${L[0].id}&price_change_percentage=24h,7d,30d,1y`, 10000); return m?.[0] || null; }); }
+{ const eski = pzSatirBul; pzSatirBul = async function(k){ const s = await eski(k); if(pzTur(k) !== "KRIPTO" || !s || s.cg) return s;
+    try{ const c = await pzCgBul(pzKod(k)); if(c){ Object.assign(s, { cg:c, ad:c.name, f:s.f ?? c.current_price, deg:s.deg ?? c.price_change_percentage_24h, logo:s.logo || c.image }); } }catch(e){} return s; }; }
+{ const eski = pzGecmis; pzGecmis = async function(s, aralik = "2Y"){
+    try{ return await eski(s, aralik); }
+    catch(e){ if(pzTur(s.k) !== "KRIPTO") throw e;
+      s.bnYok = true; pzdBnYokNot(s);
+      const id = s.cg?.id || (await pzCgBul(s.kod).catch(() => null))?.id; if(!id) throw new Error(`${s.kod} Binance'te işlem görmüyor ve CoinGecko'da da bulunamadı, fiyat geçmişi yok`);
+      const gun = { "1G":1, "5G":5, "1A":30, "3A":90, "6A":180, "1Y":365, "2Y":730, "5Y":1825 }[aralik] || 730;
+      return pzOnbellek(`gcg|${s.k}|${aralik}`, 5*60000, async () => { const r = await pzJson(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=${Math.min(gun, 365)}`, 12000);
+        const P = r?.prices || [], V = r?.total_volumes || []; if(!P.length) throw new Error(`${s.kod} için fiyat geçmişi bulunamadı`);
+        const v = { t:[], o:[], h:[], l:[], c:[], v:[], kaynak:"CoinGecko" }; P.forEach((x, i) => { const f = +x[1]; v.t.push(Math.round(x[0]/1000)); v.o.push(i ? +P[i-1][1] : f); v.h.push(f); v.l.push(f); v.c.push(f); v.v.push(+(V[i]?.[1] || 0)); });
+        for(let i = 0; i < v.t.length; i++){ v.h[i] = Math.max(v.o[i], v.c[i]); v.l[i] = Math.min(v.o[i], v.c[i]); }
+        return v; }); } }; }
+function pzdBnYokNot(s){ if(app.dataset.ekran !== "piyasaDetay" || app.dataset.pid !== s.k) return; document.querySelectorAll(".pzGecB.canli").forEach(e => { if(/Binance/.test(e.textContent)){ e.classList.remove("canli"); e.textContent = "CoinGecko · birkaç dk gecikmeli"; e.title = "Bu coin Binance'te yok"; } }); if(document.getElementById("pzdBnYok")) return;
+  const yer = document.getElementById("pzdKripto2")?.parentElement || document.getElementById("pzdMasa");
+  yer?.insertAdjacentHTML("afterbegin", `<div class="pzNot uy" id="pzdBnYok">⚠ <b>${esc(s.kod)} Binance'te işlem görmüyor.</b> Fiyat ve grafik CoinGecko'dan geliyor (birkaç dakika gecikmeli, mumlar yaklaşık). Bot bu coinde işlem yapamaz; Binance TR'den de büyük ihtimalle alınamaz.</div>`); }
+
+/* ================= PIYASALAR v12 · SADELESTIRME =================
+   Amac: (1) kisa vadeli al-sat ile para kazanmak -> "🤖 Al-Sat Botu" sekmesi, (2) Midas'ta uzun vadeli yatirim -> Portföy, Öneriler, Doktor.
+   Kalkanlar (kod duruyor, menude yok): Ekstrem'in süre sekmeleri (Bugün … 5-6 ay, Piyango) – botla ayni isi eski kurallarla yapiyordu,
+   Katlama planı – botun 50.000'lik kasalari onun yerini aldi, Haftalık rapor, Karne, Risk & kazanç. */
+PZ_SEKMELER.splice(0, PZ_SEKMELER.length, ...PZ_SEKMELER.filter(([v]) => !["rapor", "karne", "risk"].includes(v)).map(([v, a]) => v === "ekstrem" ? [v, "🤖 Al-Sat Botu"] : [v, a]));
+PZ_EKS_ALT.splice(0, PZ_EKS_ALT.length, ["bot", "🤖 Bot kasaları"], ["algo", "🧠 Strateji yarışı"]);
+if(!["bot", "algo"].includes(PZ.eksAlt)) PZ.eksAlt = "bot";
+if(["rapor", "karne", "risk"].includes(PZ.sekme)) PZ.sekme = "takip";
+try{ pzLS.yaz("pzRaporBil", 9e15); }catch(e){}   // pazar aksami haftalik rapor bildirimi kapali
+
+{ const eski = pzTablo; pzTablo = function(){
+    if(PZ.sekme !== "ekstrem") return eski.apply(this, arguments);
+    const k = document.getElementById("pzTablo"); if(!k) return; if(!["bot", "algo"].includes(PZ.eksAlt)) PZ.eksAlt = "bot";
+    const seg = `<div class="pzEksSeg">${PZ_EKS_ALT.map(([v, ad]) => `<button class="${PZ.eksAlt === v ? "on" : ""}" onclick="PZ.eksAlt='${v}';pzLS.yaz('pzEksAlt','${v}');pzTablo()">${ad}</button>`).join("")}</div>`;
+    if(PZ.eksAlt === "algo"){ k.innerHTML = seg + pzAlgoHtml(); return; }
+    k.innerHTML = seg + `<div class="pzBotPc"><div class="bmS" id="bmS"><div class="bmBos">Yükleniyor…</div></div></div>`;
+    const yaz = () => { try{ bmCiz(); const y = document.querySelector("#bmS .bmYen"); if(y) y.setAttribute("onclick", "this.textContent='Yenileniyor…';pzBotYukle(true).then(pzTablo)"); }catch(e){} };
+    if(PZ.bot?.row && Date.now() - (PZ.bot.t || 0) < 120000) yaz(); else pzBotYukle(true).then(yaz).catch(yaz); }; }
+// bot verisi yenilenince acik ekran guncellensin
+setTimeout(() => setInterval(() => { try{ if(PZ.sekme === "ekstrem" && PZ.eksAlt === "bot" && app?.dataset?.ekran === "piyasa" && document.visibilityState === "visible") pzBotYukle(true).then(() => pzTablo()); }catch(e){} }, 3*60000), 5000);
+// sol hizli tuslar: Rapor kalkti, Ekstrem -> Al-Sat Botu
+{ const eski = pzGezginCiz; pzGezginCiz = function(){ const r = eski.apply(this, arguments);
+    document.querySelectorAll("#pzGez .pzGezHizli button").forEach(b => { const o = b.getAttribute("onclick") || ""; if(/'rapor'/.test(o)) b.remove(); else if(/'ekstrem'/.test(o)) b.innerHTML = "🤖 Al-Sat Botu"; });
+    return r; }; }
+{ const st = document.createElement("style"); st.textContent = `.pzBotPc{max-width:920px}.pzBotPc .bmS{padding:4px 0 30px}`; document.head.appendChild(st); }
 
 /* ================= EMSAL v2 · ALAKASIZ / UYDURMA EMSALE KARSI KORUMA =================
    ChatGPT bazen baska ildeki, imarli arsa olan, cok kucuk/buyuk ya da hic var olmayan ilanlari emsal diye getiriyor.
