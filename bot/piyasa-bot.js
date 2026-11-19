@@ -97,7 +97,7 @@ async function sonuclandir(masraf){
     for(const m of (r || [])){ const t = +m[0]; if(t >= son) break; if(+m[3] <= +o.stop){ s = { cikis:+o.stop, neden:"zarar kes", ct:t }; break; } if(+m[2] >= +o.hedef){ s = { cikis:+o.hedef, neden:"hedef", ct:t }; break; } }
     if(!s && Date.now() > son && r?.length){ const z = r.filter(m => +m[0] < son).pop() || r[r.length - 1]; s = { cikis:+z[4], neden:"süre doldu", ct:son }; }
     if(!s) return; const brut = (s.cikis/o.giris - 1)*100;
-    const net = +(brut - masraf).toFixed(4); await sb(`piyasa_sanal?id=eq.${o.id}`, "PATCH", { durum:"kapali", cikis:s.cikis, neden:s.neden, ct:new Date(s.ct).toISOString(), net }, { Prefer:"return=minimal" }); kapanan[o.id] = { net, ct:s.ct }; bitti++; });
+    const net = +(brut - masraf).toFixed(4); await sb(`piyasa_sanal?id=eq.${o.id}`, "PATCH", { durum:"kapali", cikis:s.cikis, neden:s.neden, ct:new Date(s.ct).toISOString(), net }, { Prefer:"return=minimal" }); kapanan[o.id] = { net, ct:s.ct, neden:s.neden }; bitti++; });
   return { acik:acik.length, bitti, kapanan }; }
 
 /* ---------- SANAL KASA: 5.000 TL ile katlama kurallariyla (ayni anda en fazla 2 islem, islem basi %5 risk), 500 TL altina duserse yeni tur 5.000 TL ----------
@@ -109,14 +109,14 @@ async function canliKanit(A){ const L = await sb(`piyasa_sanal?user_id=eq.${UID}
 function kasaYeni(){ return { tur:1, bas:KASA_BAS, bakiye:KASA_BAS, acik:[], turlar:[], egri:[{ t:Date.now(), b:KASA_BAS }], islem:0, kazan:0, tepe:KASA_BAS, maxDus:0 }; }
 function kasaIsle(K, kapanan, adaylar){
   // 1) kapanan islemler
-  const kal = []; for(const p of K.acik){ const c = kapanan[p.id]; if(!c){ kal.push(p); continue; } K.bakiye += p.para*c.net/100; K.islem++; if(c.net > 0) K.kazan++; K.egri.push({ t:c.ct, b:+K.bakiye.toFixed(2) }); K.tepe = Math.max(K.tepe, K.bakiye); K.maxDus = Math.max(K.maxDus, 1 - K.bakiye/K.tepe); }
+  const kal = []; for(const p of K.acik){ const c = kapanan[p.id]; if(!c){ kal.push(p); continue; } K.bakiye += p.para*c.net/100; K.islem++; (K.gecmis = K.gecmis || []).push({ id:p.id, k:p.k, alt:p.alt, ai:p.ai, para:p.para, net:c.net, kz:+(p.para*c.net/100).toFixed(2), neden:c.neden, t:p.t, ct:c.ct }); if(c.net > 0) K.kazan++; K.egri.push({ t:c.ct, b:+K.bakiye.toFixed(2) }); K.tepe = Math.max(K.tepe, K.bakiye); K.maxDus = Math.max(K.maxDus, 1 - K.bakiye/K.tepe); }
   K.acik = kal;
   // 2) batti mi? yeni tur
   if(K.bakiye < KASA_BATTI && !K.acik.length){ K.turlar.push({ tur:K.tur, bas:K.bas, son:+K.bakiye.toFixed(2), islem:K.islem, kazan:K.kazan, bitis:Date.now(), neden:"battı" }); K.tur++; K.bakiye = KASA_BAS; K.bas = KASA_BAS; K.islem = 0; K.kazan = 0; K.tepe = KASA_BAS; K.maxDus = 0; K.egri.push({ t:Date.now(), b:KASA_BAS, yeniTur:K.tur }); }
   // 3) yeni girisler
   for(const x of adaylar){ if(K.acik.length >= KASA_MAKS || K.acik.some(p => p.k === x.k)) continue; const kay = Math.max(.005, 1 - x.stop/x.giris) + .005, kullan = K.acik.reduce((t, p) => t + p.para, 0);
     const para = Math.min(K.bakiye - kullan, K.bakiye/KASA_MAKS, K.bakiye*KASA_RISK/100/kay); if(para < 10) continue; K.acik.push({ id:x.id, k:x.k, alt:x.alt, ai:x.ai, para:+para.toFixed(2), t:Date.now() }); }
-  K.egri = K.egri.slice(-3000); return K; }
+  K.egri = K.egri.slice(-3000); K.gecmis = (K.gecmis || []).slice(-300); return K; }
 
 /* ---------- ana akis ---------- */
 (async () => {
@@ -131,7 +131,7 @@ function kasaIsle(K, kapanan, adaylar){
   const herAday = sira(T1.eklenen.filter(x => x.ai === 0));
   // kasadaki acik pozisyonlarin guncel durumu (ayni calismada acilip kapananlar dahil)
   const idler = [...new Set([...(kasa.disiplin?.acik || []), ...(kasa.her?.acik || [])].map(p => p.id))], kapanmis = {};
-  for(let i = 0; i < idler.length; i += 100){ const L = await sb(`piyasa_sanal?id=in.(${idler.slice(i, i + 100).join(",")})&select=id,durum,net,ct`); (L || []).forEach(x => { if(x.durum === "kapali") kapanmis[x.id] = { net:+x.net, ct:new Date(x.ct).getTime() }; }); }
+  for(let i = 0; i < idler.length; i += 100){ const L = await sb(`piyasa_sanal?id=in.(${idler.slice(i, i + 100).join(",")})&select=id,durum,net,ct,neden`); (L || []).forEach(x => { if(x.durum === "kapali") kapanmis[x.id] = { net:+x.net, ct:new Date(x.ct).getTime(), neden:x.neden }; }); }
   kasa.disiplin = kasaIsle(kasa.disiplin || kasaYeni(), kapanmis, disiplinAday); kasa.her = kasaIsle(kasa.her || kasaYeni(), kapanmis, herAday); kasa.kanit = kanit;
   const kayit = { user_id:UID, algo:A, kasa, son_tarama:new Date().toISOString(), ...(egitildi ? { son_egitim:new Date().toISOString() } : {}), durum:{ taranan:T1.taranan, yeni:T1.yeni, acik:S1.acik - S1.bitti, bitti:S1.bitti, sure:Math.round((Date.now() - bas)/1000), masraf } };
   await sb("piyasa_bot?on_conflict=user_id", "POST", kayit, { Prefer:"resolution=merge-duplicates,return=minimal" });
