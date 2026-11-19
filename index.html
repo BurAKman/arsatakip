@@ -3888,7 +3888,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 1.7.0";
+const SURUM_MORDOR = "v 1.8.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -25298,7 +25298,7 @@ function dgPanelHtml(id, p, A, E){
   const H = A?.deger || dgHesap(p, A, E), S = H.sonuc, yaz = ME.role !== "uye", D = p.analiz?.deger || {}, kendi = (D.satislar || []);
   const satir = y => `<div class="kv dgSat"><span>${esc(y.ad)}<small>${esc(y.not)}</small></span><b class="mono">${nf(Math.round(y.v))} ₺/m²</b><em>ağırlık ${nf2(y.w)}</em></div>`;
   const tusl = yaz ? `<div class="dgTus"><button class="btn ghost" onclick="dgSatisEkle('${id}')">＋ Bilinen satış ekle</button><button class="btn ghost" onclick="dgRayic('${id}')">🏛 Rayiç değer</button><button class="btn ghost" onclick="dgKira('${id}')">🌾 Dekar kirası</button><button class="btn ghost" onclick="dgAyarAc('${id}')">⚙ Varsayımlar</button></div>` : "";
-  const ilT = H.IL?.length ? `<details class="dgDuz"><summary>İlan düzeltme tablosu</summary><table class="dgT"><thead><tr><th>İlan</th><th>İlan ₺/m²</th><th>Ay</th><th>Çarpan</th><th>Düzeltilmiş</th><th>Ağırlık</th></tr></thead><tbody>${H.IL.slice().sort((a, b) => b.w - a.w).map(r => `<tr><td>${esc((r.x.yer || r.x.baslik || "").slice(0, 38))}${r.ayni ? " ★" : ""}</td><td>${nf(r.x.birim)}</td><td>${r.ayf}</td><td>×${nf2(r.k)}</td><td><b>${nf(Math.round(r.v))}</b></td><td>${nf2(r.w)}</td></tr>`).join("")}</tbody></table><small>★ aynı köy · ağırlık: aynı köy, benzer büyüklük ve yeni ilan daha ağır basar</small></details>` : "";
+  const ilT = H.IL?.length ? `<details class="dgDuz"><summary>İlan düzeltme tablosu</summary><table class="dgT"><thead><tr><th>İlan</th><th>İlan ₺/m²</th><th>Ay</th><th>Çarpan</th><th>Düzeltilmiş</th><th>Ağırlık</th></tr></thead><tbody>${H.IL.slice().sort((a, b) => b.w - a.w).map(r => `<tr><td>${esc((String(r.x.yer || "").split("/").pop().trim() || r.x.baslik || "").slice(0, 28))}${r.ayni ? " ★" : ""}${r.x.elle ? " ✍" : ""}</td><td>${nf(r.x.birim)}</td><td>${r.ayf}</td><td>×${nf2(r.k)}</td><td><b>${nf(Math.round(r.v))}</b></td><td>${nf2(r.w)}</td></tr>`).join("")}</tbody></table><small>★ aynı köy · ✍ elle eklendi · ağırlık: aynı köy, benzer büyüklük ve yeni ilan daha ağır basar</small></details>` : "";
   const saL = (H.SA || []).length ? `<details class="dgDuz"><summary>Bilinen satışlar · ${H.SA.length}</summary>${H.SA.map(r => `<div class="kv dgSat"><span>${esc(r.s.yer || "")} · ${nf(Math.round(r.s.m2))} m² · ${tl(r.s.tutar)}<small>${esc(r.s.tarih || "")} · ${esc(r.s.kaynak || "")}${r.s.not ? " · " + esc(r.s.not) : ""}${r.s.ayniParsel ? "" : " · başka parselinden"}</small></span><b class="mono">${nf(Math.round(r.birim))} → ${nf(Math.round(r.v))} ₺/m²</b>${yaz && r.s.ayniParsel ? `<button onclick="dgSatisSil('${id}','${r.s.id}')">✕</button>` : ""}</div>`).join("")}</details>` : "";
   return `<div class="dgPanel"><div class="dgBas"><b>📐 Değer tespiti</b>${S ? `<span class="dgGuven g${S.guven[0]}">güven: ${S.guven}</span>` : ""}</div>
     ${S ? `<div class="dgSonuc"><b>${nf(S.bant[0])} – ${nf(S.bant[1])} ₺/m²</b><span>${mnP(S.toplam[0])} – ${mnP(S.toplam[1])} · ${H.Y.length} yöntem uzlaştırıldı</span><small>${esc(S.neden.join(" · "))}</small></div>` : `<div class="ekEmsalNot">Henüz değer çıkacak kadar bilgi yok. Gerçek satış bildiğin varsa ekle: tek bir tapu satışı on ilandan daha değerlidir.</div>`}
@@ -25364,6 +25364,103 @@ async function dgAyarAc(id){ const a = await analizOku(id).catch(() => ({})), ay
 .dgForm p{margin:0;font-size:12.5px;color:#A9A7AE;line-height:1.5}.dgForm label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#C9C7CC}
 .dgForm input,.dgForm select{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:#0E0F13;color:#fff;font-size:14px}
 .dgFormAlt{display:flex;gap:8px;margin-top:4px}.dgFormAlt .btn{flex:1;margin:0}`; document.head.appendChild(st); }
+
+/* ================= EMSAL v3 · EKSPERTIZ GIBI: ELLE EMSAL + ADA/PARSEL ILE KONUMLAMA =================
+   - "＋ Emsal ilanı ekle": sahibinden bağlantısını yapıştır; ilan no, m² ve köy bağlantıdan okunur, sen sadece fiyatı yazarsın.
+     (ChatGPT sahibinden'i çoğu zaman açamıyor; gerçek emsalleri en iyi sen ya da "Sahibinden'den topla" bulur.)
+   - "📍" ile her emsal ada/parsel girilerek TKGM'den bulunur: tapudaki alanı, niteliği ve BİZİM parsele kuş uçuşu mesafesi hesaplanır.
+     İlandaki m² tapuyla tutmazsa uyarır. Yakın emsal hesapta çok daha ağır basar. */
+
+const EM3_ID = {};   // "il|ilce|mahalle" -> TKGM mahalle id (onbellek)
+async function em3MahalleId(il, ilce, mah){
+  const k = [il, ilce, mah].map(trNrm).join("|"); if(EM3_ID[k]) return EM3_ID[k];
+  try{ const c = JSON.parse(localStorage.getItem("em3Mah") || "{}"); if(c[k]) return EM3_ID[k] = c[k]; }catch(e){}
+  const bul = (L, n) => { const t = trNrm(n).replace(/ (koyu|mahallesi|mah\.?|merkez)$/, ""); return L.find(o => trNrm(ad(o)).replace(/ (koyu|mahallesi|mah\.?)$/, "") === t) || L.find(o => trNrm(ad(o)).includes(t)); };
+  const { d:I } = await ilkCalisan(IL_UCLARI); const i = bul(I, il); if(!i) throw new Error("il bulunamadı: " + il);
+  const { d:C } = await ilkCalisan(ILCE_UCLARI(kim(i))); const c = bul(C, ilce); if(!c) throw new Error("ilçe bulunamadı: " + ilce);
+  const { d:M } = await ilkCalisan(MAH_UCLARI(kim(c))); const m = bul(M, mah); if(!m) throw new Error("köy/mahalle bulunamadı: " + mah);
+  EM3_ID[k] = kim(m); try{ const c2 = JSON.parse(localStorage.getItem("em3Mah") || "{}"); c2[k] = EM3_ID[k]; localStorage.setItem("em3Mah", JSON.stringify(c2)); }catch(e){}
+  return EM3_ID[k]; }
+function em3Merkez(f){ const g = f?.geometry; if(!g?.coordinates) return null; const h = (g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0]); return ekMerkez(h.slice(0, -1).length > 2 ? h.slice(0, -1) : h); }
+async function em3Konumla(p, ada, parsel, koy){
+  const mid = await em3MahalleId(p.il, p.ilce, koy || p.mahalle);
+  const f = await zamanAsimi(tkgm(`${TB3}/parsel/${mid}/${ada || 0}/${parsel}`), 15000); if(!f?.geometry) throw new Error("TKGM'de bu ada/parsel bulunamadı");
+  const pr = f.properties || {}, mz = em3Merkez(f), biz = ekHalkaP(p) ? ekMerkez(ekHalkaP(p)) : (p.lng ? [+p.lng, +p.lat] : null);
+  return { lat:mz?.[1], lng:mz?.[0], km: biz && mz ? Math.round(ekKusUcusu(biz, mz)*100)/100 : null, tkgmAlan: sayiTr(String(pr.alan ?? pr.Alan ?? "")) || null,
+    nitelik: pr.nitelik || pr.Nitelik || "", mevkii: pr.mevkii || pr.Mevkii || "", mahalle: pr.mahalleAd || koy || p.mahalle, ada:String(ada || 0), parsel:String(parsel) }; }
+
+// sahibinden baglantisindan ilan no, m2, koy
+function em3UrlCoz(url){ const u = String(url || ""), no = (u.match(/-(\d{8,12})(?:\/detay)?\/?(?:[?#].*)?$/) || u.match(/\/(\d{8,12})(?:[/?#]|$)/) || [])[1] || "";
+  const m2 = +((u.match(/-(\d{2,7})-?m2/i) || [])[1] || 0), slug = decodeURIComponent((u.match(/\/ilan\/([^/]+)/) || [])[1] || "");
+  return { no, m2, slug }; }
+async function emsalElleEkle(id){ const { data:p } = await sb.from("parcels").select("*").eq("id", id).single();
+  dgForm("＋ Emsal ilanı ekle", "Sahibinden (ya da başka sitedeki) ilanın bağlantısını yapıştır; m² ve ilan no bağlantıdan okunur. Ada/parsel ilanda yazıyorsa gir: TKGM'den yeri bulunur, bizim parsele mesafesi ve tapudaki alanı kontrol edilir.", [
+    { ad:"url", etiket:"İlan bağlantısı", ipucu:"https://www.sahibinden.com/ilan/...-1345747089/detay" }, { ad:"fiyat", etiket:"İlan fiyatı (₺, toplam)", tip:"sayi", ipucu:"ör. 535.000" },
+    { ad:"m2", etiket:"Alan (m²) · boş bırakırsan bağlantıdan okunur", tip:"sayi" }, { ad:"koy", etiket:"Köy", deger:duzgun(p.mahalle || "") },
+    { ad:"ada", etiket:"Ada (biliyorsan)", tip:"sayi" }, { ad:"parsel", etiket:"Parsel (biliyorsan)", tip:"sayi" }, { ad:"baslik", etiket:"Not / başlık (isteğe bağlı)", ipucu:"ör. köy içi, yola cepheli" } ],
+    async v => { const U = em3UrlCoz(v.url), m2 = dgSayi(v.m2) || U.m2, fiyat = dgSayi(v.fiyat);
+      if(!(fiyat > 0)) throw new Error("Fiyatı yaz"); if(!(m2 > 0)) throw new Error("m² bağlantıda yok, elle yaz");
+      const x = { id:U.no || "e" + Date.now().toString(36), baslik:v.baslik || (U.slug ? U.slug.replace(/-/g, " ").replace(/\b(emlak|arsa|satilik)\b/g, "").replace(/\s+/g, " ").trim().slice(0, 80) : "Elle eklenen emsal"), url:/^https?:/.test(v.url || "") ? v.url.trim() : "",
+        fiyat, m2, birim:Math.round(fiyat/m2), yer:`${duzgun(p.il)} / ${duzgun(p.ilce)} / ${v.koy || duzgun(p.mahalle)}`, tarih:`${new Date().getMonth() + 1}.${new Date().getFullYear()}`, alindi:new Date().toISOString().slice(0, 10), elle:true, denetim:1 };
+      if(dgSayi(v.parsel) > 0){ toast("TKGM'den konum aranıyor…"); try{ x.konum = await em3Konumla(p, dgSayi(v.ada) || 0, dgSayi(v.parsel), v.koy); }catch(e){ toast("Konum bulunamadı: " + (e.message || e) + " · emsal yine de eklendi"); } }
+      await emsalKaydet(id, [x], "elle"); toast(`Emsal eklendi · ${nf(x.birim)} ₺/m²${x.konum?.km != null ? ` · bizim parsele ${nf2(x.konum.km)} km` : ""}`); try{ PC_P_ZAMAN = 0; }catch(e){} ekraniCiz("parsel", id); }); }
+async function emsalKonumla(id, ilanId){ const { data:p } = await sb.from("parcels").select("*").eq("id", id).single(), x = p.analiz?.emsal?.ilanlar?.find(z => z.id === ilanId); if(!x) return;
+  const yerKoy = String(x.yer || "").split("/").pop().trim();
+  dgForm("📍 Emsali konumla", `“${esc((x.baslik || "").slice(0, 60))}” ilanının ada/parselini gir (ilan açıklamasında ya da satıcıya sorarak). TKGM'den bulunur; bizim parsele mesafesi, tapudaki alanı ve niteliği kaydedilir.`, [
+    { ad:"koy", etiket:"Köy", deger:yerKoy || duzgun(p.mahalle || "") }, { ad:"ada", etiket:"Ada", tip:"sayi", deger:x.konum?.ada || "" }, { ad:"parsel", etiket:"Parsel", tip:"sayi", deger:x.konum?.parsel || "" } ],
+    async v => { if(!(dgSayi(v.parsel) > 0)) throw new Error("Parsel no gir"); toast("TKGM'den aranıyor…"); const K = await em3Konumla(p, dgSayi(v.ada) || 0, dgSayi(v.parsel), v.koy);
+      const a = await analizOku(id), E = a.emsal, z = E.ilanlar.find(t => t.id === ilanId); z.konum = K; await analizYaz(id, { emsal:E });
+      toast(`Bulundu · bizim parsele ${K.km != null ? nf2(K.km) + " km" : "?"}${K.tkgmAlan && Math.abs(K.tkgmAlan/z.m2 - 1) > .15 ? ` · ⚠ tapuda ${nf(Math.round(K.tkgmAlan))} m², ilanda ${nf(Math.round(z.m2))} m²` : ""}`); try{ PC_P_ZAMAN = 0; }catch(e){} ekraniCiz("parsel", id); }); }
+
+// denetim: elle eklenen ve konumu bilinen ilan konum denetiminden muaf; tapu alani ilanla tutmuyorsa uyar (elemez)
+{ const eski = emsalUygunluk; emsalUygunluk = function(p, x){ const u = eski(p, x);
+    if(x.elle || x.konum?.km != null) u.neden = u.neden.filter(n => !/konum|başka il|bağlantı|site/.test(n));
+    if(x.konum?.km != null && x.konum.km > 25) u.neden.push(`bizim parsele ${nf(Math.round(x.konum.km))} km uzak`);
+    u.ok = !u.neden.length; return u; }; }
+
+// deger hesabinda agirlik: yakinlik ve kaynak (elle/konumlu cok daha agir, konumsuz ChatGPT ilani hafif)
+{ const eski = dgHesap; dgHesap = function(p, A, E){ const H = eski(p, A, E);
+    const yak = x => x.konum?.km == null ? (x.elle ? 1.3 : x.gpt ? .7 : 1) : x.konum.km < 1 ? 2.5 : x.konum.km < 3 ? 1.7 : x.konum.km < 8 ? 1.1 : .7;
+    const il = H.Y.find(y => y.k === "ilan"); if(!il) return H;
+    il.liste.forEach(r => { r.w *= yak(r.x); r.km = r.x.konum?.km; });
+    const v = dgAgirlikliMedyan(il.liste); if(v){ il.v = v; il.alt = dgYuzdelikW(il.liste, .25); il.ust = dgYuzdelikW(il.liste, .75); il.dag = (il.ust - il.alt)/v;
+      const nY = il.liste.filter(r => r.km != null && r.km < 3).length; if(nY) il.not += ` · ${nY} tanesi 3 km içinde (konumu TKGM'den doğrulandı)`;
+      // yeniden uzlastir
+      const T = H.Y.reduce((t, y) => t + y.w, 0), m = Math.exp(H.Y.reduce((t, y) => t + y.w*Math.log(y.v), 0)/T), yay = Math.max(...H.Y.map(y => y.v))/Math.min(...H.Y.map(y => y.v));
+      const gen = Math.min(.25, Math.max(.08, il.dag/2.5, H.Y.length > 1 ? (yay - 1)/4 : 0)), alan = +p.alan_m2 || 0;
+      if(H.sonuc){ H.sonuc.v = Math.round(m); H.sonuc.bant = [Math.round(m*(1 - gen)/10)*10, Math.round(m*(1 + gen)/10)*10]; H.sonuc.toplam = H.sonuc.bant.map(b => b*alan);
+        if(nY >= 2){ H.sonuc.neden.push(`${nY} yakın ve konumu doğrulanmış emsal`); if(H.sonuc.guven === "Düşük") H.sonuc.guven = "Orta"; else if(H.sonuc.guven === "Orta" && nY >= 3) H.sonuc.guven = "Yüksek"; } } }
+    return H; }; }
+
+// kart: ilan satirina 📍, ustte "＋ Emsal ilanı ekle", duzeltme tablosuna mesafe
+{ const eski = emsalKartiHtml; emsalKartiHtml = async function(id, p, a){ let h = await eski(id, p, a); if(!h || ME.role === "uye") return h;
+    const E = a.emsal || {}, L = E.ilanlar || [];
+    h = h.replace(/<button title="(Hesaptan çıkar|Geri al)" onclick="emsalHaric\('([^']+)','([^']+)'\)">/g, (t, _, pid, xid) => { const x = L.find(z => String(z.id) === xid);
+      return `<button title="${x?.konum ? "Konum: " + (x.konum.km != null ? nf2(x.konum.km) + " km" : "") + " · ada " + x.konum.ada + "/" + x.konum.parsel : "Ada/parsel ile konumla (TKGM)"}" onclick="emsalKonumla('${pid}','${xid}')">${x?.konum ? "📍" : "⌖"}</button>` + t; });
+    // konum bilgisini satira yaz
+    L.filter(x => x.konum).forEach(x => { const k = x.konum, uy = k.tkgmAlan && Math.abs(k.tkgmAlan/x.m2 - 1) > .15;
+      h = h.replace(new RegExp(`(onclick="emsalKonumla\\('${id}','${String(x.id).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}'\\)")`), `$1`)
+           .replace(`${esc(x.yer)} · ${nf(Math.round(x.m2))} m²`, `${esc(x.yer)} · ${nf(Math.round(x.m2))} m² · <b class="em3Km">📍 ${k.km != null ? nf2(k.km) + " km" : "?"} · ada ${esc(k.ada)}/${esc(k.parsel)}${k.nitelik ? " · " + esc(k.nitelik) : ""}</b>${uy ? ` <b class="ekRedNeden">⚠ tapuda ${nf(Math.round(k.tkgmAlan))} m²</b>` : ""}`); });
+    const tus = `<button class="btn ghost" onclick="emsalElleEkle('${id}')">＋ Emsal ilanı ekle</button>`;
+    h = h.replace(/(<div class="ekTuslar ekAnaTus">)/, `$1${tus}`);
+    return h.replace("<small>Medyan · aynı köy</small>", "<small>Ham ilan medyanı<em>düzeltmesiz</em></small>"); }; }
+// duzeltme tablosuna mesafe sutunu
+{ const eski = dgPanelHtml; dgPanelHtml = function(id, p, A, E){ let h = eski(id, p, A, E); const H = A?.deger; const il = H?.Y?.find(y => y.k === "ilan"); if(!il) return h;
+    il.liste.slice().sort((a, b) => b.w - a.w).forEach(r => { h = h.replace(`<td>${nf2(r.w)}</td></tr>`, `<td>${r.km != null ? nf2(r.km) + " km" : "—"}</td><td>${nf2(r.w)}</td></tr>`); });
+    return h.replace("<th>Ağırlık</th></tr>", "<th>Mesafe</th><th>Ağırlık</th></tr>").replace("★ aynı köy · ✍ elle eklendi · ağırlık:", "★ aynı köy · ✍ elle eklendi · mesafe TKGM ada/parselden · ağırlık: yakın (konumu doğrulanmış) emsal 2,5 kata kadar,"); }; }
+
+// ChatGPT istemi: sahibinden'i acamayabilir; ada/parsel iste
+{ const eski = emsalKuralMetni; emsalKuralMetni = function(p){ return eski(p) + `- sahibinden.com ilan sayfasını açamıyorsan o ilanı UYDURMA; emlakjet, hepsiemlak, zingat gibi açabildiğin sitelere bak.
+- İlan açıklamasında ada/parsel yazıyorsa baslik alanının sonuna "(ada X parsel Y)" diye ekle.
+`; }; }
+// ChatGPT basligindaki "(ada X parsel Y)" -> otomatik konumla
+{ const eski = emsalKaydet; emsalKaydet = async function(id, yeniler, kaynak){
+    const ap = yeniler.filter(x => !x.konum && /ada\s*(\d+)\s*parsel\s*(\d+)/i.test(x.baslik || ""));
+    if(ap.length){ try{ const { data:p } = await sb.from("parcels").select("*").eq("id", id).single();
+      for(const x of ap.slice(0, 8)){ const m = x.baslik.match(/ada\s*(\d+)\s*parsel\s*(\d+)/i), koy = String(x.yer || "").split("/").pop().trim(); try{ x.konum = await em3Konumla(p, m[1], m[2], koy || p.mahalle); }catch(e){} } }catch(e){} }
+    return eski(id, yeniler, kaynak); }; }
+
+{ const st = document.createElement("style"); st.textContent = `.em3Km{color:#7FE0A6;font-weight:600}`; document.head.appendChild(st); }
 
 baslat();
 
