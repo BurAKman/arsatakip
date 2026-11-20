@@ -3888,7 +3888,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.0.0";
+const SURUM_MORDOR = "v 2.2.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -25049,7 +25049,7 @@ const pzStratAd = tf => ({ g1:"Kırılım · 24 saat", g3:"Kırılım · 2-3 gü
 const pzRjAd = r => r === 1 ? "BTC yükselişteyken" : r === 2 ? "BTC düşüşteyken" : "BTC'ye bakmadan";
 function pzRejimHtml(d){ if(!d?.rejim) return ""; const y = d.rejim === 1;
   return `<div class="bmDurum ${y ? "ok" : "kapali"}" style="margin:0 0 8px"><b>${y ? "🐂 BTC yükseliş trendinde" : "🐻 BTC düşüş trendinde"}</b> · 4 saatlik 50 mumluk ortalamanın ${d.btcFark != null ? `%${Math.abs(d.btcFark).toLocaleString("tr-TR", { maximumFractionDigits:1 })} ` : ""}${y ? "üstünde" : "altında"}${(d.acikStrateji || []).length ? "" : " · şu an hiçbir strateji açık değil: program nakitte bekliyor"}</div>`; }
-function pzKuralYazi(tf, P){ const X = pzAlgo()?.[tf]; if(X?.tip === "ml") return X.w ? `kazanma olasılığı %${Math.round(X.esik*100)} üstü olunca gir · en etkili: ${(X.onem || []).slice(0, 4).map(o => o.ad + (o.w > 0 ? " ↑" : " ↓")).join(", ")} · ${nf(X.ornek || 0)} geçmiş örnekten öğrendi` : (X.hata || "henüz eğitilmedi"); if(!P) return "henüz eğitilmedi"; const T = PZ_ALGO_TF[tf], s = T.iv === "1h" ? "saatlik" : T.iv === "1d" ? "günlük" : "4 saatlik";
+function pzKuralYazi(tf, P){ const X = pzAlgo()?.[tf]; if(X?.tip === "ml") return X.w ? `kazanma olasılığı %${Math.round(X.esik*100)} üstü olunca gir · en etkili: ${(X.onem || []).slice(0, 4).map(o => o.ad + (o.w > 0 ? " ↑" : " ↓")).join(", ")} · ${nf(X.ornek || 0)} geçmiş örnekten, ${X.ozellik || 23} göstergeyle öğrendi${X.cikis?.ad ? " · çıkış: " + X.cikis.ad : ""}` : (X.hata || "henüz eğitilmedi"); if(!P) return "henüz eğitilmedi"; const T = PZ_ALGO_TF[tf], s = T.iv === "1h" ? "saatlik" : T.iv === "1d" ? "günlük" : "4 saatlik";
   if(tf[0] === "d") return `RSI ${P.rsiMin}'in altına düşmüş · son ${T.Lb} ${s} mumun tepesinden oynaklığın ${pzVirgul(P.dusK)} katı aşağıda${P.yesil ? " · son mum yeşil kapanmış" : ""} · ${pzRjAd(P.rj)} · hedef ${pzVirgul(P.hedefK)}× · zarar kes ${pzVirgul(P.stopK)}×`;
   return `${Math.round(T.Lb*P.L)} ${s} mumun tepesini kırınca · hacim ${pzVirgul(P.hk)}× · RSI<${P.rsiMax} · ${pzRjAd(P.rj)} · hedef ${pzVirgul(P.hedefK)}× · zarar kes ${pzVirgul(P.stopK)}×`; }
 // PC algoritma ekrani: 4 stratejinin yarisi
@@ -25230,6 +25230,351 @@ async function pzTecrubeIndir(btn){ try{ if(btn) btn.textContent = "Hazırlanıy
     if(y && !document.getElementById("bmTec")) y.insertAdjacentHTML("afterend", `<button class="bmYen" id="bmTec" onclick="pzTecrubeIndir(this)">📥 Tecrübe raporunu indir</button><p class="bmBos" style="margin-top:8px">Botun bütün sanal işlemleri, kasaların geçmişi ve modeller tek dosyada. Yeterince tecrübe birikince bu dosyayı Claude'a ver; nihai trade botu bu rapordan yazılacak.</p>`);
     return r; }; }
 { const st = document.createElement("style"); st.textContent = `.pzSkUst.uc{grid-template-columns:repeat(3,minmax(0,1fr))}@media (max-width:1100px){.pzSkUst.uc{grid-template-columns:1fr}}.bmNot{color:#E8C98A;font-weight:600}`; document.head.appendChild(st); }
+
+/* ================= PIYASALAR v13 · 👑 Sah Indikatoru =================
+   Botun kumar kasasindaki indikator cekirdegi (EMA, MACD, RSI, Supertrend, UT Bot, Squeeze, ADX/DMI, Ichimoku, OBV, piyasa yapisi...)
+   istemciye tasindi + MFI, CMF, kirilim, fonlama orani. Varlik detayinda: konsey oylari, karar, pivot kumelerinden destek/direnc,
+   al bolgesi / stop / hedefler / R:R, bu varlikta konseyin gecmis karnesi, botun ogrenen modelinin olasiligi, temel karne.
+   Ayni ozet Claude / GPT istemine de eklenir. */
+const KZ = (() => {
+function rsi(c, n = 14){ const r = new Float64Array(c.length).fill(NaN); let g = 0, l = 0; for(let i = 1; i < c.length; i++){ const d = c[i] - c[i-1], u = Math.max(d, 0), z = Math.max(-d, 0);
+  if(i <= n){ g += u; l += z; if(i === n){ g /= n; l /= n; r[i] = l === 0 ? 100 : 100 - 100/(1 + g/l); } } else { g = (g*(n-1) + u)/n; l = (l*(n-1) + z)/n; r[i] = l === 0 ? 100 : 100 - 100/(1 + g/l); } } return r; }
+
+const OZ_AD2 = ["üst zaman dilimi trendi", "üst zaman diliminde fiyat yeri", "RSI uyumsuzluğu (divergence)", "mum formasyonu", "OBV (hacim teyidi)", "piyasa yapısı (tepe/dip)", "dirence mesafe", "desteğe mesafe", "oynaklık rejimi", "Supertrend × rejim", "RSI × rejim", "momentum × hacim"];
+const OZ_AD = ["EMA9>EMA21", "fiyat>EMA50", "fiyat>EMA200", "EMA50'ye uzaklık", "MACD histogram", "MACD yükseliyor", "RSI", "Supertrend", "UT Bot", "Squeeze sıkışma", "Squeeze momentum",
+  "ADX güç", "DMI yön", "Bollinger %B", "Ichimoku bulut üstü", "Tenkan>Kijun", "hacim patlaması", "son mum", "5 mum getiri", "20 mum getiri", "20 mum tepesine uzaklık", "göreli güç", "piyasa rejimi"];
+
+const emaA = (a, n) => { const o = new Float64Array(a.length), k = 2/(n + 1); for(let i = 0; i < a.length; i++) o[i] = i ? a[i]*k + o[i-1]*(1 - k) : a[i]; return o; };
+const smaA = (a, n) => { const o = new Float64Array(a.length).fill(NaN); let s = 0; for(let i = 0; i < a.length; i++){ s += a[i]; if(i >= n) s -= a[i-n]; if(i >= n - 1) o[i] = s/n; } return o; };
+const rmaA = (a, n) => { const o = new Float64Array(a.length).fill(NaN); let p = NaN; for(let i = 0; i < a.length; i++){ if(i === n - 1){ let s = 0; for(let j = 0; j < n; j++) s += a[j]; p = s/n; } else if(i >= n) p = (p*(n - 1) + a[i])/n; o[i] = p; } return o; };
+const stdA = (a, n) => { const o = new Float64Array(a.length).fill(NaN); for(let i = n - 1; i < a.length; i++){ let m = 0; for(let j = i - n + 1; j <= i; j++) m += a[j]; m /= n; let v = 0; for(let j = i - n + 1; j <= i; j++) v += (a[j] - m)**2; o[i] = Math.sqrt(v/n); } return o; };
+const hhA = (a, n) => { const o = new Float64Array(a.length).fill(NaN); for(let i = n - 1; i < a.length; i++){ let m = -Infinity; for(let j = i - n + 1; j <= i; j++) if(a[j] > m) m = a[j]; o[i] = m; } return o; };
+const llA = (a, n) => { const o = new Float64Array(a.length).fill(NaN); for(let i = n - 1; i < a.length; i++){ let m = Infinity; for(let j = i - n + 1; j <= i; j++) if(a[j] < m) m = a[j]; o[i] = m; } return o; };
+function indikatorler(R){ const n = R.c.length, c = R.c, h = R.h, l = R.l, tr = new Float64Array(n);
+  for(let i = 0; i < n; i++) tr[i] = i ? Math.max(h[i] - l[i], Math.abs(h[i] - c[i-1]), Math.abs(l[i] - c[i-1])) : h[i] - l[i];
+  const atr = rmaA(tr, 14), atr10 = rmaA(tr, 10), e9 = emaA(c, 9), e21 = emaA(c, 21), e50 = emaA(c, 50), e200 = emaA(c, 200);
+  const e26 = emaA(c, 26), e12 = emaA(c, 12), mline = new Float64Array(n); for(let i = 0; i < n; i++) mline[i] = e12[i] - e26[i]; const sig = emaA(mline, 9), mh = mline.map((v, i) => v - sig[i]);
+  const rs = rsi(c, 14);
+  // Supertrend (10, 3)
+  const st = new Int8Array(n); { let up = 0, dn = 0, dir = 1; for(let i = 0; i < n; i++){ const a = atr10[i]; if(!(a > 0)){ st[i] = 0; continue; } const m = (h[i] + l[i])/2, u = m - 3*a, d = m + 3*a;
+      up = i && c[i-1] > up ? Math.max(u, up) : u; dn = i && c[i-1] < dn ? Math.min(d, dn) : d; if(dir === -1 && c[i] > dn) dir = 1; else if(dir === 1 && c[i] < up) dir = -1; st[i] = dir; } }
+  // UT Bot (key 1, ATR 10)
+  const ut = new Int8Array(n); { let ts = c[0]; for(let i = 1; i < n; i++){ const nl = (atr10[i] || 0)*1;
+      ts = c[i] > ts && c[i-1] > ts ? Math.max(ts, c[i] - nl) : c[i] < ts && c[i-1] < ts ? Math.min(ts, c[i] + nl) : c[i] > ts ? c[i] - nl : c[i] + nl; ut[i] = c[i] > ts ? 1 : -1; } }
+  // Squeeze Momentum (LazyBear)
+  const b20 = smaA(c, 20), sd20 = stdA(c, 20), tr20 = smaA(tr, 20), hh20 = hhA(h, 20), ll20 = llA(l, 20), sqz = new Int8Array(n), mom = new Float64Array(n).fill(NaN), dv = new Float64Array(n);
+  for(let i = 0; i < n; i++){ const ub = b20[i] + 2*sd20[i], lb = b20[i] - 2*sd20[i], uk = b20[i] + 1.5*tr20[i], lk = b20[i] - 1.5*tr20[i]; sqz[i] = lb > lk && ub < uk ? 1 : 0; dv[i] = c[i] - ((hh20[i] + ll20[i])/2 + b20[i])/2; }
+  for(let i = 39; i < n; i++){ let sx = 0, sy = 0, sxy = 0, sxx = 0; for(let j = 0; j < 20; j++){ const y = dv[i - 19 + j]; sx += j; sy += y; sxy += j*y; sxx += j*j; } const b = (20*sxy - sx*sy)/(20*sxx - sx*sx), a = (sy - b*sx)/20; mom[i] = a + b*19; }
+  // ADX / DMI (14)
+  const pdm = new Float64Array(n), mdm = new Float64Array(n); for(let i = 1; i < n; i++){ const u = h[i] - h[i-1], d = l[i-1] - l[i]; pdm[i] = u > d && u > 0 ? u : 0; mdm[i] = d > u && d > 0 ? d : 0; }
+  const atr14 = rmaA(tr, 14), pdi = rmaA(pdm, 14).map((v, i) => 100*v/(atr14[i] || 1e-12)), mdi = rmaA(mdm, 14).map((v, i) => 100*v/(atr14[i] || 1e-12)), dx = pdi.map((v, i) => 100*Math.abs(v - mdi[i])/((v + mdi[i]) || 1e-12)), adx = rmaA(dx.map(v => isFinite(v) ? v : 0), 14);
+  // Ichimoku
+  const h9 = hhA(h, 9), l9 = llA(l, 9), h26 = hhA(h, 26), l26 = llA(l, 26), h52 = hhA(h, 52), l52 = llA(l, 52), ten = new Float64Array(n), kij = new Float64Array(n);
+  for(let i = 0; i < n; i++){ ten[i] = (h9[i] + l9[i])/2; kij[i] = (h26[i] + l26[i])/2; }
+  const vs = smaA(R.v, 20);
+  // ust zaman dilimi trendi (4 saatlikte ~gunluk, gunlukte ~haftalik): uzun EMA'nin egimi ve fiyatin ona gore yeri
+  const eU = emaA(c, 120), eU2 = emaA(c, 300);
+  // OBV (hacimle teyit)
+  const obv = new Float64Array(n); for(let i = 1; i < n; i++) obv[i] = obv[i-1] + (c[i] > c[i-1] ? R.v[i] : c[i] < c[i-1] ? -R.v[i] : 0); const obvE = emaA(obv, 20);
+  // piyasa yapisi: pivot tepe/dipler (5 mum sag-sol), son iki tepe ve dip
+  const pvH = [], pvL = []; for(let i = 5; i < n - 5; i++){ let th = true, tl = true; for(let j = i - 5; j <= i + 5; j++){ if(j === i) continue; if(h[j] >= h[i]) th = false; if(l[j] <= l[i]) tl = false; } if(th) pvH.push(i); if(tl) pvL.push(i); }
+  // ATR yuzdesinin son 100 mumdaki yuzdelik sirasi (oynaklik rejimi)
+  const atrp = new Float64Array(n).fill(NaN); for(let i = 120; i < n; i++){ const x = atr[i]/c[i]; let k = 0; for(let j = i - 100; j < i; j++) if(atr[j]/c[j] < x) k++; atrp[i] = k/100; }
+  return { n, c, h, l, o:R.o, atr, e9, e21, e50, e200, eU, eU2, obv, obvE, pvH, pvL, atrp, mh, rs, st, ut, sqz, mom, adx, pdi, mdi, b20, sd20, ten, kij, h52, l52, vs, hh20 }; }
+function ozellik(I, R, i, BM, rj){ const c = I.c[i], a = I.atr[i]; if(!(a > 0) || i < 210) return null; const ap = a/c, ok = v => isFinite(v) ? Math.max(-6, Math.min(6, v)) : 0, sg = v => v > 0 ? 1 : v < 0 ? -1 : 0;
+  const ic = i - 26, spA = ic >= 0 ? (I.ten[ic] + I.kij[ic])/2 : NaN, spB = ic >= 0 ? (I.h52[ic] + I.l52[ic])/2 : NaN, bbu = I.b20[i] + 2*I.sd20[i], bbl = I.b20[i] - 2*I.sd20[i];
+  const r20 = c/I.c[i - 20] - 1, bm = BM ? BM(R.t[i], R.t[i - 20]) : 0;
+  return [sg(I.e9[i] - I.e21[i]), sg(c - I.e50[i]), sg(c - I.e200[i]), ok((c/I.e50[i] - 1)/ap/3), ok(I.mh[i]/a), sg(I.mh[i] - I.mh[i-1]), ok((I.rs[i] - 50)/20), I.st[i], I.ut[i], I.sqz[i], ok(I.mom[i]/a/2),
+    ok((I.adx[i] - 20)/15), ok((I.pdi[i] - I.mdi[i])/20), ok(((c - bbl)/((bbu - bbl) || 1e-12) - .5)*2), isFinite(spA) ? sg(c - Math.max(spA, spB)) : 0, sg(I.ten[i] - I.kij[i]), ok(Math.log((R.v[i] || 1)/(I.vs[i] || 1))),
+    ok((c/I.c[i-1] - 1)/ap), ok((c/I.c[i-5] - 1)/ap/2.2), ok(r20/ap/4.5), ok((c/I.hh20[i] - 1)/ap), ok((r20 - bm)/ap/4.5), rj === 1 ? 1 : rj === 2 ? -1 : 0].concat(ekOzellik(I, R, i, rj, ap)); }
+// ek ozellikler: ust zaman dilimi, RSI uyumsuzlugu, mum formasyonu, OBV, piyasa yapisi, destek/direnc, oynaklik rejimi, etkilesimler
+function ekOzellik(I, R, i, rj, ap){ const c = I.c[i], a = I.atr[i], ok = v => isFinite(v) ? Math.max(-6, Math.min(6, v)) : 0, sg = v => v > 0 ? 1 : v < 0 ? -1 : 0, rjs = rj === 1 ? 1 : rj === 2 ? -1 : 0;
+  const ustT = sg(I.eU[i] - I.eU[i - 6]), ustY = ok((c/I.eU2[i] - 1)/ap/6);
+  // RSI uyumsuzlugu: son 14 mumun dibi onceki 14'unkinden asagi ama RSI dibi yukari -> +1 (boga); tepe icin tersi -> -1
+  let dv = 0; { let l1 = Infinity, l2 = Infinity, r1 = Infinity, r2 = Infinity, h1 = -Infinity, h2 = -Infinity, q1 = -Infinity, q2 = -Infinity;
+    for(let j = i - 13; j <= i; j++){ if(I.l[j] < l1){ l1 = I.l[j]; r1 = I.rs[j]; } if(I.h[j] > h1){ h1 = I.h[j]; q1 = I.rs[j]; } }
+    for(let j = i - 27; j <= i - 14; j++){ if(I.l[j] < l2){ l2 = I.l[j]; r2 = I.rs[j]; } if(I.h[j] > h2){ h2 = I.h[j]; q2 = I.rs[j]; } }
+    if(l1 < l2 && r1 > r2 + 2) dv = 1; else if(h1 > h2 && q1 < q2 - 2) dv = -1; }
+  // mum formasyonu: yutan boga / cekic (+1), yutan ayi / kayan yildiz (-1)
+  const o = I.o[i], h = I.h[i], l = I.l[i], o1 = I.o[i-1], c1 = I.c[i-1], gov = Math.abs(c - o) || 1e-12, alt = Math.min(o, c) - l, ust = h - Math.max(o, c);
+  const mum = (c > o && c1 < o1 && c >= o1 && o <= c1) || (alt > 2*gov && ust < gov && c < I.e21[i]) ? 1 : (c < o && c1 > o1 && c <= o1 && o >= c1) || (ust > 2*gov && alt < gov && c > I.e21[i]) ? -1 : 0;
+  const obv = sg(I.obv[i] - I.obvE[i]);
+  // piyasa yapisi: (yalnizca i'den en az 5 mum once onaylanmis pivotlar -> gelecege bakmaz)
+  const H = I.pvH.filter(j => j <= i - 5).slice(-2), L = I.pvL.filter(j => j <= i - 5).slice(-2);
+  const yapi = H.length === 2 && L.length === 2 ? (I.h[H[1]] > I.h[H[0]] && I.l[L[1]] > I.l[L[0]] ? 1 : I.h[H[1]] < I.h[H[0]] && I.l[L[1]] < I.l[L[0]] ? -1 : 0) : 0;
+  const direnc = H.length ? I.h[H[H.length - 1]] : NaN, destek = L.length ? I.l[L[L.length - 1]] : NaN;
+  const dirM = isFinite(direnc) && direnc > c ? ok((direnc - c)/a/3) : 2, desM = isFinite(destek) && destek < c ? ok((c - destek)/a/3) : 2;
+  const rsN = isFinite(I.rs[i]) ? (I.rs[i] - 50)/20 : 0, vr = Math.log((R.v[i] || 1)/(I.vs[i] || 1));
+  return [ustT, ustY, dv, mum, obv, yapi, dirM, desM, isFinite(I.atrp[i]) ? (I.atrp[i] - .5)*2 : 0, I.st[i]*rjs, ok(rsN*rjs), ok(sg(I.mom[i])*Math.max(0, vr))]; }
+
+const sigm = z => 1/(1 + Math.exp(-z));
+
+const tahmin = (Mo, x) => { let z = Mo.b; for(let f = 0; f < x.length; f++) z += Mo.w[f]*((x[f] - Mo.mu[f])/Mo.sd[f]); return sigm(z); };
+
+  return { indikatorler, ozellik, tahmin, OZ_AD, OZ_AD2, emaA, smaA }; })();
+
+const KZC = {};
+const kzSg = v => v > 0 ? 1 : v < 0 ? -1 : 0, kzKs = v => Math.max(-1, Math.min(1, v));
+// veriyi temizle: bos kapanislari at, eksik o/h/l/v'yi doldur
+function kzTemiz(R){ const o = { t:[], o:[], h:[], l:[], c:[], v:[] }; const n = R?.c?.length || 0;
+  for(let i = 0; i < n; i++){ const c = +R.c[i]; if(!(c > 0)) continue; const op = +R.o?.[i] > 0 ? +R.o[i] : c, hi = Math.max(+R.h?.[i] > 0 ? +R.h[i] : c, c, op), lo = Math.min(+R.l?.[i] > 0 ? +R.l[i] : c, c, op);
+    o.t.push(+R.t[i]); o.o.push(op); o.h.push(hi); o.l.push(lo); o.c.push(c); o.v.push(+R.v?.[i] > 0 ? +R.v[i] : 0); } return o; }
+// son KAPANMIS mumun indeksi (canli mum her dakika oy degistirmesin)
+function kzKapali(R, iv, tur){ const n = R.c.length, t = R.t[n - 1], simdi = Date.now()/1000;
+  if(iv === "4h") return t + 14400 <= simdi ? n - 1 : n - 2;
+  if(tur === "KRIPTO") return t + 86400 <= simdi ? n - 1 : n - 2;
+  const tr = new Date((simdi + 3*3600)*1000), gunBar = Math.floor((t + 3*3600)/86400), bugun = Math.floor((simdi + 3*3600)/86400);
+  if(gunBar < bugun) return n - 1; const dk = tr.getUTCHours()*60 + tr.getUTCMinutes(), kapanis = tur === "NASDAQ" ? 23*60 + 5 : 18*60 + 15;
+  return dk >= kapanis || tr.getUTCDay() === 0 || tr.getUTCDay() === 6 ? n - 1 : n - 2; }
+// ek indikatorler: MFI 14, CMF 20, 20 mum dibi
+function kzEk(I, R){ const n = R.c.length, mfi = new Float64Array(n).fill(NaN), cmf = new Float64Array(n).fill(NaN), ll20 = new Float64Array(n).fill(NaN), tp = R.c.map((c, i) => (c + R.h[i] + R.l[i])/3);
+  for(let i = 14; i < n; i++){ let p = 0, m = 0; for(let j = i - 13; j <= i; j++){ const f = tp[j]*R.v[j]; if(tp[j] > tp[j-1]) p += f; else if(tp[j] < tp[j-1]) m += f; } mfi[i] = p + m > 0 ? 100*p/(p + m) : 50; }
+  for(let i = 19; i < n; i++){ let a = 0, b = 0, lo = Infinity; for(let j = i - 19; j <= i; j++){ const r = R.h[j] - R.l[j]; a += r > 0 ? ((R.c[j] - R.l[j]) - (R.h[j] - R.c[j]))/r*R.v[j] : 0; b += R.v[j]; if(R.l[j] < lo) lo = R.l[j]; } cmf[i] = b > 0 ? a/b : 0; ll20[i] = lo; }
+  return { mfi, cmf, ll20 }; }
+const KZ_GRUP = { trend:"Trend", mom:"Momentum", hacim:"Hacim & para akışı", yapi:"Yapı & formasyon", turev:"Türev piyasa" };
+// tek mumda konsey oylamasi. ayrinti=false iken sadece puan hesaplar (gecmis karne icin)
+function kzOyla(I, E, R, i, BM, ayrinti){
+  const c = I.c[i], a = I.atr[i]; if(!(a > 0) || i < 210) return null; const V = [], ap = a/c, f = (x, d = 2) => isFinite(x) ? (+x).toFixed(d).replace(".", ",") : "—";
+  const ekle = (ad, grup, v, w, not, ops) => { v = kzKs(v); if(ops && !v) { if(ayrinti) V.push({ ad, grup, v:0, w:0, not }); return; } V.push({ ad, grup, v, w, not: ayrinti ? not : "" }); };
+  // --- trend
+  ekle("EMA 9 / 21", "trend", kzSg(I.e9[i] - I.e21[i]), 1, I.e9[i] > I.e21[i] ? "kısa ortalama uzunun üstünde" : "kısa ortalama uzunun altında");
+  ekle("EMA 50", "trend", kzSg(c - I.e50[i]), 1, `fiyat 50'liğin ${c > I.e50[i] ? "üstünde" : "altında"} (${f((c/I.e50[i] - 1)*100, 1)}%)`);
+  ekle("EMA 200", "trend", kzSg(c - I.e200[i]), 1.5, `fiyat 200'lüğün ${c > I.e200[i] ? "üstünde · ana trend boğa" : "altında · ana trend ayı"}`);
+  ekle("Supertrend 10/3", "trend", I.st[i], 1.5, I.st[i] > 0 ? (I.st[i-1] < 0 ? "YENİ AL döndü" : "al modunda") : (I.st[i-1] > 0 ? "YENİ SAT döndü" : "sat modunda"));
+  ekle("UT Bot", "trend", I.ut[i], 1, I.ut[i] > 0 ? (I.ut[i-1] < 0 ? "yeni al sinyali" : "fiyat iz süren stopun üstünde") : (I.ut[i-1] > 0 ? "yeni sat sinyali" : "fiyat iz süren stopun altında"));
+  { const ic = i - 26, A = (I.ten[ic] + I.kij[ic])/2, B = (I.h52[ic] + I.l52[ic])/2, ust = Math.max(A, B), alt = Math.min(A, B);
+    ekle("Ichimoku bulut", "trend", c > ust ? 1 : c < alt ? -1 : 0, 1, c > ust ? "bulutun üstünde" : c < alt ? "bulutun altında" : "bulutun içinde · kararsız"); }
+  ekle("Tenkan / Kijun", "trend", kzSg(I.ten[i] - I.kij[i]), .5, I.ten[i] > I.kij[i] ? "dönüş çizgisi temelin üstünde" : "dönüş çizgisi temelin altında");
+  { const d = kzSg(I.pdi[i] - I.mdi[i]), x = I.adx[i], g = x < 18 ? .3 : x < 25 ? .7 : 1; ekle("ADX / DMI", "trend", d*g, 1, `ADX ${f(x, 0)} (${x < 18 ? "trend yok" : x < 25 ? "trend oluşuyor" : "güçlü trend"}), ${d > 0 ? "+DI önde" : "−DI önde"}`); }
+  { const e = I.eU[i] - I.eU[i-6], v = .5*kzSg(e) + .5*kzSg(c - I.eU2[i]); ekle("Üst zaman dilimi", "trend", v, 1.5, `uzun ortalama ${e > 0 ? "yükseliyor" : "düşüyor"}, fiyat ${c > I.eU2[i] ? "uzun vadeli ortalamanın üstünde" : "uzun vadeli ortalamanın altında"}`); }
+  // --- momentum
+  { const h = I.mh[i], y = h > I.mh[i-1]; ekle("MACD", "mom", (h > 0 ? .6 : -.6) + (y ? .4 : -.4), 1, `histogram ${h > 0 ? "pozitif" : "negatif"} ve ${y ? "güçleniyor" : "zayıflıyor"}`); }
+  { const r = I.rs[i]; ekle("RSI 14", "mom", r > 78 ? -.6 : r > 60 ? .6 : r >= 50 ? .3 : r >= 40 ? -.3 : r >= 25 ? -.6 : .6, 1, `RSI ${f(r, 0)}${r > 78 ? " · aşırı alım, kovalamak riskli" : r < 25 ? " · aşırı satım, tepki ihtimali" : r > 60 ? " · güçlü bölge" : r < 40 ? " · zayıf bölge" : ""}`); }
+  { const s = I.sqz[i], s1 = I.sqz[i-1], m = I.mom[i], mY = m > I.mom[i-1]; const v = s ? kzSg(m)*.3 : s1 ? kzSg(m) : kzSg(m)*(mY === (m > 0) ? .7 : .35);
+    ekle("Squeeze (LazyBear)", "mom", v, 1, s ? "bantlar sıkıştı · patlama yakın, yön " + (m > 0 ? "yukarı" : "aşağı") + " eğilimli" : s1 ? "sıkışma ATEŞLENDİ · " + (m > 0 ? "yukarı" : "aşağı") : `momentum ${m > 0 ? "pozitif" : "negatif"}${mY === (m > 0) ? ", güçleniyor" : ", sönümleniyor"}`); }
+  { let dv = 0, l1 = Infinity, l2 = Infinity, r1 = 0, r2 = 0, h1 = -Infinity, h2 = -Infinity, q1 = 0, q2 = 0;
+    for(let j = i - 13; j <= i; j++){ if(I.l[j] < l1){ l1 = I.l[j]; r1 = I.rs[j]; } if(I.h[j] > h1){ h1 = I.h[j]; q1 = I.rs[j]; } }
+    for(let j = i - 27; j <= i - 14; j++){ if(I.l[j] < l2){ l2 = I.l[j]; r2 = I.rs[j]; } if(I.h[j] > h2){ h2 = I.h[j]; q2 = I.rs[j]; } }
+    if(l1 < l2 && r1 > r2 + 2) dv = 1; else if(h1 > h2 && q1 < q2 - 2) dv = -1;
+    ekle("RSI uyumsuzluğu", "mom", dv, 1.5, dv > 0 ? "fiyat yeni dip yaptı ama RSI yapmadı · boğa uyumsuzluğu" : dv < 0 ? "fiyat yeni tepe yaptı ama RSI yapmadı · ayı uyumsuzluğu" : "uyumsuzluk yok", true); }
+  { const u = I.b20[i] + 2*I.sd20[i], l = I.b20[i] - 2*I.sd20[i], pb = (c - l)/((u - l) || 1e-12); ekle("Bollinger %B", "mom", pb > 1.05 ? -1 : pb < -.05 ? 1 : 0, .5, pb > 1.05 ? "üst bandın dışında · aşırı uzama" : pb < -.05 ? "alt bandın dışında · aşırı satım" : `%B ${f(pb*100, 0)}`, true); }
+  // --- hacim
+  ekle("OBV", "hacim", kzSg(I.obv[i] - I.obvE[i]), 1, I.obv[i] > I.obvE[i] ? "hacim alıcıları teyit ediyor" : "hacim satıcıları teyit ediyor");
+  { const m = E.mfi[i]; ekle("MFI 14 (para akışı)", "hacim", m > 82 ? -.6 : m < 18 ? .6 : (m - 50)/40, .7, `MFI ${f(m, 0)}${m > 82 ? " · para girişi doydu" : m < 18 ? " · para çıkışı aşırı" : m > 50 ? " · para giriyor" : " · para çıkıyor"}`); }
+  { const m = E.cmf[i]; ekle("Chaikin para akışı", "hacim", m*5, 1, `CMF ${f(m, 2)} · ${m > .05 ? "birikim (toplama)" : m < -.05 ? "dağıtım (mal çıkışı)" : "dengede"}`); }
+  { const vr = R.v[i]/(I.vs[i] || 1); ekle("Hacim patlaması", "hacim", vr > 1.8 ? kzSg(c - R.o[i]) : 0, .7, vr > 1.8 ? `ortalamanın ${f(vr, 1)} katı hacim, ${c > R.o[i] ? "yeşil mumla" : "kırmızı mumla"}` : `hacim ortalamanın ${f(vr, 1)} katı`, true); }
+  // --- yapi
+  { const H = I.pvH.filter(j => j <= i - 5).slice(-2), L = I.pvL.filter(j => j <= i - 5).slice(-2);
+    const y = H.length === 2 && L.length === 2 ? (I.h[H[1]] > I.h[H[0]] && I.l[L[1]] > I.l[L[0]] ? 1 : I.h[H[1]] < I.h[H[0]] && I.l[L[1]] < I.l[L[0]] ? -1 : 0) : 0;
+    ekle("Piyasa yapısı", "yapi", y, 1.5, y > 0 ? "yükselen tepe + yükselen dip" : y < 0 ? "alçalan tepe + alçalan dip" : "karışık yapı / yatay"); }
+  { const o = R.o[i], h = R.h[i], l = R.l[i], o1 = R.o[i-1], c1 = R.c[i-1], gov = Math.abs(c - o) || 1e-12, alt = Math.min(o, c) - l, ust = h - Math.max(o, c);
+    const yb = c > o && c1 < o1 && c >= o1 && o <= c1, ck = alt > 2*gov && ust < gov && c < I.e21[i], ya = c < o && c1 > o1 && c <= o1 && o >= c1, ky = ust > 2*gov && alt < gov && c > I.e21[i];
+    ekle("Mum formasyonu", "yapi", yb || ck ? 1 : ya || ky ? -1 : 0, .5, yb ? "yutan boğa" : ck ? "çekiç" : ya ? "yutan ayı" : ky ? "kayan yıldız" : "belirgin formasyon yok", true); }
+  { const kir = c > I.hh20[i-1] ? 1 : c < E.ll20[i-1] ? -1 : 0; ekle("20 mum kırılımı", "yapi", kir, 1, kir > 0 ? "20 mumluk zirve KIRILDI" : kir < 0 ? "20 mumluk dip kırıldı" : "kanal içinde", true); }
+  if(BM){ const r20 = c/I.c[i-20] - 1, bm = BM(R.t[i], R.t[i-20]); ekle("Göreli güç", "yapi", Math.tanh((r20 - bm)/(ap*4.5)), 1, `20 mumda ${f(r20*100, 1)}% · kıyas ${f(bm*100, 1)}%`); }
+  let sw = 0, sv = 0; V.forEach(o => { sw += o.w; sv += o.w*o.v; }); const puan = Math.round(100*sv/(sw || 1));
+  return { puan, V: ayrinti ? V : null }; }
+const kzKarar = p => p >= 40 ? ["GÜÇLÜ AL", "gal"] : p >= 15 ? ["AL", "al"] : p > -15 ? ["NÖTR", "not"] : p > -40 ? ["SAT", "sat"] : ["GÜÇLÜ SAT", "gsat"];
+// pivot kumelerinden destek / direnc (+ dinamik seviyeler, zirve ustunde Fibonacci uzantisi)
+function kzSeviye(I, R, i, fiyat){
+  const a = I.atr[i], P = [];
+  I.pvH.filter(j => j <= i - 2 && j >= i - 320).forEach(j => P.push({ f:I.h[j], j, tur:"tepe" })); I.pvL.filter(j => j <= i - 2 && j >= i - 320).forEach(j => P.push({ f:I.l[j], j, tur:"dip" }));
+  let hj = i, lj = i; for(let j = i - 8; j <= i; j++){ if(I.h[j] >= I.h[hj]) hj = j; if(I.l[j] <= I.l[lj]) lj = j; } P.push({ f:I.h[hj], j:hj, tur:"tepe" }, { f:I.l[lj], j:lj, tur:"dip" });
+  P.sort((x, y) => x.f - y.f); const K = [];
+  for(const p of P){ const s = K[K.length - 1], g = 1 + (p.j > i - 60 ? .6 : p.j > i - 150 ? .25 : 0); if(s && p.f - s.f < .55*a){ s.top += p.f*g; s.gw += g; s.f = s.top/s.gw; s.dok++; s.guc += g; s.son = Math.max(s.son, p.j); } else K.push({ f:p.f, top:p.f*g, gw:g, dok:1, guc:g, son:p.j, ad:"" }); }
+  K.forEach(k => k.ad = k.dok >= 3 ? `${k.dok} kez test edildi` : k.dok === 2 ? "çift dokunuş" : "tek pivot");
+  const din = [["EMA 50", I.e50[i], 1], ["EMA 200", I.e200[i], 1.6], ["Kijun", I.kij[i], .8]].filter(x => isFinite(x[1])).map(([ad, f, guc]) => ({ f, guc, dok:0, ad, din:true }));
+  const hepsi = K.concat(din), ustE = fiyat + .12*a, altE = fiyat - .12*a;
+  let direnc = hepsi.filter(k => k.f > ustE).sort((x, y) => x.f - y.f), destek = hepsi.filter(k => k.f < altE).sort((x, y) => y.f - x.f);
+  const sade = L => { const o = []; for(const k of L){ const y = o.find(x => Math.abs(x.f - k.f) < .35*a); if(y){ if(k.din && !y.din) y.ad += " + " + k.ad; else if(!k.din && y.din){ y.ad = k.ad + " + " + y.ad; y.din = false; y.dok = k.dok; } y.guc += k.guc; continue; } o.push({ ...k }); } return o; };
+  direnc = sade(direnc).slice(0, 4); destek = sade(destek).slice(0, 4);
+  if(direnc.length < 3){ let lo = Infinity, hi = -Infinity; for(let j = Math.max(0, i - 160); j <= i; j++){ lo = Math.min(lo, I.l[j]); hi = Math.max(hi, I.h[j]); }
+    [[1.272, "Fib 1.272 uzantısı"], [1.618, "Fib 1.618 uzantısı"], [2, "Fib 2.0 uzantısı"]].forEach(([r, ad]) => { const f = lo + (hi - lo)*r; if(f > ustE && direnc.length < 4 && !direnc.some(x => Math.abs(x.f - f) < .5*a)) direnc.push({ f, guc:.8, dok:0, ad, fib:true }); });
+    direnc.sort((x, y) => x.f - y.f); }
+  return { destek, direnc, atr:a }; }
+// islem plani: al bolgesi, stop, hedefler, risk/odul ve eylem
+function kzPlan(sev, fiyat, puan, uzama){
+  const a = sev.atr, d1 = sev.destek.find(k => k.guc >= 1.5 && fiyat - k.f <= 3.2*a) || sev.destek[0];
+  let stop = d1 ? d1.f - .4*a : fiyat - 2*a; stop = Math.min(fiyat - .8*a, Math.max(fiyat - 4*a, stop));
+  const H = sev.direnc.filter(k => k.f >= fiyat + .8*a).map(k => k.f); while(H.length < 3) H.push((H[H.length - 1] || fiyat) + 2*a);
+  const yakin = d1 && fiyat - d1.f <= 1.2*a, al = d1 ? (yakin ? [d1.f, fiyat] : [d1.f, d1.f + .6*a]) : [fiyat - a, fiyat], rr = (H[0] - fiyat)/(fiyat - stop);
+  let eylem, neden;
+  if(puan >= 15){ if(uzama > 2.6){ eylem = "TUT"; neden = "Konsey olumlu ama fiyat 50'likten çok uzaklaşmış; elindeyse tut, yeni giriş için al bölgesine geri çekilmeyi bekle."; }
+    else if(rr >= 1.5){ eylem = "AL"; neden = yakin ? "Konsey olumlu, fiyat desteğin hemen üstünde ve ilk hedefe kadar risk/ödül yeterli." : "Konsey olumlu ve risk/ödül yeterli; kademeli gir, kalanını al bölgesinde topla."; }
+    else { eylem = "TUT"; neden = "Konsey olumlu ama ilk direnç çok yakın (risk/ödül zayıf); elindeyse tut, yeni giriş için direncin kırılmasını ya da geri çekilmeyi bekle."; } }
+  else if(puan > -15){ eylem = "BEKLE"; neden = "Oylar bölünmüş, net yön yok; elindeyse stopla tut, yeni giriş için konseyin AL'a dönmesini bekle."; }
+  else { eylem = "SAT"; neden = "Konsey olumsuz; elindeyse stop seviyesinin altında kapanışta çık ya da tepki yükselişlerini satış fırsatı say. Yeni alım yok."; }
+  return { al, stop, H:H.slice(0, 3), rr, eylem, neden, d1 }; }
+// bu varlikta konseyin gecmis karnesi: puan esigini gectiginde H mum sonra ne oldu
+function kzKarne(P, c, H){
+  let n = 0, k = 0, top = 0, nG = 0, kG = 0, topG = 0, nS = 0, kS = 0, topS = 0, bz = 0, bzP = 0;
+  for(let i = 0; i < c.length - H; i++){ const p = P[i]; if(p == null) continue; const r = c[i + H]/c[i] - 1; bz++; if(r > 0) bzP++;
+    if(p >= 15){ n++; top += r; if(r > 0) k++; } if(p >= 40){ nG++; topG += r; if(r > 0) kG++; } if(p <= -15){ nS++; topS += r; if(r < 0) kS++; } }
+  return { H, baz:bz ? bzP/bz : 0, bz, al:{ n, isabet:n ? k/n : 0, ort:n ? top/n : 0 }, gal:{ n:nG, isabet:nG ? kG/nG : 0, ort:nG ? topG/nG : 0 }, sat:{ n:nS, isabet:nS ? kS/nS : 0, ort:nS ? topS/nS : 0 } }; }
+// bir zaman dilimi icin tum hesap
+function kzCerceve(R0, BR0, iv, tur, fiyat){
+  const R = kzTemiz(R0); if(R.c.length < 240) throw new Error(`yetersiz geçmiş (${R.c.length} mum, en az 240 lazım)`);
+  const I = KZ.indikatorler(R), E = kzEk(I, R), ic = Math.max(210, kzKapali(R, iv, tur)), anah = t => iv === "4h" ? t : Math.floor((t + 3*3600)/86400);
+  let BM = null, rjOf = () => 0;
+  if(BR0?.c?.length > 60){ const B = kzTemiz(BR0), e = KZ.emaA(Float64Array.from(B.c), 50), bm = new Map(), rm = new Map(); B.t.forEach((t, j) => { bm.set(anah(t), B.c[j]); rm.set(anah(t), j < 50 ? 0 : B.c[j] > e[j] ? 1 : 2); });
+    BM = (t, t0) => { const x = bm.get(anah(t)), y = bm.get(anah(t0)); return x && y ? x/y - 1 : 0; }; rjOf = t => rm.get(anah(t)) || 0; }
+  const H = iv === "4h" ? 12 : 10, P = new Array(R.c.length).fill(null);
+  for(let i = 210; i <= ic; i++){ const o = kzOyla(I, E, R, i, BM, false); if(o) P[i] = o.puan; }
+  const son = kzOyla(I, E, R, ic, BM, true), f = fiyat > 0 ? fiyat : R.c[R.c.length - 1], sev = kzSeviye(I, R, ic, f), uzama = (f - I.e50[ic])/I.atr[ic];
+  let sinyal = null; for(let i = ic; i > ic - 120 && i > 211; i--){ if(P[i] >= 15 && !(P[i-1] >= 15)){ sinyal = { yon:"AL", i, gun:ic - i, f:R.c[i], t:R.t[i] }; break; } if(P[i] <= -15 && !(P[i-1] <= -15)){ sinyal = { yon:"SAT", i, gun:ic - i, f:R.c[i], t:R.t[i] }; break; } }
+  return { iv, R, I, ic, BM, rjOf, puan:son.puan, V:son.V, karar:kzKarar(son.puan), sev, plan:kzPlan(sev, f, son.puan, uzama), uzama, karne:kzKarne(P, R.c, H), sinyal, P, fiyat:f }; }
+// botun ogrenen modeli (kumar kasasi): kb = BIST gunluk, k4 = kripto 4 saatlik
+function kzModel(C, mk){
+  const Mo = PZ.bot?.row?.algo?.[mk]; if(!Mo?.w || !C) return null; const i = C.ic, x = KZ.ozellik(C.I, C.R, i, C.BM, C.rjOf(C.R.t[i]));
+  if(!x || x.length !== Mo.w.length) return { mk, yok:"model bu sürümün özellik sayısıyla uyuşmuyor (bot yeniden eğitince düzelir)" };
+  const p = KZ.tahmin(Mo, x), AD = KZ.OZ_AD.concat(KZ.OZ_AD2), katki = Mo.w.map((w, f) => ({ ad:AD[f], k:w*((x[f] - Mo.mu[f])/Mo.sd[f]) })).sort((a, b) => Math.abs(b.k) - Math.abs(a.k)).slice(0, 5);
+  return { mk, p, esik:Mo.esik, sinyal:p >= Mo.esik, te:Mo.te, tr:Mo.tr, aktif:Mo.aktif, cikis:Mo.cikis?.ad, H:Mo.H, katki }; }
+// temel karne (hisse: carpanlar + karlilik + borc; coin: siralama, arz, zirveden uzaklik)
+function kzTemel(s){
+  const t = s.tv || {}, g = s.cg || {}, tur = pzTur(s.k), M = [], ek = (p, not) => M.push({ p, not }), ok = v => v != null && isFinite(v);
+  if(tur === "BIST" || tur === "NASDAQ"){ const bist = tur === "BIST", fk = t.price_earnings_ttm, pd = t.price_book_ratio, fv = t.enterprise_value_ebitda_ttm, roe = t.return_on_equity, nm = t.net_margin, de = t.debt_to_equity, dy = t.dividends_yield_current;
+    if(!ok(fk) && !ok(pd) && !ok(roe) && !ok(t.net_income)) return null;
+    if(ok(t.net_income)) ek(t.net_income > 0 ? 1 : -2, t.net_income > 0 ? "kâr ediyor" : "ZARAR ediyor");
+    if(ok(fk) && fk > 0) ek(fk < (bist ? 7 : 15) ? 1.5 : fk < (bist ? 14 : 28) ? .5 : fk > (bist ? 30 : 60) ? -1 : 0, `F/K ${fk.toFixed(1)}${fk < (bist ? 7 : 15) ? " ucuz" : fk > (bist ? 30 : 60) ? " pahalı" : ""}`);
+    if(ok(pd) && pd > 0) ek(pd < 1 ? 1 : pd < (bist ? 2.5 : 5) ? .3 : pd > (bist ? 6 : 15) ? -1 : 0, `PD/DD ${pd.toFixed(2)}${pd < 1 ? " defter değerinin altında" : ""}`);
+    if(ok(fv) && fv > 0) ek(fv < 6 ? 1 : fv < 10 ? .3 : fv > 18 ? -1 : 0, `FD/FAVÖK ${fv.toFixed(1)}`);
+    if(ok(roe)) ek(roe > (bist ? 35 : 20) ? 1.5 : roe > (bist ? 20 : 12) ? .5 : roe < 5 ? -1 : 0, `özsermaye kârlılığı %${roe.toFixed(0)}${bist && roe < 30 ? " (enflasyonun altında kalabilir)" : ""}`);
+    if(ok(nm)) ek(nm > 15 ? 1 : nm < 3 ? -.5 : 0, `net marj %${nm.toFixed(1)}`);
+    if(ok(de)) ek(de < .5 ? .5 : de > 2 ? -1 : 0, `borç/özsermaye ${de.toFixed(2)}`);
+    if(ok(dy) && dy > 4) ek(.5, `temettü verimi %${dy.toFixed(1)}`); }
+  else if(tur === "KRIPTO"){ if(!ok(g.market_cap_rank) && !ok(g.market_cap)) return null; const r = g.market_cap_rank, ar = g.max_supply ? g.circulating_supply/g.max_supply : null, ath = g.ath_change_percentage, hv = g.total_volume && g.market_cap ? g.total_volume/g.market_cap : null;
+    if(ok(r)) ek(r <= 20 ? 1.5 : r <= 100 ? .5 : r > 300 ? -1 : 0, `piyasa değeri sırası #${r}`);
+    if(ok(ar)) ek(ar >= .9 ? .5 : ar < .5 ? -1 : 0, `arzın %${Math.round(ar*100)}'i dolaşımda${ar < .5 ? " · sulandırma (unlock) riski" : ""}`); else ek(-.3, "üst arz sınırı yok");
+    if(ok(ath)) ek(ath < -90 ? -1 : ath < -70 ? -.3 : ath > -15 ? .5 : 0, `zirveye uzaklık %${ath.toFixed(0)}`);
+    if(ok(hv)) ek(hv > .5 ? -.5 : hv > .03 ? .3 : -.3, `günlük hacim / piyasa değeri %${(hv*100).toFixed(1)}${hv > .5 ? " · aşırı spekülatif" : hv < .03 ? " · sığ" : ""}`); }
+  else return null;
+  if(!M.length) return null; const top = M.reduce((a, b) => a + b.p, 0), en = M.reduce((a, b) => a + Math.max(1, Math.abs(b.p)), 0) || 1;
+  const not10 = Math.max(0, Math.min(10, Math.round(5 + 5*top/en)));
+  return { not:not10, M, ad: not10 >= 7 ? "güçlü" : not10 >= 5 ? "orta" : "zayıf" }; }
+async function kzFonlama(s){ try{ const r = await pzOnbellek("fon|" + s.bn, 5*60000, () => pzJson(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${s.bn || pzKod(s.k) + "USDT"}`, 6000)); const f = +r?.lastFundingRate; return isFinite(f) ? f : null; }catch(e){ return null; } }
+async function kzBn4s(bn){ return pzOnbellek("4s|" + bn, 4*60000, async () => { const r = await pzJson(`https://api.binance.com/api/v3/klines?symbol=${bn}&interval=4h&limit=1000`);
+  const v = { t:[], o:[], h:[], l:[], c:[], v:[] }; (r || []).forEach(x => { v.t.push(Math.round(x[0]/1000)); v.o.push(+x[1]); v.h.push(+x[2]); v.l.push(+x[3]); v.c.push(+x[4]); v.v.push(+x[7]); }); return v; }); }
+// ana hesap (5 dk onbellekli)
+function kzHesapla(s){
+  const k = s.k, o = KZC[k]; if(o && Date.now() - o.t < 5*60000) return o.p;
+  const p = (async () => { const tur = pzTur(k), kr = tur === "KRIPTO", bist = tur === "BIST";
+    if(!["BIST", "NASDAQ", "KRIPTO", "MADEN", "DOVIZ", "ENDEKS"].includes(tur)) throw new Error("bu varlık türünde konsey yok");
+    const fiyat = (s.bn && PZ.canli?.[s.bn]?.f) || s.f || 0;
+    const [R, BR] = await Promise.all([ pzGecmis(s, "2Y"), (kr ? (k === "KRIPTO:BTC" ? Promise.resolve(null) : pzGecmis({ k:"KRIPTO:BTC", kod:"BTC", bn:"BTCUSDT" }, "2Y")) : bist ? pzGecmis({ k:"ENDEKS:XU100", kod:"XU100", ys:"XU100.IS" }, "2Y") : tur === "NASDAQ" ? pzGecmis({ k:"ENDEKS:NDX", kod:"NDX", ys:"^NDX" }, "2Y") : Promise.resolve(null)).catch(() => null) ]);
+    const G = kzCerceve(R, BR, "1d", tur, fiyat); let K4 = null, fon = null;
+    if(kr){ const bn = s.bn || pzKod(k) + "USDT";
+      const [R4, B4, f] = await Promise.all([ kzBn4s(bn).catch(() => null), bn === "BTCUSDT" ? Promise.resolve(null) : kzBn4s("BTCUSDT").catch(() => null), kzFonlama({ ...s, bn }) ]);
+      fon = f; try{ if(R4?.c?.length >= 240) K4 = kzCerceve(R4, B4, "4h", tur, fiyat); }catch(e){} }
+    if(!PZ.bot && !PZ.dbYok && typeof pzBotYukle === "function") await pzBotYukle().catch(() => {});
+    const model = kr ? kzModel(K4, "k4") : bist ? kzModel(G, "kb") : null;
+    return { k, G, K4, fon, model, temel:kzTemel(s), t:Date.now() }; })();
+  KZC[k] = { t:Date.now(), p }; p.catch(() => { delete KZC[k]; }); return p; }
+
+/* ---------- ekran ---------- */
+function kzFiyat(x, s){ return pzPara(x, s.para || (pzTur(s.k) === "KRIPTO" ? "USD" : pzTur(s.k) === "BIST" ? "TRY" : "")); }
+function kzOlcek(p){ const x = (p + 100)/2; return `<div class="kzOlc"><i style="left:${x}%"></i><span>Güçlü sat</span><span>Nötr</span><span>Güçlü al</span></div>`; }
+function kzOyCiz(V){ const g = {}; V.forEach(o => (g[o.grup] = g[o.grup] || []).push(o));
+  return Object.keys(KZ_GRUP).filter(k => g[k]).map(k => { const L = g[k], al = L.filter(o => o.v > .15).length, sat = L.filter(o => o.v < -.15).length;
+    return `<div class="kzGr"><div class="kzGrB"><b>${KZ_GRUP[k]}</b><small><em class="art">${al} al</em> · <em class="az">${sat} sat</em></small></div>${L.map(o => { const c = o.v > .15 ? "al" : o.v < -.15 ? "sat" : "not";
+      return `<div class="kzOy ${o.w ? "" : "pasif"}"><span>${esc(o.ad)}</span><em class="kzCip ${c}">${c === "al" ? "AL" : c === "sat" ? "SAT" : "—"}</em><small>${esc(o.not)}</small></div>`; }).join("")}</div>`; }).join(""); }
+function kzSevCiz(C, s){ const f = C.fiyat, a = C.sev.atr, pc = x => ((x/f - 1)*100).toFixed(1).replace(".", ",");
+  const sat = (k, t) => `<div class="kzSv ${t}"><b class="mono">${kzFiyat(k.f, s)}</b><small>${t === "dir" ? "+" : ""}${pc(k.f)}%</small><span>${esc(k.ad)}${k.guc >= 2.5 ? " ★" : ""}</span></div>`;
+  const P = C.plan;
+  return `<div class="kzSvL">${C.sev.direnc.slice().reverse().map(k => sat(k, "dir")).join("")}<div class="kzSv simdi"><b class="mono">${kzFiyat(f, s)}</b><small>şimdi</small><span>ATR ${kzFiyat(a, s)} (mum başı oynaklık %${(a/f*100).toFixed(1).replace(".", ",")})</span></div>${C.sev.destek.map(k => sat(k, "des")).join("")}</div>
+    <div class="kzPlan"><div><small>Al bölgesi</small><b class="mono">${kzFiyat(P.al[0], s)} – ${kzFiyat(P.al[1], s)}</b></div><div><small>Zarar kes</small><b class="mono az">${kzFiyat(P.stop, s)}</b><em>${pc(P.stop)}%</em></div>
+      ${P.H.map((h, j) => `<div><small>Hedef ${j + 1}</small><b class="mono art">${kzFiyat(h, s)}</b><em>+${pc(h)}%</em></div>`).join("")}<div><small>Risk / ödül (H1)</small><b class="mono ${P.rr >= 2 ? "art" : P.rr < 1.2 ? "az" : ""}">1 : ${P.rr.toFixed(1).replace(".", ",")}</b></div></div>`; }
+function kzKarneCiz(C){ const K = C.karne, y = x => "%" + Math.round(x*100), r = x => (x >= 0 ? "+" : "") + (x*100).toFixed(1).replace(".", ",") + "%", bir = C.iv === "4h" ? `${K.H} mum (~${K.H*4/24} gün)` : `${K.H} gün`;
+  if(!K.bz) return ""; const ust = K.al.isabet - K.baz;
+  return `<div class="kzKarne"><b>Bu varlıkta konseyin karnesi</b><small>son ${C.R.c.length} mum · ${bir} sonrası</small>
+    <div class="kzKr"><span>Rastgele bir gün alsan</span><b>${y(K.baz)} kârda</b></div>
+    <div class="kzKr"><span>Konsey AL derken (${K.al.n} kez)</span><b class="${ust > .04 ? "art" : ust < -.02 ? "az" : ""}">${K.al.n ? y(K.al.isabet) + " kârda · ort " + r(K.al.ort) : "—"}</b></div>
+    <div class="kzKr"><span>GÜÇLÜ AL derken (${K.gal.n} kez)</span><b>${K.gal.n ? y(K.gal.isabet) + " · ort " + r(K.gal.ort) : "—"}</b></div>
+    <div class="kzKr"><span>SAT derken düştü (${K.sat.n} kez)</span><b>${K.sat.n ? y(K.sat.isabet) + " · ort " + r(K.sat.ort) : "—"}</b></div>
+    <p class="kzNot">${K.al.n < 15 ? "Örnek az, karneye fazla güvenme." : ust > .04 ? `Konsey bu varlıkta yazı-turadan ${Math.round(ust*100)} puan iyi çalışmış 👍` : ust < -.02 ? "Dikkat: konsey bu varlıkta tutmamış, ters köşe yapan bir hisse/coin." : "Konsey bu varlıkta yazı-turadan pek farklı değil; seviyeleri kullan, yöne fazla güvenme."}</p></div>`; }
+function kzModelCiz(M){ if(!M) return ""; if(M.yok) return `<div class="kzModel"><b>Öğrenen model</b><p class="kzNot">${esc(M.yok)}</p></div>`;
+  const y = Math.round(M.p*100), e = Math.round(M.esik*100), te = M.te;
+  return `<div class="kzModel"><b>Öğrenen model <small>(${M.mk === "k4" ? "kripto 4 saatlik" : "BIST günlük"} · kumar kasası)</small></b>
+    <div class="kzMd"><div class="kzBar"><i style="width:${y}%"></i><u style="left:${e}%"></u></div><b class="${M.sinyal ? "art" : ""}">%${y}</b></div>
+    <small>${M.sinyal ? `🎯 Eşik (%${e}) aşıldı · bot bu mumda girerdi` : `Eşik %${e} · henüz sinyal yok`}${M.cikis ? " · çıkış: " + esc(M.cikis) : ""}</small>
+    ${te ? `<small>İleri test: ${te.n} işlem, isabet %${Math.round(te.isabet*100)}, ort ${(te.ort >= 0 ? "+" : "") + te.ort.toFixed(2).replace(".", ",")}% ${M.aktif ? "· ✓ aktif" : "· kanıt bekliyor"}</small>` : ""}
+    <div class="kzKatki">${M.katki.map(k => `<em class="${k.k > 0 ? "art" : "az"}">${k.k > 0 ? "▲" : "▼"} ${esc(k.ad)}</em>`).join("")}</div></div>`; }
+function kzTemelCiz(T){ if(!T) return ""; return `<div class="kzTemel"><b>Temel karne <em class="${T.not >= 7 ? "art" : T.not < 5 ? "az" : ""}">${T.not}/10 · ${T.ad}</em></b>${T.M.map(m => `<div class="kzKr"><span>${esc(m.not)}</span><b class="${m.p > 0 ? "art" : m.p < 0 ? "az" : ""}">${m.p > 0 ? "+" : m.p < 0 ? "−" : "·"}</b></div>`).join("")}</div>`; }
+function kzPanelCiz(Z, s){
+  const G = Z.G, K4 = Z.K4, P = G.plan, ek = P.eylem === "AL" ? "al" : P.eylem === "SAT" ? "sat" : "not", tarih = t => new Date(t*1000).toLocaleDateString("tr-TR", { day:"numeric", month:"short" });
+  const vade = (C, ad) => C ? `<div class="kzVd"><small>${ad}</small><em class="kzCip ${C.karar[1]}">${C.karar[0]}</em><b class="mono">${C.puan > 0 ? "+" : ""}${C.puan}</b>${C.sinyal ? `<span>son ${C.sinyal.yon} ${C.sinyal.gun ? C.sinyal.gun + " mum önce" : "bu mumda"} (${kzFiyat(C.sinyal.f, s)}, ${((C.fiyat/C.sinyal.f - 1)*100 >= 0 ? "+" : "") + ((C.fiyat/C.sinyal.f - 1)*100).toFixed(1).replace(".", ",")}%)${(C.sinyal.yon === "AL" && C.puan < 15) || (C.sinyal.yon === "SAT" && C.puan > -15) ? " · sinyal söndü" : ""}</span>` : ""}</div>` : "";
+  const fon = Z.fon != null ? `<div class="kzVd"><small>Fonlama oranı</small><b class="mono ${Z.fon > .0005 ? "az" : Z.fon < -.0002 ? "art" : ""}">%${(Z.fon*100).toFixed(4).replace(".", ",")}</b><span>${Z.fon > .0005 ? "longlar kalabalık · silkeleme riski" : Z.fon < -.0002 ? "shortlar kalabalık · sıkışma (squeeze) potansiyeli" : "dengeli"}</span></div>` : "";
+  return `<div class="kzUst"><div class="kzKarar ${G.karar[1]}"><small>Konsey kararı (günlük)</small><b>${G.karar[0]}</b><em class="mono">${G.puan > 0 ? "+" : ""}${G.puan} / 100</em>${kzOlcek(G.puan)}</div>
+    <div class="kzEylem ${ek}"><small>Ne yapmalı?</small><b>${P.eylem}</b><p>${esc(P.neden)}</p></div></div>
+    <div class="kzVdL">${vade(K4, "Kısa vade · 4 saatlik")}${vade(G, "Orta vade · günlük")}${fon}</div>
+    <div class="kzIz"><div class="kzSut"><div class="kzBas">Oylar · son kapanmış mum (${tarih(G.R.t[G.ic])})</div>${kzOyCiz(G.V)}</div>
+      <div class="kzSut"><div class="kzBas">Destek / direnç & işlem planı</div>${kzSevCiz(G, s)}${K4 ? `<details class="kzK4"><summary>4 saatlik seviyeler (kısa vade işlem için)</summary>${kzSevCiz(K4, s)}</details>` : ""}</div>
+      <div class="kzSut">${kzModelCiz(Z.model)}${kzKarneCiz(G)}${kzTemelCiz(Z.temel)}<p class="kzNot">Kural: konsey + seviyeler yön ve yer söyler, kesinlik söylemez. Stopsuz işlem yok.</p></div></div>`; }
+async function kzPanel(k){
+  const yer = document.querySelector(".pzdIzgara"); if(!yer || document.getElementById("kzP")) return;
+  yer.insertAdjacentHTML("afterend", `<section class="pcBox kzK" id="kzP"><header><b>👑 Şah İndikatörü</b><small>22 indikatörlük konsey · öğrenen model · destek/direnç · temel karne</small><button class="pcLink" onclick="delete KZC['${k}'];document.getElementById('kzP').remove();kzPanel('${k}')">↻</button></header><div class="pcBoxIc" id="kzPic"><div class="spin"></div></div></section>`);
+  try{ const s = PZD.s?.k === k ? PZD.s : await pzSatirBul(k), Z = await kzHesapla(s); if(app.dataset.pid !== k) return; const b = document.getElementById("kzPic"); if(b) b.innerHTML = kzPanelCiz(Z, s); }
+  catch(e){ const b = document.getElementById("kzPic"); if(b) b.innerHTML = `<p class="kzNot">Konsey hesaplanamadı: ${esc(String(e?.message || e))}</p>`; } }
+{ const eski = pzDetay; pzDetay = async function(k){ const r = await eski.apply(this, arguments); try{ if(app.dataset.pid === String(k || "")) kzPanel(String(k)); }catch(e){} return r; }; if(typeof ekranlar === "object") ekranlar.piyasaDetay = pzDetay; }
+
+/* ---------- Claude / GPT istemine ekle ---------- */
+function kzMetin(Z, s){ const G = Z.G, P = G.plan, f = x => kzFiyat(x, s), y = x => "%" + Math.round(x*100), L = [];
+  const oz = C => { const g = {}; C.V.filter(o => o.w).forEach(o => { g[o.grup] = g[o.grup] || [0, 0]; if(o.v > .15) g[o.grup][0]++; else if(o.v < -.15) g[o.grup][1]++; }); return Object.keys(g).map(k => `${KZ_GRUP[k].split(" ")[0].toLowerCase()} ${g[k][0]} al/${g[k][1]} sat`).join(", "); };
+  const one = G.V.filter(o => o.w && Math.abs(o.v) >= .6).sort((a, b) => b.w*Math.abs(b.v) - a.w*Math.abs(a.v)).slice(0, 7).map(o => `${o.ad}: ${o.not}`).join("; ");
+  L.push(`İNDİKATÖR KONSEYİ (22 indikatör, günlük, son kapanmış mum): ${G.karar[0]} (puan ${G.puan > 0 ? "+" : ""}${G.puan}/100) — ${oz(G)}${Z.K4 ? `; 4 saatlik konsey ${Z.K4.karar[0]} (${Z.K4.puan > 0 ? "+" : ""}${Z.K4.puan})` : ""}`);
+  if(one) L.push(`öne çıkan oylar: ${one}`);
+  L.push(`konsey seviyeleri (pivot kümeleri): dirençler ${G.sev.direnc.map(k => `${f(k.f)} [${k.ad}]`).join(", ") || "-"}; destekler ${G.sev.destek.map(k => `${f(k.f)} [${k.ad}]`).join(", ") || "-"}; ATR ${f(G.sev.atr)}`);
+  L.push(`konsey planı: ${P.eylem} — al bölgesi ${f(P.al[0])}-${f(P.al[1])}, stop ${f(P.stop)}, hedefler ${P.H.map(f).join(" / ")}, risk/ödül 1:${P.rr.toFixed(1)}${G.uzama > 2.6 ? ", fiyat 50 günlükten aşırı uzak" : ""}`);
+  const K = G.karne; if(K.bz) L.push(`konseyin bu varlıktaki geçmiş karnesi (${K.H} mum sonrası): rastgele gün ${y(K.baz)} kârda; AL dediğinde ${K.al.n} kez, ${y(K.al.isabet)} kârda, ort ${(K.al.ort*100).toFixed(1)}%; SAT dediğinde ${K.sat.n} kez, ${y(K.sat.isabet)} düştü`);
+  if(Z.model && !Z.model.yok) L.push(`botun öğrenen modeli: hedefe stoptan önce ulaşma olasılığı %${Math.round(Z.model.p*100)} (eşik %${Math.round(Z.model.esik*100)}, ${Z.model.sinyal ? "SİNYAL VAR" : "sinyal yok"})`);
+  if(Z.fon != null) L.push(`vadeli fonlama oranı %${(Z.fon*100).toFixed(4)}`);
+  if(Z.temel) L.push(`temel karne ${Z.temel.not}/10: ${Z.temel.M.map(m => m.not).join(", ")}`);
+  return L.join("\n   "); }
+{ const eski = pzOzet; pzOzet = async function(k){ const o = await eski.apply(this, arguments);
+    try{ const Z = await kzHesapla(o.s); o.kz = Z; o.metin += "\n   " + kzMetin(Z, o.s); }catch(e){} return o; }; }
+{ const eski = pzIstem; pzIstem = function(oz, kay, firsatIste){ const t = eski.apply(this, arguments);
+    return t.replace("\nKURALLAR\n", `\nKURALLAR
+- Her varlıkta İNDİKATÖR KONSEYİ, seviyeleri, geçmiş karnesi ve öğrenen model satırları var: bunları teknik tarafın omurgası say. Al bölgesi, stop ve hedeflerini bu destek/dirençlere oturt (rastgele yuvarlak sayı yazma); katılmıyorsan nedenini 1 cümleyle söyle.
+- Temel karneyi ve haberleri teknikle birleştir: teknik AL ama temel zayıfsa bunu açıkça yaz ve stopu sıkı tut; konseyin bu varlıktaki karnesi kötüyse teknik sinyale daha az ağırlık ver.
+`); }; }
+
+{ const st = document.createElement("style"); st.textContent = `
+.kzK{margin-top:14px}.kzK header small{opacity:.6;margin-left:8px;font-weight:400}
+.kzUst{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:12px;margin-bottom:12px}
+.kzKarar,.kzEylem{border-radius:14px;padding:12px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.kzKarar small,.kzEylem small{display:block;opacity:.6;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.kzKarar b{font-size:26px;display:inline-block;margin:4px 8px 2px 0}.kzKarar em{font-style:normal;opacity:.8}
+.kzKarar.gal b,.kzKarar.al b,.kzEylem.al b{color:#5BD08B}.kzKarar.gsat b,.kzKarar.sat b,.kzEylem.sat b{color:#FF5A63}.kzKarar.not b,.kzEylem.not b{color:#E8B661}
+.kzKarar.gal{background:rgba(91,208,139,.10)}.kzKarar.gsat{background:rgba(255,90,99,.10)}
+.kzEylem b{font-size:22px;display:block;margin:4px 0}.kzEylem p{margin:0;opacity:.85;font-size:13px;line-height:1.45}
+.kzOlc{position:relative;height:8px;border-radius:6px;margin:10px 0 16px;background:linear-gradient(90deg,#FF5A63,#E8B661 50%,#5BD08B)}
+.kzOlc i{position:absolute;top:-4px;width:4px;height:16px;border-radius:2px;background:#fff;transform:translateX(-2px);box-shadow:0 0 0 2px rgba(0,0,0,.4)}
+.kzOlc span{position:absolute;top:11px;font-size:10px;opacity:.55}.kzOlc span:nth-of-type(1){left:0}.kzOlc span:nth-of-type(2){left:50%;transform:translateX(-50%)}.kzOlc span:nth-of-type(3){right:0}
+.kzVdL{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.kzVd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.035);font-size:13px}.kzVd small{opacity:.6}.kzVd span{opacity:.7;font-size:12px}
+.kzCip{font-style:normal;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,.08);white-space:nowrap}
+.kzCip.al,.kzCip.gal{background:rgba(91,208,139,.18);color:#5BD08B}.kzCip.sat,.kzCip.gsat{background:rgba(255,90,99,.18);color:#FF5A63}.kzCip.not{color:#bbb}
+.kzIz{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.kzBas{font-size:11px;text-transform:uppercase;letter-spacing:.05em;opacity:.55;margin-bottom:8px}
+.kzGr{margin-bottom:10px}.kzGrB{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid rgba(255,255,255,.07);padding-bottom:3px;margin-bottom:4px}.kzGrB small em{font-style:normal}
+.kzOy{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 8px;padding:4px 0;font-size:13px}.kzOy small{grid-column:1/3;opacity:.6;font-size:11.5px}.kzOy.pasif{opacity:.55}
+.kzSvL{display:flex;flex-direction:column;gap:3px}
+.kzSv{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:8px;align-items:baseline;padding:5px 10px;border-radius:9px;font-size:13px;border-left:3px solid transparent}
+.kzSv span{opacity:.6;font-size:11.5px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.kzSv small{opacity:.7;font-size:11px}
+.kzSv.dir{background:rgba(255,90,99,.06);border-left-color:#FF5A63}.kzSv.des{background:rgba(91,208,139,.06);border-left-color:#5BD08B}.kzSv.simdi{background:rgba(232,182,97,.13);border-left-color:#E8B661}
+.kzPlan{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:10px}.kzPlan div{padding:7px 10px;border-radius:10px;background:rgba(255,255,255,.035)}
+.kzPlan small{display:block;opacity:.6;font-size:11px}.kzPlan b{font-size:14px}.kzPlan em{font-style:normal;opacity:.6;font-size:11px;margin-left:6px}
+.kzK4{margin-top:10px}.kzK4 summary{cursor:pointer;opacity:.75;font-size:12.5px;margin-bottom:6px}
+.kzModel,.kzKarne,.kzTemel{padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.035);margin-bottom:10px;font-size:13px}
+.kzModel>b,.kzKarne>b,.kzTemel>b{display:block;margin-bottom:4px}.kzModel small{display:block;opacity:.65;font-size:11.5px;margin-top:3px}.kzKarne>small{display:block;opacity:.55;font-size:11px;margin-bottom:6px}
+.kzTemel>b em{font-style:normal;margin-left:6px}
+.kzMd{display:flex;align-items:center;gap:10px;margin:6px 0 2px}.kzMd b{font-size:18px}
+.kzBar{position:relative;flex:1;height:8px;border-radius:6px;background:rgba(255,255,255,.08)}.kzBar i{position:absolute;inset:0 auto 0 0;border-radius:6px;background:linear-gradient(90deg,#5B8DEF,#5BD08B)}.kzBar u{position:absolute;top:-3px;width:2px;height:14px;background:#E8B661}
+.kzKatki{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.kzKatki em{font-style:normal;font-size:11px;padding:2px 7px;border-radius:12px;background:rgba(255,255,255,.05)}
+.kzKr{display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-size:12.5px}.kzKr span{opacity:.75}.kzKr b{white-space:nowrap}
+.kzNot{opacity:.6;font-size:11.5px;margin:6px 0 0;line-height:1.45}
+@media (max-width:1100px){.kzIz{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.kzIz .kzSut:last-child{grid-column:1/3}}
+@media (max-width:720px){.kzUst,.kzIz{grid-template-columns:minmax(0,1fr)}.kzIz .kzSut:last-child{grid-column:auto}.kzIz .kzSut:nth-child(2){order:-1}.kzK header small{display:none}}
+`; document.head.appendChild(st); }
 
 /* ================= EMSAL v2 · ALAKASIZ / UYDURMA EMSALE KARSI KORUMA =================
    ChatGPT bazen baska ildeki, imarli arsa olan, cok kucuk/buyuk ya da hic var olmayan ilanlari emsal diye getiriyor.
