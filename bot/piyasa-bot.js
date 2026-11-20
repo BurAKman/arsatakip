@@ -227,7 +227,7 @@ async function kumarEgit(mk, M, ctx){ if(M.pazar === "bist" && !ctx.B?.length) t
 async function kumarTara(A, ctx, var_, mumVar){ const yeni = [];
   for(const [mk, M] of Object.entries(KUMAR)){ const Mo = A[mk]; if(!Mo?.w) continue; if(M.pazar === "bist" && !ctx.B?.length) continue;
     const { V, BM } = await kumarVeri(mk, M, ctx, 300);
-    for(const d of V){ const i = d.R.c.length - 1, x = ozellik(d.I, d.R, i, BM, d.rj[i]); if(!x) continue; const p = tahmin(Mo, x); if(p < Mo.esik) continue;
+    for(const d of V){ const i = d.R.c.length - 1, x = ozellik(d.I, d.R, i, BM, d.rj[i]); if(!x) continue; if(x.length !== Mo.w.length) continue; const p = tahmin(Mo, x); if(!isFinite(p) || p < Mo.esik) continue;
       const k = (M.pazar === "bist" ? "BIST:" : "KRIPTO:") + d.x.kod, tG = d.R.kap[i], an = `${k}|${mk}|0`; if(var_.has(an) || mumVar.has(`${an}|${tG}`)) continue; var_.add(an); mumVar.add(`${an}|${tG}`);
       const c = d.R.c[i], a = d.I.atr[i], uzat = M.pazar === "bist" ? 1.45 : 1;
       const iz = Mo.cikis?.iz ? { m:Mo.cikis.izM, atr:a } : null;
@@ -324,7 +324,7 @@ function kasaIsle(K, kapanan, adaylar, O){ const KASA_RISK = O.risk, KASA_MAKS =
   let A = satir?.algo || null, egitildi = false;
   const RJ = await rejimKur().catch(() => ({ at:() => 0, simdi:0, fark:0 }));
   const RJB = await rejimBist().catch(e => { console.log("BIST verisi alinamadi (Yahoo):", e.message); return null; }), ctx = { onb:{}, RJ, RJB, masraf };
-  if(!A?.surum || !A.t || !A.d1 || !A.p4 || !A.k4 || Date.now() - A.t > EGITIM_SAAT*3600000 || process.env.ZORLA_EGIT === "1"){ A = await egit(A, masraf, RJ, RJB); egitildi = true; }
+  if(!A?.surum || !A.t || !A.d1 || !A.p4 || !A.k4 || Object.keys(KUMAR).some(mk => A[mk]?.w && A[mk].w.length !== OZ_AD.length + OZ_AD2.length) || Date.now() - A.t > EGITIM_SAAT*3600000 || process.env.ZORLA_EGIT === "1"){ A = await egit(A, masraf, RJ, RJB); egitildi = true; }
   ctx.C = await coinler(80); ctx.CK = [];
   const T1 = await tara(A, masraf, RJ, RJB, ctx), S1 = await sonuclandir(masraf);
   // sanal kasalar
