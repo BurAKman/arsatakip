@@ -24960,6 +24960,7 @@ html:has(.bmS),body:has(.bmS){background:#0B0C0F!important}.bmS{padding:0 14px 4
 .bmKural{margin-top:8px;font-size:12px;color:#C9C7CC}.bmKural summary{cursor:pointer;color:#E8C98A;font-weight:700;font-size:12px}.bmKural ul{margin:6px 0 0;padding-left:18px;line-height:1.55;color:#B8B6BC}
 .bmFren{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:14px;margin-bottom:4px;background:rgba(255,74,85,.05);border:1px solid rgba(255,74,85,.25);font-size:12.5px;color:#D9D7DC}.bmFren b{font-size:13px;margin-bottom:2px}
 .bmI .bmEt{color:#E6E4E8;font-weight:700}
+.bmI .bmBitis{color:#E8C98A}
 .bmDetay{margin-top:18px;padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)}.bmDetay>summary{cursor:pointer;font-weight:700;font-size:13px;color:#C9C7CC}
 .bmL{display:flex;flex-direction:column;gap:6px}
 .bmI{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:#121419;border:1px solid rgba(255,255,255,.07);font-size:12.5px}
@@ -25008,9 +25009,10 @@ function bmKasa(tip, K){ if(!K) return ""; const T = BM_KASA[tip];
     <details class="bmKural"><summary>Kurallar</summary><ul>${T.kural.map(k => `<li>${k}</li>`).join("")}</ul></details></div>`; }
 
 const bmPara = (k, v) => pzPara(v, /^BIST:/.test(k || "") ? "TRY" : "USD");
+const bmKalan = t => { const m = Math.round((t - Date.now())/60000); if(m <= 0) return "süre doldu, kapanıyor"; const g = Math.floor(m/1440), sa = Math.floor(m%1440/60), dk = m%60; return (g ? `${g} gün ${sa} sa` : sa ? `${sa} sa ${dk} dk` : `${dk} dk`) + " kaldı"; };
 function bmPoz(K, ad){ const B = PZ.bot, L = (K?.acik || []).map(p => ({ p, s:B.acik.find(x => x.id === p.id) || {} }));
   if(!L.length) return ""; const y = (a, b) => a && b ? pzYuzde((a/b - 1)*100, 1) : "—";
-  return L.map(({ p, s }) => `<div class="bmI"><span class="bmKod">${esc(bmKod(p.k))}</span><span class="bmOrta"><b class="bmEt">${ad}</b> · ${bmOnce(p.t || s.t)} girdi${p.not ? ` · ${esc(p.not)}` : ""}<br>giriş ${s.giris ? bmPara(p.k, s.giris) : "—"} · <span class="art">hedef ${y(s.hedef, s.giris)}</span> · <span class="az">stop ${y(s.stop, s.giris)}</span></span><span class="bmSag">${bmTl(p.para)}<small>yatırılan</small></span></div>`).join(""); }
+  return L.map(({ p, s }) => `<div class="bmI"><span class="bmKod">${esc(bmKod(p.k))}</span><span class="bmOrta"><b class="bmEt">${ad}</b> · ${bmOnce(p.t || s.t)} girdi${p.not ? ` · ${esc(p.not)}` : ""}<br>giriş ${s.giris ? bmPara(p.k, s.giris) : "—"} · <span class="art">hedef ${s.hedef ? bmPara(p.k, s.hedef) : "—"} (${y(s.hedef, s.giris)})</span> · <span class="az">stop ${s.stop ? bmPara(p.k, s.stop) : "—"} (${y(s.stop, s.giris)})</span>${s.son ? `<br><span class="bmBitis">⏳ en geç ${bmSaat(s.son)} · ${bmKalan(s.son)}</span>` : ""}</span><span class="bmSag">${bmTl(p.para)}<small>yatırılan</small></span></div>`).join(""); }
 function bmGecmis(K, ad){ const G = (K?.gecmis || []).slice(-15).reverse(); if(!G.length) return "";
   return G.map(x => `<div class="bmI"><span class="bmKod">${esc(bmKod(x.k))}</span><span class="bmOrta">${ad ? ad + " · " : ""}${bmSureAd(x.alt)} · ${esc(x.neden || "")} · ${bmSaat(x.ct)}${x.not ? ` · ${esc(x.not)}` : ""}<br>${bmTl(x.para)} yatırıldı</span><span class="bmSag ${x.kz >= 0 ? "art" : "az"}">${x.kz >= 0 ? "+" : ""}${bmTl(x.kz)}<small>${pzYuzde(x.net, 2)}</small></span></div>`).join(""); }
 
@@ -25036,7 +25038,7 @@ function bmCiz(){
     <div class="bmDurum ${akt ? "ok" : "kapali"}"><b>${akt ? "✅ Bot çalışıyor" : "⚠ Bot son " + bmOnce(r.son_tarama) + " çalıştı"}</b> · ${bmOnce(r.son_tarama)} ${d.taranan || 0} coin taradı · tamamen sanal para, gerçek işlem yok</div>
     ${KL.length ? `<div class="bmHero"><small>3 kasa toplam</small><b class="${topKz >= 0 ? "art" : "az"}">${bmTl(topSim)}</b><span class="${topKz >= 0 ? "art" : "az"}">${topKz >= 0 ? "+" : "−"}${bmTl(Math.abs(topKz))} (${pzYuzde((topSim/topBas - 1)*100, 1)})</span><em>Başlangıç ${bmTl(topBas)} · her kasa ${bmTl(KL[0].bas)}</em>${piyasa ? `<p>${piyasa}</p>` : ""}</div>` : ""}
     ${K ? bmKasa("disiplin", K.disiplin) + bmKasa("her", K.her) + bmKasa("kumar", K.kumar) + `<div class="bmFren"><b>🛑 Üç kasada ortak frenler</b>${BM_FREN.map(f => `<span>${f}</span>`).join("")}</div>` : `<div class="bmBos">Kasalar bir sonraki taramada oluşacak.</div>`}
-    <div class="bmBas">Şu an açık işlemler</div>
+    <div class="bmBas">Şu an açık işlemler</div><div class="bmAlt" style="margin:-4px 2px 8px">İşlem hedefe ya da stopa değerse hemen kapanır; ikisine de değmezse “en geç” saatinde o anki fiyattan kapanır.</div>
     <div class="bmL">${poz || `<div class="bmBos">Açık işlem yok, bot fırsat bekliyor.</div>`}</div>
     ${gec ? `<div class="bmBas">Kasaların son işlemleri</div><div class="bmL">${gec}</div>` : ""}
     <div class="bmBas">Gerçek paraya geçiş</div>${pzGecisKontrol()}
