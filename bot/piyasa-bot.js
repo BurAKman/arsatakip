@@ -17,6 +17,7 @@ const SB = (process.env.SB_URL || "").replace(/\/+$/, ""), KEY = process.env.SB_
 const BN = process.env.BINANCE_BASE || "https://data-api.binance.vision";
 const YH = process.env.YAHOO_BASE || "https://query1.finance.yahoo.com", TVB = process.env.TV_BASE || "https://scanner.tradingview.com";
 const MASRAF_BIST = +(process.env.MASRAF_BIST || .3);   // Midas BIST komisyonsuz; alis-satis makasi + kayma payi
+const BAYAT_DK = +(process.env.BAYAT_DK || 40);
 const EGITIM_SAAT = +(process.env.EGITIM_SAAT || 24), TARAMA_COIN = +(process.env.TARAMA_COIN || 150), EGITIM_COIN = 50;
 if(!SB || !KEY || !UID){ console.error("SB_URL / SB_SERVICE_KEY / BOT_USER_ID eksik (GitHub > Settings > Secrets and variables > Actions)"); process.exit(1); }
 
@@ -46,6 +47,8 @@ async function havuz(L, n, f){ const R = []; let i = 0; await Promise.all(Array.
 const sbH = (ek = {}) => ({ apikey:KEY, ...(/^sb_secret_/.test(KEY) ? {} : { Authorization:"Bearer " + KEY }), "Content-Type":"application/json", ...ek });
 async function sb(yol, yontem = "GET", govde, ek){ const r = await fetch(`${SB}/rest/v1/${yol}`, { method:yontem, headers:sbH(ek), body: govde ? JSON.stringify(govde) : undefined });
   if(!r.ok) throw new Error(`Supabase ${yontem} ${yol.split("?")[0]}: ${r.status} ${(await r.text()).slice(0, 300)}`); const t = await r.text(); return t ? JSON.parse(t) : null; }
+// Supabase tek istekte en fazla 1000 satir doner -> hepsini sayfa sayfa cek
+async function sbHepsi(yol){ const L = []; for(let o = 0; o < 200000; o += 1000){ const p = await sb(`${yol}&order=id.asc&limit=1000&offset=${o}`); if(!Array.isArray(p) || !p.length) break; L.push(...p); if(p.length < 1000) break; } return L; }
 async function klines(sem, iv, lim, bas){ const r = await jget(`${BN}/api/v3/klines?symbol=${sem}&interval=${iv}&limit=${lim}${bas ? "&startTime=" + bas : ""}`);
   const v = { t:[], o:[], h:[], l:[], c:[], v:[], kap:[] }; (r || []).forEach(x => { v.t.push(Math.round(x[0]/1000)); v.o.push(+x[1]); v.h.push(+x[2]); v.l.push(+x[3]); v.c.push(+x[4]); v.v.push(+x[7]); v.kap.push(+x[6]); }); return v; }
 async function coinler(n){ const r = await jget(`${BN}/api/v3/ticker/24hr`);
@@ -228,7 +231,7 @@ async function kumarTara(A, ctx, var_, mumVar){ const yeni = [];
   for(const [mk, M] of Object.entries(KUMAR)){ const Mo = A[mk]; if(!Mo?.w) continue; if(M.pazar === "bist" && !ctx.B?.length) continue;
     const { V, BM } = await kumarVeri(mk, M, ctx, 300);
     for(const d of V){ const i = d.R.c.length - 1, x = ozellik(d.I, d.R, i, BM, d.rj[i]); if(!x) continue; if(x.length !== Mo.w.length) continue; const p = tahmin(Mo, x); if(!isFinite(p) || p < Mo.esik) continue;
-      const k = (M.pazar === "bist" ? "BIST:" : "KRIPTO:") + d.x.kod, tG = d.R.kap[i], an = `${k}|${mk}|0`; if(var_.has(an) || mumVar.has(`${an}|${tG}`)) continue; var_.add(an); mumVar.add(`${an}|${tG}`);
+      const k = (M.pazar === "bist" ? "BIST:" : "KRIPTO:") + d.x.kod, tG = d.R.kap[i], an = `${k}|${mk}|0`; if(M.pazar !== "bist" && Date.now() - tG > BAYAT_DK*60000) continue; if(var_.has(an) || mumVar.has(`${an}|${tG}`)) continue; var_.add(an); mumVar.add(`${an}|${tG}`);
       const c = d.R.c[i], a = d.I.atr[i], uzat = M.pazar === "bist" ? 1.45 : 1;
       const iz = Mo.cikis?.iz ? { m:Mo.cikis.izM, atr:a } : null;
       yeni.push({ user_id:UID, k, alt:mk, ai:0, algo:A.surum, giris:c, hedef:iz ? c + Mo.cikis.izTavan*a : c + Mo.kH*a, stop:c - Mo.kS*a, t:new Date(tG).toISOString(), son:new Date(tG + M.H*M.ms*uzat).toISOString(),
@@ -259,14 +262,15 @@ async function egit(eski, masraf, RJ, RJB){
 
 /* ---------- tarama: kurala uyan her coin -> sanal islem ---------- */
 async function tara(A, masraf, RJ, RJB, ctx){
-  const C = await coinler(TARAMA_COIN), acik = await sb(`piyasa_sanal?user_id=eq.${UID}&durum=eq.acik&select=k,alt,ai,algo&limit=10000`), var_ = new Set(acik.map(o => `${o.k}|${o.alt}|${o.ai}`)), yeni = [];
+  const C = await coinler(TARAMA_COIN), acik = await sbHepsi(`piyasa_sanal?user_id=eq.${UID}&durum=eq.acik&select=id,k,alt,ai,algo`), var_ = new Set(acik.map(o => `${o.k}|${o.alt}|${o.ai}`)), yeni = [];
   // ayni mumdan ikinci kez giris olmasin (onceki islem kapanmis olsa bile)
-  const yakin = await sb(`piyasa_sanal?user_id=eq.${UID}&t=gte.${new Date(Date.now() - 3*86400000).toISOString()}&select=k,alt,ai,t&limit=20000`), mumVar = new Set(yakin.map(o => `${o.k}|${o.alt}|${o.ai}|${new Date(o.t).getTime()}`));
+  const yakin = await sbHepsi(`piyasa_sanal?user_id=eq.${UID}&t=gte.${new Date(Date.now() - 4*86400000).toISOString()}&select=id,k,alt,ai,t`), mumVar = new Set(yakin.map(o => `${o.k}|${o.alt}|${o.ai}|${new Date(o.t).getTime()}`));
   const onb = ctx.onb, B = RJB ? await bistListe() : [];
   for(const tf of Object.keys(TF)){ const T = TF[tf], AY = (A[tf]?.ilk5?.length ? A[tf].ilk5 : A[tf]?.P ? [{ P:A[tf].P }] : []).map((a, i) => ({ ...a, i })); if(!AY.length) continue;
     const bist = pazarOf(T) === "bist"; if(bist && !B.length) continue; const LST = bist ? B : C, RJx = bist ? RJB : RJ;
     await havuz(LST, bist ? 4 : 6, async x => { const nM = bist ? 300 : T.tip === "pg" ? 260 : 151, ka = x.bn + T.iv + nM; onb[ka] = onb[ka] || mumlar(T, x, nM); const R = await onb[ka]; if(R.c.length < 100) return; const tGiris = R.kap[R.kap.length - 1];
       if(bist && Date.now() - tGiris > 4*86400000) return;   // eski mum (tatil/veri yok) -> sinyal verme
+      if(!bist && Date.now() - tGiris > BAYAT_DK*60000) return;   // gec kalinmis sinyal: o fiyat artik yok, sahte kazanc/kayip yazmasin
       const d = hazirla(R, tumL(T), RJx, T.ms/1000);
       for(const a of AY){ const s = sinyal(d, a.P, T); if(!s?.ok) continue; const k = (bist ? "BIST:" : "KRIPTO:") + x.kod, an = `${k}|${tf}|${a.i}`; if(var_.has(an) || mumVar.has(`${an}|${tGiris}`)) continue; var_.add(an); mumVar.add(`${an}|${tGiris}`);
         yeni.push({ user_id:UID, k, alt:tf, ai:a.i, algo:A.surum, giris:s.c, hedef:s.hed, stop:s.st, t:new Date(tGiris).toISOString(), son:new Date(tGiris + T.H*T.ms*(bist ? 1.45 : 1)).toISOString(),
@@ -277,7 +281,7 @@ async function tara(A, masraf, RJ, RJB, ctx){
 
 /* ---------- sonuclandirma: 15 dakikalik mumlarla once hangisine degdi ---------- */
 async function sonuclandir(masraf){
-  const acik = await sb(`piyasa_sanal?user_id=eq.${UID}&durum=eq.acik&select=id,k,giris,hedef,stop,t,son,oz&order=t.asc&limit=3000`); let bitti = 0; const kapanan = {};
+  const acik = await sbHepsi(`piyasa_sanal?user_id=eq.${UID}&durum=eq.acik&select=id,k,giris,hedef,stop,t,son,oz`); let bitti = 0; const kapanan = {};
   await havuz(acik, 5, async o => { const bist = /^BIST:/.test(o.k), bn = o.oz?.bn || (bist ? o.k.slice(5) + ".IS" : o.k.replace("KRIPTO:", "") + "USDT"), t0 = new Date(o.t).getTime(), son = new Date(o.son).getTime(); let s = null;
     let r; if(bist){ const Y = await yahoo(bn, "60m", null, t0 - 3600000); r = Y.t.map((t, i) => [t*1000, Y.o[i], Y.h[i], Y.l[i], Y.c[i]]).filter(m => m[0] >= t0); }
     else r = await jget(`${BN}/api/v3/klines?symbol=${bn}&interval=15m&startTime=${t0}&limit=1000`);
@@ -298,10 +302,10 @@ const KASA_BAS = 50000, KASA_BATTI = 1000;
 const KASA_AYAR = { disiplin:{ risk:5, maks:2, ad:"Disiplinli" }, her:{ risk:2.5, maks:10, ad:"Piyango", allIn:true }, kumar:{ risk:3, maks:6, ad:"Kumar", kelly:true } };
 // canli kanit: ayarin KENDISINE gore (surum/sira degil). Egitim ayni ayari tekrar secerse gecmis canli sonuclari birikmeye devam eder.
 async function canliKanit(A){ const t0 = new Date(Date.now() - 45*86400000).toISOString();
-  const L = await sb(`piyasa_sanal?user_id=eq.${UID}&durum=eq.kapali&t=gte.${t0}&select=alt,net,oz&limit=20000`), k = {};
+  const L = await sbHepsi(`piyasa_sanal?user_id=eq.${UID}&durum=eq.kapali&t=gte.${t0}&select=id,alt,net,t,oz`), k = {};
   for(const tf of Object.keys(TF)){ let en = null; (A[tf]?.ilk5 || []).forEach((a, i) => { const pk = ayarKimlik(tf, a.P), X = L.filter(x => x.oz?.pk === pk), n = X.length, ort = n ? X.reduce((t, x) => t + +x.net, 0)/n : 0;
-      a.canli = { n, ort:+ort.toFixed(3), isabet:n ? +(X.filter(x => +x.net > 0).length/n).toFixed(3) : null };
-      if(n >= 30 && ort > .1 && (!en || ort > en.ort)) en = { i, n, ort }; }); if(en) k[tf] = en; }
+      const gun = new Set(X.map(x => String(x.t).slice(0, 10))).size; a.canli = { n, ort:+ort.toFixed(3), isabet:n ? +(X.filter(x => +x.net > 0).length/n).toFixed(3) : null, gun };
+      if(n >= 30 && gun >= 4 && ort > .1 && (!en || ort > en.ort)) en = { i, n, ort }; }); if(en) k[tf] = en; }
   return k; }
 function kasaYeni(){ return { tur:1, bas:KASA_BAS, bakiye:KASA_BAS, acik:[], turlar:[], egri:[{ t:Date.now(), b:KASA_BAS }], islem:0, kazan:0, tepe:KASA_BAS, maxDus:0 }; }
 function kasaIsle(K, kapanan, adaylar, O){ const KASA_RISK = O.risk, KASA_MAKS = O.maks;
@@ -333,7 +337,7 @@ function kasaIsle(K, kapanan, adaylar, O){ const KASA_RISK = O.risk, KASA_MAKS =
   const disiplinAday = sira(T1.eklenen.filter(x => { const k = kanit[x.alt]; return k ? x.ai === k.i : A[x.alt]?.aktif && x.ai === 0; }));
   const buyukMu = x => { const c = A[x.alt]?.ilk5?.[x.ai]?.canli; return !!(c && c.n >= 20 && c.ort >= 2 && c.isabet >= .45); };
   const herAday = sira(T1.eklenen.filter(x => ["p4", "bp"].includes(x.alt) && x.ai === 0).map(x => ({ ...x, buyuk:buyukMu(x) }))).sort((a, b) => b.buyuk - a.buyuk);   // piyango kasasi
-  const kumarAday = T1.eklenen.filter(x => x.oz?.tip === "ml").sort((a, b) => b.oz.p - a.oz.p);   // kumar kasasi
+  const kumarAday = T1.eklenen.filter(x => x.oz?.tip === "ml" && A[x.alt]?.aktif).sort((a, b) => b.oz.p - a.oz.p);   // kumar kasasi
   // kasadaki acik pozisyonlarin guncel durumu (ayni calismada acilip kapananlar dahil)
   const idler = [...new Set([...(kasa.disiplin?.acik || []), ...(kasa.her?.acik || []), ...(kasa.kumar?.acik || [])].map(p => p.id))], kapanmis = {};
   for(let i = 0; i < idler.length; i += 100){ const L = await sb(`piyasa_sanal?id=in.(${idler.slice(i, i + 100).join(",")})&select=id,durum,net,ct,neden`); (L || []).forEach(x => { if(x.durum === "kapali") kapanmis[x.id] = { net:+x.net, ct:new Date(x.ct).getTime(), neden:x.neden }; }); }
