@@ -1,4 +1,4 @@
-// ARSA TAKIP · PIYASA BOTU v2 (GitHub Actions'ta 15 dakikada bir calisir; bilgisayar acik/kapali fark etmez)
+// ARSA TAKIP · PIYASA BOTU v2.3 (GitHub Actions'ta 15 dakikada bir calisir; bilgisayar acik/kapali fark etmez)
 // v2: BIST (Yahoo gunluk mumlar, TradingView tarayicisindan likit hisse listesi) + 3 sanal kasa (Disiplinli / Piyango / Kumar)
 //     Kumar = "indikator konseyi": TradingView'in klasik ucretsiz indikatorleri (EMA 9/21, EMA 50/200, MACD, RSI, Supertrend, UT Bot,
 //     Squeeze Momentum, ADX/DMI, Bollinger %B, Ichimoku, hacim, goreli guc) + ogrenen model (lojistik regresyon): hangi indikator
@@ -294,12 +294,20 @@ async function sonuclandir(masraf){
   return { acik:acik.length, bitti, kapanan }; }
 
 /* ---------- SANAL KASALAR (her biri 50.000 TL; bakiye 1.000 TL altina inerse yeni tur 50.000 TL — sinirsiz tecrube) ----------
-   "disiplin": sadece kendini kanitlamis stratejiler (ileri testte acik ya da canli kanitli). Ayni anda en fazla 2 islem, islem basi %5 risk.
-   "her"     : PIYANGO kasasi. Kripto + BIST piyango sinyalleri. Ayni anda 10 isleme kadar, islem basi %2,5 risk.
-               O ayar canlida kendini kanitladiysa (20+ islem, ortalama +%2 ve isabet %45 uzeri) "buyuk firsat" sayilir: bostaki paranin TAMAMI basilir.
-   "kumar"   : KUMAR kasasi. Indikator konseyi modelinin sinyalleri; para, modelin kazanma olasiligina gore (yarim Kelly) ayarlanir, ayni anda 6 islem. */
-const KASA_BAS = 50000, KASA_BATTI = 1000;
-const KASA_AYAR = { disiplin:{ risk:5, maks:2, ad:"Disiplinli" }, her:{ risk:2.5, maks:10, ad:"Piyango", allIn:true }, kumar:{ risk:3, maks:6, ad:"Kumar", kelly:true } };
+   v2.3 kasa ayarlari (Claude, 23 Kasim 2026):
+   "disiplin": sadece kendini kanitlamis stratejiler. Ayni anda en fazla 2 islem, islem basi %5 risk. (degismedi, calisiyor)
+   "her"     : PIYANGO kasasi. Kripto + BIST piyango sinyalleri; artik en iyi 5 ayarin ileri testte kârli olan HEPSI sinyal verir
+               (eskiden sadece 1. ayar -> neredeyse hic islem acilmiyordu). Ayni anda 5 islem, islem basi %2 risk.
+               "Tum parayi bas" kurali KALDIRILDI: kanitli buyuk firsatta sadece risk 2 katina cikar (islem basi en fazla kasanin %20'si).
+   "kumar"   : KUMAR kasasi. Indikator konseyi modeli. Ceyrek Kelly, islem basi en fazla %2 risk ve kasanin %15'i, ayni anda 3 islem.
+               BTC dusus trendindeyken (4s fiyat < EMA50) ayni anda en fazla 2 islem ve yarim pozisyon.
+   Ortak frenler (uc kasa): ust uste 3 kayip -> 24 saat yeni islem yok; kasa tepeden %15+ asagidaysa pozisyonlar yariya iner;
+               zarar kesen coine ayni kasada 24 saat tekrar girilmez. */
+const KASA_BAS = 50000, KASA_BATTI = 1000, SAAT = 3600000;
+const KASA_AYAR = { disiplin:{ risk:5, maks:2, ad:"Disiplinli" },
+                    her:{ risk:2, maks:5, ad:"Piyango", buyukKat:2, tavan:.2 },
+                    kumar:{ risk:2, maks:3, ad:"Kumar", kelly:.25, tavan:.15, ayiMaks:2, ayiKat:.5 } };
+const FREN = { seri:3, seriSaat:24, dusus:.15, dususKat:.5, sogukSaat:24 };
 // canli kanit: ayarin KENDISINE gore (surum/sira degil). Egitim ayni ayari tekrar secerse gecmis canli sonuclari birikmeye devam eder.
 async function canliKanit(A){ const t0 = new Date(Date.now() - 45*86400000).toISOString();
   const L = await sbHepsi(`piyasa_sanal?user_id=eq.${UID}&durum=eq.kapali&t=gte.${t0}&select=id,alt,net,t,oz`), k = {};
@@ -308,19 +316,30 @@ async function canliKanit(A){ const t0 = new Date(Date.now() - 45*86400000).toIS
       if(n >= 30 && gun >= 4 && ort > .1 && (!en || ort > en.ort)) en = { i, n, ort }; }); if(en) k[tf] = en; }
   return k; }
 function kasaYeni(){ return { tur:1, bas:KASA_BAS, bakiye:KASA_BAS, acik:[], turlar:[], egri:[{ t:Date.now(), b:KASA_BAS }], islem:0, kazan:0, tepe:KASA_BAS, maxDus:0 }; }
-function kasaIsle(K, kapanan, adaylar, O){ const KASA_RISK = O.risk, KASA_MAKS = O.maks;
+function kasaIsle(K, kapanan, adaylar, O, ort = {}){ const simdi = ort.simdi || Date.now(), ayi = ort.rejim === 2;
   // 1) kapanan islemler
-  const kal = []; for(const p of K.acik){ const c = kapanan[p.id]; if(!c){ kal.push(p); continue; } K.bakiye += p.para*c.net/100; K.islem++; (K.gecmis = K.gecmis || []).push({ id:p.id, k:p.k, alt:p.alt, ai:p.ai, para:p.para, not:p.not, tur:K.tur, net:c.net, kz:+(p.para*c.net/100).toFixed(2), neden:c.neden, t:p.t, ct:c.ct }); if(c.net > 0) K.kazan++; K.egri.push({ t:c.ct, b:+K.bakiye.toFixed(2) }); K.tepe = Math.max(K.tepe, K.bakiye); K.maxDus = Math.max(K.maxDus, 1 - K.bakiye/K.tepe); }
-  K.acik = kal;
+  const kal = []; K.soguk = K.soguk || {}; K.seri = K.seri || 0;
+  for(const p of K.acik){ const c = kapanan[p.id]; if(!c){ kal.push(p); continue; } K.bakiye += p.para*c.net/100; K.islem++; (K.gecmis = K.gecmis || []).push({ id:p.id, k:p.k, alt:p.alt, ai:p.ai, para:p.para, not:p.not, tur:K.tur, net:c.net, kz:+(p.para*c.net/100).toFixed(2), neden:c.neden, t:p.t, ct:c.ct }); if(c.net > 0) K.kazan++; K.egri.push({ t:c.ct, b:+K.bakiye.toFixed(2) }); K.tepe = Math.max(K.tepe, K.bakiye); K.maxDus = Math.max(K.maxDus, 1 - K.bakiye/K.tepe);
+    if(c.net > 0) K.seri = 0; else { K.seri++; if(K.seri >= FREN.seri){ K.fren = (c.ct || simdi) + FREN.seriSaat*SAAT; K.seri = 0; } }
+    if(c.net <= 0 && /zarar/.test(c.neden || "")) K.soguk[p.k] = (c.ct || simdi) + FREN.sogukSaat*SAAT; }
+  K.acik = kal; for(const k in K.soguk) if(K.soguk[k] < simdi) delete K.soguk[k];
   // 2) batti mi? yeni tur
-  if(K.bakiye < KASA_BATTI && !K.acik.length){ K.turlar.push({ tur:K.tur, bas:K.bas, son:+K.bakiye.toFixed(2), islem:K.islem, kazan:K.kazan, bitis:Date.now(), neden:"battı" }); K.tur++; K.bakiye = KASA_BAS; K.bas = KASA_BAS; K.islem = 0; K.kazan = 0; K.tepe = KASA_BAS; K.maxDus = 0; K.egri.push({ t:Date.now(), b:KASA_BAS, yeniTur:K.tur }); }
-  // 3) yeni girisler
-  for(const x of adaylar){ if(K.acik.length >= KASA_MAKS || K.acik.some(p => p.k === x.k)) continue; const kay = Math.max(.005, 1 - x.stop/x.giris) + .005, kullan = K.acik.reduce((t, p) => t + p.para, 0);
-    const bos = K.bakiye - kullan; let para = Math.min(bos, K.bakiye/KASA_MAKS, K.bakiye*KASA_RISK/100/kay), not = "";
-    if(O.kelly && x.oz?.p){ const R = Math.max(.3, (x.hedef/x.giris - 1)/Math.max(.005, 1 - x.stop/x.giris)), f = x.oz.p - (1 - x.oz.p)/R; para = Math.min(bos, K.bakiye*Math.min(.4, Math.max(.05, f/2))); not = `olasılık %${Math.round(x.oz.p*100)}`; }
-    if(O.allIn && x.buyuk){ para = bos; not = "büyük fırsat: tüm boştaki para"; }
+  if(K.bakiye < KASA_BATTI && !K.acik.length){ K.turlar.push({ tur:K.tur, bas:K.bas, son:+K.bakiye.toFixed(2), islem:K.islem, kazan:K.kazan, bitis:Date.now(), neden:"battı" }); K.tur++; K.bakiye = KASA_BAS; K.bas = KASA_BAS; K.islem = 0; K.kazan = 0; K.tepe = KASA_BAS; K.maxDus = 0; K.seri = 0; K.fren = 0; K.soguk = {}; K.egri.push({ t:Date.now(), b:KASA_BAS, yeniTur:K.tur }); }
+  // 3) yeni girisler (frenler)
+  if(K.fren && K.fren > simdi){ K.durum = `fren: üst üste ${FREN.seri} kayıp, ${new Date(K.fren).toLocaleString("tr-TR", { timeZone:"Europe/Istanbul", hour:"2-digit", minute:"2-digit", day:"2-digit", month:"2-digit" })} saatine kadar yeni işlem yok`; return kasaSon(K); }
+  const dususte = K.bakiye < K.tepe*(1 - FREN.dusus), maks = ayi && O.ayiMaks ? Math.min(O.maks, O.ayiMaks) : O.maks;
+  let kat = 1; if(dususte) kat *= FREN.dususKat; if(ayi && O.ayiKat) kat *= O.ayiKat;
+  K.durum = [dususte ? `kasa tepeden %${Math.round((1 - K.bakiye/K.tepe)*100)} aşağıda: yarım pozisyon` : "", ayi && O.ayiMaks ? `BTC düşüş trendinde: en fazla ${maks} işlem${O.ayiKat ? ", yarım pozisyon" : ""}` : ""].filter(Boolean).join(" · ") || "normal";
+  for(const x of adaylar){ if(K.acik.length >= maks || K.acik.some(p => p.k === x.k) || (K.soguk[x.k] || 0) > simdi) continue;
+    const kay = Math.max(.005, 1 - x.stop/x.giris) + .005, kullan = K.acik.reduce((t, p) => t + p.para, 0), bos = K.bakiye - kullan;
+    const riskPara = K.bakiye*O.risk/100/kay; let para = Math.min(bos, K.bakiye/O.maks, riskPara), not = "";
+    if(O.kelly && x.oz?.p){ const R = Math.max(.3, (x.hedef/x.giris - 1)/Math.max(.005, 1 - x.stop/x.giris)), f = x.oz.p - (1 - x.oz.p)/R; if(f <= 0) continue;
+      para = Math.min(bos, riskPara, K.bakiye*Math.min(O.tavan, f*O.kelly)); not = `olasılık %${Math.round(x.oz.p*100)}`; }
+    if(O.buyukKat && x.buyuk){ para = Math.min(bos, riskPara*O.buyukKat, K.bakiye*O.tavan); not = "kanıtlı büyük fırsat: 2 kat risk"; }
+    para *= kat; if(kat < 1) not = (not ? not + " · " : "") + "yarım pozisyon";
     if(para < 10) continue; K.acik.push({ id:x.id, k:x.k, alt:x.alt, ai:x.ai, para:+para.toFixed(2), t:Date.now(), not }); }
-  K.egri = K.egri.slice(-3000); K.gecmis = (K.gecmis || []).slice(-1000); return K; }
+  return kasaSon(K); }
+function kasaSon(K){ K.egri = K.egri.slice(-3000); K.gecmis = (K.gecmis || []).slice(-1000); return K; }
 
 /* ---------- ana akis ---------- */
 (async () => {
@@ -336,14 +355,18 @@ function kasaIsle(K, kapanan, adaylar, O){ const KASA_RISK = O.risk, KASA_MAKS =
   const sira = L => L.slice().sort((a, b) => +b.oz?.hk - +a.oz?.hk);
   const disiplinAday = sira(T1.eklenen.filter(x => { const k = kanit[x.alt]; return k ? x.ai === k.i : A[x.alt]?.aktif && x.ai === 0; }));
   const buyukMu = x => { const c = A[x.alt]?.ilk5?.[x.ai]?.canli; return !!(c && c.n >= 20 && c.ort >= 2 && c.isabet >= .45); };
-  const herAday = sira(T1.eklenen.filter(x => ["p4", "bp"].includes(x.alt) && x.ai === 0).map(x => ({ ...x, buyuk:buyukMu(x) }))).sort((a, b) => b.buyuk - a.buyuk);   // piyango kasasi
+  // piyango kasasi: en iyi 5 ayarin ileri testte (ya da canlida) kârli olan hepsi; once kanitli olanlar, sonra ileri testi iyi olanlar
+  const pgSkor = x => { const a = A[x.alt]?.ilk5?.[x.ai]; return (a?.canli?.n >= 10 ? a.canli.ort : 0)*2 + (a?.te?.ort || 0); };
+  const pgUygun = x => { const a = A[x.alt]?.ilk5?.[x.ai]; if(!a) return x.ai === 0; if(a.canli?.n >= 10) return a.canli.ort > 0; return (a.te?.ort || 0) > 0; };
+  const herAday = T1.eklenen.filter(x => ["p4", "bp"].includes(x.alt) && pgUygun(x)).map(x => ({ ...x, buyuk:buyukMu(x) })).sort((a, b) => (b.buyuk - a.buyuk) || (pgSkor(b) - pgSkor(a)) || (+b.oz?.hk - +a.oz?.hk));
   const kumarAday = T1.eklenen.filter(x => x.oz?.tip === "ml" && A[x.alt]?.aktif).sort((a, b) => b.oz.p - a.oz.p);   // kumar kasasi
   // kasadaki acik pozisyonlarin guncel durumu (ayni calismada acilip kapananlar dahil)
   const idler = [...new Set([...(kasa.disiplin?.acik || []), ...(kasa.her?.acik || []), ...(kasa.kumar?.acik || [])].map(p => p.id))], kapanmis = {};
   for(let i = 0; i < idler.length; i += 100){ const L = await sb(`piyasa_sanal?id=in.(${idler.slice(i, i + 100).join(",")})&select=id,durum,net,ct,neden`); (L || []).forEach(x => { if(x.durum === "kapali") kapanmis[x.id] = { net:+x.net, ct:new Date(x.ct).getTime(), neden:x.neden }; }); }
   // 5.000'lik eski donem -> 50.000'lik yeni kasa (eski ozet saklanir)
   for(const k of ["disiplin", "her", "kumar"]) if(kasa[k] && kasa[k].bas !== KASA_BAS && !kasa[k].turlar?.some(t => t.bas === KASA_BAS)){ const o = kasa[k]; kasa[k] = { ...kasaYeni(), eski:{ bas:o.bas, son:+(+o.bakiye).toFixed(2), islem:(o.turlar || []).reduce((t, x) => t + (x.islem || 0), 0) + (o.islem || 0), bitis:Date.now() } }; }
-  kasa.disiplin = kasaIsle(kasa.disiplin || kasaYeni(), kapanmis, disiplinAday, KASA_AYAR.disiplin); kasa.her = kasaIsle(kasa.her || kasaYeni(), kapanmis, herAday, KASA_AYAR.her); kasa.kumar = kasaIsle(kasa.kumar || kasaYeni(), kapanmis, kumarAday, KASA_AYAR.kumar); kasa.kanit = kanit;
+  const ortam = { rejim:RJ.simdi, simdi:Date.now() };
+  kasa.disiplin = kasaIsle(kasa.disiplin || kasaYeni(), kapanmis, disiplinAday, KASA_AYAR.disiplin, ortam); kasa.her = kasaIsle(kasa.her || kasaYeni(), kapanmis, herAday, KASA_AYAR.her, ortam); kasa.kumar = kasaIsle(kasa.kumar || kasaYeni(), kapanmis, kumarAday, KASA_AYAR.kumar, ortam); kasa.ayar = { surum:"2.3", KASA_AYAR, FREN }; kasa.kanit = kanit;
   const kayit = { user_id:UID, algo:A, kasa, son_tarama:new Date().toISOString(), ...(egitildi ? { son_egitim:new Date().toISOString() } : {}), durum:{ rejim:RJ.simdi, btcFark:+(RJ.fark*100).toFixed(2), acikStrateji:[...Object.keys(TF), ...Object.keys(KUMAR)].filter(tf => A[tf]?.aktif || kanit[tf]), bistRejim:RJB?.simdi || 0, bistFark:RJB ? +(RJB.fark*100).toFixed(2) : null, bist:T1.bist, taranan:T1.taranan, yeni:T1.yeni, acik:S1.acik - S1.bitti, bitti:S1.bitti, sure:Math.round((Date.now() - bas)/1000), masraf } };
   await sb("piyasa_bot?on_conflict=user_id", "POST", kayit, { Prefer:"resolution=merge-duplicates,return=minimal" });
   console.log(`kasa: disiplinli tur ${kasa.disiplin.tur} ${Math.round(kasa.disiplin.bakiye)} TL (${kasa.disiplin.acik.length} acik) · piyango tur ${kasa.her.tur} ${Math.round(kasa.her.bakiye)} TL (${kasa.her.acik.length} acik) · kumar tur ${kasa.kumar.tur} ${Math.round(kasa.kumar.bakiye)} TL (${kasa.kumar.acik.length} acik)`);
