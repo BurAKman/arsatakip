@@ -24951,6 +24951,16 @@ html:has(.bmS),body:has(.bmS){background:#0B0C0F!important}.bmS{padding:0 14px 4
 .bmBas{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#A9A7AE;margin:18px 2px 8px;font-weight:700}
 .bmSure{display:flex;gap:8px}.bmSure div{flex:1;padding:10px;border-radius:12px;background:#121419;border:1px solid rgba(255,255,255,.08);font-size:12px}
 .bmSure b{display:block;font-size:13px;margin-bottom:3px}.bmSure .on{color:#7FE0A6}.bmSure .off{color:#FF8A92}.bmSure small{color:#9C9AA2;font-size:11px}
+.bmHero{padding:16px;border-radius:16px;margin-bottom:12px;background:radial-gradient(120% 140% at 0% 0%,rgba(232,182,97,.14),transparent 60%),#121419;border:1px solid rgba(232,182,97,.3)}
+.bmHero small{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#A9A7AE}.bmHero b{display:block;font-size:30px;font-weight:800;margin:2px 0}.bmHero span{font-weight:700;font-size:14px}
+.bmHero em{display:block;font-style:normal;font-size:11.5px;color:#9C9AA2;margin-top:4px}.bmHero p{margin:10px 0 0;font-size:12.5px;line-height:1.45;color:#D9D7DC}.bmHero .art{color:#7FE0A6}.bmHero .az{color:#FF8A92}
+.bmKUst{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.bmRozet{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:99px;line-height:1.3}.bmRozet.yes{color:#7FE0A6;background:rgba(91,208,139,.12)}.bmRozet.sar{color:#E8C98A;background:rgba(232,182,97,.13)}.bmRozet.kir{color:#FF8A92;background:rgba(255,74,85,.13)}
+.bmKasa .bmCizgi{margin-top:4px;font-size:11px}
+.bmKural{margin-top:8px;font-size:12px;color:#C9C7CC}.bmKural summary{cursor:pointer;color:#E8C98A;font-weight:700;font-size:12px}.bmKural ul{margin:6px 0 0;padding-left:18px;line-height:1.55;color:#B8B6BC}
+.bmFren{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:14px;margin-bottom:4px;background:rgba(255,74,85,.05);border:1px solid rgba(255,74,85,.25);font-size:12.5px;color:#D9D7DC}.bmFren b{font-size:13px;margin-bottom:2px}
+.bmI .bmEt{color:#E6E4E8;font-weight:700}
+.bmDetay{margin-top:18px;padding:12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)}.bmDetay>summary{cursor:pointer;font-weight:700;font-size:13px;color:#C9C7CC}
 .bmL{display:flex;flex-direction:column;gap:6px}
 .bmI{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:#121419;border:1px solid rgba(255,255,255,.07);font-size:12.5px}
 .bmI .bmKod{font-weight:800;min-width:62px}.bmI .bmOrta{flex:1;min-width:0;color:#9C9AA2;font-size:11.5px;line-height:1.35}.bmI .bmSag{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
@@ -24976,20 +24986,31 @@ function bmEgri(egri){ if(!egri || egri.length < 2) return ""; const G = 300, Y 
   return `<svg viewBox="0 0 ${G} ${Y}" preserveAspectRatio="none"><line x1="0" x2="${G}" y1="${y(egri[0].b).toFixed(1)}" y2="${y(egri[0].b).toFixed(1)}" stroke="rgba(255,255,255,.2)" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>
     <polyline fill="none" stroke="${son >= egri[0].b ? "#5BD08B" : "#FF4A55"}" stroke-width="2" vector-effect="non-scaling-stroke" points="${egri.map(e => `${x(e.t).toFixed(1)},${y(e.b).toFixed(1)}`).join(" ")}"/></svg>`; }
 
-function bmKasa(ad, alt, K){ if(!K) return "";
-  const kz = (K.bakiye/K.bas - 1)*100, turlar = K.turlar || [], acikPara = (K.acik || []).reduce((t, p) => t + (+p.para || 0), 0);
-  const yuklenen = (turlar.length + 1)*K.bas, simdi = turlar.reduce((t, x) => t + x.son, 0) + K.bakiye;
-  return `<div class="bmKasa"><small>${ad}${K.tur > 1 ? ` · tur ${K.tur}` : ""}</small>
-    <div class="bmB"><b class="${K.bakiye >= K.bas ? "art" : "az"}">${bmTl(K.bakiye)}</b><em class="${kz >= 0 ? "art" : "az"}">${pzYuzde(kz, 1)}</em></div>
-    <div class="bmAlt">${alt}${turlar.length ? `<br>Batan turlar: ${turlar.map(t => `tur ${t.tur} → ${bmTl(t.son)}`).join(" · ")} · toplam yüklenen ${bmTl(yuklenen)} → şu an ${bmTl(simdi)}` : ""}</div>
-    <div class="bmIki"><div><b>${K.islem || 0}</b><span>işlem</span></div><div><b>${K.islem ? "%" + Math.round(K.kazan/K.islem*100) : "—"}</b><span>kazanan</span></div><div><b>${(K.acik || []).length}</b><span>açık${acikPara ? " · " + bmTl(acikPara) : ""}</span></div></div>
+const BM_KASA = {
+  disiplin:{ ad:"🧭 Disiplinli kasa", ozet:"Az ama emin işlem. Sadece testte kendini kanıtlamış stratejilerle girer; emin değilse nakitte bekler.",
+    kural:["Aynı anda en fazla 2 işlem", "Her işlemde kasanın en fazla %5'i riske girer", "Gerçek paraya geçerken bu kasa örnek alınacak"] },
+  her:{ ad:"🎰 Piyango kasası", ozet:"Nadir ama büyük vuruş. Hacimle gelen sert kırılımları yakalamaya çalışır; çoğu zaman bekler.",
+    kural:["Aynı anda en fazla 5 işlem", "Her işlemde kasanın en fazla %2'si riske girer", "Canlıda kanıtlanmış fırsatta risk 2 katına çıkar (en fazla kasanın %20'si)", "Kripto + BIST sinyalleri"] },
+  kumar:{ ad:"🎲 Kumar kasası", ozet:"Sık işlem. 20+ indikatöre bakan öğrenen model karar verir; para, kazanma ihtimaline göre ayarlanır.",
+    kural:["Aynı anda en fazla 3 işlem", "Her işlemde en fazla %2 risk ve kasanın en fazla %15'i", "BTC düşüş trendindeyse en fazla 2 işlem ve yarım pozisyon", "Model kazanma ihtimalini düşük görürse hiç girmez"] } };
+const BM_FREN = ["Üst üste 3 kayıp → 24 saat mola", "Kasa zirvesinden %15 düşerse → yarım pozisyon", "Zarar kesen coine → 24 saat tekrar girilmez"];
+function bmKasa(tip, K){ if(!K) return ""; const T = BM_KASA[tip];
+  const kz = K.bakiye - K.bas, kzY = (K.bakiye/K.bas - 1)*100, turlar = K.turlar || [], acikPara = (K.acik || []).reduce((t, p) => t + (+p.para || 0), 0);
+  const fren = /^fren/.test(K.durum || ""), yarim = /yarım/.test(K.durum || ""), dRenk = fren ? "kir" : yarim ? "sar" : "yes";
+  const dYazi = fren ? "⏸ Molada · " + esc(String(K.durum).replace(/^fren:\s*/, "")) : !K.durum || K.durum === "normal" ? (K.acik?.length ? "▶ Çalışıyor · işlem açık" : "▶ Çalışıyor · fırsat bekliyor") : "⚠ Temkinli · " + esc(K.durum);
+  return `<div class="bmKasa"><div class="bmKUst"><small>${T.ad}${K.tur > 1 ? ` · ${K.tur}. tur` : ""}</small><span class="bmRozet ${dRenk}">${dYazi}</span></div>
+    <div class="bmB"><b class="${kz >= 0 ? "art" : "az"}">${bmTl(K.bakiye)}</b><em class="${kz >= 0 ? "art" : "az"}">${kz >= 0 ? "+" : "−"}${bmTl(Math.abs(kz))} · ${pzYuzde(kzY, 1)}</em></div>
+    <div class="bmAlt">${T.ozet}</div>
+    <div class="bmIki"><div><b>${K.islem || 0}</b><span>biten işlem</span></div><div><b>${K.islem ? "%" + Math.round(K.kazan/K.islem*100) : "—"}</b><span>kazanan</span></div><div><b>${(K.acik || []).length}</b><span>açık${acikPara ? " · " + bmTl(acikPara) : ""}</span></div></div>
     ${bmEgri((K.egri || []).slice(-600))}
-    <div class="bmAlt" style="margin-top:4px">En derin düşüş %${Math.round((K.maxDus || 0)*100)} · kesik çizgi = ${bmTl(K.bas)}${K.eski ? `<br>Önceki ${bmTl(K.eski.bas)}'lik deneme ${bmTl(K.eski.son)} ile kapandı (${K.eski.islem} işlem)` : ""}</div></div>`; }
+    <div class="bmAlt bmCizgi">Başlangıç ${bmTl(K.bas)} (kesik çizgi) · en kötü anda zirveden %${Math.round((K.maxDus || 0)*100)} geriledi</div>
+    ${turlar.length ? `<div class="bmAlt">Batan turlar: ${turlar.map(t => `${t.tur}. tur → ${bmTl(t.son)}`).join(" · ")}</div>` : ""}
+    <details class="bmKural"><summary>Kurallar</summary><ul>${T.kural.map(k => `<li>${k}</li>`).join("")}</ul></details></div>`; }
 
 const bmPara = (k, v) => pzPara(v, /^BIST:/.test(k || "") ? "TRY" : "USD");
 function bmPoz(K, ad){ const B = PZ.bot, L = (K?.acik || []).map(p => ({ p, s:B.acik.find(x => x.id === p.id) || {} }));
-  if(!L.length) return "";
-  return L.map(({ p, s }) => `<div class="bmI"><span class="bmKod">${esc(bmKod(p.k))}</span><span class="bmOrta">${ad} · ${bmSureAd(p.alt)} · ${bmSaat(p.t || s.t)}${p.not ? ` · <b class="bmNot">${esc(p.not)}</b>` : ""}<br>giriş ${s.giris ? bmPara(p.k, s.giris) : "—"} · hedef ${s.hedef ? bmPara(p.k, s.hedef) : "—"} · stop ${s.stop ? bmPara(p.k, s.stop) : "—"}</span><span class="bmSag">${bmTl(p.para)}<small>yatırılan</small></span></div>`).join(""); }
+  if(!L.length) return ""; const y = (a, b) => a && b ? pzYuzde((a/b - 1)*100, 1) : "—";
+  return L.map(({ p, s }) => `<div class="bmI"><span class="bmKod">${esc(bmKod(p.k))}</span><span class="bmOrta"><b class="bmEt">${ad}</b> · ${bmOnce(p.t || s.t)} girdi${p.not ? ` · ${esc(p.not)}` : ""}<br>giriş ${s.giris ? bmPara(p.k, s.giris) : "—"} · <span class="art">hedef ${y(s.hedef, s.giris)}</span> · <span class="az">stop ${y(s.stop, s.giris)}</span></span><span class="bmSag">${bmTl(p.para)}<small>yatırılan</small></span></div>`).join(""); }
 function bmGecmis(K, ad){ const G = (K?.gecmis || []).slice(-15).reverse(); if(!G.length) return "";
   return G.map(x => `<div class="bmI"><span class="bmKod">${esc(bmKod(x.k))}</span><span class="bmOrta">${ad ? ad + " · " : ""}${bmSureAd(x.alt)} · ${esc(x.neden || "")} · ${bmSaat(x.ct)}${x.not ? ` · ${esc(x.not)}` : ""}<br>${bmTl(x.para)} yatırıldı</span><span class="bmSag ${x.kz >= 0 ? "art" : "az"}">${x.kz >= 0 ? "+" : ""}${bmTl(x.kz)}<small>${pzYuzde(x.net, 2)}</small></span></div>`).join(""); }
 
@@ -25007,21 +25028,29 @@ function bmCiz(){
   const ort = L => L.length ? L.reduce((t, x) => t + x.net, 0)/L.length : null, oB = ort(bugunKap), isa = L => L.length ? Math.round(L.filter(x => x.net > 0).length/L.length*100) : null;
   const son = B.kapali.slice(-12).reverse();
   const sure = tf => { const a = A?.[tf]; const kn = r.kasa?.kanit?.[tf]; if(!a && (tf[0] === "d" || tf === "p4")) return `<div><b class="off">${pzStratAd(tf)}</b><small>bir sonraki eğitimde başlar</small></div>`; return `<div><b class="${a?.aktif || kn ? "on" : "off"}">${pzStratAd(tf)}: ${a?.aktif || kn ? "AÇIK" : "KAPALI"}</b><small>${kn ? `canlıda kanıtlandı · ayar ${kn.i + 1} · ${kn.n} işlem` : a?.te ? `ileri test ${pzYuzde(a.te.ort, 2)} / işlem` : "eğitim bekleniyor"}</small></div>`; };
+  const KL = K ? ["disiplin", "her", "kumar"].map(x => K[x]).filter(Boolean) : [], topBas = KL.reduce((t, x) => t + x.bas, 0), topSim = KL.reduce((t, x) => t + x.bakiye, 0), topKz = topSim - topBas;
+  const ayi = d.rejim === 2, piyasa = d.rejim ? (ayi ? `🐻 BTC düşüş trendinde: bot temkinli, az ve küçük işlem açar.` : `🐂 BTC yükseliş trendinde: bot normal çalışır.`) : "";
+  const poz = K ? bmPoz(K.disiplin, "Disiplinli") + bmPoz(K.her, "Piyango") + bmPoz(K.kumar, "Kumar") : "";
+  const gec = K ? [["Disiplinli", K.disiplin], ["Piyango", K.her], ["Kumar", K.kumar]].map(([a, x]) => bmGecmis(x, a)).join("") : "";
   k.innerHTML = `
-    <div class="bmDurum ${akt ? "ok" : "kapali"}"><b>${akt ? "☁️ Bot çalışıyor" : "☁️ Bot son " + bmOnce(r.son_tarama) + " çalıştı"}</b> · son tarama ${bmOnce(r.son_tarama)} · ${d.taranan || 0} coin · son eğitim ${bmOnce(r.son_egitim)}${A?.surum ? ` · algoritma v${A.surum}` : ""}</div>
-    ${K ? bmKasa("Disiplinli kasa", "Sadece kendini kanıtlamış stratejilerle girer. Program “bekle” diyorsa nakitte bekler. Aynı anda en fazla 2 işlem, işlem başı kasanın %5'i riskte. Gerçek paraya bu kasa örnek alınacak. Üç kasada ortak frenler: üst üste 3 kayıpta 24 saat mola, kasa tepeden %15 düşerse yarım pozisyon, zarar kesen coine 24 saat tekrar girilmez.", K.disiplin)
-        + bmKasa("🎰 Piyango kasası", "Kripto + BIST piyango sinyalleri: büyük hedef, büyük risk. En iyi 5 ayardan ileri testte kârlı olanların hepsi sinyal verir. Aynı anda 5 işleme kadar, işlem başı %2 risk. Canlıda kendini kanıtlamış ayarda risk 2 katına çıkar (işlem başı en fazla kasanın %20'si).", K.her) + bmKasa("🎲 Kumar kasası", "İndikatör konseyi (Supertrend, UT Bot, Squeeze, Ichimoku, MACD, EMA, ADX…) + öğrenen model. Para, modelin kazanma olasılığına göre çeyrek Kelly ile ayarlanır (işlem başı en fazla %2 risk ve kasanın %15'i). Aynı anda 3 işlem; BTC düşüş trendindeyse 2 işlem ve yarım pozisyon.", K.kumar) : `<div class="bmBos">Kasa bilgisi bir sonraki taramada gelir.</div>`}
-    <div class="bmBas">Program şu an ne diyor?</div>${pzRejimHtml(d)}<div class="bmSure">${sure("g1")}${sure("g3")}</div><div class="bmSure" style="margin-top:8px">${sure("d1")}${sure("d3")}</div><div class="bmSure" style="margin-top:8px">${sure("p4")}${sure("bp")}</div><div class="bmSure" style="margin-top:8px">${sure("k4")}${sure("kb")}</div>
-    <div class="bmBas">Açık pozisyonlar (kasalar)</div>
-    <div class="bmL">${(bmPoz(K?.disiplin, "disiplinli") + bmPoz(K?.her, "piyango") + bmPoz(K?.kumar, "kumar")) || `<div class="bmBos">Kasada açık pozisyon yok.</div>`}</div>
-    ${(K?.disiplin?.gecmis?.length || K?.her?.gecmis?.length || K?.kumar?.gecmis?.length) ? `<div class="bmBas">Kasaların son işlemleri</div><div class="bmL">${bmGecmis(K.disiplin, "disiplinli")}${bmGecmis(K.her, "piyango")}${bmGecmis(K.kumar, "kumar")}</div>` : ""}
-    <div class="bmBas">Bugün tüm sanal denemeler (5 ayar birden)</div>
-    <div class="bmOzet"><div><b>${bugunAc.length}</b><span>bugün açılan</span></div><div><b>${bugunKap.length}</b><span>bugün sonuçlanan</span></div>
-      <div><b class="${oB == null ? "" : oB >= 0 ? "art" : "az"}">${oB == null ? "—" : pzYuzde(oB, 2)}</b><span>işlem başı net (masraf sonrası)</span></div><div><b>${isa(bugunKap) == null ? "—" : "%" + isa(bugunKap)}</b><span>kazanan oranı</span></div>
-      <div><b>${B.acik.length}</b><span>şu an açık deneme</span></div><div><b>${B.kapali.length}</b><span>toplam sonuçlanan</span></div></div>
-    <div class="bmBas">Son sonuçlanan denemeler</div>
-    <div class="bmL">${son.length ? son.map(x => `<div class="bmI"><span class="bmKod">${esc(bmKod(x.k))}</span><span class="bmOrta">${bmSureAd(x.alt)} · ayar ${(x.ai ?? 0) + 1} · ${esc(x.neden || "")}<br>${bmSaat(x.ct)}</span><span class="bmSag ${x.net >= 0 ? "art" : "az"}">${pzYuzde(x.net, 2)}<small>net</small></span></div>`).join("") : `<div class="bmBos">Henüz sonuçlanan deneme yok. 24 saatlikler 1 gün, 2-3 günlükler 3 gün içinde sonuçlanır.</div>`}</div>
+    <div class="bmDurum ${akt ? "ok" : "kapali"}"><b>${akt ? "✅ Bot çalışıyor" : "⚠ Bot son " + bmOnce(r.son_tarama) + " çalıştı"}</b> · ${bmOnce(r.son_tarama)} ${d.taranan || 0} coin taradı · tamamen sanal para, gerçek işlem yok</div>
+    ${KL.length ? `<div class="bmHero"><small>3 kasa toplam</small><b class="${topKz >= 0 ? "art" : "az"}">${bmTl(topSim)}</b><span class="${topKz >= 0 ? "art" : "az"}">${topKz >= 0 ? "+" : "−"}${bmTl(Math.abs(topKz))} (${pzYuzde((topSim/topBas - 1)*100, 1)})</span><em>Başlangıç ${bmTl(topBas)} · her kasa ${bmTl(KL[0].bas)}</em>${piyasa ? `<p>${piyasa}</p>` : ""}</div>` : ""}
+    ${K ? bmKasa("disiplin", K.disiplin) + bmKasa("her", K.her) + bmKasa("kumar", K.kumar) + `<div class="bmFren"><b>🛑 Üç kasada ortak frenler</b>${BM_FREN.map(f => `<span>${f}</span>`).join("")}</div>` : `<div class="bmBos">Kasalar bir sonraki taramada oluşacak.</div>`}
+    <div class="bmBas">Şu an açık işlemler</div>
+    <div class="bmL">${poz || `<div class="bmBos">Açık işlem yok, bot fırsat bekliyor.</div>`}</div>
+    ${gec ? `<div class="bmBas">Kasaların son işlemleri</div><div class="bmL">${gec}</div>` : ""}
     <div class="bmBas">Gerçek paraya geçiş</div>${pzGecisKontrol()}
+    <details class="bmDetay"><summary>Teknik detay (stratejiler ve tüm denemeler)</summary>
+      ${pzRejimHtml(d)}<div class="bmSure">${sure("g1")}${sure("g3")}</div><div class="bmSure" style="margin-top:8px">${sure("d1")}${sure("d3")}</div><div class="bmSure" style="margin-top:8px">${sure("p4")}${sure("bp")}</div><div class="bmSure" style="margin-top:8px">${sure("k4")}${sure("kb")}</div>
+      <div class="bmBas">Bugün tüm sanal denemeler</div>
+      <div class="bmAlt" style="margin:-4px 2px 8px">Bot her sinyali kasadan bağımsız olarak da dener; stratejileri bu denemelerle ölçer. Kasaya sadece en iyileri girer.</div>
+      <div class="bmOzet"><div><b>${bugunAc.length}</b><span>bugün açılan</span></div><div><b>${bugunKap.length}</b><span>bugün sonuçlanan</span></div>
+        <div><b class="${oB == null ? "" : oB >= 0 ? "art" : "az"}">${oB == null ? "—" : pzYuzde(oB, 2)}</b><span>işlem başı net</span></div><div><b>${isa(bugunKap) == null ? "—" : "%" + isa(bugunKap)}</b><span>kazanan oranı</span></div>
+        <div><b>${B.acik.length}</b><span>şu an açık deneme</span></div><div><b>${B.kapali.length}</b><span>toplam sonuçlanan</span></div></div>
+      <div class="bmBas">Son sonuçlanan denemeler</div>
+      <div class="bmL">${son.length ? son.map(x => `<div class="bmI"><span class="bmKod">${esc(bmKod(x.k))}</span><span class="bmOrta">${bmSureAd(x.alt)} · ayar ${(x.ai ?? 0) + 1} · ${esc(x.neden || "")}<br>${bmSaat(x.ct)}</span><span class="bmSag ${x.net >= 0 ? "art" : "az"}">${pzYuzde(x.net, 2)}<small>net</small></span></div>`).join("") : `<div class="bmBos">Henüz sonuçlanan deneme yok.</div>`}</div>
+      ${A?.surum ? `<div class="bmAlt" style="margin-top:10px">Algoritma v${A.surum} · son eğitim ${bmOnce(r.son_egitim)} · günde bir yeniden eğitilir</div>` : ""}
+    </details>
     <button class="bmYen" onclick="this.textContent='Yenileniyor…';pzBotYukle(true).then(bmCiz)">↻ Yenile · ${new Date().toLocaleTimeString("tr-TR", { hour:"2-digit", minute:"2-digit" })}</button>`;
 }
 ekranlar.botMob = pzBotMob; try{ UST_EKRAN.botMob = "ana"; PC_AD.botMob = "Bot Kasası"; PC_GIZLI_EKRAN.add("botMob"); }catch(e){}
