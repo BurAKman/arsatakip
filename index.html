@@ -4471,7 +4471,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.1.0";
+const SURUM_MORDOR = "v 3.2.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -27943,6 +27943,265 @@ function v3OgrenHtml(row){ const A = row?.algo || {}, O = row?.durum?.oneri || {
 { const st = document.createElement("style"); st.textContent = `.v3Ogr{border-color:rgba(232,182,97,.4);background:linear-gradient(180deg,rgba(232,182,97,.08),rgba(232,182,97,.02))}
 .v3OgP{display:flex;flex-direction:column;gap:4px;margin-top:6px}.v3OgP > b{font-size:12px;color:#E8C98A}.v3OgP > div{display:flex;flex-wrap:wrap;gap:4px}.v3OgP span{font-size:11.5px;padding:2px 8px;border-radius:8px;background:rgba(255,255,255,.05)}
 .v3OgP span.art{color:#7FE3A8}.v3OgP span.az{color:#FF9AA1}`; document.head.appendChild(st); }
+
+/* ================= v3.2 =================
+   - Bildirimler: telefona anlik bildirim (bot gonderir), Ayarlar'da ac/kapa + tur secimi + sessiz saat
+   - Net servet: sadece SECILEN parseller (pay + deger) + portfoy + elle eklenenler; borc/alacak istege bagli
+   - Bot ekrani: ucretli ekler listesi (fiyatlariyla) */
+const V3B = { pub:null };
+const V3_BLD_TUR = [["alarm", "🔔 Fiyat alarmlarım", "Kurduğun alarm seviyesi geçilince (sessiz saatte de gelir)"], ["portfoy", "⚠️ Portföyde sert hareket", "Portföyündeki bir varlık gün içinde ±%5 oynarsa"],
+  ["hava", "📣 Piyasa havası değişti", "BIST / Kripto / NASDAQ: GİR · HAZIRLAN · BEKLE geçişleri"], ["oneri", "🎯 Bay Pipo'dan güçlü AL", "Yeni güçlü AL önerisi çıkınca (günde birkaç kez en fazla)"],
+  ["takvim", "📅 Bilanço · temettü · önemli veri", "Takip/portföyündeki hissenin bilançosu yarınsa, Fed/TCMB gibi önemli veriden 1 saat önce"], ["bot", "🏦 Ana kasa işlemleri", "Ana kasa ve Disiplinli kasa işlem açıp kapatınca (sanal)"],
+  ["gunsonu", "📊 Gün sonu özeti", "Hafta içi 18:30 civarı portföyünün günlük değişimi"]];
+const v3BldAyar = () => ({ acik:true, sessiz:[23, 8], ...(PZ.ayar?.bildirim || {}) });
+function v3B64(s){ const p = "=".repeat((4 - s.length % 4) % 4), b = atob((s + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from([...b].map(c => c.charCodeAt(0))); }
+async function v3BildirimPub(){ if(V3B.pub) return V3B.pub; const { data, error } = await sb.from("bildirim_pub").select("pub").maybeSingle(); if(error) throw new Error(/exist|schema|404|relation/i.test(error.message || "") ? "Supabase'de bildirim-kurulum.sql henüz çalıştırılmamış" : error.message); return V3B.pub = data?.pub || null; }
+const v3Ios = () => /iphone|ipad|ipod/i.test(navigator.userAgent), v3Kurulu = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+async function v3BildirimDurum(){ try{ if(!("serviceWorker" in navigator) || !("PushManager" in window)) return { destek:false }; const reg = await navigator.serviceWorker.getRegistration(); const sub = reg ? await reg.pushManager.getSubscription() : null;
+    return { destek:true, izin:Notification.permission, sub }; }catch(e){ return { destek:false }; } }
+async function v3BildirimAc(btn){ try{ if(btn){ btn.disabled = true; btn.textContent = "Açılıyor…"; }
+    if(!("serviceWorker" in navigator) || !("PushManager" in window) || !window.Notification) throw new Error(v3Ios() && !v3Kurulu() ? "iPhone'da bildirim için uygulamayı önce Safari'de Paylaş > Ana Ekrana Ekle ile kur, sonra ana ekrandaki simgeden açıp burayı tekrar dene." : window.arsaPC ? "PC programında bildirimler program açıkken ekranın köşesinde çıkar. Telefona bildirim için telefondaki uygulamadan aç." : "Bu tarayıcı bildirim desteklemiyor.");
+    const izin = await Notification.requestPermission(); if(izin !== "granted") throw new Error("Bildirim izni verilmedi. Telefonun Ayarlar > Bildirimler kısmından Arsa Takip'e izin verip tekrar dene.");
+    const pub = await v3BildirimPub(); if(!pub) throw new Error("Bay Pipo bildirim anahtarını henüz üretmedi. bildirim-kurulum.sql çalıştırıldıysa en geç 15 dakikada hazır olur, sonra tekrar dene.");
+    const reg = await navigator.serviceWorker.ready; let sub = await reg.pushManager.getSubscription();
+    if(sub){ const k = sub.options?.applicationServerKey ? new Uint8Array(sub.options.applicationServerKey) : null, y = v3B64(pub); if(k && (k.length !== y.length || k.some((v, i) => v !== y[i]))){ await sub.unsubscribe(); sub = null; } }
+    if(!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:v3B64(pub) });
+    const j = sub.toJSON(), { error } = await sb.from("bildirim_abone").upsert({ user_id:ME.id, endpoint:j.endpoint, p256dh:j.keys.p256dh, auth:j.keys.auth, cihaz:(v3Ios() ? "iPhone" : /android/i.test(navigator.userAgent) ? "Android" : "Bilgisayar") + " · " + new Date().toLocaleDateString("tr-TR") }, { onConflict:"endpoint" });
+    if(error) throw new Error(error.message); if(v3BldAyar().acik === false) await pzAyarYaz({ bildirim:{ ...v3BldAyar(), acik:true } });
+    toast("🔔 Bildirimler bu cihazda açıldı"); }
+  catch(e){ alert(e.message || String(e)); } v3BildirimKart(); }
+async function v3BildirimKapat(){ try{ const reg = await navigator.serviceWorker.getRegistration(), sub = reg && await reg.pushManager.getSubscription(); if(sub){ await sb.from("bildirim_abone").delete().eq("endpoint", sub.endpoint); await sub.unsubscribe(); } toast("Bu cihazda bildirimler kapatıldı"); }catch(e){ toast("Kapatılamadı: " + (e.message || e)); } v3BildirimKart(); }
+async function v3BildirimTest(){ try{ const reg = await navigator.serviceWorker.getRegistration(), sub = reg && await reg.pushManager.getSubscription(); if(!sub) return toast("Önce bu cihazda bildirimleri aç");
+    await sb.from("bildirim_abone").update({ test:true }).eq("endpoint", sub.endpoint); reg.showNotification("🔔 Arsa Takip", { body:"Bu cihazda bildirim görünüyor. Bay Pipo'nun test mesajı da 15 dakika içinde gelecek (uygulama kapalıyken bile).", icon:"./icon-192.png" });
+    toast("Test istendi · bot bir sonraki turunda gönderecek"); }catch(e){ toast("Olmadı: " + (e.message || e)); } }
+async function v3BldYaz(ek){ await pzAyarYaz({ bildirim:{ ...v3BldAyar(), ...ek } }).catch(() => {}); v3BildirimKart(); }
+async function v3BildirimKart(){ const k = document.getElementById("v3BldK"); if(!k) return; if(!PZ.ayar || !Object.keys(PZ.ayar).length) await pzAyarOku().catch(() => {});
+  const A = v3BldAyar(), D = await v3BildirimDurum(), acik = !!(D.sub && D.izin === "granted");
+  const tog = (on, js) => `<button class="v3Tog ${on ? "on" : ""}" onclick="${js}" aria-pressed="${on}"><i></i></button>`;
+  k.innerHTML = `<div class="v3BldUst"><div><b>Bu cihaz</b><small>${!D.destek ? (v3Ios() && !v3Kurulu() ? "iPhone'da önce Ana Ekrana Ekle ile kur" : window.arsaPC ? "PC programında bildirim program açıkken gelir" : "bu tarayıcı desteklemiyor") : acik ? "✅ bildirim alıyor" : D.izin === "denied" ? "⛔ izin kapalı (telefon ayarlarından aç)" : "kapalı"}</small></div>
+      ${acik ? `<button class="btn ghost" onclick="v3BildirimTest()">Test gönder</button><button class="btn ghost" onclick="v3BildirimKapat()">Bu cihazda kapat</button>` : `<button class="btn" onclick="v3BildirimAc(this)">🔔 Bu cihazda aç</button>`}</div>
+    <div class="v3BldSat ana"><div><b>Bütün bildirimler</b><small>Kapatırsan hiçbir cihazına bildirim gelmez</small></div>${tog(A.acik !== false, `v3BldYaz({acik:${A.acik === false}})`)}</div>
+    <div class="v3BldL ${A.acik === false ? "pasif" : ""}">${V3_BLD_TUR.map(([t, ad, not]) => `<div class="v3BldSat"><div><b>${ad}</b><small>${not}</small></div>${tog(A[t] !== false, `v3BldYaz({${t}:${A[t] === false}})`)}</div>`).join("")}
+      <div class="v3BldSat"><div><b>🌙 Sessiz saatler</b><small>Bu saatlerde sadece fiyat alarmları gelir</small></div><span class="v3Sessiz"><input type="number" min="0" max="23" value="${A.sessiz[0]}" onchange="v3BldYaz({sessiz:[+this.value||0,${A.sessiz[1]}]})">–<input type="number" min="0" max="23" value="${A.sessiz[1]}" onchange="v3BldYaz({sessiz:[${A.sessiz[0]},+this.value||0]})"></span></div></div>
+    <p class="pzNot">Bildirimleri Bay Pipo gönderir (15 dakikada bir bakar), uygulama kapalıyken de gelir. Ayarlar hesabına bağlı; telefonda ve bilgisayarda aynı. ${v3Ios() ? "iPhone'da iOS 16.4 ve üstü + Ana Ekrana Ekle gerekir." : ""}</p>`; }
+{ const eski = ekranlar.ayarlar; ekranlar.ayarlar = async function(){ const r = await eski.apply(this, arguments);
+    try{ if(ME?.id && !document.getElementById("v3BldK")){ const c = app.querySelector(".card"); c?.insertAdjacentHTML("afterend", `<h3 style="font-size:14px;margin:22px 0 10px">🔔 Bildirimler</h3><div class="card v3Bld" id="v3BldK"><div class="spin"></div></div>`); v3BildirimKart(); } }catch(e){ console.log("bildirim kart", e); }
+    return r; }; }
+// bildirime dokununca ilgili ekrana git
+function v3Git(g){ g = String(g || ""); if(!g) return; const pc = typeof pcAcik === "function" && pcAcik(), git = (e, a) => pc && typeof pcGit === "function" && !a ? pcGit(e) : go(e, a);
+  if(g.startsWith("piyasaDetay:")) return go("piyasaDetay", g.slice(12)); if(g.startsWith("piyasa:")){ PZ.sekme = g.slice(7); if(PZ.sekme === "ekstrem") PZ.eksAlt = "bot"; return git("piyasa"); } git(g); }
+try{ navigator.serviceWorker?.addEventListener("message", e => { if(e.data?.tur === "git") v3Git(e.data.git); }); }catch(e){}
+{ const q = new URLSearchParams(location.search).get("git"); if(q){ const t = setInterval(() => { if(typeof ME !== "undefined" && ME?.id && app?.dataset?.ekran){ clearInterval(t); setTimeout(() => v3Git(q), 400); try{ history.replaceState(null, "", location.pathname); }catch(e){} } }, 400); setTimeout(() => clearInterval(t), 60000); } }
+
+/* ---------- 💰 Net servet: secilen parseller ---------- */
+v3ServetVeri = async function(){ return pzOnbellek("v3servet", 120000, async () => {
+    const [{ data:P }, { data:PY }, { data:PC }, { data:H }, { data:V }] = await Promise.all([ sb.from("parcels").select("id,alan_m2,mahalle,ada,parsel,il,ilce"), sb.from("parcel_years").select("parcel_id,yil,m2_fiyat,toplam_fiyat"),
+      sb.from("parca").select("m2,satilik,satildi,m2_fiyat,parcel_id"), sb.from("hesap").select("*"), sb.from("hesap_vade").select("*") ]);
+    const grup = {}; (V || []).forEach(v => (grup[v.hesap_id] = grup[v.hesap_id] || []).push(v)); let borc = 0, alacak = 0, nB = 0, nA = 0;
+    (H || []).forEach(h => { let o; try{ o = hesapOzet(h, grup[h.id] || []); }catch(e){ return; } if(o.kalan < .5) return; if(h.tip === "borc"){ borc += o.kalan; nB++; } else { alacak += o.kalan; nA++; } });
+    const yil = {}; (PY || []).forEach(y => { if(!yil[y.parcel_id] || y.yil > yil[y.parcel_id].yil) yil[y.parcel_id] = y; });
+    const parca = {}; (PC || []).forEach(p => (parca[p.parcel_id] = parca[p.parcel_id] || []).push(p));
+    const L = (P || []).map(p => { const C = parca[p.id] || [], kalan = C.filter(c => !c.satildi), fiyatli = kalan.filter(c => +c.m2_fiyat > 0), y = yil[p.id];
+      const oneri = fiyatli.length ? fiyatli.reduce((t, c) => t + (+c.m2 || 0)*(+c.m2_fiyat), 0) : +y?.toplam_fiyat > 0 ? +y.toplam_fiyat : +y?.m2_fiyat > 0 ? +y.m2_fiyat*(+p.alan_m2 || 0) : null;
+      return { ...p, ad:`${p.mahalle || "Parsel"} ${p.ada || "—"}/${p.parsel || "—"}`, satildi:C.length && !kalan.length, oneri, kaynak:fiyatli.length ? "satılmamış parça fiyatları" : y?.toplam_fiyat ? "tapu yılı toplam fiyat" : y?.m2_fiyat ? "tapu yılı m² fiyatı × alan" : null }; });
+    return { L, borc, alacak, nB, nA }; }); };
+V3_PANEL.servet = async function(k){
+  k.innerHTML = `<div class="spin"></div>`; await pzMadenDoviz().catch(() => {});
+  const [D, H] = await Promise.all([v3ServetVeri().catch(e => ({ hata:e.message, L:[] })), PZ.portfoy.length ? pzPortHesap() : { top:0 }]); if(PZ.sekme !== "servet") return;
+  const A = PZ.ayar?.v3Servet || {}, SP = A.parseller || {}, M = A.manuel || [], usd = v3Kur("USD"), gr = v3Kur("GRALTIN");
+  const sec = D.L.filter(p => SP[p.id]).map(p => { const o = SP[p.id], deg = o.deger > 0 ? +o.deger : p.oneri || 0, pay = o.pay > 0 ? +o.pay : 100; return { ...p, deg, pay, bizim:deg*pay/100, elle:o.deger > 0 }; });
+  const arsa = sec.reduce((t, p) => t + p.bizim, 0), man = M.map(x => ({ ...x, tl:(+x.tutar || 0)*v3Kur(x.para) })), manTop = man.reduce((t, x) => t + x.tl, 0);
+  const K = [["🌾 Bizim parseller", arsa, sec.length ? `${sec.length} parsel seçili` : "henüz parsel seçmedin"], ["📈 Portföy (hisse, kripto, maden)", H.top || 0, `${PZ.portfoy.length} pozisyon · canlı fiyat`], ["🏦 Nakit, banka, döviz, altın", manTop, `${man.length} kalem`]];
+  if(A.alacakDahil) K.push(["🤝 Alacaklar", D.alacak || 0, `${D.nA || 0} açık kayıt · Hesap-Kitap`]); if(A.borcDahil) K.push(["💳 Borçlar", -(D.borc || 0), `${D.nB || 0} açık kayıt · Hesap-Kitap`]);
+  const net = K.reduce((t, x) => t + x[1], 0), poz = K.filter(x => x[1] > 0).reduce((t, x) => t + x[1], 0) || 1;
+  const ay = new Date().toISOString().slice(0, 7), AN = (A.anlik || []).slice(), son = AN[AN.length - 1], yeni = { ay, tl:Math.round(net), usd:usd ? Math.round(net/usd) : null, gr:gr ? Math.round(net/gr) : null };
+  if(net && (!son || son.ay !== ay || Math.abs(son.tl - yeni.tl) > Math.abs(son.tl)*.005)){ if(son?.ay === ay) AN[AN.length - 1] = yeni; else AN.push(yeni); clearTimeout(V3.svZ); V3.svZ = setTimeout(() => pzAyarYaz({ v3Servet:{ ...(PZ.ayar?.v3Servet || {}), anlik:AN.slice(-60) } }).catch(() => {}), 1500); }
+  const hd = A.hedef || {};
+  k.innerHTML = `<div class="v3Sv">
+    <div class="v3SvUst"><div><small>Mal varlığımız</small><b class="mono">${pzPara(net, "TRY", 0)}</b></div><div><small>Dolar olarak</small><b class="mono">${usd ? pzPara(net/usd, "USD", 0) : "—"}</b></div><div><small>Gram altın olarak</small><b class="mono">${gr ? nf(Math.round(net/gr)) + " gr" : "—"}</b></div></div>
+    <div class="v3SvDag">${K.filter(x => x[1] > 0).map(([a, v], i) => `<i style="flex:${v};background:${["#C9A227", "#5B8DEF", "#5BD08B", "#B49CFF"][i % 4]}" title="${a}"></i>`).join("")}</div>
+    <div class="v3SvL">${K.map(([a, v, n]) => `<div class="v3SvS ${v < 0 ? "eksi" : ""}"><span>${a}</span><b class="mono ${v < 0 ? "az" : ""}">${v < 0 ? "−" : ""}${pzPara(Math.abs(v), "TRY", 0)}</b><em>${v > 0 ? "%" + Math.round(v/poz*100) : ""}</em><small>${esc(n)}</small></div>`).join("")}</div>
+    <section class="v3Kart"><header><b>🌾 Bizim parsellerimiz</b><small>Kayıtlı parsellerden sadece seçtiklerin servete sayılır</small><button class="pcLink" onclick="v3ParselSec()">＋ Parsel seç</button></header>
+      ${sec.length ? `<div class="v3PrL">${sec.map(p => `<div class="v3PrS"><div><b>${esc(p.ad)}</b><small>${nf(Math.round(+p.alan_m2 || 0))} m²${p.ilce ? " · " + esc(p.ilce) : ""} · ${p.elle ? "değeri sen girdin" : p.kaynak ? "değer: " + p.kaynak : "⚠️ fiyat yok, değer gir"}</small></div>
+          <label>Değer (₺)<input type="number" placeholder="${p.oneri ? Math.round(p.oneri) : "değer gir"}" value="${p.elle ? p.deg : ""}" onchange="v3PrAyar('${p.id}',{deger:+this.value||0})"></label>
+          <label>Bizim payımız %<input type="number" min="1" max="100" value="${p.pay}" onchange="v3PrAyar('${p.id}',{pay:Math.max(1,Math.min(100,+this.value||100))})"></label>
+          <b class="mono">${pzPara(p.bizim, "TRY", 0)}</b><button class="pzIkon" title="Servetten çıkar" onclick="v3PrAyar('${p.id}',null)">×</button></div>`).join("")}</div>`
+        : `<div class="pcBos">Henüz parsel seçmedin. "＋ Parsel seç" ile kayıtlı parsellerden size ait olanları işaretle; sadece onlar mal varlığına sayılır.</div>`}</section>
+    <div class="v3Iki">
+      <section class="v3Kart"><header><b>📉📈 Servetin aylar içinde</b><small>her ay kendiliğinden kaydedilir</small></header>${v3SvGrafik(AN)}</section>
+      <section class="v3Kart"><header><b>🎯 Hedef planlayıcı</b></header>${v3HedefHtml(hd, net, (H.top || 0) + manTop)}${v3MonteHtml(hd, net, (H.top || 0) + manTop)}</section></div>
+    <section class="v3Kart"><header><b>🏦 Nakit, banka, döviz, altın</b><small>uygulamanın bilmediği varlıkların</small></header>
+      <div class="v3ManL">${man.map((x, i) => `<div class="v3ManS"><b>${esc(x.ad)}</b><span class="mono">${(+x.tutar).toLocaleString("tr-TR")} ${(V3_PARA.find(p => p[0] === x.para) || ["", x.para])[1]}</span><em class="mono">${pzPara(x.tl, "TRY", 0)}</em><button class="pzIkon" title="Sil" onclick="v3ManSil(${i})">×</button></div>`).join("") || `<div class="pcBos">Banka hesabı, yastık altı dolar, bilezik… ne varsa ekle.</div>`}</div>
+      <div class="v3ManForm"><input id="v3MAd" placeholder="Ne? (ör. Ziraat vadeli)"><input id="v3MTu" type="number" step="any" inputmode="decimal" placeholder="Tutar"><select id="v3MPa">${V3_PARA.map(([v, a]) => `<option value="${v}">${a}</option>`).join("")}</select><button class="btn" onclick="v3ManEkle()">+ Ekle</button></div></section>
+    <section class="v3Kart"><header><b>🤝 Hesap - Kitap kayıtları</b><small>istersen servete dahil et</small></header>
+      <div class="v3BldSat"><div><b>Alacaklar dahil</b><small>${pzPara(D.alacak || 0, "TRY", 0)} · ${D.nA || 0} açık kayıt</small></div><button class="v3Tog ${A.alacakDahil ? "on" : ""}" onclick="v3SvAyar({alacakDahil:${!A.alacakDahil}})"><i></i></button></div>
+      <div class="v3BldSat"><div><b>Borçlar düşülsün</b><small>${pzPara(D.borc || 0, "TRY", 0)} · ${D.nB || 0} açık kayıt</small></div><button class="v3Tog ${A.borcDahil ? "on" : ""}" onclick="v3SvAyar({borcDahil:${!A.borcDahil}})"><i></i></button></div></section>
+    ${D.hata ? `<div class="pzSqlUyar">Arsa / hesap verisi okunamadı: ${esc(D.hata)}</div>` : ""}
+    <p class="pzNot">Bu ekran sadece senin hesabına özel; seçimlerin Supabase'deki kendi ayarında saklanır.</p></div>`; };
+async function v3PrAyar(id, ek){ const P = { ...(PZ.ayar?.v3Servet?.parseller || {}) }; if(ek === null) delete P[id]; else P[id] = { ...(P[id] || { pay:100 }), ...ek }; await v3SvAyar({ parseller:P }); }
+async function v3ParselSec(){ const D = await v3ServetVeri().catch(() => ({ L:[] })), SP = PZ.ayar?.v3Servet?.parseller || {};
+  const m = document.createElement("div"); m.className = "v3Modal"; m.innerHTML = `<div class="v3ModalIc"><header><b>🌾 Hangi parseller bizim?</b><button class="pzIkon" onclick="this.closest('.v3Modal').remove()">×</button></header>
+    <input class="pzAra" placeholder="Ara: köy, ada, parsel…" oninput="const q=this.value.toLocaleLowerCase('tr');this.closest('.v3ModalIc').querySelectorAll('label[data-q]').forEach(l=>l.style.display=l.dataset.q.includes(q)?'':'none')">
+    <div class="v3PrSecL">${D.L.map(p => `<label data-q="${esc((p.ad + " " + (p.il || "") + " " + (p.ilce || "")).toLocaleLowerCase("tr"))}"><input type="checkbox" value="${p.id}" ${SP[p.id] ? "checked" : ""}><span><b>${esc(p.ad)}</b><small>${nf(Math.round(+p.alan_m2 || 0))} m²${p.ilce ? " · " + esc(p.ilce) : ""}${p.satildi ? " · satılmış" : ""}${p.oneri ? " · ~" + pzPara(p.oneri, "TRY", 0) : ""}</small></span></label>`).join("") || `<div class="pcBos">Kayıtlı parsel yok.</div>`}</div>
+    <div class="v3TarTus"><button class="btn ghost" onclick="this.closest('.v3Modal').remove()">Vazgeç</button><button class="btn" onclick="v3ParselKaydet(this)">Kaydet</button></div></div>`;
+  m.onclick = e => { if(e.target === m) m.remove(); }; document.body.appendChild(m); }
+async function v3ParselKaydet(btn){ const m = btn.closest(".v3Modal"), eski = PZ.ayar?.v3Servet?.parseller || {}, P = {};
+  m.querySelectorAll("input[type=checkbox]:checked").forEach(c => { P[c.value] = eski[c.value] || { pay:100 }; }); m.remove(); await v3SvAyar({ parseller:P }); toast(`${Object.keys(P).length} parsel servete sayılıyor`); }
+// hedefe ulasma ihtimali (Monte Carlo: 2.000 senaryo)
+function v3MonteHtml(h, net, yatirim){ const T = +h.tutar || 0, [yy, mm] = String(h.tarih || "").split("-").map(Number); if(!T || !yy) return "";
+  const now = new Date(), n = Math.max(1, (yy - now.getFullYear())*12 + (mm - 1 - now.getMonth())), baz = h.baz === "yatirim" ? yatirim : net, mu = (+(h.getiri ?? 30))/100/12, sig = (+(h.oyn ?? 25))/100/Math.sqrt(12), a = +h.aylik || 0;
+  let ok = 0; const S = []; let tohum = 7; const r = () => { tohum = (tohum*16807) % 2147483647; return tohum/2147483647; }, nrm = () => Math.sqrt(-2*Math.log(r() || 1e-9))*Math.cos(2*Math.PI*r());
+  for(let s = 0; s < 2000; s++){ let v = baz; for(let i = 0; i < n; i++) v = v*(1 + mu + sig*nrm()) + a; S.push(v); if(v >= T) ok++; }
+  S.sort((x, y) => x - y); const p = ok/2000;
+  return `<div class="v3Monte"><b>🎲 Hedefe ulaşma ihtimali: <span class="${p >= .7 ? "art" : p < .4 ? "az" : ""}">%${Math.round(p*100)}</span></b><small>2.000 farklı piyasa senaryosu · kötü senaryoda (%10) ${pzPara(S[200], "TRY", 0)}, orta ${pzPara(S[1000], "TRY", 0)}, iyi senaryoda (%90) ${pzPara(S[1800], "TRY", 0)}</small>
+    <label>Yıllık oynaklık %<input type="number" value="${h.oyn ?? 25}" onchange="v3Hd({oyn:+this.value||0})"></label></div>`; }
+
+/* ---------- bot ekrani: parayla alinacaklar (gercek paraya gecis listesinin yaninda) ---------- */
+const V3_UCRETLI = [
+  { ad:"⚡ Gerçek zamanlı BIST fiyatı", ne:"Şu an BIST 15 dk gecikmeli. Bot gün içi BIST işlemlerinde 15 dk geriden geliyor.", fiyat:"Aracı kurum uygulamasında Karma Düzey 1 ücretsiz (ör. İş Bankası 0 ₺) ama sadece onların ekranında. Bizim programa akıtmak için veri dağıtıcı lisansı gerekir: Matriks/Foreks platform + Düzey 1 ~975–2.550 ₺/ay (kuruma göre; komisyon hacmi yetince ücretsiz olabiliyor).", tur:"aylık lisans, her ay yenilenir", ne_zaman:"Trader kasası BIST'te kendini kanıtlayınca" },
+  { ad:"📚 Derinlik (emir defteri, Düzey 2)", ne:"Alıcı-satıcı sıralarını görmek: büyük emir nerede bekliyor.", fiyat:"~535–803 ₺/ay (10 kademe), 25 kademe ~625–750 ₺/ay", tur:"aylık", ne_zaman:"Gün içi BIST işlemi gerçek parayla yapılacaksa" },
+  { ad:"🏦 AKD / takas (aracı kurum dağılımı)", ne:"Hangi kurum alıyor, hangisi satıyor; yabancı payı.", fiyat:"Gün sonu AKD ~115–215 ₺/ay · eşanlı (anlık) AKD ~290–485 ₺/ay · MKK takas ~97–100 ₺/ay", tur:"aylık", ne_zaman:"Orta vadeli BIST seçimlerinde ek filtre olarak" },
+  { ad:"🎯 BIST analist hedef fiyatları + şirket beklentileri", ne:"NASDAQ hedef fiyatları ücretsiz veriyle uygulamada var. BIST'te kapsamlı ve güncel liste ücretli.", fiyat:"Fintables PRO yıllık abonelik (2024'te ~4.200 ₺/yıl idi; güncel fiyat sitede)", tur:"yıllık/aylık abonelik", ne_zaman:"Uzun vadeli BIST portföyü büyüyünce" },
+  { ad:"📊 Derin temel veri (10 yıllık tablolar, tahminler)", ne:"Çok yıllık bilanço özeti ücretsiz kaynaktan uygulamada var; çeyreklik detay ve tahminler ücretli servislerde.", fiyat:"Fintables PRO (BIST) · yabancı veri servisleri aylık dolar bazında", tur:"abonelik", ne_zaman:"Temel analize ağırlık verince" },
+  { ad:"🔗 Aracı kurum API (otomatik emir)", ne:"Binance zaten kolay (anahtar sadece bilgisayarda, para çekme izni yok). BIST için API veren kurumda hesap gerekir.", fiyat:"Kuruma göre (çoğunda müşteriye ücretsiz, veri lisansı ayrıca)", tur:"—", ne_zaman:"Gerçek paraya geçiş listesi tamamen ✓ olunca" } ];
+function v3UcretliHtml(){ return `<details class="v3Rehber v3Ucr" ${pzLS.oku("v3Ucr", 1) ? "open" : ""} ontoggle="pzLS.yaz('v3Ucr',this.open?1:0)"><summary>💳 Parayla alınacaklar · zamanı gelince (unutmayalım diye burada)</summary>
+  <div class="v3UcrL">${V3_UCRETLI.map(u => `<div class="v3UcrS"><b>${u.ad}</b><p>${u.ne}</p><div><span>💰 ${u.fiyat}</span><span>🧾 ${u.tur}</span><span>⏳ ${u.ne_zaman}</span></div></div>`).join("")}</div>
+  <p class="pzNot">Fiyatlar Kasım 2026 itibarıyla aracı kurum ve dağıtıcıların yayımladığı listelerden; KDV ve kuruma göre değişir, almadan önce güncelini kontrol et. Kriptoda ek ücret yok (Binance verisi zaten anlık ve ücretsiz).</p></details>`; }
+{ const eski = bmCiz; bmCiz = function(){ const r = eski.apply(this, arguments);
+    try{ const k = document.getElementById("bmS"); if(k && !k.querySelector(".v3Ucr")){ const t = [...k.querySelectorAll(".bmSekT")].find(b => /Gerçek/i.test(b.textContent))?.dataset.t, pan = t && k.querySelector(`.bmPan[data-t="${t}"]`);
+        if(pan) pan.insertAdjacentHTML("beforeend", v3UcretliHtml()); else k.querySelector(".v3Ogr")?.insertAdjacentHTML("afterend", v3UcretliHtml()); } }catch(e){ console.log("ucretli", e); }
+    return r; }; }
+
+/* ---------- 🪄 Bay Pipo cizsin: otomatik trend cizgileri, Fibonacci, formasyonlar + sade "grafik ne diyor" + elle cizim + yapay zeka yorumu + hacim profili ---------- */
+if(typeof PZD !== "undefined" && PZD.katman){ if(PZD.katman.oto == null) PZD.katman.oto = true; if(PZD.katman.hp == null) PZD.katman.hp = false; }
+function v3Pivot(R, k){ const H = [], L = [], n = R.c.length; for(let i = k; i < n - k; i++){ let ust = true, alt = true; for(let j = i - k; j <= i + k; j++){ if(j === i) continue; if(R.h[j] > R.h[i]) ust = false; if(R.l[j] < R.l[i]) alt = false; }
+    if(ust) H.push({ i, f:R.h[i] }); if(alt) L.push({ i, f:R.l[i] }); } return { H, L }; }
+function v3Cizim(R){ const n = R.c.length; if(n < 40) return null; const k = n > 300 ? 6 : n > 120 ? 4 : 3, { H, L } = v3Pivot(R, k), f = R.c[n - 1], pc = (a, b) => (a/b - 1)*100;
+  const hat = (a, b) => ({ a, b, egim:(b.f - a.f)/(b.i - a.i), deger:i => a.f + (b.f - a.f)*(i - a.i)/(b.i - a.i) });
+  const L2 = L.slice(-2), H2 = H.slice(-2), des = L2.length === 2 ? hat(L2[0], L2[1]) : null, dir = H2.length === 2 ? hat(H2[0], H2[1]) : null;
+  // Fibonacci: son belirgin salinim (son ~120 mum icindeki en yuksek ve en dusuk)
+  const bas = Math.max(0, n - Math.min(n, 160)); let iH = bas, iL = bas; for(let i = bas; i < n; i++){ if(R.h[i] > R.h[iH]) iH = i; if(R.l[i] < R.l[iL]) iL = i; }
+  const yukari = iL < iH, ust = R.h[iH], alt = R.l[iL], fark = ust - alt, FIB = [.236, .382, .5, .618, .786].map(o => ({ o, f: yukari ? ust - fark*o : alt + fark*o }));
+  // formasyonlar
+  const F = [], es = (a, b, t) => Math.abs(a/b - 1) <= t;
+  if(L2.length === 2 && es(L2[0].f, L2[1].f, .03) && L2[1].i - L2[0].i >= 8){ const arada = H.filter(h => h.i > L2[0].i && h.i < L2[1].i).sort((a, b) => b.f - a.f)[0];
+    if(arada && arada.f > Math.max(L2[0].f, L2[1].f)*1.04) F.push({ ad:"İkili dip (W)", yon:1, boyun:arada.f, hedef:arada.f + (arada.f - Math.min(L2[0].f, L2[1].f)), not:`fiyat iki kez aynı tabandan döndü. ${f > arada.f ? "Boyun çizgisi kırıldı, olumlu." : `${pzPara(arada.f)} (boyun) yukarı kırılırsa olumlu sinyal.`}` }); }
+  if(H2.length === 2 && es(H2[0].f, H2[1].f, .03) && H2[1].i - H2[0].i >= 8){ const arada = L.filter(l => l.i > H2[0].i && l.i < H2[1].i).sort((a, b) => a.f - b.f)[0];
+    if(arada && arada.f < Math.min(H2[0].f, H2[1].f)*.96) F.push({ ad:"İkili tepe (M)", yon:-1, boyun:arada.f, hedef:arada.f - (Math.max(H2[0].f, H2[1].f) - arada.f), not:`fiyat iki kez aynı tavana çarptı. ${f < arada.f ? "Boyun kırıldı, dikkat: düşüş sinyali." : `${pzPara(arada.f)} (boyun) aşağı kırılırsa olumsuz.`}` }); }
+  if(des && dir){ const de = des.egim/f*100, di = dir.egim/f*100, duz = x => Math.abs(x) < .05;
+    if(duz(di) && de > .05) F.push({ ad:"Yükselen üçgen", yon:1, not:"tavan düz, tabanlar yükseliyor: alıcılar sabırsızlanıyor. Tavan kırılırsa genelde yukarı devam eder." });
+    else if(duz(de) && di < -.05) F.push({ ad:"Alçalan üçgen", yon:-1, not:"taban düz, tepeler alçalıyor: satıcılar baskın. Taban kırılırsa düşüş hızlanabilir." });
+    else if(de > .05 && di < -.05) F.push({ ad:"Simetrik üçgen (sıkışma)", yon:0, not:"fiyat daralan bir koridorda sıkışıyor; hangi yöne kırarsa sert hareket gelebilir." });
+    else if(Math.abs(de - di) < Math.max(.04, Math.abs(de)*.35) && Math.abs(de) > .05) F.push({ ad:de > 0 ? "Yükselen kanal" : "Düşen kanal", yon:Math.sign(de), not:de > 0 ? "fiyat düzenli yükselen bir kanalda; alt çizgiye yaklaşınca alım, üstte kâr alma bölgesi." : "fiyat düzenli düşen bir kanalda; üst çizgi kırılmadıkça trend aşağı." }); }
+  // sade cumleler
+  const S = [], dT = des ? des.deger(n - 1) : null, rT = dir ? dir.deger(n - 1) : null;
+  if(des && des.egim > 0) S.push(f >= dT ? `📈 Yükselen destek çizgisi korunuyor (${pzPara(dT)}). Bu çizginin üstünde kaldıkça yön yukarı.` : `⚠️ Yükselen destek çizgisi (${pzPara(dT)}) aşağı kırıldı; yükseliş trendi zayıfladı.`);
+  else if(des) S.push(`📉 Dipler alçalıyor; destek çizgisi şu an ${pzPara(dT)} civarında.`);
+  if(dir && dir.egim < 0) S.push(f <= rT ? `🧱 Alçalan direnç çizgisi (${pzPara(rT)}) hâlâ tavan; bunu yukarı kırmadan büyük yükseliş beklemek erken.` : `🚀 Alçalan direnç çizgisi (${pzPara(rT)}) yukarı kırıldı; olumlu.`);
+  else if(dir) S.push(`⬆️ Tepeler yükseliyor; direnç çizgisi şu an ${pzPara(rT)} civarında.`);
+  const yakin = FIB.slice().sort((a, b) => Math.abs(a.f - f) - Math.abs(b.f - f))[0];
+  S.push(`📐 Son büyük ${yukari ? "yükselişin" : "düşüşün"} Fibonacci haritasında fiyat %${(yakin.o*100).toFixed(1).replace(".", ",")} seviyesine yakın (${pzPara(yakin.f)}). ${yukari ? "%38-%62 arası geri çekilmeler sağlıklı alım bölgesi sayılır; %78'in altı trendin bozulduğunu gösterir." : "Düşüşte %38-%62 arası tepki yükselişleri genelde satış baskısıyla karşılaşır."}`);
+  F.forEach(x => S.push(`🔷 ${x.ad}: ${x.not}${x.hedef ? ` Klasik hedef ~${pzPara(x.hedef)} (${pc(x.hedef, f) > 0 ? "+" : ""}${pc(x.hedef, f).toFixed(1).replace(".", ",")}%).` : ""}`));
+  return { des, dir, FIB, F, S, yukari, iH, iL, f }; }
+// cizim katmani (pzdGrafikCiz'den sonra calisir)
+{ const eski = pzdKatmanCiz; pzdKatmanCiz = function(){ const r = eski.apply(this, arguments); const k = document.getElementById("pzdKatman");
+    if(k && PZD.sekme === "bizim" && !k.querySelector(".otoK")) k.insertAdjacentHTML("afterbegin", `<label class="otoK ${PZD.katman.oto ? "on" : ""}"><input type="checkbox" ${PZD.katman.oto ? "checked" : ""} onchange="PZD.katman.oto=this.checked;pzdGrafikCiz()">🪄 Bay Pipo çizsin</label><label class="hpK ${PZD.katman.hp ? "on" : ""}"><input type="checkbox" ${PZD.katman.hp ? "checked" : ""} onchange="PZD.katman.hp=this.checked;pzdGrafikCiz()">📊 Hacim profili</label>`); return r; }; }
+const v3CizKay = k => (PZ.ayar?.cizim || {})[k] || [];
+{ const eski = pzdGrafikCiz; pzdGrafikCiz = async function(){ const r = await eski.apply(this, arguments);
+    try{ document.getElementById("v3Ciz")?.remove(); if(PZD.sekme !== "bizim") return r; const ana = PZD.grafikler[0], s = PZD.s, LC = window.LightweightCharts; if(!ana || !s || !LC) return r; const kk = s.k;
+      let R = PZD.R; if(!/^(1Y|2Y)$/.test(PZD.aralik) || !R) R = await pzGecmis(s, PZD.aralik).catch(() => null); if(!R?.c?.length || PZD.grafikler[0] !== ana) return r;
+      if(PZD.aralik === "1Y" && R === PZD.R){ const n = Math.min(R.c.length, pzAyGun(s)*12 + 5), a = R.c.length - n; R = { t:R.t.slice(a), o:R.o.slice(a), h:R.h.slice(a), l:R.l.slice(a), c:R.c.slice(a), v:R.v.slice(a) }; }
+      const T = R.t.map(t => t + 3*3600), n = R.c.length, X = v3Cizim(R); PZD.cizim = X;
+      const yard = ana.addLineSeries({ color:"rgba(0,0,0,0)", lineWidth:1, priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false }); yard.setData(T.map((t, i) => ({ time:t, value:R.c[i] })));
+      const hat = (h, renk, ad) => { if(!h) return; const s2 = ana.addLineSeries({ color:renk, lineWidth:2, lineStyle:0, priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false, title:ad }); s2.setData([{ time:T[h.a.i], value:h.a.f }, { time:T[n - 1], value:h.deger(n - 1) }]); };
+      if(X && PZD.katman.oto){ hat(X.des, "#5BD08B", "destek çizgisi"); hat(X.dir, "#FF7A83", "direnç çizgisi");
+        X.FIB.forEach(o => yard.createPriceLine({ price:o.f, color:"rgba(180,156,255,.55)", lineWidth:1, lineStyle:2, axisLabelVisible:false, title:"Fib %" + (o.o*100).toFixed(1).replace(".", ",") }));
+        X.F.forEach(x => { if(x.boyun) yard.createPriceLine({ price:x.boyun, color:x.yon > 0 ? "#8BC34A" : "#FF7043", lineWidth:1, lineStyle:1, axisLabelVisible:true, title:x.ad + " boyun" }); }); }
+      // elle cizimler
+      v3CizKay(kk).forEach(c => { if(c.tip === "y") yard.createPriceLine({ price:c.f, color:"#4DD0E1", lineWidth:2, lineStyle:0, axisLabelVisible:true, title:"✏️ " + (c.ad || "") });
+        if(c.tip === "t"){ const s2 = ana.addLineSeries({ color:"#4DD0E1", lineWidth:2, priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false }); const [a, b] = [c.a, c.b].sort((x, y) => x.t - y.t); if(a.t !== b.t){ const eg = (b.f - a.f)/(b.t - a.t), son = Math.max(b.t, T[n - 1]); s2.setData([{ time:a.t, value:a.f }, { time:son, value:a.f + eg*(son - a.t) }]); } } });
+      // elle cizim: grafige tikla
+      PZD.cizYard = yard; ana.subscribeClick(p => { if(!V3.cizMod || !p?.point || p.time == null) return; const f = yard.coordinateToPrice(p.point.y); if(f == null) return;
+        if(V3.cizMod === "y"){ v3CizEkle(kk, { tip:"y", f:+f.toPrecision(6) }); V3.cizMod = null; }
+        else if(V3.cizMod === "t"){ if(!V3.cizIlk){ V3.cizIlk = { t:p.time, f:+f.toPrecision(6) }; toast("İkinci noktaya dokun"); } else { v3CizEkle(kk, { tip:"t", a:V3.cizIlk, b:{ t:p.time, f:+f.toPrecision(6) } }); V3.cizIlk = null; V3.cizMod = null; } } });
+      // hacim profili (sagda yatay cubuklar)
+      if(PZD.katman.hp){ const k = document.getElementById("pzdAna"); if(k){ k.style.position = "relative"; const ciz = () => { k.querySelector(".v3Hp")?.remove(); const mn = Math.min(...R.l), mx = Math.max(...R.h), B = 28, d = (mx - mn)/B || 1, V = new Array(B).fill(0);
+          R.c.forEach((c, i) => { V[Math.min(B - 1, Math.floor(((R.h[i] + R.l[i] + c)/3 - mn)/d))] += R.v[i] || 0; }); const vm = Math.max(...V) || 1, poc = V.indexOf(vm);
+          k.insertAdjacentHTML("beforeend", `<div class="v3Hp">${V.map((v, b) => { const y1 = yard.priceToCoordinate(mn + (b + 1)*d), y0 = yard.priceToCoordinate(mn + b*d); if(y1 == null || y0 == null) return ""; return `<i class="${b === poc ? "poc" : ""}" style="top:${Math.min(y0, y1)}px;height:${Math.max(1, Math.abs(y0 - y1) - 1)}px;width:${Math.round(v/vm*28)}%"></i>`; }).join("")}</div>`); };
+          setTimeout(ciz, 60); ana.timeScale().subscribeVisibleLogicalRangeChange(() => { clearTimeout(V3.hpZ); V3.hpZ = setTimeout(ciz, 80); }); } }
+      // sade anlatim kutusu + araclar
+      const lej = document.getElementById("pzdLejant"); if(lej && X){ lej.insertAdjacentHTML("afterend", `<div class="v3Ciz" id="v3Ciz"><header><b><i class="pipo"></i> Grafik ne diyor?</b><small>Bay Pipo'nun çizimine göre · ${PZD.aralik}</small></header>
+        <ul>${X.S.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+        <div class="v3CizTus"><span>✏️ Elle çiz:</span><button class="v3Cip" onclick="V3.cizMod='y';V3.cizIlk=null;toast('Grafikte çizgi istediğin fiyata dokun')">— Yatay çizgi</button><button class="v3Cip" onclick="V3.cizMod='t';V3.cizIlk=null;toast('Trend çizgisi: önce ilk noktaya, sonra ikinciye dokun')">╱ Trend çizgisi</button>${v3CizKay(kk).length ? `<button class="v3Cip" onclick="v3CizSil('${kk}')">🧹 Çizimlerimi sil (${v3CizKay(kk).length})</button>` : ""}
+          <button class="v3Cip yz" onclick="v3CizYz(this)">🤖 Yapay zekâ yorumlasın</button></div><div id="v3CizYz"></div></div>`); } }
+    catch(e){ console.log("oto cizim", e); } return r; }; }
+async function v3CizEkle(k, c){ const C = { ...(PZ.ayar?.cizim || {}) }; C[k] = (C[k] || []).concat([c]).slice(-20); await pzAyarYaz({ cizim:C }).catch(() => {}); toast("✏️ Çizildi"); pzdGrafikCiz(); }
+async function v3CizSil(k){ const C = { ...(PZ.ayar?.cizim || {}) }; delete C[k]; await pzAyarYaz({ cizim:C }).catch(() => {}); pzdGrafikCiz(); }
+async function v3CizYz(btn){ const X = PZD.cizim, s = PZD.s, y = document.getElementById("v3CizYz"); if(!X || !s || !y) return; if(typeof pzYzSor !== "function") return toast("Yapay zekâ bağlantısı yok");
+  btn.disabled = true; btn.textContent = "Claude yorumluyor…";
+  const istem = `Sen sade konuşan bir borsa öğretmenisin. Aşağıda ${s.kod} (${s.ad || ""}) grafiğinin ${PZD.aralik} aralığı için programın otomatik çizdiği seviyeler var. Grafik bilgisi olmayan birine 5-7 kısa madde halinde Türkçe açıkla: şu an ne oluyor, hangi seviyeler önemli, hangi senaryoda ne yapılmalı (al/bekle/sat değil, "izle"/"dikkat" dili kullan), riskler. Yatırım tavsiyesi olmadığını tek cümleyle belirt. Web araması yapma.
+Fiyat: ${X.f}
+Notlar: ${X.S.join(" | ")}
+Fibonacci (${X.yukari ? "yükseliş" : "düşüş"} sonrası): ${X.FIB.map(o => `%${(o.o*100).toFixed(1)}=${o.f.toFixed(4)}`).join(", ")}
+Formasyonlar: ${X.F.map(f => f.ad).join(", ") || "belirgin yok"}
+Bay Pipo planı: ${PZD.A ? `al bölgesi ${PZD.A.al?.map(x => x?.toFixed?.(4)).join("-")}, stop ${PZD.A.stop?.toFixed?.(4)}` : "—"}`;
+  try{ const t = await pzYzSor("claude", istem); y.innerHTML = `<div class="v3CizYzK"><b>🤖 Claude'un yorumu</b><div>${esc(String(t || "")).replace(/\n/g, "<br>")}</div></div>`; }
+  catch(e){ y.innerHTML = `<p class="pzNot">Yapay zekâ cevap vermedi: ${esc(e.message || e)}. Ayarlar'dan Claude girişini kontrol et.</p>`; }
+  finally{ btn.disabled = false; btn.textContent = "🤖 Yapay zekâ yorumlasın"; } }
+
+/* ---------- v3.2 uzun Claude+GPT analizi kalkti; ChatGPT sadece kisa "uzman hedef fiyatlari" sorgusu yapar (varlik basina 24 saatte bir, arka planda) ---------- */
+V3_BLD_TUR.push(["kap", "📢 KAP bildirimleri", "Portföy/takip hisselerine yeni KAP açıklaması gelince"]);
+function v3HedefOku(k){ try{ return JSON.parse(localStorage.getItem("v3Hdf") || "{}")[k] || PZ.ayar?.v3Hedefler?.[k] || null; }catch(e){ return null; } }
+function v3HedefYaz(k, v){ try{ const o = JSON.parse(localStorage.getItem("v3Hdf") || "{}"); o[k] = v; localStorage.setItem("v3Hdf", JSON.stringify(o)); }catch(e){} }
+const V3_HDF_IS = {};
+// ortak kayit: hedefler piyasa_analiz tablosuna yazilir, herkes (abi, abla) ayni ozeti gorur; kim once acarsa o gunku sorguyu o yapar
+async function v3HedefOrtak(k){ try{ const L = await pzOku("piyasa_analiz", q => q.eq("sembol", k).eq("kaynak", "hedef").order("created_at", { ascending:false }).limit(1)); const v = L.find(x => x.sembol === k && x.kaynak === "hedef")?.veri; if(v?.t){ const o = v3HedefOku(k); if(!o || v.t > o.t) v3HedefYaz(k, v); } }catch(e){} return v3HedefOku(k); }
+async function v3HedefCek(s, zorla){ const k = s.k; let o = await v3HedefOrtak(k); if(!zorla && o && Date.now() - o.t < 24*3600000) return o; if(V3_HDF_IS[k] || typeof pzYzSor !== "function") return o; V3_HDF_IS[k] = 1;
+  try{ const tur = pzTur(k), istem = `${tur === "KRIPTO" ? `${s.ad || s.kod} (${s.kod}) kripto parası` : `${s.kod} (${s.ad || ""}, ${tur === "BIST" ? "Borsa İstanbul" : "ABD borsası"}) hissesi`} için SADECE şu bilgileri internetten bul ve kısa yaz, yorum ekleme:
+1) Aracı kurum / analist 12 aylık hedef fiyatları (kurum adı, hedef, tavsiye, tarih) — en güncel en fazla 6 tane
+2) Ortalama hedef fiyat ve kaç analist (biliniyorsa)
+3) Son 30 günde fiyatı etkileyebilecek 1-3 önemli gelişme (tek cümle)
+${tur === "KRIPTO" ? "Kripto için analist hedefi yoksa büyük kurumların (ör. Standard Chartered, Bernstein) açıkladığı tahminleri yaz." : ""}
+Cevabı SADECE şu JSON ile ver: {"hedefler":[{"kurum":"","hedef":0,"tavsiye":"","tarih":""}],"ortalama":0,"analist":0,"para":"","onemli":[""]}`;
+    const t = await pzYzSor("gpt", istem), m = String(t || "").match(/\{[\s\S]*\}/); if(!m) throw new Error("cevap okunamadı");
+    const J = JSON.parse(m[0]), v = { t:Date.now(), ...J }; v3HedefYaz(k, v); try{ await pzEkle("piyasa_analiz", { sembol:k, kaynak:"hedef", veri:v }); }catch(e){} return v; }
+  catch(e){ const v = { t:Date.now() - 20*3600000, hata:e.message || String(e) }; v3HedefYaz(k, v); return v; } finally{ delete V3_HDF_IS[k]; } }
+function v3HedefHtmlK(s, H){ const f = s.f || PZD.A?.fiyat, p = x => pzPara(+x, s.para || (pzTur(s.k) === "KRIPTO" ? "USD" : "")), pc = x => f && +x ? ((+x/f - 1)*100) : null;
+  if(!H) return `<div class="spin"></div><p class="pzNot">ChatGPT kısa bir sorguyla uzman hedeflerini topluyor…</p>`;
+  if(H.hata) return `<p class="pzNot">Hedef fiyatlar alınamadı (${esc(H.hata)}). ChatGPT girişi Ayarlar'da açık mı? <button class="pcLink" onclick="v3HedefYenile()">Tekrar dene</button></p>`;
+  const L = (H.hedefler || []).filter(x => +x.hedef > 0);
+  return `${+H.ortalama > 0 ? `<div class="v3HdfOrt"><small>Ortalama hedef${H.analist ? ` · ${H.analist} analist` : ""}</small><b class="mono">${p(H.ortalama)}</b>${pc(H.ortalama) != null ? `<em class="${pc(H.ortalama) >= 0 ? "art" : "az"}">${pc(H.ortalama) >= 0 ? "+" : ""}${pc(H.ortalama).toFixed(1).replace(".", ",")}% potansiyel</em>` : ""}</div>` : ""}
+    ${L.length ? `<div class="v3HdfL">${L.map(x => `<div><b>${esc(x.kurum || "—")}</b><span class="mono">${p(x.hedef)}</span><em class="${(pc(x.hedef) || 0) >= 0 ? "art" : "az"}">${pc(x.hedef) != null ? (pc(x.hedef) >= 0 ? "+" : "") + pc(x.hedef).toFixed(1).replace(".", ",") + "%" : ""}</em><small>${esc(x.tavsiye || "")} ${esc(x.tarih || "")}</small></div>`).join("")}</div>` : `<p class="pzNot">Güncel analist hedefi bulunamadı.</p>`}
+    ${(H.onemli || []).filter(Boolean).length ? `<ul class="v3HdfOn">${H.onemli.filter(Boolean).map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+    <p class="pzNot">ChatGPT'nin internetten topladığı bilgi · ${new Date(H.t).toLocaleString("tr-TR", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" })} · 24 saatte bir kendiliğinden yenilenir · yatırım tavsiyesi değildir</p>`; }
+async function v3HedefYenile(){ const s = PZD.s; if(!s) return; const y = document.getElementById("v3Hdf"); if(y) y.innerHTML = v3HedefHtmlK(s, null); const H = await v3HedefCek(s, true); if(PZD.s?.k === s.k && document.getElementById("v3Hdf")) document.getElementById("v3Hdf").innerHTML = v3HedefHtmlK(s, H); }
+{ const eski = ekranlar.piyasaDetay; ekranlar.piyasaDetay = async function(k){ const r = await eski.apply(this, arguments);
+    try{ const s = PZD.s; if(!s || !/^(BIST|NASDAQ|KRIPTO)$/.test(pzTur(s.k)) || document.getElementById("v3HdfK")) return r;
+      const yer = document.querySelector(".pzdYZ") || document.getElementById("pzdUzlasi"); if(!yer) return r;
+      yer.insertAdjacentHTML("beforebegin", `<section class="pcBox v3HdfK" id="v3HdfK"><header><b>🎯 Uzman hedef fiyatları</b><small>ChatGPT · kısa sorgu · 24 saatte bir</small><button class="pcLink" onclick="v3HedefYenile()">↻</button></header><div class="pcBoxIc" id="v3Hdf">${v3HedefHtmlK(s, v3HedefOku(s.k))}</div></section>`);
+      v3HedefCek(s).then(H => { if(PZD.s?.k === s.k && document.getElementById("v3Hdf")) document.getElementById("v3Hdf").innerHTML = v3HedefHtmlK(s, H); }); }catch(e){ console.log("hedef", e); }
+    return r; }; }
+{ const st = document.createElement("style"); st.textContent = `
+.pzdYZ,.pzdYzK,.pzdTus .btn:not(.ghost),#pzdUzlasi{display:none!important}
+.v3HdfK{margin:14px 0}.v3HdfOrt{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}.v3HdfOrt small{color:#8E8C93;font-size:12px}.v3HdfOrt b{font-size:22px}.v3HdfOrt em{font-style:normal;font-weight:700}
+.v3HdfL{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px}.v3HdfL > div{display:grid;grid-template-columns:1fr auto auto;gap:2px 8px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);font-size:13px}
+.v3HdfL em{font-style:normal;font-size:12px}.v3HdfL small{grid-column:1/-1;color:#8E8C93;font-size:11px}.v3HdfOn{margin:10px 0 0;padding-left:18px;font-size:13px;line-height:1.5}
+.v3Tog{width:44px;height:26px;border-radius:13px;border:0;background:rgba(255,255,255,.12);position:relative;cursor:pointer;flex:0 0 auto;padding:0}.v3Tog i{position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#C9C7CC;transition:left .15s}
+.v3Tog.on{background:#3FBF78}.v3Tog.on i{left:21px;background:#fff}
+.v3BldUst{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.v3BldUst > div{flex:1;min-width:160px}.v3BldUst b,.v3BldSat b{display:block;font-size:14px}.v3BldUst small,.v3BldSat small{display:block;font-size:12px;color:var(--ink-3,#8E8C93)}.v3BldUst .btn{width:auto;padding:0 14px;min-height:36px}
+.v3BldSat{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:9px 0;border-top:1px solid rgba(255,255,255,.06)}.v3BldSat > div{flex:1;min-width:0}.v3BldL.pasif{opacity:.4;pointer-events:none}
+.v3Sessiz{display:flex;align-items:center;gap:4px}.v3Sessiz input{width:52px;background:#0B0B0E;border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:8px;padding:5px;text-align:center}
+.v3PrL{display:flex;flex-direction:column;gap:6px}.v3PrS{display:grid;grid-template-columns:minmax(0,1.6fr) 1fr 110px auto auto;gap:10px;align-items:end;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07)}
+.v3PrS small{display:block;font-size:11.5px;color:#8E8C93}.v3PrS label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:#A9A7AE}.v3PrS input{background:#0B0B0E;border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:8px;padding:6px 8px;min-width:0;width:100%}
+@media (max-width:700px){ .v3PrS{grid-template-columns:1fr 1fr}.v3PrS > div:first-child{grid-column:1/-1} }
+.v3Modal{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:16px}.v3ModalIc{width:min(560px,100%);max-height:85vh;display:flex;flex-direction:column;gap:10px;background:#15151A;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px}
+.v3ModalIc header{display:flex;justify-content:space-between;align-items:center}.v3PrSecL{overflow:auto;display:flex;flex-direction:column;gap:4px}.v3PrSecL label{display:flex;gap:10px;align-items:center;padding:8px;border-radius:9px;background:rgba(255,255,255,.03);cursor:pointer}.v3PrSecL small{display:block;color:#8E8C93;font-size:11.5px}
+.v3Monte{margin-top:12px;padding:10px 12px;border-radius:11px;background:rgba(91,141,239,.08);border:1px solid rgba(91,141,239,.25);display:flex;flex-direction:column;gap:5px;font-size:13px}.v3Monte small{color:#A9A7AE;font-size:12px}.v3Monte label{font-size:12px;color:#A9A7AE;display:flex;gap:6px;align-items:center}.v3Monte input{width:70px;background:#0B0B0E;border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:8px;padding:4px 6px}
+.v3UcrL{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px;margin-top:10px}.v3UcrS{padding:10px 12px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08)}.v3UcrS b{font-size:13.5px}.v3UcrS p{margin:5px 0;font-size:12.5px;color:#D7D5DA;line-height:1.5}.v3UcrS div{display:flex;flex-direction:column;gap:3px;font-size:12px;color:#E8C98A}
+.v3Ciz{margin-top:10px;padding:11px 13px;border-radius:12px;background:rgba(160,120,80,.08);border:1px solid rgba(160,120,80,.35)}.v3Ciz header{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.v3Ciz header small{color:#8E8C93;font-size:11.5px}.v3Ciz ul{margin:8px 0;padding-left:4px;list-style:none;display:flex;flex-direction:column;gap:5px;font-size:13px;line-height:1.5}
+.v3CizTus{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px;color:#A9A7AE}.v3CizYzK{margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(217,119,87,.08);border:1px solid rgba(217,119,87,.35);font-size:13px;line-height:1.55}
+.v3Hp{position:absolute;inset:0 60px 0 auto;width:180px;pointer-events:none;z-index:3}.v3Hp i{position:absolute;right:0;background:rgba(91,141,239,.28);border-radius:2px 0 0 2px}.v3Hp i.poc{background:rgba(232,182,97,.55)}
+.v3Ucr{margin-top:12px}`; document.head.appendChild(st); }
 
 // v3.0 hiz: uygulama acildiktan sonra bos anda grafik kutuphanesi + bot verisi + piyasa listeleri isitilir; Piyasalar ve detay aninda acilir
 setTimeout(() => { const isit = () => { try{ if(!ME?.id || !navigator.onLine) return; pzLib().catch(() => {}); pzBotYukle().catch(() => {});
