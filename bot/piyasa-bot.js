@@ -321,8 +321,9 @@ async function tara(A, masraf, RJ, RJB, ctx){
 
 /* ---------- sonuclandirma: 15 dakikalik mumlarla once hangisine degdi ---------- */
 async function sonuclandir(masraf){
-  const acik = await sbHepsi(`piyasa_sanal?user_id=eq.${UID}&durum=eq.acik&select=id,k,giris,hedef,stop,t,son,oz`); let bitti = 0; const kapanan = {};
-  await havuz(acik, 5, async o => { const bist = /^BIST:/.test(o.k), nq = /^NASDAQ:/.test(o.k), bn = o.oz?.bn || (bist ? o.k.slice(5) + ".IS" : nq ? o.k.slice(7) : o.k.replace("KRIPTO:", "") + "USDT"), t0 = new Date(o.t).getTime(), son = new Date(o.son).getTime(); let s = null;
+  const acik = await sbHepsi(`piyasa_sanal?user_id=eq.${UID}&durum=eq.acik&select=id,k,alt,giris,hedef,stop,t,son,oz`); let bitti = 0; const kapanan = {};
+  await havuz(acik, 5, async o => { const bist = /^BIST:/.test(o.k), nq = /^NASDAQ:/.test(o.k), bn = o.oz?.bn || (bist ? o.k.slice(5) + ".IS" : nq ? o.k.slice(7) : o.k.replace("KRIPTO:", "") + "USDT"), t0 = new Date(o.t).getTime(); let son = new Date(o.son).getTime(), s = null;
+    if(TF[o.alt]?.kapanisUtc != null){ const k = new Date(t0); k.setUTCHours(TF[o.alt].kapanisUtc, 0, 0, 0); son = Math.min(son, Math.max(k.getTime(), t0 + 3600000)); }   // v2.12: gun ici trader seans kapanisinda kapanir (eski uzun sureli islemler dahil)
     let r; if(bist || nq){ const Y = await yahoo(bn, "60m", null, t0 - 3600000); r = Y.t.map((t, i) => [t*1000, Y.o[i], Y.h[i], Y.l[i], Y.c[i]]).filter(m => m[0] >= t0); }
     else r = await jget(`${BN}/api/v3/klines?symbol=${bn}&interval=15m&startTime=${t0}&limit=1000`);
     let st = +o.stop, tepe = +o.giris; const iz = o.oz?.iz, guv = !(st > 0) || st >= +o.giris; if(guv) st = +o.giris*.75;   // v2.4: bozuk (negatif) stoplu eski islemler icin %25 guvenlik stopu

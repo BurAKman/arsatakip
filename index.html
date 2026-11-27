@@ -4466,7 +4466,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.12.0";
+const SURUM_MORDOR = "v 2.12.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -24273,7 +24273,7 @@ async function pzOneriCiz(k, zorla){
   finally{ PZ_ONERI_IS = null; } ciz();
 }
 // v2.11 botun Sah konseyi onerileri: yuzdeli, karneli
-function pzBotOneriHtml(O){ if(!O?.pazar) return `<section class="pzBo"><header><b>👑 Bot önerileri</b><small>bot ilk hesabını yapınca burada çıkar (3 saatte bir)</small></header></section>`;
+function pzBotOneriHtml(O){ if(!O?.pazar) return `<section class="pzBo"><header><b>🦅 Tuğrul'un önerileri</b><small>Tuğrul ilk hesabını yapınca burada çıkar (3 saatte bir)</small></header></section>`;
   const para = k => pzTur(k) === "BIST" ? "TRY" : "USD", bul = k => ["bist", "nasdaq", "kripto", "takip"].map(t => (PZ.liste[t] || []).find(x => x.k === k)).find(Boolean) || {};
   const yz = (x, f) => { const v = (x/f - 1)*100; return (v >= 0 ? "+" : "") + v.toFixed(1).replace(".", ",") + "%"; }, yuz = v => "%" + Math.round(v*100);
   const kart = x => { const s = bul(x.k), p = para(x.k), c = PZ.canli[x.kod + "USDT"], f = (pzTur(x.k) === "KRIPTO" ? c?.f : s.f) || x.f, edge = x.p - x.baz;
@@ -24287,7 +24287,7 @@ function pzBotOneriHtml(O){ if(!O?.pazar) return `<section class="pzBo"><header>
   const sut = (pz, ad) => { const H = O.havuz?.[pz]; return `<div class="pzBoSut"><div class="pzBoBas"><b>${ad}</b><small>${H ? `${H.varlik} varlık tarandı · konsey AL dediğinde piyasa geneli %${Math.round(H.pG*100)} kârda (rastgele %${Math.round(H.bG*100)})` : ""}</small></div>
       ${(O.pazar[pz] || []).length ? O.pazar[pz].map(kart).join("") : `<div class="pcBos">Bugün bu piyasada kurala uyan AL yok. Zorla öneri yapmıyorum.</div>`}
       <div class="pzBoAlt"><small>👀 AL'a yaklaşanlar</small><div>${cip(O.izle?.[pz], "izle")}</div><small>⛔ Uzak dur (güçlü SAT)</small><div>${cip(O.kacin?.[pz], "kac")}</div></div></div>`; };
-  return `<section class="pzBo"><header><b>👑 Bot önerileri · Şah konseyi</b><small>${new Date(O.t).toLocaleString("tr-TR", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })} · 3 saatte bir yenilenir · yüzde = o varlıkta konseyin geçmiş isabeti, piyasa ortalamasıyla dengelenmiş</small></header>
+  return `<section class="pzBo"><header><b>🦅 Tuğrul'un önerileri</b><small>${new Date(O.t).toLocaleString("tr-TR", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" })} · 3 saatte bir yenilenir · yüzde = o varlıkta konseyin geçmiş isabeti, piyasa ortalamasıyla dengelenmiş</small></header>
     ${kar}<div class="pzBoUc">${sut("bist", "🇹🇷 BIST")}${sut("nasdaq", "🇺🇸 NASDAQ")}${sut("kripto", "₿ Kripto")}</div>
     <details class="pzSozluk"><summary>ℹ️ Bu kartlar nasıl okunur? (kısa sözlük)</summary><div>
       <p><b>Büyük yüzde (ör. %62):</b> Bot bu hissede geçmiş 2 yılda “AL” dediği her günü saydı. O günlerde alan biri, 10 iş günü (2 hafta) sonra 100 alımın 62'sinde kârdaydı.</p>
@@ -25770,7 +25770,7 @@ const bmPara = (k, v) => pzPara(v, /^BIST:/.test(k || "") ? "TRY" : "USD");
 const bmKalan = t => { const m = Math.round((t - Date.now())/60000); if(m <= 0) return "süre doldu, kapanıyor"; const g = Math.floor(m/1440), sa = Math.floor(m%1440/60), dk = m%60; return (g ? `${g} gün ${sa} sa` : sa ? `${sa} sa ${dk} dk` : `${dk} dk`) + " kaldı"; };
 function bmPoz(K, ad){ const B = PZ.bot, L = (K?.acik || []).map(p => ({ p, s:B.acik.find(x => x.id === p.id) || {} }));
   if(!L.length) return ""; const y = (a, b) => a && b ? pzYuzde((a/b - 1)*100, 1) : "—";
-  return L.map(({ p, s }) => `<div class="bmI"><span class="bmKod">${esc(bmKod(p.k))}</span><span class="bmOrta"><b class="bmEt">${ad}</b> · ${bmOnce(p.t || s.t)} girdi${p.not ? ` · ${esc(p.not)}` : ""}<br>giriş ${s.giris ? bmPara(p.k, s.giris) : "—"} · <span class="art">hedef ${s.hedef ? bmPara(p.k, s.hedef) : "—"} (${y(s.hedef, s.giris)})</span> · <span class="az">stop ${s.stop ? bmPara(p.k, s.stop) : "—"} (${y(s.stop, s.giris)})</span>${s.son ? `<br><span class="bmBitis">⏳ en geç ${bmSaat(s.son)} · ${bmKalan(s.son)}</span>` : ""}</span><span class="bmSag">${bmTl(p.para)}<small>yatırılan</small></span></div>`).join(""); }
+  return L.map(({ p, s }) => `<div class="bmI" data-t="${new Date(p.t || s.t || 0).getTime() || 0}"><span class="bmKod">${esc(bmKod(p.k))}</span><span class="bmOrta"><b class="bmEt">${ad}</b> · ${bmOnce(p.t || s.t)} girdi${p.not ? ` · ${esc(p.not)}` : ""}<br>giriş ${s.giris ? bmPara(p.k, s.giris) : "—"} · <span class="art">hedef ${s.hedef ? bmPara(p.k, s.hedef) : "—"} (${y(s.hedef, s.giris)})</span> · <span class="az">stop ${s.stop ? bmPara(p.k, s.stop) : "—"} (${y(s.stop, s.giris)})</span>${s.son ? `<br><span class="bmBitis">⏳ en geç ${bmSaat(s.son)} · ${bmKalan(s.son)}</span>` : ""}</span><span class="bmSag">${bmTl(p.para)}<small>yatırılan</small></span></div>`).join(""); }
 function bmGecmis(K, ad){ const G = (K?.gecmis || []).slice(-15).reverse(); if(!G.length) return "";
   return G.map(x => `<div class="bmI"><span class="bmKod">${esc(bmKod(x.k))}</span><span class="bmOrta">${ad ? ad + " · " : ""}${bmSureAd(x.alt)} · ${esc(x.neden || "")} · ${bmSaat(x.ct)}${x.not ? ` · ${esc(x.not)}` : ""}<br>${bmTl(x.para)} yatırıldı</span><span class="bmSag ${x.kz >= 0 ? "art" : "az"}">${x.kz >= 0 ? "+" : ""}${bmTl(x.kz)}<small>${pzYuzde(x.net, 2)}</small></span></div>`).join(""); }
 
@@ -26040,8 +26040,9 @@ function bmDuzenle(){ const k = document.getElementById("bmS"); if(!k || k.query
   if(!P.length) return; const sec = pzLS.oku("bmSek", P[0][0]), varM = P.some(p => p[0] === sec) ? sec : P[0][0];
   const bar = document.createElement("div"); bar.className = "bmSekBar"; bar.innerHTML = P.map(([t, ad]) => `<button class="bmSekT${t === varM ? " on" : ""}" data-t="${t}" onclick="bmSekSec('${t}')">${ad}</button>`).join("");
   iz.after(bar); let son = bar; P.forEach(([t, , d]) => { d.classList.toggle("on", t === varM); son.after(d); son = d; }); }
+function bmSirala(){ document.querySelectorAll(".bmPan .bmL").forEach(L => { const I = [...L.querySelectorAll(":scope > .bmI[data-t]")]; if(I.length < 2) return; I.sort((a, b) => +b.dataset.t - +a.dataset.t).forEach(x => L.appendChild(x)); }); }
 function bmSekSec(t){ pzLS.yaz("bmSek", t); document.querySelectorAll(".bmSekT").forEach(b => b.classList.toggle("on", b.dataset.t === t)); document.querySelectorAll(".bmPan").forEach(p => p.classList.toggle("on", p.dataset.t === t)); }
-{ const eski = bmCiz; bmCiz = function(){ const r = eski.apply(this, arguments); try{ bmDuzenle(); }catch(e){ console.error("bm duzen", e); } return r; }; }
+{ const eski = bmCiz; bmCiz = function(){ const r = eski.apply(this, arguments); try{ bmDuzenle(); bmSirala(); }catch(e){ console.error("bm duzen", e); } return r; }; }
 { const st = document.createElement("style"); st.textContent = `.bmIz{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;margin-bottom:14px}.bmIz .bmKasa{margin:0!important}
 .bmSekBar{display:flex;gap:6px;flex-wrap:wrap;padding:6px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.1);margin:4px 0 12px}
 .bmSekT{flex:1 1 auto;padding:10px 14px;border-radius:10px;border:1px solid transparent;background:transparent;color:#BDBBC2;font:inherit;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
@@ -27111,7 +27112,7 @@ function ilanYazisiz(){ const D = ILAN?.D; if(!D) return; const goster = D.ogele
 pzZamanlayici = async function(){};
 { const eski = pzGeceKutu; pzGeceKutu = function(){ const r = eski.apply(this, arguments); const k = document.getElementById("pzGece"); if(!k) return r;
     k.querySelector(".pzOto")?.remove(); k.querySelectorAll(".pzNot.az").forEach(e => e.remove());
-    if(!k.querySelector(".pzGeceKapali")) k.insertAdjacentHTML("afterbegin", `<div class="pzNot pzGeceKapali">Otomatik gece analizi <b>kapalı</b>: Claude/ChatGPT limiti boşa gitmesin. Her varlığın detayındaki <b>📋 Program raporu</b> yapay zekasız, anında hazırlanır. Yapay zekayı istersen detaydaki “Claude + GPT analiz” ya da aşağıdaki tuşla sen başlatırsın.</div>`);
+    if(!k.querySelector(".pzGeceKapali")) k.insertAdjacentHTML("afterbegin", `<div class="pzNot pzGeceKapali">Otomatik gece analizi <b>kapalı</b>: Claude/ChatGPT limiti boşa gitmesin. Her varlığın detayındaki <b>🦅 Tuğrul raporu</b> anında hazırlanır, limit harcamaz. Yapay zekayı istersen detaydaki “Claude + GPT analiz” ya da aşağıdaki tuşla sen başlatırsın.</div>`);
     return r; }; }
 
 // ---------- haber tonu (kural tabanli, son 30 gun) ----------
@@ -27155,7 +27156,7 @@ function kzRapor(Z, s, HT){ const G = Z.G, P = G.plan, K = G.karne, M = Z.model 
 function kzRaporCiz(Z, s, HT){ const X = kzRapor(Z, s, HT), P = X.P, f = x => kzFiyat(x, s), pc = x => { const v = (x/X.G.fiyat - 1)*100; return (v >= 0 ? "+" : "") + v.toFixed(1).replace(".", ",") + "%"; };
   const sn = X.karar === "AL" ? "al" : X.karar === "SAT" ? "sat" : "not";
   return `<div class="kzRap">
-    <div class="kzRapUst"><div class="kzRapKarar ${sn}"><small>Program kararı · yapay zekasız</small><b>${X.karar}</b><em>güven: ${X.guven} · skor ${X.skor > 0 ? "+" : ""}${X.skor}</em></div>
+    <div class="kzRapUst"><div class="kzRapKarar ${sn}"><small>Tuğrul'un kararı</small><b>${X.karar}</b><em>güven: ${X.guven} · skor ${X.skor > 0 ? "+" : ""}${X.skor}</em></div>
       <div class="kzRapOzet"><small>Ne yapmalı?</small><p>${esc(X.basit)}</p></div></div>
     <div class="kzRapSev">
       <div><small>Al bölgesi</small><b class="mono">${f(P.al[0])} – ${f(P.al[1])}</b></div>
@@ -27166,21 +27167,21 @@ function kzRaporCiz(Z, s, HT){ const X = kzRapor(Z, s, HT), P = X.P, f = x => kz
       <div class="kzRapK risk"><b>Riskler</b><ul>${X.R.map(n => `<li>${esc(n)}</li>`).join("")}</ul></div></div>
     ${HT?.n ? `<div class="kzRapK"><b>Haber akışı · son 30 gün</b> <small>${HT.iyi} olumlu · ${HT.kotu} olumsuz · ${HT.n - HT.iyi - HT.kotu} nötr (başlıklara göre kural tabanlı)</small>
       <div class="kzHabL">${HT.L.slice(0, 6).map(h => `<a href="${esc(h.url || "#")}" target="_blank" rel="noopener" class="kzHab ${h.v > 0 ? "art" : h.v < 0 ? "az" : ""}"><i>${h.v > 0 ? "▲" : h.v < 0 ? "▼" : "•"}</i><span>${esc(h.baslik)}</span><small>${esc(h.kaynak || "")}${h.tarih && isFinite(Date.parse(h.tarih)) ? " · " + new Date(h.tarih).toLocaleDateString("tr-TR", { day:"numeric", month:"short" }) : ""}</small></a>`).join("")}</div></div>` : ""}
-    <p class="kzNot">Bu rapor programın kendi hesabıdır: 24 indikatörlük konsey, bu varlıktaki geçmiş isabeti, botun öğrenen modeli, iki vade uyumu, temel karne ve haber başlıkları. Yapay zeka çalışmaz, limit harcamaz. İstersen “Claude + GPT analiz” ile ikinci görüş al.</p></div>`; }
+    <p class="kzNot">🦅 Tuğrul bu raporu kendi hesabıyla yazar: 24 indikatörlük konsey, bu varlıktaki geçmiş isabeti, öğrenen model, iki vade uyumu, temel karne ve haber başlıkları. İstersen “Claude + GPT analiz” ile ikinci görüş al.</p></div>`; }
 async function kzRaporYukle(k){ const yer = document.getElementById("kzRapor"); if(!yer) return;
   try{ const s = PZD.s?.k === k ? PZD.s : await pzSatirBul(k), [Z, L] = await Promise.all([kzHesapla(s), pzHaberler(s).catch(() => [])]); if(app.dataset.pid !== k) return;
     const b = document.getElementById("kzRapor"); if(b) b.innerHTML = kzRaporCiz(Z, s, kzHaberTon(L)); }
   catch(e){ const b = document.getElementById("kzRapor"); if(b) b.innerHTML = `<p class="kzNot">Program raporu hazırlanamadı: ${esc(String(e?.message || e))}</p>`; } }
 
 // ---------- detay: alt bolumleri sekmelere topla ----------
-const KZ_SEK = [["rapor", "📋 Program raporu"], ["konsey", "👑 Şah İndikatörü"], ["yz", "🤖 Yapay zeka (isteğe bağlı)"], ["temel", "📊 Temel & temettü"], ["haber", "📰 Haberler & olaylar"]];
+const KZ_SEK = [["rapor", "🦅 Tuğrul raporu"], ["konsey", "👑 Şah İndikatörü"], ["yz", "🤖 Yapay zeka (isteğe bağlı)"], ["temel", "📊 Temel & temettü"], ["haber", "📰 Haberler & olaylar"]];
 function kzSekmeSec(t){ pzLS.yaz("kzSek", t); document.querySelectorAll(".kzSekTus").forEach(b => b.classList.toggle("on", b.dataset.t === t)); document.querySelectorAll(".kzSekPan").forEach(p => p.classList.toggle("on", p.dataset.t === t)); }
 function kzSekmeKur(k){ const iz = app.querySelector(".pzdIzgara"); if(!iz || document.getElementById("kzSekK")) return;
   const sec = pzLS.oku("kzSek", "rapor");
   iz.insertAdjacentHTML("afterend", `<div id="kzSekK" class="kzSekK"><div class="kzSekBar">${KZ_SEK.map(([t, a]) => `<button class="kzSekTus${t === sec ? " on" : ""}" data-t="${t}" onclick="kzSekmeSec('${t}')">${a}</button>`).join("")}</div>
     ${KZ_SEK.map(([t]) => `<div class="kzSekPan${t === sec ? " on" : ""}" data-t="${t}"></div>`).join("")}</div>`);
   const pan = t => document.querySelector(`.kzSekPan[data-t="${t}"]`), tasi = (t, el) => { if(el) pan(t).appendChild(el); };
-  pan("rapor").innerHTML = `<section class="pcBox"><header><b>📋 Program raporu</b><small>yapay zekasız · anında</small></header><div class="pcBoxIc" id="kzRapor"><div class="spin"></div></div></section>`;
+  pan("rapor").innerHTML = `<section class="pcBox"><header><b>🦅 Tuğrul raporu</b><small>Tuğrul: Arsa Takip'in kendi analiz botu · anında</small></header><div class="pcBoxIc" id="kzRapor"><div class="spin"></div></div></section>`;
   tasi("konsey", document.getElementById("kzP"));
   tasi("yz", document.getElementById("pzdUzlasi")); tasi("yz", app.querySelector(".pzdYZ"));
   const alt = app.querySelector(".pzdAlt"); if(alt){ const B = [...alt.children], bul = re => B.find(b => re.test(b.querySelector("header b, h2, h3")?.textContent || ""));
@@ -27232,8 +27233,8 @@ function pzAnaOzetHtml(r){ const d = r?.durum || {}, K = r?.kasa || {}, O = d.on
     const Y = I.liste.filter(x => (I.iller || []).includes(x.il)).map(x => ({ x, d:(I.detay || {})[key(x)] || {} })).filter(o => tm(o.d.tarih) >= Date.now() - 86400000).sort((a, b) => tm(a.d.tarih) - tm(b.d.tarih)).slice(0, 3);
     ih = Y.length ? Y.map(o => `<span class="pzAoIh">🏛️ <b>${esc(o.x.il)} / ${esc(o.x.ilce)}</b> ${esc(o.x.mah || "")} · ${esc(o.d.tarih.split(" ")[0])} · ${Math.round(o.d.bedel ?? o.x.fiyat).toLocaleString("tr-TR")} ₺</span>`).join("") : `<span class="pzAoIh soluk">Takip illerinde yaklaşan Hazine ihalesi yok · Türkiye geneli ${I.liste.length.toLocaleString("tr-TR")} ilan</span>`; }
   return `<div class="pzAo">${sin ? `<div class="pzAoSat"><span class="pzAoEt">Piyasa havası</span><div class="pzAoSin">${sin}</div></div>` : ""}
-    ${KL ? `<div class="pzAoSat"><span class="pzAoEt">Bot kasaları</span><div class="pzAoKL">${KL}</div></div>` : ""}
-    ${on ? `<div class="pzAoSat"><span class="pzAoEt">Bot önerileri</span><div class="pzAoKL">${on}</div></div>` : ""}
+    ${KL ? `<div class="pzAoSat"><span class="pzAoEt">Tuğrul'un kasaları</span><div class="pzAoKL">${KL}</div></div>` : ""}
+    ${on ? `<div class="pzAoSat"><span class="pzAoEt">🦅 Tuğrul önerileri</span><div class="pzAoKL">${on}</div></div>` : ""}
     ${ih ? `<div class="pzAoSat"><span class="pzAoEt">İhaleler</span><div class="pzAoIhL">${ih}</div></div>` : ""}</div>`; }
 async function pzAnaOzetKoy(yer, once){ try{ const b = await pzBotYukle(), h = pzAnaOzetHtml(b?.row); if(!h) return; document.getElementById("pzAo")?.remove();
     const d = document.createElement("div"); d.id = "pzAo"; d.innerHTML = h; once ? yer.prepend(d) : yer.after(d); }catch(e){} }
@@ -27248,6 +27249,12 @@ async function pzAnaOzetKoy(yer, once){ try{ const b = await pzBotYukle(), h = p
 .pzAoCip{padding:5px 10px;border-radius:999px;border:1px solid rgba(70,190,120,.45);background:rgba(70,190,120,.08);color:#E6E4EA;font:inherit;font-size:12.5px;cursor:pointer}.pzAoCip em{font-style:normal;color:#6BE39C;font-weight:800}
 .pzAoIhL{display:flex;flex-direction:column;gap:3px}.pzAoIh{font-size:12.5px;color:#CFCDD3}
 @media (max-width:700px){.pzAoSat{grid-template-columns:minmax(0,1fr);gap:5px}}`; document.head.appendChild(st); }
+
+// v2.12.1 PC ana sayfa (Genel Bakis): sadece piyasalarin ozeti. Araziler, yaklasanlar, hesap, son hareketler kendi menulerinde.
+{ const eski = pcPano; pcPano = async function(){ const p = eski.apply(this, arguments);
+    try{ document.getElementById("pcKpi")?.remove(); app.querySelector(".pcPano3")?.remove(); const h = app.querySelector(".pcHero p"); if(h) h.textContent = "Piyasaların bugünkü özeti · arazi, hesap ve takvim kendi menülerinde";
+      const b = app.querySelector("#pysAna")?.closest(".pcBox")?.querySelector("header b"); if(b) b.textContent = "🦅 Piyasaların özeti"; }catch(e){}
+    try{ return await p; }catch(e){ return null; } }; }
 
 baslat();
 
