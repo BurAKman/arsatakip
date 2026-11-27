@@ -28461,7 +28461,7 @@ function v4Yerlesim(){ const iz = app.querySelector(".pzIzgara"); if(!iz || app.
   try{ let e = w.parentElement; while(e && e !== document.body){ const cs = getComputedStyle(e); if(/(auto|scroll)/.test(cs.overflowY)){ const pt = parseFloat(cs.paddingTop) || 0; document.getElementById("pzV4Nav").style.top = (-pt) + "px"; document.getElementById("pzV4Sag").style.top = (150 - pt) + "px"; break; } e = e.parentElement; } }catch(e){} }
 { const eski = pzEkran; pzEkran = async function(){ const p = eski.apply(this, arguments); try{ v4Yerlesim(); pzSekmeCiz(); v4Mod(); }catch(e){ console.log("v4 yerlesim", e); } const r = await p; try{ v4Yerlesim(); pzSekmeCiz(); v4Mod(); }catch(e){} return r; }; ekranlar.piyasa = pzEkran; }
 function v4Mod(){ const v = app.querySelector(".pzV4"); if(!v) return; const T = PZ.sekme; v.dataset.sek = T; v.classList.toggle("ozet", T === "ozet"); v.dataset.grp = v4GrupBul(T).id;
-  const d = document.getElementById("pzDuyuruK"); const raf = d?.closest(".v4Raf"); if(raf) raf.style.display = d.textContent.trim() ? "" : "none"; }
+  const d = document.getElementById("pzDuyuruK"); const raf = d?.closest(".v4Raf"); if(raf) raf.style.display = d.querySelector(".pzDuyuru button") ? "" : "none"; }
 { const eski = pzTablo; pzTablo = function(){ const r = eski.apply(this, arguments); try{ v4Mod(); v4Baslik(); }catch(e){} return r; }; }
 // icerigin ustunde net bolum basligi: "📈 Piyasalar › BIST"
 function v4Baslik(){ const k = document.getElementById("pzTablo"); if(!k || !v4Pc()) return; let b = document.getElementById("v4Bas"); const G = v4GrupBul(PZ.sekme), ad = (PZ_SEKMELER.find(x => x[0] === PZ.sekme) || [, ""])[1];
