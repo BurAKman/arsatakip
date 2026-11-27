@@ -32,3 +32,7 @@ grant select on public.bildirim_pub to authenticated;
 -- v3.2.1 · AI araştırmalı hedef fiyatlar herkes için ortak: herkes okuyabilir (sadece kaynak = 'hedef' satırları)
 drop policy if exists hedef_herkes_okur on public.piyasa_analiz;
 create policy hedef_herkes_okur on public.piyasa_analiz for select to authenticated using (kaynak = 'hedef');
+
+-- v4.1 · AI dünya brifingi de herkes için ortak
+drop policy if exists hedef_herkes_okur on public.piyasa_analiz;
+create policy hedef_herkes_okur on public.piyasa_analiz for select to authenticated using (kaynak in ('hedef', 'brifing'));

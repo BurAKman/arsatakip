@@ -4471,7 +4471,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 4.0.1";
+const SURUM_MORDOR = "v 4.1.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -28549,6 +28549,108 @@ body:not(.pc) .pzV4Hava .pzSinK b{font-size:18px!important}
 .v4MobG h4{margin:0 0 8px;font-size:13px;color:var(--r)}.v4MobG > div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .v4MobG button{all:unset;box-sizing:border-box;text-align:center;padding:10px 4px;border-radius:10px;background:rgba(255,255,255,.05);font-size:12px;font-weight:600;color:#E6E4E8;line-height:1.25}
 `; document.head.appendChild(st); }
+
+/* ================= v4.1: Strateji lab + dengeleme kalkti · Boga-Ayi gostergesi · Buyuk sinyaller · Dunya brifingi (AI) · listelerde gorus/destek/direnc/hedef · kasa karnesi ================= */
+{ const i = PZ_SEKMELER.findIndex(x => x[0] === "lab"); if(i >= 0) PZ_SEKMELER.splice(i, 1); V4_GRUP_SEK.bot = V4_GRUP_SEK.bot.filter(t => t !== "lab"); if(PZ.sekme === "lab") PZ.sekme = "ozet"; }
+const v41D = () => PZ.bot?.row?.durum || {};
+// --- Boga-Ayi gostergesi karti ---
+function v41MakroHtml(){ const M = v41D().makro; if(!M?.B?.length) return "";
+  const r = M.puan >= 8 ? "#FF5A64" : M.puan >= 6.5 ? "#E8B661" : M.puan > 3.5 ? "#9AA0A6" : M.puan > 2 ? "#5B9DFF" : "#4FD08A", G = (M.gecmis || []).slice(-60);
+  const sp = G.length > 1 ? `<svg class="v41Sp" viewBox="0 0 200 40" preserveAspectRatio="none"><rect x="0" y="0" width="200" height="8" fill="rgba(255,90,100,.12)"/><rect x="0" y="32" width="200" height="8" fill="rgba(79,208,138,.12)"/><polyline fill="none" stroke="${r}" stroke-width="2" points="${G.map((g, i) => (i*200/(G.length - 1)) + "," + (40 - g.p*4)).join(" ")}"/></svg>` : "";
+  return `<section class="v3Kart genis v41Mk" style="--r:${r}"><header><b>🌡️ Boğa-Ayı göstergesi</b><small>BofA'nın "Bull & Bear" mantığı · ücretsiz verilerle · bot bununla risk ayarlar</small></header>
+    <div class="v41MkIc"><div class="v41Gost"><div class="v41Bar"><i style="left:${M.puan*10}%"></i></div><div class="v41BarE"><span>0 · aşırı korku<br><b>AL bölgesi</b></span><span>5</span><span>10 · aşırı açgözlülük<br><b>SAT bölgesi</b></span></div>
+        <div class="v41Puan"><b>${String(M.puan).replace(".", ",")}</b><span>${esc(M.etiket)}</span></div>${M.sinyal ? `<p class="v41Sin">${esc(M.sinyal)}</p>` : `<p class="pzNot">Uç bölgede değil: bot normal büyüklükte işlem açar.${M.puan >= 7 ? " İyimserlik yüksek, pozisyonlar biraz küçültülüyor." : ""}</p>`}${sp}</div>
+      <div class="v41Bl">${M.B.map(b => `<div><span>${esc(b.ad)}</span><b class="mono">${esc(String(b.deger))}</b><em style="--p:${b.puan*10}%"><i></i></em><small>${esc(b.not || "")}</small></div>`).join("")}
+        ${M.egri ? `<div><span>ABD faiz eğrisi (10y-2y)</span><b class="mono">${String(M.egri.v).replace(".", ",")}</b><em class="bos"></em><small>${M.egri.v < 0 ? "ters: resesyon uyarısı" : "normal"} · puana katılmaz</small></div>` : ""}</div></div>
+    <p class="pzNot">Kural: herkes açgözlüyken (8+) risk azaltılır, herkes korkarken (2-) fırsat aranır. ${new Date(M.t).toLocaleString("tr-TR", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" })} · 3 saatte bir güncellenir</p></section>`; }
+// --- Buyuk sinyaller ---
+function v41SinyalHtml(){ const S = v41D().buyukSinyal; if(!S?.L?.length) return ""; const L = S.L.slice().sort((a, b) => (b.aktif - a.aktif));
+  return `<section class="v3Kart v41Bs"><header><b>🚨 Büyük sinyaller</b><small>profesyonellerin izlediği klasik alarmlar · yanınca telefona bildirim</small></header><div class="v41BsL">${L.map(b => `<div class="${b.aktif ? "on" : ""} ${b.yon > 0 ? "art" : "az"}">
+      <span class="v41Lamba"></span><div><b>${esc(b.ad)}</b><small>${esc(b.not || "")}${b.tarih ? ` · ${esc(b.tarih)}` : ""}</small>${b.gecmis ? `<em>Geçmişte ${b.gecmis.n} kez: ${b.gecmis.gun} gün sonra ort. <b class="${b.gecmis.ort >= 0 ? "art" : "az"}">${b.gecmis.ort >= 0 ? "+" : ""}${String(b.gecmis.ort).replace(".", ",")}%</b> · ${Math.round(b.gecmis.isabet*100)}% yükseliş</em>` : ""}</div></div>`).join("")}</div></section>`; }
+// --- Dunya brifingi (AI): PC'de ChatGPT arka planda 12 saatte bir; herkes ortak kayittan okur, bot da Boga-Ayi gostergesine katar ---
+const V41B = { v:null, t:0, is:false };
+async function v41BrifingOku(){ if(Date.now() - V41B.t < 5*60000 && V41B.v) return V41B.v; try{ const L = await pzOku("piyasa_analiz", q => q.eq("kaynak", "brifing").order("created_at", { ascending:false }).limit(1)); const x = L.find(y => y.kaynak === "brifing"); if(x?.veri) V41B.v = { ...x.veri, t:new Date(x.created_at).getTime() }; }catch(e){} V41B.t = Date.now(); return V41B.v; }
+async function v41BrifingUret(zorla){ if(V41B.is || !window.arsaPC?.yzOto || typeof pzYzSor !== "function") return; const o = await v41BrifingOku(); if(!zorla && o && Date.now() - o.t < 12*3600000) return; V41B.is = true;
+  try{ const ist = `Bugün ${new Date().toLocaleDateString("tr-TR")}. İnternetten son 24-48 saatin dünya ekonomisi ve piyasaları için en önemli gelişmelerini bul (Fed/TCMB/ECB, enflasyon, savaş/jeopolitik, petrol, dolar, büyük şirket haberleri, kripto düzenlemeleri, Türkiye gündemi). Kısa ve tarafsız yaz, uydurma.
+Cevabı SADECE şu JSON ile ver: {"piyasa_analiz":"brifing","risk":0,"ozet":"","maddeler":[{"baslik":"","etki":"olumlu|olumsuz|nötr","piyasa":"BIST|ABD|Kripto|Altın|Dolar|Petrol","aciklama":""}],"piyasalar":{"bist":{"yon":"yukarı|aşağı|yatay","not":""},"abd":{"yon":"","not":""},"kripto":{"yon":"","not":""},"altin":{"yon":"","not":""},"dolar":{"yon":"","not":""}},"izle":[""]}
+"risk": 0 = dünya gündemi çok olumsuz/korkutucu, 10 = çok olumlu/coşkulu. En fazla 7 madde, "izle" = önümüzdeki günlerde izlenecek 3 olay.`;
+    const t = await pzYzSor("gpt", ist), m = String(t || "").match(/\{[\s\S]*\}/); if(!m) throw new Error("cevap okunamadı"); const J = JSON.parse(m[0]); J.risk = Math.max(0, Math.min(10, +J.risk || 5));
+    await pzEkle("piyasa_analiz", { sembol:"_DUNYA", kaynak:"brifing", veri:J }); V41B.v = { ...J, t:Date.now() }; V41B.t = Date.now(); if(PZ.sekme === "ozet" && document.getElementById("v41Bf")) document.getElementById("v41Bf").outerHTML = v41BrifingHtml(V41B.v); }
+  catch(e){ console.log("brifing", e); } finally{ V41B.is = false; } }
+setTimeout(() => { v41BrifingUret(); setInterval(() => v41BrifingUret(), 60*60000); }, 120000);
+function v41BrifingHtml(B){ const yon = y => /yukar/i.test(y) ? ["▲", "art"] : /aşağ|asag/i.test(y) ? ["▼", "az"] : ["◆", ""];
+  if(!B) return `<section class="v3Kart v41Bf" id="v41Bf"><header><b>🌍 Dünya brifingi (AI)</b></header><p class="pzNot">Henüz brifing yok. PC'deki program açıkken yapay zekâ arka planda 12 saatte bir dünya gündemini özetler; herkes buradan aynısını görür.</p></section>`;
+  const P = B.piyasalar || {}, ad = { bist:"BIST", abd:"ABD", kripto:"Kripto", altin:"Altın", dolar:"Dolar" };
+  return `<section class="v3Kart v41Bf" id="v41Bf"><header><b>🌍 Dünya brifingi (AI)</b><small>AI araştırması · ${new Date(B.t).toLocaleString("tr-TR", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" })} · gündem puanı ${B.risk}/10</small>${window.arsaPC?.yzOto ? `<button class="pcLink" onclick="v41BrifingUret(true)">↻</button>` : ""}</header>
+    ${B.ozet ? `<p class="v41BfOz">${esc(B.ozet)}</p>` : ""}<div class="v41BfP">${Object.entries(ad).map(([k, a]) => P[k] ? `<span class="${yon(P[k].yon)[1]}" title="${esc(P[k].not || "")}">${yon(P[k].yon)[0]} ${a}</span>` : "").join("")}</div>
+    <ul class="v41BfL">${(B.maddeler || []).slice(0, 7).map(m => `<li><span class="v41Et ${m.etki === "olumlu" ? "art" : m.etki === "olumsuz" ? "az" : ""}">${esc(m.piyasa || "")}</span><b>${esc(m.baslik || "")}</b><small>${esc(m.aciklama || "")}</small></li>`).join("")}</ul>
+    ${(B.izle || []).filter(Boolean).length ? `<p class="pzNot">👀 İzlenecek: ${B.izle.filter(Boolean).map(esc).join(" · ")}</p>` : ""}</section>`; }
+{ const eski = V3_PANEL.ozet; V3_PANEL.ozet = function(k){ const r = eski(k);
+    try{ const oz = k.querySelector(".v3Oz"); if(oz){ const sag = oz.querySelector(".v3Sag"); const h = v41MakroHtml() + v41SinyalHtml() + v41BrifingHtml(V41B.v); if(sag) sag.insertAdjacentHTML("afterend", h); else oz.insertAdjacentHTML("afterbegin", h);
+        v41BrifingOku().then(B => { const e = document.getElementById("v41Bf"); if(B && e) e.outerHTML = v41BrifingHtml(B); }); } }catch(e){ console.log("v41 ozet", e); } return r; }; }
+// --- en guclu AL kartinda puan yerine anlasilir etiket + hedef / stop ---
+{ const eski = V3_PANEL.ozet; V3_PANEL.ozet = function(k){ const r = eski(k); try{ const O = v41D().oneri; const M = new Map(); ["bist", "nasdaq", "kripto"].forEach(p => (O?.pazar?.[p] || []).forEach(x => M.set(x.k, x)));
+      k.querySelectorAll(".v3EnL button").forEach(b => { const kk = (b.getAttribute("onclick") || "").match(/'([^']+)'\)/)?.[1], x = M.get(kk); if(!x) return; const H = Array.isArray(x.H) ? x.H[0] : null, f = x.f;
+        const p = b.querySelector(".v3Puan"); if(p) p.textContent = x.karar || (x.puan >= 40 ? "GÜÇLÜ AL" : "AL"); const em = b.querySelector("em"); if(em) em.innerHTML = H && f ? `hedef <b class="art">${pzYuzde((H/f - 1)*100, 1)}</b> · stop <b class="az">${pzYuzde((x.stop/f - 1)*100, 1)}</b>` : em.innerHTML; }); }catch(e){} return r; }; }
+// --- listelerde Gorus / Destek / Direnc / Hedef sutunlari (siralanabilir) ---
+function v41Gorus(s, O){ const t = s?.tv, f = s?.f, alt = t ? [t.SMA50, t.SMA200, t.price_52_week_low].filter(v => v && v < f) : [], ust = t ? [t.SMA50, t.SMA200, t.price_52_week_high].filter(v => v && v > f) : [];
+  const tvDes = alt.length ? Math.max(...alt) : null, tvDir = ust.length ? Math.min(...ust) : null, ah = v3HedefOku?.(s?.k), aiH = +ah?.ortalama > 0 ? +ah.ortalama : null;
+  if(O){ const H = Array.isArray(O.H) ? O.H : [], A = Array.isArray(O.al) ? O.al : []; const al = O.eylem === "AL";
+    return { ad:O.karar || O.eylem, sn:O.puan, kaynak:"Bay Pipo", destek:al && A[0] ? A[0] : tvDes, direnc:al && H[0] ? H[0] : tvDir, hedef:al && (H[1] || H[0]) ? (H[1] || H[0]) : aiH, ai:!al && !!aiH }; }
+  if(!t) return null; const rec = t["Recommend.All"]; let p = (rec != null ? rec*50 : 0) + (t.SMA200 ? (f > t.SMA200 ? 15 : -15) : 0) + (t.SMA50 ? (f > t.SMA50 ? 10 : -10) : 0) + (t.RSI ? (t.RSI > 75 ? -10 : t.RSI < 28 ? 8 : 0) : 0);
+  const ad = p >= 45 ? "GÜÇLÜ AL" : p >= 15 ? "AL" : p > -15 ? "NÖTR" : p > -45 ? "SAT" : "GÜÇLÜ SAT";
+  return { ad, sn:Math.round(p), kaynak:"teknik özet (TradingView + ortalamalar)", destek:tvDes, direnc:tvDir, hedef:aiH, ai:!!aiH }; }
+function v41ListeSut(k){ try{ if(!["takip", "bist", "nasdaq", "kripto", "portfoy"].includes(PZ.sekme)) return; const T = k.querySelector("table.pzT"); if(!T || T.dataset.v41) return; T.dataset.v41 = 1;
+    const O = v41D().oneri, M = new Map(); ["bist", "nasdaq", "kripto"].forEach(p => ["pazar", "izle", "kacin"].forEach(a => (O?.[a]?.[p] || []).forEach(x => M.set(x.k, x))));
+    const tum = new Map(); Object.values(PZ.liste).forEach(L => (L || []).forEach(s => tum.set(s.k, s)));
+    const hr = T.querySelector("thead tr"); if(!hr) return; const tk = [...hr.children].findIndex(th => /^teknik/i.test(th.textContent.trim())); if(tk >= 0) T.querySelectorAll("tr").forEach(tr => { const c = tr.children[tk]; if(c) c.style.display = "none"; }); hr.insertAdjacentHTML("beforeend", `<th class="v41Th" data-s="g">Görüş</th><th class="sag v41Th" data-s="d">Destek</th><th class="sag v41Th" data-s="r">Direnç</th><th class="sag v41Th" data-s="h">Hedef</th>`);
+    T.querySelectorAll("tbody tr").forEach(tr => { const kk = (tr.getAttribute("onclick") || "").match(/piyasaDetay','([^']+)'/)?.[1], s = tum.get(kk), g = kk ? v41Gorus(s, M.get(kk)) : null, f = s?.f;
+      const pc = v => v && f ? (v/f - 1)*100 : null, hu = (v, sinif) => v ? `<span class="mono">${pzPara(v, s?.para)}</span><small class="${sinif}">${pzYuzde(pc(v), 1)}</small>` : "—";
+      tr.dataset.g = g?.sn ?? -999; tr.dataset.d = pc(g?.destek) ?? -999; tr.dataset.r = pc(g?.direnc) ?? 999; tr.dataset.h = pc(g?.hedef) ?? -999;
+      tr.insertAdjacentHTML("beforeend", `<td>${g ? `<span class="v41G ${/AL/.test(g.ad) ? "al" : /SAT/.test(g.ad) ? "sat" : ""} ${/GÜÇLÜ/.test(g.ad) ? "guc" : ""}" title="${esc(g.kaynak)}">${g.kaynak === "Bay Pipo" ? '<i class="pipo"></i>' : ""}${esc(g.ad)}</span>` : "—"}</td><td class="sag v41Sv">${hu(g?.destek, "az")}</td><td class="sag v41Sv">${hu(g?.direnc, "art")}</td><td class="sag v41Sv">${g?.hedef ? hu(g.hedef, (pc(g.hedef) || 0) >= 0 ? "art" : "az") + (g.ai ? `<small class="soluk">AI</small>` : "") : "—"}</td>`); });
+    T.querySelectorAll(".v41Th").forEach(th => th.onclick = e => { e.stopPropagation(); const a = th.dataset.s, b = T.querySelector("tbody"), art = th.dataset.yon !== "1"; th.dataset.yon = art ? "1" : "0";
+      [...b.querySelectorAll("tr")].sort((x, y) => (art ? -1 : 1)*((+x.dataset[a]) - (+y.dataset[a]))).forEach(r => b.appendChild(r)); });
+  }catch(e){ console.log("v41 liste", e); } }
+{ const eski = pzTablo; pzTablo = function(){ const r = eski.apply(this, arguments); const k = document.getElementById("pzTablo"); Promise.resolve(r).then(() => setTimeout(() => v41ListeSut(k), 0)).catch(() => {}); return r; }; }
+// --- dengeleme kalkti (bot kasayi yonetiyor); risk olculeri kaldi ---
+{ const st0 = document.createElement("style"); st0.textContent = `.v3Iki:has(#v4Den){grid-template-columns:1fr!important}section:has(> #v4Den){display:none!important}`; document.head.appendChild(st0); }
+// --- bot ekrani: kasa karnesi + Ana kasa yoneticisi + guncel rehber ---
+function v41KarneHtml(row){ const K = row?.kasa; if(!K) return ""; const AD = { karma:"👑 Ana kasa", disiplin:"📏 Disiplinli", trader:"⏱ Trader", her:"🎰 Piyango", kumar:"🎲 Kumar" }, W = K.kaynakAgirlik || {};
+  const sat = k => { const X = K[k]; if(!X) return ""; const G = (X.gecmis || []).filter(g => Date.now() - (g.ct || 0) < 30*86400000), n = G.length, ort = n ? G.reduce((t, g) => t + g.net, 0)/n : 0, isb = n ? G.filter(g => g.net > 0).length/n : 0, kz = G.reduce((t, g) => t + (g.kz || 0), 0);
+    const sd = n > 1 ? Math.sqrt(G.reduce((t, g) => t + (g.net - ort)**2, 0)/(n - 1)) : 0, sh = sd ? ort/sd*Math.sqrt(Math.min(n, 250)) : null, dd = X.tepe ? (1 - X.bakiye/X.tepe)*100 : 0;
+    return `<tr><td><b>${AD[k]}</b>${X.gun && k === "trader" ? `<small class="soluk"> · bugün ${X.gun.islem} işlem, ${X.gun.kz >= 0 ? "+" : ""}${Math.round(X.gun.kz)} ₺</small>` : ""}</td><td class="sag mono">${n}</td><td class="sag mono">${n ? "%" + Math.round(isb*100) : "—"}</td><td class="sag mono ${pzYon(ort)}">${n ? pzYuzde(ort, 2) : "—"}</td><td class="sag mono ${pzYon(kz)}">${n ? (kz >= 0 ? "+" : "") + nf(Math.round(kz)) + " ₺" : "—"}</td><td class="sag mono">${sh == null ? "—" : sh.toFixed(1).replace(".", ",")}</td><td class="sag mono az">-%${dd.toFixed(1).replace(".", ",")}</td><td><small>${esc(X.durum || "")}</small></td></tr>`; };
+  return `<details class="v3Rehber v41Karne" ${pzLS.oku("v41Kr", 1) ? "open" : ""} ontoggle="pzLS.yaz('v41Kr',this.open?1:0)"><summary>📊 Kasa karnesi (son 30 gün) · Ana kasa yöneticisi</summary>
+    <div class="v3TabloK"><table class="pzT"><thead><tr><th>Kasa</th><th class="sag">İşlem</th><th class="sag">İsabet</th><th class="sag">Ort. işlem</th><th class="sag">Kâr/zarar</th><th class="sag v3Ib">Sharpe</th><th class="sag">Tepeden düşüş</th><th>Durum</th></tr></thead><tbody>${["karma", "disiplin", "trader", "her", "kumar"].map(sat).join("")}</tbody></table></div>
+    <div class="v41Kw"><b>👑 Ana kasa kimin işlemine ne kadar para veriyor?</b><small>Son 30 günde hangi kaynak kazandırıyorsa onun işlemleri büyür, kaybettiren küçülür (×0,3 – ×1,6). Düşüş ortamında kırılım işlemleri ayrıca kısılır.</small>
+      <div>${[["swing", "📏 Swing (Disiplinli)"], ["trader", "⏱ Trader"], ["model", "🧠 Öğrenen model (Kumar)"]].map(([a, ad]) => { const w = W[a]; return `<span><i>${ad}</i><b class="mono ${!w ? "" : w.w > 1 ? "art" : w.w < 1 ? "az" : ""}">×${w ? String(w.w).replace(".", ",") : "1"}</b><small>${w?.n >= 6 ? `${w.n} işlem · ort ${pzYuzde(w.ort, 2)} · isabet %${Math.round(w.isabet*100)}` : `${w?.n || 0} işlem · yeterli veri yok, nötr`}</small></span>`; }).join("")}</div></div>
+    <p class="pzNot">Sharpe: kazancın oynaklığa oranı (1 üstü iyi). Trader kasası günde en fazla 6 işlem açar; gün içinde kasanın %2'si kazanılınca ya da %1,5'i kaybedilince o gün durur. Tüm kasalarda açık işlemlerin toplam riski kasanın belli bir yüzdesini geçemez (risk bütçesi).</p></details>`; }
+{ const eski = bmCiz; bmCiz = function(){ const r = eski.apply(this, arguments);
+    try{ const k = document.getElementById("bmS"); if(!k) return r; const og = k.querySelector(".v3Ogr"); if(og && !k.querySelector(".v41Karne")) og.insertAdjacentHTML("beforebegin", v41KarneHtml(PZ.bot?.row));
+      const pl = [...k.querySelectorAll(".v3RehIz > div")].find(d => /Plan/.test(d.querySelector("b")?.textContent || "")); if(pl && !pl.dataset.v41){ pl.dataset.v41 = 1; pl.innerHTML = `<b>🛣 Kim neye evrilecek?</b><ol>
+        <li><b>Piyango & Kumar:</b> keşif kasaları. Görevleri "riskli tarz ne getirir" diye ölçmek. Sürekli zarar kesiyorlar: bu da bir bilgi. İşe yarayan tek tük ayarları Ana kasa zaten alıyor; 30 gün daha kanıt çıkmazsa emekliye ayrılacaklar.</li>
+        <li><b>Disiplinli:</b> şu an en iyisi. Ana kasanın "swing" ayağı olarak yaşayacak; kanıtlanan her yeni ayarı (t ≥ 2) bünyesine alır.</li>
+        <li><b>Trader:</b> yeni "trendde geri çekilme" stratejisi + günlük hedef/limit ile gerçek trader gibi: az ama isabetli, gece taşımadan.</li>
+        <li><b>Ana kasa (tek nihai bot):</b> üçünün işlemlerini alır; kimin işlemine ne kadar para vereceğini son 30 günün sonucu ve piyasa ortamı belirler (aşağıdaki karne). Gerçek paraya giden bu olacak.</li></ol>`; } }catch(e){ console.log("v41 karne", e); }
+    return r; }; }
+{ const st = document.createElement("style"); st.textContent = `
+.v41Mk{border-color:color-mix(in srgb,var(--r) 45%,transparent)!important}.v41MkIc{display:grid;grid-template-columns:minmax(260px,1fr) minmax(0,1.6fr);gap:18px;align-items:start}
+.v41Bar{position:relative;height:14px;border-radius:7px;background:linear-gradient(90deg,#4FD08A,#5B9DFF 30%,#9AA0A6 50%,#E8B661 70%,#FF5A64);margin:8px 0 4px}.v41Bar i{position:absolute;top:-5px;width:6px;height:24px;margin-left:-3px;border-radius:3px;background:#fff;box-shadow:0 0 0 2px #000}
+.v41BarE{display:flex;justify-content:space-between;font-size:10.5px;color:#8E8C93}.v41BarE span:last-child{text-align:right}.v41BarE b{color:#C9C7CC}
+.v41Puan{display:flex;align-items:baseline;gap:10px;margin:8px 0 4px}.v41Puan b{font-size:40px;font-weight:900;color:var(--r)}.v41Puan span{font-size:15px;font-weight:800;color:var(--r)}
+.v41Sin{margin:4px 0;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--r) 14%,transparent);border:1px solid color-mix(in srgb,var(--r) 45%,transparent);font-size:13px;font-weight:600}
+.v41Sp{width:100%;height:40px;display:block;margin-top:8px}
+.v41Bl{display:flex;flex-direction:column;gap:6px}.v41Bl > div{display:grid;grid-template-columns:minmax(0,1fr) 70px 110px;gap:4px 10px;align-items:center;font-size:12.5px;padding:6px 8px;border-radius:9px;background:rgba(255,255,255,.025)}
+.v41Bl small{grid-column:1/-1;font-size:11px;color:#8E8C93}.v41Bl b{text-align:right}.v41Bl em{height:6px;border-radius:3px;background:linear-gradient(90deg,#4FD08A,#9AA0A6,#FF5A64);position:relative}.v41Bl em i{position:absolute;left:var(--p);top:-3px;width:4px;height:12px;margin-left:-2px;background:#fff;border-radius:2px}.v41Bl em.bos{background:none}
+@media (max-width:900px){ .v41MkIc{grid-template-columns:1fr} }
+.v41BsL{display:flex;flex-direction:column;gap:6px}.v41BsL > div{display:grid;grid-template-columns:14px 1fr;gap:10px;align-items:start;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);opacity:.72}
+.v41BsL > div.on{opacity:1;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.05)}.v41BsL b{font-size:13px}.v41BsL small{display:block;font-size:11.5px;color:#9A98A0;margin-top:2px}.v41BsL em{display:block;font-style:normal;font-size:11.5px;color:#C9C7CC;margin-top:3px}
+.v41Lamba{width:12px;height:12px;border-radius:50%;margin-top:3px;background:#3A3A40}.v41BsL > div.on.art .v41Lamba{background:#4FD08A;box-shadow:0 0 10px #4FD08A}.v41BsL > div.on.az .v41Lamba{background:#FF5A64;box-shadow:0 0 10px #FF5A64}
+.v41BfOz{font-size:13px;line-height:1.55;margin:0 0 8px;color:#E6E4E8}.v41BfP{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.v41BfP span{font-size:12px;font-weight:700;padding:3px 9px;border-radius:8px;background:rgba(255,255,255,.05)}
+.v41BfL{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.v41BfL li{font-size:12.5px;line-height:1.45}.v41BfL small{display:block;color:#9A98A0}.v41Et{font-size:10.5px;font-weight:800;padding:1px 7px;border-radius:7px;margin-right:6px;background:rgba(255,255,255,.07)}.v41Et.art{background:rgba(79,208,138,.18);color:#7FE3A8}.v41Et.az{background:rgba(255,90,100,.18);color:#FF9AA1}
+.v41G{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.06);color:#C9C7CC;white-space:nowrap}.v41G.al{background:rgba(79,208,138,.14);color:#7FE3A8}.v41G.sat{background:rgba(255,90,100,.14);color:#FF9AA1}.v41G.guc{box-shadow:inset 0 0 0 1px currentColor}
+.v41Sv small{display:block;font-size:10.5px}.v41Th{cursor:pointer}
+.v41Kw{margin-top:10px}.v41Kw > small{display:block;color:#9A98A0;font-size:12px;margin:3px 0 8px}.v41Kw > div{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}.v41Kw span{display:flex;flex-direction:column;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03)}.v41Kw i{font-style:normal;font-size:12px;color:#C9C7CC}.v41Kw span b{font-size:20px}.v41Kw span small{font-size:11px;color:#8E8C93}
+.v3Puan{font-size:11px!important;letter-spacing:.02em}`; document.head.appendChild(st); }
 
 // v3.0 hiz: uygulama acildiktan sonra bos anda grafik kutuphanesi + bot verisi + piyasa listeleri isitilir; Piyasalar ve detay aninda acilir
 setTimeout(() => { const isit = () => { try{ if(!ME?.id || !navigator.onLine) return; pzLib().catch(() => {}); pzBotYukle().catch(() => {});
