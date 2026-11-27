@@ -1,4 +1,4 @@
-// ARSA TAKIP · PIYASA BOTU v2.6 (GitHub Actions'ta 15 dakikada bir calisir; bilgisayar acik/kapali fark etmez)
+// ARSA TAKIP · PIYASA BOTU v2.7 (GitHub Actions'ta 15 dakikada bir calisir; bilgisayar acik/kapali fark etmez)
 // v2: BIST (Yahoo gunluk mumlar, TradingView tarayicisindan likit hisse listesi) + 3 sanal kasa (Disiplinli / Piyango / Kumar)
 //     Kumar = "indikator konseyi": TradingView'in klasik ucretsiz indikatorleri (EMA 9/21, EMA 50/200, MACD, RSI, Supertrend, UT Bot,
 //     Squeeze Momentum, ADX/DMI, Bollinger %B, Ichimoku, hacim, goreli guc) + ogrenen model (lojistik regresyon): hangi indikator
@@ -450,6 +450,36 @@ async function nasdaqSinyal(){ const Q = kapaliMumlar(await yahoo("QQQ", "1d", "
     { ad:"Fed faiz indiriyor ya da sabit", ok:MAKRO_ABD.fed !== "artirim", deger:MAKRO_ABD.fedNot } ];
   return { ...sinyalKarar(M, 5, 3), M, qqq:+c.toFixed(2), vix:vix && +vix.toFixed(1), makro:MAKRO_ABD, t:Date.now() }; }
 
+
+/* ---------- v2.7 IHALE AVCISI: Milli Emlak (Hazine) tasinmaz satis ihaleleri ----------
+   e-Devlet'teki herkese acik liste; gunde 1 kez, istekler arasinda bekleyerek okunur. Detay (ada/parsel, m2, bedel, teminat, ihale tarihi)
+   sadece ilgilenilen iller icin cekilir. ilan.gov.tr ve UYAP bot erisimini engelledigi icin uygulamada kisayol olarak durur. */
+const IHALE_ILLER = ["Kırklareli", "Edirne", "Tekirdağ", "İstanbul", "Çanakkale"];
+const enSayi = v => v == null ? null : (isFinite(+String(v).replace(/,/g, "")) ? +String(v).replace(/,/g, "") : null);   // detay sayfasi: 10400.38
+const trSayi = v => { const x = String(v || "").replace(/[^\d,.-]/g, ""); if(!x || x === "-") return null; return +x.replace(/\./g, "").replace(",", "."); };
+async function milliEmlak(){ const U = "https://www.turkiye.gov.tr/csb-tasinmaz-satis-ilanlari-ihaleye-cikanlar", C = {};
+  const al = async (u, d = 0) => { const r = await fetch(u, { redirect:"manual", headers:{ "User-Agent":UA.headers["User-Agent"], "Accept-Language":"tr-TR,tr;q=0.9", Referer:U, Cookie:Object.entries(C).map(([k, v]) => k + "=" + v).join("; ") } });
+    for(const c of r.headers.getSetCookie?.() || []){ const kv = c.split(";")[0], i = kv.indexOf("="); C[kv.slice(0, i).trim()] = kv.slice(i + 1); }
+    if(r.status >= 300 && r.status < 400 && r.headers.get("location") && d < 3) return al(new URL(r.headers.get("location"), u).href, d + 1);
+    if(!r.ok) throw new Error("milli emlak " + r.status); return r.text(); };
+  const temiz = h => h.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+  const satirlar = t => (t.match(/<tr[\s\S]*?<\/tr>/g) || []).map(tr => { const td = (tr.match(/<td[\s\S]*?<\/td>/g) || []); if(td.length < 8) return null;
+      const ref = (tr.match(/ref_no=([A-Za-z0-9+/=]+)/) || [])[1]; let no = null; try{ no = ref ? Buffer.from(ref, "base64").toString("utf8").replace(/\D/g, "") : null; }catch(e){}
+      const idx = +((tr.match(/index=(\d+)/) || [])[1] ?? -1), c = td.map(temiz);
+      return { no, cins:c[0], imar:c[2], il:c[3], ilce:c[4], mah:c[5], m2:trSayi(c[6]), fiyat:trSayi(c[7]), idx, resim:!!ref }; }).filter(Boolean);
+  const ilk = await al(U), top = Math.min(1000, +(((ilk.match(/Toplam\s+([\d.]+)\s+kayıttan/) || [])[1] || "0").replace(/\./g, "")));
+  const liste = [], detay = {};
+  for(let sf = 0; sf < Math.max(top, 1); sf += 20){ const t = sf === 0 ? ilk : await al(U + "?sf=" + sf); await bekle(400);
+    const L = satirlar(t); for(const x of L){ x.sf = sf; liste.push(x);
+      if(IHALE_ILLER.includes(x.il) && x.idx >= 0){ try{ const d = temiz(await al(`${U}?detay=bilgisi&sf=${sf}&index=${x.idx}`)); await bekle(400);
+          const g = re => (d.match(re) || [])[1]?.trim() || null, apa = d.match(/Pafta \/ Ada \/ Parsel\s*([^/]*?)\s*\/\s*([\w.]+)\s*\/\s*([\w.]+)/);
+          detay[x.no || `${x.il}|${x.ilce}|${x.mah}|${x.fiyat}`] = { ada:apa?.[2] || null, parsel:apa?.[3] || null, m2:enSayi(g(/Taşınmaz Yüz Ölçümü\s*([\d.,]+)/)), satilacakM2:enSayi(g(/Satılacak Yüz Ölçümü\s*([\d.,]+)/)), hisse:g(/Hazine Hissesi\s*([\d./,]+)/),
+            bedel:enSayi(g(/Toplam Tahmini Bedel\s*([\d.,]+)/)), teminat:enSayi(g(/Geçici Teminat Bedeli\s*([\d.,]+)/)), tarih:g(/İhale Tarihi ve Saati\s*([\d/]+(?:\s+[\d:]+)?)/), imar:g(/İmar Durumu\s*(\S+)/), dayanak:g(/Yasal Dayanak\s*([\d /]+)/) };
+          if(sf !== 0) await al(U + "?sf=" + sf);   // oturumun liste sayfasini koru
+        }catch(e){ console.log("ihale detay alinamadi:", e.message); } } }
+    if(!L.length) break; }
+  return { t:Date.now(), kaynak:"Milli Emlak (e-Devlet)", toplam:top, iller:IHALE_ILLER, liste, detay }; }
+
 /* ---------- ana akis ---------- */
 (async () => {
   const bas = Date.now(), satir = (await sb(`piyasa_bot?user_id=eq.${UID}&select=*`))[0] || null, masraf = +(satir?.masraf ?? process.env.MASRAF ?? .5);
@@ -485,7 +515,11 @@ async function nasdaqSinyal(){ const Q = kapaliMumlar(await yahoo("QQQ", "1d", "
     nsin = await nasdaqSinyal().catch(e => { console.log("NASDAQ sinyali hesaplanamadi:", e.message); return eskiD.nasdaqSinyal || null; });
     if(ksin) console.log(`kripto sinyali: ${ksin.karar} (${ksin.puan}/${ksin.maks}) · korku ${ksin.fg?.v ?? "-"}`); if(nsin) console.log(`NASDAQ sinyali: ${nsin.karar} (${nsin.puan}/${nsin.maks}) · VIX ${nsin.vix ?? "-"}`);
     if(bistSin) console.log(`BIST giris sinyali: ${bistSin.karar} (${bistSin.puan}/${bistSin.maks}) · dolar bazli endeks ${bistSin.usd} $ · firsat ${bistFr.length}: ${bistFr.map(f => f.kod + " hedef " + f.hedef + " (" + f.pot + "%)").join(", ")}`); }
-  const kayit = { user_id:UID, algo:A, kasa, son_tarama:new Date().toISOString(), ...(egitildi ? { son_egitim:new Date().toISOString() } : {}), durum:{ rejim:RJ.simdi, btcFark:+(RJ.fark*100).toFixed(2), acikStrateji:[...Object.keys(TF), ...Object.keys(KUMAR)].filter(tf => A[tf]?.aktif || kanit[tf]), bistRejim:RJB?.simdi || 0, bistFark:RJB ? +(RJB.fark*100).toFixed(2) : null, bist:T1.bist, bistSinyal:bistSin, bistFirsat:bistFr || [], kriptoSinyal:ksin, nasdaqSinyal:nsin, taranan:T1.taranan, yeni:T1.yeni, acik:S1.acik - S1.bitti, bitti:S1.bitti, sure:Math.round((Date.now() - bas)/1000), masraf } };
+  // ihale avcisi: gunde bir kez (20 saatten eskiyse) tara, aradaki turlarda son sonucu tasi
+  let ihale = eskiD.ihale || null;
+  if(!ihale?.t || Date.now() - ihale.t > 20*3600000){ ihale = await milliEmlak().catch(e => { console.log("ihale avcisi calismadi:", e.message); return eskiD.ihale || null; });
+    if(ihale?.liste) console.log(`ihale avcisi: ${ihale.liste.length}/${ihale.toplam} Hazine ihalesi, ${Object.keys(ihale.detay || {}).length} ilgilenilen ilde detay`); }
+  const kayit = { user_id:UID, algo:A, kasa, son_tarama:new Date().toISOString(), ...(egitildi ? { son_egitim:new Date().toISOString() } : {}), durum:{ rejim:RJ.simdi, btcFark:+(RJ.fark*100).toFixed(2), acikStrateji:[...Object.keys(TF), ...Object.keys(KUMAR)].filter(tf => A[tf]?.aktif || kanit[tf]), bistRejim:RJB?.simdi || 0, bistFark:RJB ? +(RJB.fark*100).toFixed(2) : null, bist:T1.bist, bistSinyal:bistSin, bistFirsat:bistFr || [], kriptoSinyal:ksin, nasdaqSinyal:nsin, ihale, taranan:T1.taranan, yeni:T1.yeni, acik:S1.acik - S1.bitti, bitti:S1.bitti, sure:Math.round((Date.now() - bas)/1000), masraf } };
   await sb("piyasa_bot?on_conflict=user_id", "POST", kayit, { Prefer:"resolution=merge-duplicates,return=minimal" });
   console.log(`kasa: disiplinli tur ${kasa.disiplin.tur} ${Math.round(kasa.disiplin.bakiye)} TL (${kasa.disiplin.acik.length} acik) · piyango tur ${kasa.her.tur} ${Math.round(kasa.her.bakiye)} TL (${kasa.her.acik.length} acik) · kumar tur ${kasa.kumar.tur} ${Math.round(kasa.kumar.bakiye)} TL (${kasa.kumar.acik.length} acik) · trader tur ${kasa.trader.tur} ${Math.round(kasa.trader.bakiye)} TL (${kasa.trader.acik.length} acik)`);
   console.log(`tamam: ${T1.taranan} coin + ${T1.bist} BIST hissesi tarandi, +${T1.yeni} yeni sanal islem, ${S1.bitti} sonuclandi, acik ${S1.acik - S1.bitti}, algoritma v${A.surum}${egitildi ? " (yeni egitildi)" : ""}, ${Math.round((Date.now() - bas)/1000)} sn`);
