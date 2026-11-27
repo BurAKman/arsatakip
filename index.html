@@ -4438,7 +4438,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.9.0";
+const SURUM_MORDOR = "v 2.9.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -24737,9 +24737,10 @@ function pzIhaleHtml(I){ if(!I?.liste) return ""; const ilgi = I.iller || [], D 
   const kucuk = v => String(v || "").toLocaleLowerCase("tr");
   const yakin = I.liste.filter(x => ilgi.includes(x.il)).map(x => ({ ...x, d:D[key(x)] || {} })).filter(x => isFinite(tarihMs(x.d.tarih)) && tarihMs(x.d.tarih) >= Date.now() - 86400000).sort((a, b) => tarihMs(a.d.tarih) - tarihMs(b.d.tarih));
   const say = {}; I.liste.forEach(x => { say[x.il] = (say[x.il] || 0) + 1; });
-  const iller = Object.keys(say).sort((a, b) => a.localeCompare(b, "tr")), ilceler = f.il ? [...new Set(I.liste.filter(x => x.il === f.il).map(x => x.ilce))].sort((a, b) => a.localeCompare(b, "tr")) : [];
-  const cinsler = [...new Set(I.liste.map(x => x.cins))].sort((a, b) => a.localeCompare(b, "tr"));
-  const sirala = { fiyat:(a, b) => (a.fiyat || 0) - (b.fiyat || 0), fiyatA:(a, b) => (b.fiyat || 0) - (a.fiyat || 0), m2:(a, b) => (b.m2 || 0) - (a.m2 || 0), birim:(a, b) => ((a.fiyat || 1e18)/(a.m2 || 1e-9)) - ((b.fiyat || 1e18)/(b.m2 || 1e-9)), yer:(a, b) => (a.il + a.ilce + a.mah).localeCompare(b.il + b.ilce + b.mah, "tr") };
+  const trS = (a, b) => String(a ?? "").localeCompare(String(b ?? ""), "tr");
+  const iller = Object.keys(say).filter(x => x && x !== "undefined").sort(trS), ilceler = f.il ? [...new Set(I.liste.filter(x => x.il === f.il).map(x => x.ilce).filter(Boolean))].sort(trS) : [];
+  const cinsler = [...new Set(I.liste.map(x => x.cins).filter(Boolean))].sort(trS);
+  const sirala = { fiyat:(a, b) => (a.fiyat || 0) - (b.fiyat || 0), fiyatA:(a, b) => (b.fiyat || 0) - (a.fiyat || 0), m2:(a, b) => (b.m2 || 0) - (a.m2 || 0), birim:(a, b) => ((a.fiyat || 1e18)/(a.m2 || 1e-9)) - ((b.fiyat || 1e18)/(b.m2 || 1e-9)), yer:(a, b) => trS(`${a.il}${a.ilce}${a.mah}`, `${b.il}${b.ilce}${b.mah}`) };
   const uy = I.liste.filter(x => (!f.il || x.il === f.il) && (!f.ilce || x.ilce === f.ilce) && (!f.cins || x.cins === f.cins) && (!f.maks || (x.fiyat || 0) <= +f.maks) && (!f.minM2 || (x.m2 || 0) >= +f.minM2) && (!f.ara || kucuk(x.mah + " " + x.ilce + " " + x.cins + " " + x.imar).includes(kucuk(f.ara)))).sort(sirala[f.sira] || sirala.fiyat);
   const adet = Math.max(50, +f.adet || 50), tum = uy.slice(0, adet);
   const yaz = (ad, deger, ek = "") => `const o = pzLS.oku('pzIhaleF', {}); o['${ad}'] = ${deger}; ${ek} o.adet = 50; pzLS.yaz('pzIhaleF', o); pzIhaleYenile()`;
@@ -24791,7 +24792,12 @@ function pzSinyalBildir(d){ if(!d) return; const o = pzLS.oku("pzSinBildir", {})
   try{ toast("📣 " + mesaj.join(" · ")); }catch(e){}
   try{ if(window.Notification && Notification.permission === "granted") new Notification("Arsa Takip · Piyasa sinyali", { body:mesaj.join("\n") }); else if(window.Notification && Notification.permission === "default") Notification.requestPermission(); }catch(e){} }
 { const eski = pzEkran; pzEkran = async function(){ const r = await eski.apply(this, arguments);
-    try{ const b = await pzBotYukle(), dur = b?.row?.durum; const d = document.getElementById("pzDuyuruK"); if(d && !d.querySelector(".pzSinyaller")) d.insertAdjacentHTML("afterbegin", pzSinyallerHtml(dur)); pzSinyalBildir(dur); pzIhaleBildir(dur?.ihale); }catch(e){}
+    // v2.9.1: sinyaller kendi kutusunda (duyurular yenilenince silinmesin), hata olursa sessiz kalmasin
+    let c = document.getElementById("pzSinK"); const k = document.getElementById("pzSerit");
+    if(!c && k){ k.insertAdjacentHTML("afterend", `<div id="pzSinK"></div>`); c = document.getElementById("pzSinK"); }
+    try{ const b = await pzBotYukle(), dur = b?.row?.durum; if(c){ let h = ""; try{ h = pzSinyallerHtml(dur); }catch(e){ console.error("sinyal karti", e); h = `<div class="pzBistS bekle"><small>Piyasa sinyalleri çizilemedi: ${esc(String(e?.message || e))}</small></div>`; }
+        c.innerHTML = h || (b?.hata ? `<div class="pzBistS"><small>Bot verisi okunamadı: ${esc(b.hata)}</small></div>` : !dur ? `<div class="pzBistS"><small>Piyasa havası: bot henüz sinyal hesaplamadı.</small></div>` : ""); }
+      pzSinyalBildir(dur); pzIhaleBildir(dur?.ihale); }catch(e){ console.error("sinyaller", e); }
     return r; }; ekranlar.piyasa = pzEkran; }
 function pzBilancoBildir(){ const o = pzLS.oku("pzBilBildir", {}); pzBilancolar(1).forEach(x => { const a = x.s.k + "|" + new Date(x.ms).toDateString(); if(o[a]) return; o[a] = 1;
   try{ new Notification(`Arsa Takip · ${x.s.kod} bilançosu ${x.kalan <= 0 ? "bugün" : "yarın"}`, { body:"Bilanço öncesi ve sonrası fiyat sert oynayabilir. Pozisyonunu ve zarar kesini kontrol et." }); }catch(e){} }); pzLS.yaz("pzBilBildir", o); }
@@ -25481,6 +25487,8 @@ async function pzBotYukle(zorla){
     PZ.bot = { row:r.data, acik:(a.data || []).map(esle), kapali:(k.data || []).map(esle).reverse(), t:Date.now() }; }
   catch(e){ const m = String(e?.message || e); PZ.bot = { row:null, acik:[], kapali:[], t:Date.now(), hata: /exist|schema cache|piyasa_bot|404/i.test(m) ? "Supabase'de piyasa-bot.sql henüz çalıştırılmamış" : m }; }
   finally { PZ_BOT_IS = null; } return PZ.bot; }
+// v2.9.1: ayni anda iki cagri gelirse ikincisi bos (null) donuyordu -> sinyal seridi bazen hic cikmiyordu. Simdi ikinci cagri ilkinin sonucunu bekler.
+{ const ic = pzBotYukle; let P = null; pzBotYukle = function(zorla){ if(P) return P; P = Promise.resolve(ic(zorla)).finally(() => { P = null; }); return P; }; }
 // bot calisiyorsa: sanal defter = bulut, algoritma = botunki (daha yeniyse), bilgisayardaki tarama sanal yazmaz
 { const eskiS = pzSanal, eskiY = pzSanalYaz, eskiA = pzAlgo;
   pzSanal = function(){ if(pzBotAktif()) return { acik:PZ.bot.acik, kapali:PZ.bot.kapali, bulut:true }; return eskiS(); };
