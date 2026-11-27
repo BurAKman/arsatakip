@@ -3772,6 +3772,14 @@ body.pc .pzDokK{text-align:left;background:#0F1115;border:1px solid rgba(255,255
 body.pc .pzDokK.yesil{border-left-color:#2E9E5E}body.pc .pzDokK.altin{border-left-color:#C9963F}body.pc .pzDokK.kirmizi{border-left-color:#C8242E}body.pc .pzDokK.turuncu{border-left-color:#D9773A}
 body.pc .pzDokB{display:flex;align-items:center;gap:8px}body.pc .pzDokB b{font-size:14px;color:#fff}body.pc .pzDokB em{font-style:normal;font-size:12px;font-weight:700}body.pc .pzDokB small{margin-left:auto;color:#7E7C84;font-size:11px}
 body.pc .pzDokK p{font-size:12px;line-height:1.45;margin:6px 0 4px;color:#C9C7CC}
+.pzBistS{margin:0 0 12px;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);font-size:12.5px;color:#D9D7DC}
+.pzBistS.bekle{border-color:rgba(224,85,85,.45);background:rgba(224,85,85,.06)}.pzBistS.haz{border-color:rgba(230,180,60,.5);background:rgba(230,180,60,.06)}.pzBistS.gir{border-color:rgba(70,190,120,.55);background:rgba(70,190,120,.07)}
+.pzBistSB{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px}.pzBistSB b{font-size:14px;color:#fff}.pzBistSB span{color:#8E8C93;font-size:12px}
+.pzBistSA{color:#B9B7BE;margin-bottom:8px}.pzBistSL{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}.pzBistSL > div{display:grid;grid-template-columns:18px 1fr auto;gap:6px;align-items:baseline}
+.pzBistSL i{font-style:normal;font-weight:700}.pzBistSL .ok i{color:#46BE78}.pzBistSL .no i{color:#E05555}.pzBistSL small{color:#8E8C93;text-align:right}
+.pzBistSN{padding:7px 10px;border-radius:8px;background:rgba(0,0,0,.25);margin-bottom:8px}.pzBistSF > b{display:block;margin:4px 0 2px;color:#fff}.pzBistSF > small{display:block;color:#8E8C93;margin-bottom:4px}
+.pzBistSF table{width:100%;border-collapse:collapse;font-size:12px;color:inherit}.pzBistSF td:not(:last-child){white-space:nowrap}.pzBistSF th{text-align:left;color:#8E8C93;font-weight:500;padding:3px 6px;border-bottom:1px solid rgba(255,255,255,.08)}.pzBistSF td{padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.05)}
+.pzBistSF tr[onclick]{cursor:pointer}.pzBistSF tr[onclick]:hover{background:rgba(255,255,255,.05)}.pzBistSF .art{color:#46BE78}.pzBistSF .az{color:#E05555}.pzBistSZ{margin-top:6px;color:#77757C;font-size:11px}
 body.pc .pzBilanco{display:flex;flex-direction:column;gap:4px;margin:0 0 12px;padding:10px 14px;border-radius:12px;border:1px solid rgba(91,141,239,.45);background:rgba(91,141,239,.06)}
 body.pc .pzBilanco > b{font-size:12px;letter-spacing:.06em;color:#9DB8F5}body.pc .pzBilanco button{display:flex;gap:8px;align-items:center;background:none;border:0;color:#D9D7DC;font-size:12.5px;cursor:pointer;text-align:left;padding:2px 0}
 body.pc .pzOlayT.bilanco{background:rgba(91,141,239,.2);color:#9DB8F5}
@@ -3888,7 +3896,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.4.0";
+const SURUM_MORDOR = "v 2.5.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -24158,6 +24166,22 @@ function pzBilancoHtml(){ const L = pzBilancolar(); if(!L.length) return "";
 { const eski = pzEkran;
   pzEkran = async function(){ const r = await eski.apply(this, arguments); const d = document.getElementById("pzDuyuruK"); if(d && !d.querySelector(".pzBilanco")) d.insertAdjacentHTML("beforeend", pzBilancoHtml());
     pzBilancoBildir(); return r; }; ekranlar.piyasa = pzEkran; }
+
+// v2.5 BIST giris sinyali + firsat listesi (bot her 3 saatte hesaplar, Piyasalar ekraninin en ustunde)
+function pzBistSinyalHtml(d){ const S = d?.bistSinyal; if(!S?.M) return ""; const F = d.bistFirsat || [], k = S.karar, sinif = k === "GİR" ? "gir" : k === "HAZIRLAN" ? "haz" : "bekle";
+  const ne = k === "GİR" ? "Kademeli gir: BIST payını 3'e böl, ilk dilimi bankalardan ya da aşağıdaki fırsatlardan seç." : k === "HAZIRLAN" ? "Şartlar düzeliyor: listeyi izle, 5 şart ✓ olunca ilk küçük dilimi al." : "Yeni BIST alımı yapma: para şimdilik faizde ya da mevcut sepette daha iyi duruyor.";
+  const tl = v => v == null ? "—" : (+v).toLocaleString("tr-TR", { minimumFractionDigits:2, maximumFractionDigits:2 }), vg = v => String(v).replace(".", ",");
+  return `<div class="pzBistS ${sinif}"><div class="pzBistSB"><b>🇹🇷 BIST giriş sinyali: ${k}</b><span>${S.puan}/${S.maks} şart</span></div>
+    <div class="pzBistSA">Dolar bazlı BIST 100: <b>${tl(S.usd)} $</b> · son 5 yılın dibi ${tl(S.dip)} $ · dolar/TL ${tl(S.kur)}</div>
+    <div class="pzBistSL">${S.M.map(m => `<div class="${m.ok ? "ok" : "no"}"><i>${m.ok ? "✓" : "✗"}</i><span>${esc(m.ad)}</span><small>${esc(m.deger)}</small></div>`).join("")}</div>
+    <div class="pzBistSN">👉 ${ne}</div>
+    ${F.length ? `<div class="pzBistSF"><b>Alım fırsatı görünen hisseler</b>${k === "GİR" ? "" : "<small>Sinyal gelene kadar bu liste sadece izleme içindir.</small>"}
+      <table><thead><tr><th>Hisse</th><th>Fiyat</th><th>Hedef</th><th>Zarar kes</th><th>Ödül/risk</th><th>Neden</th></tr></thead><tbody>${F.map(f => `<tr onclick="go('piyasaDetay','${f.k}')"><td><b>${esc(f.kod)}</b></td><td>${tl(f.fiyat)} ₺</td><td class="art">${tl(f.hedef)} ₺ <small>+%${vg(f.pot)}</small></td><td class="az">${tl(f.stop)} ₺ <small>-%${vg(f.zarar)}</small></td><td>${vg(f.rr)}</td><td><small>${(f.neden || []).map(esc).join(" · ")}</small></td></tr>`).join("")}</tbody></table></div>`
+      : `<div class="pzBistSF"><small>Şu an kriterlere (trend + sağlıklı geri çekilme + ödül/risk ≥ 1,5) uyan hisse yok.</small></div>`}
+    <div class="pzBistSZ">Bot 3 saatte bir hesaplar · son: ${new Date(S.t).toLocaleString("tr-TR", { dateStyle:"short", timeStyle:"short" })} · makro veri: ${esc(S.makro?.enfAy || "")} TÜFE, faiz %${S.makro?.faiz ?? "—"}</div></div>`; }
+{ const eski = pzEkran; pzEkran = async function(){ const r = await eski.apply(this, arguments);
+    try{ const b = await pzBotYukle(); const d = document.getElementById("pzDuyuruK"); if(d && !d.querySelector(".pzBistS")) d.insertAdjacentHTML("afterbegin", pzBistSinyalHtml(b?.row?.durum)); }catch(e){}
+    return r; }; ekranlar.piyasa = pzEkran; }
 function pzBilancoBildir(){ const o = pzLS.oku("pzBilBildir", {}); pzBilancolar(1).forEach(x => { const a = x.s.k + "|" + new Date(x.ms).toDateString(); if(o[a]) return; o[a] = 1;
   try{ new Notification(`Arsa Takip · ${x.s.kod} bilançosu ${x.kalan <= 0 ? "bugün" : "yarın"}`, { body:"Bilanço öncesi ve sonrası fiyat sert oynayabilir. Pozisyonunu ve zarar kesini kontrol et." }); }catch(e){} }); pzLS.yaz("pzBilBildir", o); }
 

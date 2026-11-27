@@ -1,4 +1,4 @@
-// ARSA TAKIP · PIYASA BOTU v2.4 (GitHub Actions'ta 15 dakikada bir calisir; bilgisayar acik/kapali fark etmez)
+// ARSA TAKIP · PIYASA BOTU v2.5 (GitHub Actions'ta 15 dakikada bir calisir; bilgisayar acik/kapali fark etmez)
 // v2: BIST (Yahoo gunluk mumlar, TradingView tarayicisindan likit hisse listesi) + 3 sanal kasa (Disiplinli / Piyango / Kumar)
 //     Kumar = "indikator konseyi": TradingView'in klasik ucretsiz indikatorleri (EMA 9/21, EMA 50/200, MACD, RSI, Supertrend, UT Bot,
 //     Squeeze Momentum, ADX/DMI, Bollinger %B, Ichimoku, hacim, goreli guc) + ogrenen model (lojistik regresyon): hangi indikator
@@ -76,7 +76,7 @@ async function bistListe(n = 80){ if(BIST_ONB) return BIST_ONB;
     if(L.length >= 20) return BIST_ONB = L; }catch(e){ console.log("tradingview listesi alinamadi, yedek liste:", e.message); }
   return BIST_ONB = BIST_YEDEK.map(k => ({ kod:k, bn:k + ".IS", d:0, hacim:0 })); }
 async function mumlar(T, x, n){ if(pazarOf(T) === "kripto") return kapaliMumlar(await klines(x.bn, T.iv, n));
-  const R = kapaliMumlar(await yahoo(x.bn, T.iv === "1d" ? "1d" : "60m", T.iv === "1d" ? (n > 300 ? "5y" : "1y") : "1y")); if(R.c.length > n) for(const a of ["t", "o", "h", "l", "c", "v", "kap"]) R[a] = R[a].slice(-n); return R; }
+  const R = kapaliMumlar(await yahoo(x.bn, T.iv === "1d" ? "1d" : "60m", T.iv === "1d" ? (n > 500 ? "5y" : n >= 250 ? "2y" : "1y") : "1y")); /* v2.5: 300 mum icin 2 yil (1 yil ~250 gun yetmiyordu) */ if(R.c.length > n) for(const a of ["t", "o", "h", "l", "c", "v", "kap"]) R[a] = R[a].slice(-n); return R; }
 const kapaliMumlar = R => { const n = R.c.length, simdi = Date.now(); if(n && R.kap[n - 1] > simdi){ for(const a of ["t", "o", "h", "l", "c", "v", "kap"]) R[a] = R[a].slice(0, -1); } return R; };
 
 /* ---------- gostergeler + simulasyon (uygulamadaki ile ayni kural) ---------- */
@@ -360,6 +360,51 @@ function kasaIsle(K, kapanan, adaylar, O, ort = {}){ const simdi = ort.simdi || 
   return kasaSon(K); }
 function kasaSon(K){ K.egri = K.egri.slice(-3000); K.gecmis = (K.gecmis || []).slice(-1000); return K; }
 
+
+/* ---------- v2.5 BIST GIRIS SINYALI + FIRSAT LISTESI ----------
+   Makro veriler otomatik cekilemiyor: Claude her TUFE / PPK sonrasi bu satiri gunceller. */
+const MAKRO = { faiz:36, enflasyon:29.77, enfAy:"2026-10", sonKarar:"indirim", kararTarih:"2026-10-22", sonrakiKarar:"2026-12-10" };
+const emaS = (a, n) => { const k = 2/(n + 1), o = []; for(let i = 0; i < a.length; i++) o.push(i ? a[i]*k + o[i-1]*(1 - k) : a[i]); return o; };
+const gunMap = R => { const m = new Map(); R.t.forEach((t, i) => m.set(Math.floor(t/86400), R.c[i])); return m; };
+const gunBul = (m, t) => { const g = Math.floor(t/86400); for(let j = 0; j < 6; j++){ const v = m.get(g - j); if(v) return v; } return null; };
+const yz = (v, d = 1) => (v >= 0 ? "+" : "") + (v*100).toFixed(d) + "%";
+async function bistSinyal(RJB){ if(!RJB?.R?.c?.length) return null;
+  const X = RJB.R, U = kapaliMumlar(await yahoo("TRY=X", "1d", "5y")), um = gunMap(U);
+  const usd = [], tt = []; X.t.forEach((t, i) => { const k = gunBul(um, t); if(k){ usd.push(X.c[i]/k); tt.push(t); } });
+  const n = usd.length; if(n < 260) return null;
+  const u50 = emaS(usd, 50)[n - 1], u200 = emaS(usd, 200)[n - 1], son = usd[n - 1], uc3 = son/usd[n - 64] - 1;
+  const kurYil = Math.pow(U.c[U.c.length - 1]/U.c[U.c.length - 21], 252/20) - 1;
+  let banka = null; try{ const BK = kapaliMumlar(await yahoo("XBANK.IS", "1d", "6mo")), bm = gunMap(BK), xm = gunMap(X), tS = X.t[X.t.length - 1], t0 = X.t[X.t.length - 21];
+    const a = gunBul(bm, tS)/gunBul(xm, tS), b = gunBul(bm, t0)/gunBul(xm, t0); if(isFinite(a/b)) banka = a/b - 1; }catch(e){ console.log("XBANK alinamadi:", e.message); }
+  let dip = Infinity, dipT = 0; for(let i = Math.max(0, n - 1300); i < n; i++) if(usd[i] < dip){ dip = usd[i]; dipT = tt[i]; }
+  const reel = MAKRO.faiz - MAKRO.enflasyon;
+  const M = [
+    { ad:"Merkez Bankası faiz indiriyor", ok:MAKRO.sonKarar === "indirim", deger:`son karar ${MAKRO.sonKarar} (${MAKRO.kararTarih}) · faiz %${MAKRO.faiz} · sıradaki ${MAKRO.sonrakiKarar}` },
+    { ad:"Faiz borsaya rakip olmaktan çıkıyor (faiz − enflasyon ≤ 5 puan)", ok:reel <= 5, deger:`%${MAKRO.faiz} − %${MAKRO.enflasyon} = ${reel.toFixed(1)} puan` },
+    { ad:"Dolar bazında kısa trend yukarı (50 günlük ortalama üstü)", ok:son > u50, deger:`${son.toFixed(1)} $ · ortalama ${u50.toFixed(1)} $` },
+    { ad:"Dolar bazında ana trend yukarı (200 günlük ortalama üstü)", ok:son > u200, deger:`ortalama ${u200.toFixed(1)} $` },
+    { ad:"Dolar bazında son 3 ay artıda", ok:uc3 > 0, deger:yz(uc3) },
+    { ad:"Bankalar endeksten güçlü (son 20 gün)", ok:banka != null && banka > 0, deger:banka == null ? "veri yok" : yz(banka) },
+    { ad:"Kur sakin (dolar/TL artışı enflasyonun altında)", ok:kurYil*100 < MAKRO.enflasyon, deger:`son 20 gün yıllık ${yz(kurYil, 0)}` } ];
+  const puan = M.filter(m => m.ok).length, karar = puan >= 5 ? "GİR" : puan >= 3 ? "HAZIRLAN" : "BEKLE";
+  return { puan, maks:M.length, karar, M, usd:+son.toFixed(1), dip:+dip.toFixed(1), dipT:dipT*1000, kur:+U.c[U.c.length - 1].toFixed(2), makro:MAKRO, t:Date.now() }; }
+// Firsat listesi: yukselis trendinde (ya da endeksten guclu) olup saglikli geri cekilmede olan hisseler; hedef = yakin direnc, stop = son dip
+async function bistFirsat(ctx){ const X = ctx.RJB?.R; if(!X?.c?.length) return []; const B = await bistListe(), xm = gunMap(X);
+  const L = await havuz(B, 4, async x => { const ka = x.bn + "1d300"; ctx.onb[ka] = ctx.onb[ka] || mumlar({ pazar:"bist", iv:"1d" }, x, 300); let R; try{ R = await ctx.onb[ka]; }catch(e){ return null; }
+    if(!R || R.c.length < 220 || sicrama(R) || Date.now() - R.kap[R.kap.length - 1] > 4*86400000) return null;
+    const n = R.c.length, c = R.c[n - 1], e50a = emaS(R.c, 50), e50 = e50a[n - 1], e200 = emaS(R.c, 200)[n - 1], r = rsi(R.c, 14)[n - 1];
+    let atr = 0; for(let i = n - 14; i < n; i++) atr += Math.max(R.h[i] - R.l[i], Math.abs(R.h[i] - R.c[i-1]), Math.abs(R.l[i] - R.c[i-1])); atr /= 14;
+    const h60 = Math.max(...R.h.slice(-60)), h120 = Math.max(...R.h.slice(-120)), l20 = Math.min(...R.l.slice(-20));
+    const xs = gunBul(xm, R.t[n - 1]), x0 = gunBul(xm, R.t[n - 61]), gg = xs && x0 ? (c/R.c[n - 61])/(xs/x0) - 1 : 0;
+    const trend = c > e200 && e50 > e200 && e50 > e50a[n - 11], geri = r >= 35 && r <= 58 && c <= e50*1.06 && c >= e200*.97;
+    if(!(trend || gg > .08) || !geri) return null;
+    const stop = l20 - .5*atr, hedef = h60, hedef2 = Math.max(h120, h60); if(hedef < c*1.06 || !(stop > 0) || stop >= c || 1 - stop/c > .12) return null;
+    const rr = (hedef - c)/(c - stop); if(rr < 1.5) return null;
+    const neden = [trend ? "yükseliş trendinde (50 > 200 günlük)" : null, gg > 0 ? `son 3 ayda endeksten ${yz(gg, 0)} güçlü` : null, `RSI ${Math.round(r)} · 50 günlüğe geri çekilmiş`, x.fk > 0 && x.fk < 12 ? `F/K ${x.fk.toFixed(1)}` : null].filter(Boolean);
+    return { k:"BIST:" + x.kod, kod:x.kod, fiyat:+c.toFixed(2), hedef:+hedef.toFixed(2), hedef2:+hedef2.toFixed(2), stop:+stop.toFixed(2), pot:+((hedef/c - 1)*100).toFixed(1), pot2:+((hedef2/c - 1)*100).toFixed(1), zarar:+((1 - stop/c)*100).toFixed(1), rr:+rr.toFixed(2), rsi:Math.round(r), gg:+(gg*100).toFixed(1), fk:x.fk > 0 ? +x.fk.toFixed(1) : null, neden }; });
+  const sk = f => f.rr*(1 + Math.max(0, f.gg)/100);
+  return L.filter(Boolean).sort((a, b) => sk(b) - sk(a)).slice(0, 8); }
+
 /* ---------- ana akis ---------- */
 (async () => {
   const bas = Date.now(), satir = (await sb(`piyasa_bot?user_id=eq.${UID}&select=*`))[0] || null, masraf = +(satir?.masraf ?? process.env.MASRAF ?? .5);
@@ -385,8 +430,12 @@ function kasaSon(K){ K.egri = K.egri.slice(-3000); K.gecmis = (K.gecmis || []).s
   // 5.000'lik eski donem -> 50.000'lik yeni kasa (eski ozet saklanir)
   for(const k of ["disiplin", "her", "kumar"]) if(kasa[k] && kasa[k].bas !== KASA_BAS && !kasa[k].turlar?.some(t => t.bas === KASA_BAS)){ const o = kasa[k]; kasa[k] = { ...kasaYeni(), eski:{ bas:o.bas, son:+(+o.bakiye).toFixed(2), islem:(o.turlar || []).reduce((t, x) => t + (x.islem || 0), 0) + (o.islem || 0), bitis:Date.now() } }; }
   const ortam = { rejim:RJ.simdi, simdi:Date.now() };
-  kasa.disiplin = kasaIsle(kasa.disiplin || kasaYeni(), kapanmis, disiplinAday, KASA_AYAR.disiplin, ortam); kasa.her = kasaIsle(kasa.her || kasaYeni(), kapanmis, herAday, KASA_AYAR.her, ortam); kasa.kumar = kasaIsle(kasa.kumar || kasaYeni(), kapanmis, kumarAday, KASA_AYAR.kumar, ortam); kasa.ayar = { surum:"2.4", KASA_AYAR, FREN }; kasa.kanit = kanit;
-  const kayit = { user_id:UID, algo:A, kasa, son_tarama:new Date().toISOString(), ...(egitildi ? { son_egitim:new Date().toISOString() } : {}), durum:{ rejim:RJ.simdi, btcFark:+(RJ.fark*100).toFixed(2), acikStrateji:[...Object.keys(TF), ...Object.keys(KUMAR)].filter(tf => A[tf]?.aktif || kanit[tf]), bistRejim:RJB?.simdi || 0, bistFark:RJB ? +(RJB.fark*100).toFixed(2) : null, bist:T1.bist, taranan:T1.taranan, yeni:T1.yeni, acik:S1.acik - S1.bitti, bitti:S1.bitti, sure:Math.round((Date.now() - bas)/1000), masraf } };
+  kasa.disiplin = kasaIsle(kasa.disiplin || kasaYeni(), kapanmis, disiplinAday, KASA_AYAR.disiplin, ortam); kasa.her = kasaIsle(kasa.her || kasaYeni(), kapanmis, herAday, KASA_AYAR.her, ortam); kasa.kumar = kasaIsle(kasa.kumar || kasaYeni(), kapanmis, kumarAday, KASA_AYAR.kumar, ortam); kasa.ayar = { surum:"2.5", KASA_AYAR, FREN }; kasa.kanit = kanit;
+  const eskiD = satir?.durum || {}, bistTaze = eskiD.bistSinyal?.t && Date.now() - eskiD.bistSinyal.t < 3*3600000 && eskiD.bistSinyal.makro?.faiz === MAKRO.faiz && eskiD.bistSinyal.makro?.enflasyon === MAKRO.enflasyon;
+  let bistSin = bistTaze ? eskiD.bistSinyal : null, bistFr = bistTaze ? (eskiD.bistFirsat || []) : null;
+  if(!bistTaze && RJB){ bistSin = await bistSinyal(RJB).catch(e => { console.log("BIST sinyali hesaplanamadi:", e.message); return eskiD.bistSinyal || null; }); bistFr = await bistFirsat(ctx).catch(e => { console.log("BIST firsat taramasi olmadi:", e.message); return eskiD.bistFirsat || []; });
+    if(bistSin) console.log(`BIST giris sinyali: ${bistSin.karar} (${bistSin.puan}/${bistSin.maks}) · dolar bazli endeks ${bistSin.usd} $ · firsat ${bistFr.length}: ${bistFr.map(f => f.kod + " hedef " + f.hedef + " (" + f.pot + "%)").join(", ")}`); }
+  const kayit = { user_id:UID, algo:A, kasa, son_tarama:new Date().toISOString(), ...(egitildi ? { son_egitim:new Date().toISOString() } : {}), durum:{ rejim:RJ.simdi, btcFark:+(RJ.fark*100).toFixed(2), acikStrateji:[...Object.keys(TF), ...Object.keys(KUMAR)].filter(tf => A[tf]?.aktif || kanit[tf]), bistRejim:RJB?.simdi || 0, bistFark:RJB ? +(RJB.fark*100).toFixed(2) : null, bist:T1.bist, bistSinyal:bistSin, bistFirsat:bistFr || [], taranan:T1.taranan, yeni:T1.yeni, acik:S1.acik - S1.bitti, bitti:S1.bitti, sure:Math.round((Date.now() - bas)/1000), masraf } };
   await sb("piyasa_bot?on_conflict=user_id", "POST", kayit, { Prefer:"resolution=merge-duplicates,return=minimal" });
   console.log(`kasa: disiplinli tur ${kasa.disiplin.tur} ${Math.round(kasa.disiplin.bakiye)} TL (${kasa.disiplin.acik.length} acik) · piyango tur ${kasa.her.tur} ${Math.round(kasa.her.bakiye)} TL (${kasa.her.acik.length} acik) · kumar tur ${kasa.kumar.tur} ${Math.round(kasa.kumar.bakiye)} TL (${kasa.kumar.acik.length} acik)`);
   console.log(`tamam: ${T1.taranan} coin + ${T1.bist} BIST hissesi tarandi, +${T1.yeni} yeni sanal islem, ${S1.bitti} sonuclandi, acik ${S1.acik - S1.bitti}, algoritma v${A.surum}${egitildi ? " (yeni egitildi)" : ""}, ${Math.round((Date.now() - bas)/1000)} sn`);
