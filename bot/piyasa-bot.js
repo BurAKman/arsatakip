@@ -398,7 +398,9 @@ async function bistFirsat(ctx){ const X = ctx.RJB?.R; if(!X?.c?.length) return [
     const xs = gunBul(xm, R.t[n - 1]), x0 = gunBul(xm, R.t[n - 61]), gg = xs && x0 ? (c/R.c[n - 61])/(xs/x0) - 1 : 0;
     const trend = c > e200 && e50 > e200 && e50 > e50a[n - 11], geri = r >= 35 && r <= 58 && c <= e50*1.06 && c >= e200*.97;
     if(!(trend || gg > .08) || !geri) return null;
-    const stop = l20 - .5*atr, hedef = h60, hedef2 = Math.max(h120, h60); if(hedef < c*1.06 || !(stop > 0) || stop >= c || 1 - stop/c > .12) return null;
+    // hedef: en yakin direnc (20/40/60 gunluk tepelerden %6+ yukaridaki ilki, en fazla %30); uzak zirve ikinci hedef
+    const stop = l20 - .5*atr, hedef = [20, 40, 60].map(k => Math.max(...R.h.slice(-k))).filter(h => h >= c*1.06).sort((x, y) => x - y)[0], hedef2 = Math.max(h120, h60);
+    if(!hedef || hedef > c*1.3 || !(stop > 0) || stop >= c || 1 - stop/c > .12) return null;
     const rr = (hedef - c)/(c - stop); if(rr < 1.5) return null;
     const neden = [trend ? "yükseliş trendinde (50 > 200 günlük)" : null, gg > 0 ? `son 3 ayda endeksten ${yz(gg, 0)} güçlü` : null, `RSI ${Math.round(r)} · 50 günlüğe geri çekilmiş`, x.fk > 0 && x.fk < 12 ? `F/K ${x.fk.toFixed(1)}` : null].filter(Boolean);
     return { k:"BIST:" + x.kod, kod:x.kod, fiyat:+c.toFixed(2), hedef:+hedef.toFixed(2), hedef2:+hedef2.toFixed(2), stop:+stop.toFixed(2), pot:+((hedef/c - 1)*100).toFixed(1), pot2:+((hedef2/c - 1)*100).toFixed(1), zarar:+((1 - stop/c)*100).toFixed(1), rr:+rr.toFixed(2), rsi:Math.round(r), gg:+(gg*100).toFixed(1), fk:x.fk > 0 ? +x.fk.toFixed(1) : null, neden }; });
