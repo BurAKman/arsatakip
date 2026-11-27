@@ -4471,7 +4471,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 4.0.0";
+const SURUM_MORDOR = "v 4.0.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -28453,7 +28453,7 @@ function v4Yerlesim(){ const iz = app.querySelector(".pzIzgara"); if(!iz || app.
     <nav class="pzV4Nav" id="pzV4Nav"><div class="pzV4G" id="pzV4G"></div><div class="pzV4Alt"><div class="pzV4S" id="pzV4SK"></div><div class="pzV4Arac" id="pzV4Arac"></div></div></nav>
     <div class="pzV4Govde"><div class="pzV4Ana" id="pzV4Ana"></div><aside class="pzV4Sag" id="pzV4Sag"><section class="v4Raf"><header><b>📣 Duyurular</b><small>halka arz · temettü · bilanço</small></header><div id="pzDuyuruK"></div></section></aside></div>`;
   iz.before(w); const bar = iz.querySelector(".pzSekmeBar"), sk = document.getElementById("pzSekmeler"), ara = document.getElementById("pzAra");
-  if(sk) document.getElementById("pzV4SK").appendChild(sk); if(ara) document.getElementById("pzV4Arac").appendChild(ara); bar?.querySelectorAll(".pzIkon").forEach(b => document.getElementById("pzV4Arac").appendChild(b)); bar?.remove();
+  if(sk) document.getElementById("pzV4SK").appendChild(sk); if(ara) document.getElementById("pzV4Arac").appendChild(ara); bar?.querySelectorAll(".pzIkon").forEach(b => { b.title = "Fiyatları yenile"; b.classList.add("v4Yenile"); b.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><polyline points="20 4 20 11 13 11"/></svg><span>Yenile</span>`; document.getElementById("pzV4Arac").appendChild(b); }); bar?.remove();
   document.getElementById("pzV4Ana").appendChild(iz);
   const gece = document.getElementById("pzGece")?.closest("section"); if(gece){ gece.classList.add("v4Raf"); document.getElementById("pzV4Sag").appendChild(gece); }
   const olay = document.getElementById("pzOlayK")?.closest("section"); if(olay){ olay.classList.add("v4Raf"); document.getElementById("pzV4Sag").appendChild(olay); }
@@ -28526,6 +28526,10 @@ body.pc .pzV4 .v3LabUst h3,body.pc .pzV4 .v3OgUst h3{display:none}
 .pzV4 .v3HazirL button{border-left:3px solid #5B9DFF!important;background:rgba(91,157,255,.06)!important}
 .pzV4 .v3EnL button{border-left:3px solid #4FD08A!important;background:rgba(79,208,138,.05)!important}
 .pzV4 .v3Oz{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))!important}
+/* tekrar edenler kalkti: sol menudeki kisayol tuslari (ust menude var), Ozet'teki Firsat radari (= Bay Pipo onerileri), raftaki Olaylar (= Duyurular) ve bilanco listesi (= Yaklasanlar), ozet kartindaki ihaleler (= ust seritte Ihale avcisi) */
+.pzGezHizli{display:none!important}
+.pzV4 .pzYan > section:has(#pzRadar),.pzV4Sag > section:has(#pzOlayK),.v4Raf .pzBilanco,.v3Oz .pzAoSat:has(.pzAoIhL){display:none!important}
+.v4Yenile{display:inline-flex!important;align-items:center;gap:6px;width:auto!important;padding:0 12px!important;font-size:12.5px;font-weight:600}
 /* --- telefon: onizleme --- */
 body:not(.pc) .pzV4G{display:none}
 body:not(.pc) .pzV4Nav{border-radius:12px}body:not(.pc) .pzV4Nav.bos{display:none}
