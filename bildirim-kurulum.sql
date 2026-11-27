@@ -28,3 +28,7 @@ alter table public.bildirim_anahtar enable row level security;   -- kural yok = 
 
 create or replace view public.bildirim_pub as select pub from public.bildirim_anahtar where id = 1;
 grant select on public.bildirim_pub to authenticated;
+
+-- v3.2.1 · AI araştırmalı hedef fiyatlar herkes için ortak: herkes okuyabilir (sadece kaynak = 'hedef' satırları)
+drop policy if exists hedef_herkes_okur on public.piyasa_analiz;
+create policy hedef_herkes_okur on public.piyasa_analiz for select to authenticated using (kaynak = 'hedef');
