@@ -3774,12 +3774,13 @@ body.pc .pzDokB{display:flex;align-items:center;gap:8px}body.pc .pzDokB b{font-s
 body.pc .pzDokK p{font-size:12px;line-height:1.45;margin:6px 0 4px;color:#C9C7CC}
 .pzBistS{margin:0 0 12px;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);font-size:12.5px;color:#D9D7DC}
 .pzBistS.bekle{border-color:rgba(224,85,85,.45);background:rgba(224,85,85,.06)}.pzBistS.haz{border-color:rgba(230,180,60,.5);background:rgba(230,180,60,.06)}.pzBistS.gir{border-color:rgba(70,190,120,.55);background:rgba(70,190,120,.07)}
-.pzBistSB{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px}.pzBistSB b{font-size:14px;color:#fff}.pzBistSB span{color:#8E8C93;font-size:12px}
+.pzSinyaller{display:flex;flex-direction:column;gap:8px;margin:0 0 12px}.pzSinyaller .pzBistS{margin:0}.pzBistSB{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px;cursor:pointer;list-style:none}.pzBistSB::-webkit-details-marker{display:none}details.pzBistS:not([open]) .pzBistSB{margin-bottom:0}.pzBistSB b{font-size:14px;color:#fff}.pzBistSB span{color:#8E8C93;font-size:12px}
 .pzBistSA{color:#B9B7BE;margin-bottom:8px}.pzBistSL{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}.pzBistSL > div{display:grid;grid-template-columns:18px 1fr auto;gap:6px;align-items:baseline}
 .pzBistSL i{font-style:normal;font-weight:700}.pzBistSL .ok i{color:#46BE78}.pzBistSL .no i{color:#E05555}.pzBistSL small{color:#8E8C93;text-align:right}
 .pzBistSN{padding:7px 10px;border-radius:8px;background:rgba(0,0,0,.25);margin-bottom:8px}.pzBistSF > b{display:block;margin:4px 0 2px;color:#fff}.pzBistSF > small{display:block;color:#8E8C93;margin-bottom:4px}
 .pzBistSF table{width:100%;border-collapse:collapse;font-size:12px;color:inherit}.pzBistSF td:not(:last-child){white-space:nowrap}.pzBistSF th{text-align:left;color:#8E8C93;font-weight:500;padding:3px 6px;border-bottom:1px solid rgba(255,255,255,.08)}.pzBistSF td{padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.05)}
 .pzBistSF tr[onclick]{cursor:pointer}.pzBistSF tr[onclick]:hover{background:rgba(255,255,255,.05)}.pzBistSF .art{color:#46BE78}.pzBistSF .az{color:#E05555}.pzBistSZ{margin-top:6px;color:#77757C;font-size:11px}
+@media (max-width:700px){.pzBistSF thead{display:none}.pzBistSF tr{display:grid;grid-template-columns:auto auto 1fr 1fr;gap:2px 8px;padding:7px 2px;border-bottom:1px solid rgba(255,255,255,.07)}.pzBistSF td{border:0!important;padding:0!important;white-space:nowrap}.pzBistSF td:nth-child(5){display:none}.pzBistSF td:nth-child(6){grid-column:1/-1;white-space:normal}.pzBistSL > div{grid-template-columns:18px 1fr}.pzBistSL small{grid-column:2;text-align:left}}
 body.pc .pzBilanco{display:flex;flex-direction:column;gap:4px;margin:0 0 12px;padding:10px 14px;border-radius:12px;border:1px solid rgba(91,141,239,.45);background:rgba(91,141,239,.06)}
 body.pc .pzBilanco > b{font-size:12px;letter-spacing:.06em;color:#9DB8F5}body.pc .pzBilanco button{display:flex;gap:8px;align-items:center;background:none;border:0;color:#D9D7DC;font-size:12.5px;cursor:pointer;text-align:left;padding:2px 0}
 body.pc .pzOlayT.bilanco{background:rgba(91,141,239,.2);color:#9DB8F5}
@@ -3896,7 +3897,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.5.0";
+const SURUM_MORDOR = "v 2.6.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -24167,20 +24168,36 @@ function pzBilancoHtml(){ const L = pzBilancolar(); if(!L.length) return "";
   pzEkran = async function(){ const r = await eski.apply(this, arguments); const d = document.getElementById("pzDuyuruK"); if(d && !d.querySelector(".pzBilanco")) d.insertAdjacentHTML("beforeend", pzBilancoHtml());
     pzBilancoBildir(); return r; }; ekranlar.piyasa = pzEkran; }
 
-// v2.5 BIST giris sinyali + firsat listesi (bot her 3 saatte hesaplar, Piyasalar ekraninin en ustunde)
-function pzBistSinyalHtml(d){ const S = d?.bistSinyal; if(!S?.M) return ""; const F = d.bistFirsat || [], k = S.karar, sinif = k === "GİR" ? "gir" : k === "HAZIRLAN" ? "haz" : "bekle";
-  const ne = k === "GİR" ? "Kademeli gir: BIST payını 3'e böl, ilk dilimi bankalardan ya da aşağıdaki fırsatlardan seç." : k === "HAZIRLAN" ? "Şartlar düzeliyor: listeyi izle, 5 şart ✓ olunca ilk küçük dilimi al." : "Yeni BIST alımı yapma: para şimdilik faizde ya da mevcut sepette daha iyi duruyor.";
+// v2.6 Piyasa sinyalleri: BIST + kripto + NASDAQ (bot 3 saatte bir hesaplar, Piyasalar ekraninin en ustunde, acilir kartlar)
+const PZ_SIN = { bist:{ ad:"🇹🇷 BIST", alan:"bistSinyal",
+    ne:{ "GİR":"Kademeli gir: BIST payını 3'e böl, ilk dilimi bankalardan ya da aşağıdaki fırsatlardan seç.", "HAZIRLAN":"Şartlar düzeliyor: listeyi izle, 5 şart ✓ olunca ilk küçük dilimi al.", "BEKLE":"Yeni BIST alımı yapma: para şimdilik faizde ya da mevcut sepette daha iyi duruyor." } },
+  kripto:{ ad:"₿ Kripto", alan:"kriptoSinyal",
+    ne:{ "GİR":"Hava uygun: trade ve kısa vadeli işlemler için ortam olumlu. Kumbara alımın her durumda planına göre devam.", "HAZIRLAN":"Karışık: kısa vadeli işlemde temkinli ol, pozisyonu küçük tut. Kumbara alımı planına göre devam.", "BEKLE":"Hava kötü: kısa vadeli işlemlerden uzak dur. Kumbara alımı (BTC/ETH/SOL) planına göre küçük küçük devam; dipten toplamanın zamanı bu tür dönemler." } },
+  nasdaq:{ ad:"🇺🇸 NASDAQ", alan:"nasdaqSinyal",
+    ne:{ "GİR":"Hava uygun: ABD sepetine (GOOGL/TSM/ANT) normal alımlarını yap, istersen hızlandır.", "HAZIRLAN":"Karışık: düzenli küçük alımlara devam, toplu alım için acele etme.", "BEKLE":"Hava kötü: toplu alım yapma; küçük düzenli alım ve sabır. Sert düşüşler uzun vadede ucuzdan toplama fırsatıdır." } } };
+function pzSinyalKart(tip, S, F){ if(!S?.M) return ""; const T = PZ_SIN[tip], k = S.karar, sinif = k === "GİR" ? "gir" : k === "HAZIRLAN" ? "haz" : "bekle";
   const tl = v => v == null ? "—" : (+v).toLocaleString("tr-TR", { minimumFractionDigits:2, maximumFractionDigits:2 }), vg = v => String(v).replace(".", ",");
-  return `<div class="pzBistS ${sinif}"><div class="pzBistSB"><b>🇹🇷 BIST giriş sinyali: ${k}</b><span>${S.puan}/${S.maks} şart</span></div>
-    <div class="pzBistSA">Dolar bazlı BIST 100: <b>${tl(S.usd)} $</b> · son 5 yılın dibi ${tl(S.dip)} $ · dolar/TL ${tl(S.kur)}</div>
-    <div class="pzBistSL">${S.M.map(m => `<div class="${m.ok ? "ok" : "no"}"><i>${m.ok ? "✓" : "✗"}</i><span>${esc(m.ad)}</span><small>${esc(m.deger)}</small></div>`).join("")}</div>
-    <div class="pzBistSN">👉 ${ne}</div>
-    ${F.length ? `<div class="pzBistSF"><b>Alım fırsatı görünen hisseler</b>${k === "GİR" ? "" : "<small>Sinyal gelene kadar bu liste sadece izleme içindir.</small>"}
+  const ust = tip === "bist" ? `Dolar bazlı BIST 100: <b>${tl(S.usd)} $</b> · son 5 yılın dibi ${tl(S.dip)} $ · dolar/TL ${tl(S.kur)}` : tip === "kripto" ? `BTC <b>${(S.btc || 0).toLocaleString("tr-TR")} $</b>${S.fg ? ` · korku-açgözlülük ${S.fg.v} (${esc(S.fg.ad)})` : ""}` : `QQQ <b>${tl(S.qqq)} $</b>${S.vix ? ` · VIX ${vg(S.vix)}` : ""}`;
+  const fr = tip !== "bist" ? "" : (F || []).length ? `<div class="pzBistSF"><b>Alım fırsatı görünen hisseler</b>${k === "GİR" ? "" : "<small>Sinyal gelene kadar bu liste sadece izleme içindir.</small>"}
       <table><thead><tr><th>Hisse</th><th>Fiyat</th><th>Hedef</th><th>Zarar kes</th><th>Ödül/risk</th><th>Neden</th></tr></thead><tbody>${F.map(f => `<tr onclick="go('piyasaDetay','${f.k}')"><td><b>${esc(f.kod)}</b></td><td>${tl(f.fiyat)} ₺</td><td class="art">${tl(f.hedef)} ₺ <small>+%${vg(f.pot)}</small></td><td class="az">${tl(f.stop)} ₺ <small>-%${vg(f.zarar)}</small></td><td>${vg(f.rr)}</td><td><small>${(f.neden || []).map(esc).join(" · ")}</small></td></tr>`).join("")}</tbody></table></div>`
-      : `<div class="pzBistSF"><small>Şu an kriterlere (trend + sağlıklı geri çekilme + ödül/risk ≥ 1,5) uyan hisse yok.</small></div>`}
-    <div class="pzBistSZ">Bot 3 saatte bir hesaplar · son: ${new Date(S.t).toLocaleString("tr-TR", { dateStyle:"short", timeStyle:"short" })} · makro veri: ${esc(S.makro?.enfAy || "")} TÜFE, faiz %${S.makro?.faiz ?? "—"}</div></div>`; }
+      : `<div class="pzBistSF"><small>Şu an kriterlere (trend + sağlıklı geri çekilme + ödül/risk ≥ 1,5) uyan hisse yok.</small></div>`;
+  return `<details class="pzBistS ${sinif}" data-tip="${tip}"${pzLS.oku("pzSinAcik", {})[tip] ? " open" : ""} ontoggle="const o = pzLS.oku('pzSinAcik', {}); o['${tip}'] = this.open; pzLS.yaz('pzSinAcik', o)">
+    <summary class="pzBistSB"><b>${T.ad} sinyali: ${k}</b><span>${S.puan}/${S.maks} şart ▾</span></summary>
+    <div class="pzBistSA">${ust}</div>
+    <div class="pzBistSL">${S.M.map(m => `<div class="${m.ok ? "ok" : "no"}"><i>${m.ok ? "✓" : "✗"}</i><span>${esc(m.ad)}</span><small>${esc(m.deger)}</small></div>`).join("")}</div>
+    <div class="pzBistSN">👉 ${T.ne[k] || ""}</div>${fr}
+    <div class="pzBistSZ">Bot 3 saatte bir hesaplar · son: ${new Date(S.t).toLocaleString("tr-TR", { dateStyle:"short", timeStyle:"short" })}${tip === "bist" ? ` · makro: ${esc(S.makro?.enfAy || "")} TÜFE, faiz %${S.makro?.faiz ?? "—"}` : S.makro?.tarih ? ` · Fed notu: ${esc(S.makro.tarih)}` : ""}</div></details>`; }
+function pzSinyallerHtml(d){ if(!d) return ""; const h = ["bist", "kripto", "nasdaq"].map(t => pzSinyalKart(t, d[PZ_SIN[t].alan], t === "bist" ? d.bistFirsat : null)).join(""); return h ? `<div class="pzSinyaller">${h}</div>` : ""; }
+const pzBistSinyalHtml = d => pzSinyalKart("bist", d?.bistSinyal, d?.bistFirsat);   // eski cagrilar icin
+// sinyal degisince ve yeni BIST firsati cikinca bildirim (uygulama ici + sistem bildirimi)
+function pzSinyalBildir(d){ if(!d) return; const o = pzLS.oku("pzSinBildir", {}), mesaj = [];
+  for(const t of ["bist", "kripto", "nasdaq"]){ const S = d[PZ_SIN[t].alan]; if(!S?.karar) continue; if(o[t] && o[t] !== S.karar) mesaj.push(`${PZ_SIN[t].ad} sinyali ${o[t]} → ${S.karar}`); o[t] = S.karar; }
+  const fr = (d.bistFirsat || []).map(f => f.kod), eski = o.fr || []; const yeniF = o.fr ? fr.filter(k => !eski.includes(k)) : []; if(yeniF.length) mesaj.push(`Yeni BIST fırsatı: ${yeniF.join(", ")}`); o.fr = fr;
+  pzLS.yaz("pzSinBildir", o); if(!mesaj.length) return;
+  try{ toast("📣 " + mesaj.join(" · ")); }catch(e){}
+  try{ if(window.Notification && Notification.permission === "granted") new Notification("Arsa Takip · Piyasa sinyali", { body:mesaj.join("\n") }); else if(window.Notification && Notification.permission === "default") Notification.requestPermission(); }catch(e){} }
 { const eski = pzEkran; pzEkran = async function(){ const r = await eski.apply(this, arguments);
-    try{ const b = await pzBotYukle(); const d = document.getElementById("pzDuyuruK"); if(d && !d.querySelector(".pzBistS")) d.insertAdjacentHTML("afterbegin", pzBistSinyalHtml(b?.row?.durum)); }catch(e){}
+    try{ const b = await pzBotYukle(), dur = b?.row?.durum; const d = document.getElementById("pzDuyuruK"); if(d && !d.querySelector(".pzSinyaller")) d.insertAdjacentHTML("afterbegin", pzSinyallerHtml(dur)); pzSinyalBildir(dur); }catch(e){}
     return r; }; ekranlar.piyasa = pzEkran; }
 function pzBilancoBildir(){ const o = pzLS.oku("pzBilBildir", {}); pzBilancolar(1).forEach(x => { const a = x.s.k + "|" + new Date(x.ms).toDateString(); if(o[a]) return; o[a] = 1;
   try{ new Notification(`Arsa Takip · ${x.s.kod} bilançosu ${x.kalan <= 0 ? "bugün" : "yarın"}`, { body:"Bilanço öncesi ve sonrası fiyat sert oynayabilir. Pozisyonunu ve zarar kesini kontrol et." }); }catch(e){} }); pzLS.yaz("pzBilBildir", o); }
@@ -25017,7 +25034,9 @@ const BM_KASA = {
   her:{ ad:"🎰 Piyango kasası", ozet:"Nadir ama büyük vuruş. Hacimle gelen sert kırılımları yakalamaya çalışır; çoğu zaman bekler.",
     kural:["Aynı anda en fazla 5 işlem", "Her işlemde kasanın en fazla %2'si riske girer", "Canlıda kanıtlanmış fırsatta risk 2 katına çıkar (en fazla kasanın %20'si)", "Kripto + BIST sinyalleri"] },
   kumar:{ ad:"🎲 Kumar kasası", ozet:"Sık işlem. 20+ indikatöre bakan öğrenen model karar verir; para, kazanma ihtimaline göre ayarlanır.",
-    kural:["Aynı anda en fazla 3 işlem", "Her işlemde en fazla %2 risk ve kasanın en fazla %15'i", "BTC düşüş trendindeyse en fazla 2 işlem ve yarım pozisyon", "Model kazanma ihtimalini düşük görürse hiç girmez"] } };
+    kural:["Aynı anda en fazla 3 işlem", "Her işlemde en fazla %2 risk ve kasanın en fazla %15'i", "BTC düşüş trendindeyse en fazla 2 işlem ve yarım pozisyon", "Model kazanma ihtimalini düşük görürse hiç girmez"] },
+  trader:{ ad:"⚡ Trader kasası", ozet:"Gün içi al-sat. 15 dakikalık ve 1 saatlik mumlarla birkaç saatlik işlemler; küçük ama sık kazanç arar.",
+    kural:["Aynı anda en fazla 3 işlem", "Her işlemde kasanın en fazla %1,5'i riske girer, en fazla %33'ü bağlanır", "Sadece ileri testi geçen kısa vadeli stratejilerle girer", "Komisyon + kayma payı her işlemden %0,3 düşülür"] } };
 const BM_FREN = ["Üst üste 3 kayıp → 24 saat mola", "Kasa zirvesinden %15 düşerse → yarım pozisyon", "Zarar kesen coine → 24 saat tekrar girilmez"];
 function bmKasa(tip, K){ if(!K) return ""; const T = BM_KASA[tip];
   const kz = K.bakiye - K.bas, kzY = (K.bakiye/K.bas - 1)*100, turlar = K.turlar || [], acikPara = (K.acik || []).reduce((t, p) => t + (+p.para || 0), 0);
@@ -25054,20 +25073,20 @@ function bmCiz(){
   const ort = L => L.length ? L.reduce((t, x) => t + x.net, 0)/L.length : null, oB = ort(bugunKap), isa = L => L.length ? Math.round(L.filter(x => x.net > 0).length/L.length*100) : null;
   const son = B.kapali.slice(-12).reverse();
   const sure = tf => { const a = A?.[tf]; const kn = r.kasa?.kanit?.[tf]; if(!a && (tf[0] === "d" || tf === "p4")) return `<div><b class="off">${pzStratAd(tf)}</b><small>bir sonraki eğitimde başlar</small></div>`; return `<div><b class="${a?.aktif || kn ? "on" : "off"}">${pzStratAd(tf)}: ${a?.aktif || kn ? "AÇIK" : "KAPALI"}</b><small>${kn ? `canlıda kanıtlandı · ayar ${kn.i + 1} · ${kn.n} işlem` : a?.te ? `ileri test ${pzYuzde(a.te.ort, 2)} / işlem` : "eğitim bekleniyor"}</small></div>`; };
-  const KL = K ? ["disiplin", "her", "kumar"].map(x => K[x]).filter(Boolean) : [], topBas = KL.reduce((t, x) => t + x.bas, 0), topSim = KL.reduce((t, x) => t + x.bakiye, 0), topKz = topSim - topBas;
+  const KL = K ? ["disiplin", "her", "kumar", "trader"].map(x => K[x]).filter(Boolean) : [], topBas = KL.reduce((t, x) => t + x.bas, 0), topSim = KL.reduce((t, x) => t + x.bakiye, 0), topKz = topSim - topBas;
   const ayi = d.rejim === 2, piyasa = d.rejim ? (ayi ? `🐻 BTC düşüş trendinde: bot temkinli, az ve küçük işlem açar.` : `🐂 BTC yükseliş trendinde: bot normal çalışır.`) : "";
   const poz = K ? bmPoz(K.disiplin, "Disiplinli") + bmPoz(K.her, "Piyango") + bmPoz(K.kumar, "Kumar") : "";
   const gec = K ? [["Disiplinli", K.disiplin], ["Piyango", K.her], ["Kumar", K.kumar]].map(([a, x]) => bmGecmis(x, a)).join("") : "";
   k.innerHTML = `
     <div class="bmDurum ${akt ? "ok" : "kapali"}"><b>${akt ? "✅ Bot çalışıyor" : "⚠ Bot son " + bmOnce(r.son_tarama) + " çalıştı"}</b> · ${bmOnce(r.son_tarama)} ${d.taranan || 0} coin taradı · tamamen sanal para, gerçek işlem yok</div>
     ${KL.length ? `<div class="bmHero"><small>3 kasa toplam</small><b class="${topKz >= 0 ? "art" : "az"}">${bmTl(topSim)}</b><span class="${topKz >= 0 ? "art" : "az"}">${topKz >= 0 ? "+" : "−"}${bmTl(Math.abs(topKz))} (${pzYuzde((topSim/topBas - 1)*100, 1)})</span><em>Başlangıç ${bmTl(topBas)} · her kasa ${bmTl(KL[0].bas)}</em>${piyasa ? `<p>${piyasa}</p>` : ""}</div>` : ""}
-    ${K ? bmKasa("disiplin", K.disiplin) + bmKasa("her", K.her) + bmKasa("kumar", K.kumar) + `<div class="bmFren"><b>🛑 Üç kasada ortak frenler</b>${BM_FREN.map(f => `<span>${f}</span>`).join("")}</div>` : `<div class="bmBos">Kasalar bir sonraki taramada oluşacak.</div>`}
+    ${K ? bmKasa("disiplin", K.disiplin) + bmKasa("her", K.her) + bmKasa("kumar", K.kumar) + bmKasa("trader", K.trader) + `<div class="bmFren"><b>🛑 Üç kasada ortak frenler</b>${BM_FREN.map(f => `<span>${f}</span>`).join("")}</div>` : `<div class="bmBos">Kasalar bir sonraki taramada oluşacak.</div>`}
     <div class="bmBas">Şu an açık işlemler</div><div class="bmAlt" style="margin:-4px 2px 8px">İşlem hedefe ya da stopa değerse hemen kapanır; ikisine de değmezse “en geç” saatinde o anki fiyattan kapanır.</div>
     <div class="bmL">${poz || `<div class="bmBos">Açık işlem yok, bot fırsat bekliyor.</div>`}</div>
     ${gec ? `<div class="bmBas">Kasaların son işlemleri</div><div class="bmL">${gec}</div>` : ""}
     <div class="bmBas">Gerçek paraya geçiş</div>${pzGecisKontrol()}
     <details class="bmDetay"><summary>Teknik detay (stratejiler ve tüm denemeler)</summary>
-      ${pzRejimHtml(d)}<div class="bmSure">${sure("g1")}${sure("g3")}</div><div class="bmSure" style="margin-top:8px">${sure("d1")}${sure("d3")}</div><div class="bmSure" style="margin-top:8px">${sure("p4")}${sure("bp")}</div><div class="bmSure" style="margin-top:8px">${sure("pd")}${sure("bd")}</div><div class="bmSure" style="margin-top:8px">${sure("k4")}${sure("kb")}</div>
+      ${pzRejimHtml(d)}<div class="bmSure">${sure("g1")}${sure("g3")}</div><div class="bmSure" style="margin-top:8px">${sure("d1")}${sure("d3")}</div><div class="bmSure" style="margin-top:8px">${sure("p4")}${sure("bp")}</div><div class="bmSure" style="margin-top:8px">${sure("pd")}${sure("bd")}</div><div class="bmSure" style="margin-top:8px">${sure("t1")}${sure("t2")}${sure("t3")}</div><div class="bmSure" style="margin-top:8px">${sure("k4")}${sure("kb")}</div>
       <div class="bmBas">Bugün tüm sanal denemeler</div>
       <div class="bmAlt" style="margin:-4px 2px 8px">Bot her sinyali kasadan bağımsız olarak da dener; stratejileri bu denemelerle ölçer. Kasaya sadece en iyileri girer.</div>
       <div class="bmOzet"><div><b>${bugunAc.length}</b><span>bugün açılan</span></div><div><b>${bugunKap.length}</b><span>bugün sonuçlanan</span></div>
@@ -25099,13 +25118,13 @@ document.addEventListener("visibilitychange", () => { try{ if(document.visibilit
 /* ================= v1.5.2 · 4 STRATEJI + BTC TREND FILTRESI =================
    Bot artik 2 strateji ailesini ayni anda dener: tepe kirilimi (g1/g3) ve dipten donus (d1/d3). Her ayarda BTC trend filtresi de denenir.
    Kasalar ve gercege gecis listesi hepsini birlikte degerlendirir; hangi strateji ileri testte ve canlida tutarsa o acilir. */
-PZ_ALGO_TF.d1 = { ...PZ_ALGO_TF.g1, ad:"Dipten dönüş · 24 saat" }; PZ_ALGO_TF.p4 = { ...PZ_ALGO_TF.g3, ad:"Piyango · 1 hafta", Lb:42 }; PZ_ALGO_TF.bp = { ...PZ_ALGO_TF.g3, iv:"1d", ad:"Piyango · BIST 2 hafta", Lb:20 }; PZ_ALGO_TF.pd = { ...PZ_ALGO_TF.g3, ad:"Piyango · dipten dönüş (kripto)", Lb:42 }; PZ_ALGO_TF.bd = { ...PZ_ALGO_TF.g3, iv:"1d", ad:"Piyango · dipten dönüş (BIST)", Lb:20 }; PZ_ALGO_TF.k4 = { ...PZ_ALGO_TF.g3, ad:"Kumar · kripto" }; PZ_ALGO_TF.kb = { ...PZ_ALGO_TF.g3, iv:"1d", ad:"Kumar · BIST" }; PZ_ALGO_TF.d3 = { ...PZ_ALGO_TF.g3, ad:"Dipten dönüş · 2-3 gün" };
-const pzStratAd = tf => ({ g1:"Kırılım · 24 saat", g3:"Kırılım · 2-3 gün", d1:"Dipten dönüş · 24 saat", d3:"Dipten dönüş · 2-3 gün", p4:"Piyango · 1 hafta", bp:"Piyango · BIST 2 hafta", pd:"Piyango · dipten dönüş (kripto)", bd:"Piyango · dipten dönüş (BIST)", k4:"Kumar · indikatör konseyi (kripto)", kb:"Kumar · indikatör konseyi (BIST)" })[tf] || tf;
+PZ_ALGO_TF.d1 = { ...PZ_ALGO_TF.g1, ad:"Dipten dönüş · 24 saat" }; PZ_ALGO_TF.p4 = { ...PZ_ALGO_TF.g3, ad:"Piyango · 1 hafta", Lb:42 }; PZ_ALGO_TF.bp = { ...PZ_ALGO_TF.g3, iv:"1d", ad:"Piyango · BIST 2 hafta", Lb:20 }; PZ_ALGO_TF.pd = { ...PZ_ALGO_TF.g3, ad:"Piyango · dipten dönüş (kripto)", Lb:42 }; PZ_ALGO_TF.bd = { ...PZ_ALGO_TF.g3, iv:"1d", ad:"Piyango · dipten dönüş (BIST)", Lb:20 }; PZ_ALGO_TF.t1 = { ...PZ_ALGO_TF.g1, iv:"15m", ad:"Trader · kırılım 15 dk", Lb:16 }; PZ_ALGO_TF.t2 = { ...PZ_ALGO_TF.g1, iv:"15m", ad:"Trader · dipten dönüş 15 dk", Lb:16 }; PZ_ALGO_TF.t3 = { ...PZ_ALGO_TF.g1, ad:"Trader · dipten dönüş 1 saat" }; PZ_ALGO_TF.k4 = { ...PZ_ALGO_TF.g3, ad:"Kumar · kripto" }; PZ_ALGO_TF.kb = { ...PZ_ALGO_TF.g3, iv:"1d", ad:"Kumar · BIST" }; PZ_ALGO_TF.d3 = { ...PZ_ALGO_TF.g3, ad:"Dipten dönüş · 2-3 gün" };
+const pzStratAd = tf => ({ g1:"Kırılım · 24 saat", g3:"Kırılım · 2-3 gün", d1:"Dipten dönüş · 24 saat", d3:"Dipten dönüş · 2-3 gün", p4:"Piyango · 1 hafta", bp:"Piyango · BIST 2 hafta", pd:"Piyango · dipten dönüş (kripto)", bd:"Piyango · dipten dönüş (BIST)", t1:"Trader · kırılım 15 dk", t2:"Trader · dipten dönüş 15 dk", t3:"Trader · dipten dönüş 1 saat", k4:"Kumar · indikatör konseyi (kripto)", kb:"Kumar · indikatör konseyi (BIST)" })[tf] || tf;
 const pzRjAd = r => r === 1 ? "BTC yükselişteyken" : r === 2 ? "BTC düşüşteyken" : "BTC'ye bakmadan";
 function pzRejimHtml(d){ if(!d?.rejim) return ""; const y = d.rejim === 1;
   return `<div class="bmDurum ${y ? "ok" : "kapali"}" style="margin:0 0 8px"><b>${y ? "🐂 BTC yükseliş trendinde" : "🐻 BTC düşüş trendinde"}</b> · 4 saatlik 50 mumluk ortalamanın ${d.btcFark != null ? `%${Math.abs(d.btcFark).toLocaleString("tr-TR", { maximumFractionDigits:1 })} ` : ""}${y ? "üstünde" : "altında"}${(d.acikStrateji || []).length ? "" : " · şu an hiçbir strateji açık değil: program nakitte bekliyor"}</div>`; }
-function pzKuralYazi(tf, P){ const X = pzAlgo()?.[tf]; if(X?.tip === "ml") return X.w ? `kazanma olasılığı %${Math.round(X.esik*100)} üstü olunca gir · en etkili: ${(X.onem || []).slice(0, 4).map(o => o.ad + (o.w > 0 ? " ↑" : " ↓")).join(", ")} · ${nf(X.ornek || 0)} geçmiş örnekten, ${X.ozellik || 23} göstergeyle öğrendi${X.cikis?.ad ? " · çıkış: " + X.cikis.ad : ""}` : (X.hata || "henüz eğitilmedi"); if(!P) return "henüz eğitilmedi"; const T = PZ_ALGO_TF[tf], s = T.iv === "1h" ? "saatlik" : T.iv === "1d" ? "günlük" : "4 saatlik";
-  if(tf[0] === "d") return `RSI ${P.rsiMin}'in altına düşmüş · son ${T.Lb} ${s} mumun tepesinden oynaklığın ${pzVirgul(P.dusK)} katı aşağıda${P.yesil ? " · son mum yeşil kapanmış" : ""} · ${pzRjAd(P.rj)} · hedef ${pzVirgul(P.hedefK)}× · zarar kes ${pzVirgul(P.stopK)}×`;
+function pzKuralYazi(tf, P){ const X = pzAlgo()?.[tf]; if(X?.tip === "ml") return X.w ? `kazanma olasılığı %${Math.round(X.esik*100)} üstü olunca gir · en etkili: ${(X.onem || []).slice(0, 4).map(o => o.ad + (o.w > 0 ? " ↑" : " ↓")).join(", ")} · ${nf(X.ornek || 0)} geçmiş örnekten, ${X.ozellik || 23} göstergeyle öğrendi${X.cikis?.ad ? " · çıkış: " + X.cikis.ad : ""}` : (X.hata || "henüz eğitilmedi"); if(!P) return "henüz eğitilmedi"; const T = PZ_ALGO_TF[tf], s = T.iv === "1h" ? "saatlik" : T.iv === "1d" ? "günlük" : T.iv === "15m" ? "15 dakikalık" : "4 saatlik";
+  if(X?.tip === "dip" || tf[0] === "d") return `RSI ${P.rsiMin}'in altına düşmüş · son ${T.Lb} ${s} mumun tepesinden oynaklığın ${pzVirgul(P.dusK)} katı aşağıda${P.yesil ? " · son mum yeşil kapanmış" : ""} · ${pzRjAd(P.rj)} · hedef ${pzVirgul(P.hedefK)}× · zarar kes ${pzVirgul(P.stopK)}×`;
   return `${Math.round(T.Lb*P.L)} ${s} mumun tepesini kırınca · hacim ${pzVirgul(P.hk)}× · RSI<${P.rsiMax} · ${pzRjAd(P.rj)} · hedef ${pzVirgul(P.hedefK)}× · zarar kes ${pzVirgul(P.stopK)}×`; }
 // PC algoritma ekrani: 4 stratejinin yarisi
 { const eski = pzAlgoHtml; pzAlgoHtml = function(){ let h = eski(); const A = pzAlgo(), S = pzSanal(), r = PZ.bot?.row, K = r?.kasa?.kanit || {}; if(!A?.surum) return h;
@@ -25113,7 +25132,7 @@ function pzKuralYazi(tf, P){ const X = pzAlgo()?.[tf]; if(X?.tip === "ml") retur
     const sat = tf => { const X = A[tf], L = S.kapali.filter(x => x.alt === tf && x.algo === A.surum), n = L.length, o = n ? L.reduce((t, x) => t + x.net, 0)/n : null, ac = X?.aktif || K[tf];
       return `<tr><td><b>${pzStratAd(tf)}</b><small class="pzAlt">${esc(pzKuralYazi(tf, X?.P))}</small></td><td class="sag">${st(X?.te)}</td><td class="sag">${n ? `<span class="${o > 0 ? "art" : "az"}">${pzYuzde(o, 2)}</span> <small>(${n})</small>` : "birikiyor"}</td><td>${!X ? `<span class="soluk">sonraki eğitimde</span>` : ac ? `<span class="pzNeK yesil">AÇIK</span>` : `<span class="pzNeK kirmizi">KAPALI</span>`}</td></tr>`; };
     const tablo = `${pzRejimHtml(r?.durum).replace('class="bmDurum', 'class="pzBot').replace(/ style="[^"]*"/, "")}<div class="pzMini">🏁 Strateji yarışı · 8 strateji aynı anda sanal deneniyor · hangisi ileri testte ve canlıda kazandırırsa o açılır</div>
-      <table class="pzT"><thead><tr><th>Strateji · en iyi ayar</th><th class="sag">İleri test</th><th class="sag">Canlı sanal</th><th>Durum</th></tr></thead><tbody>${["g1", "g3", "d1", "d3", "p4", "bp", "pd", "bd", "k4", "kb"].map(sat).join("")}</tbody></table>`;
+      <table class="pzT"><thead><tr><th>Strateji · en iyi ayar</th><th class="sag">İleri test</th><th class="sag">Canlı sanal</th><th>Durum</th></tr></thead><tbody>${["g1", "g3", "d1", "d3", "p4", "bp", "pd", "bd", "t1", "t2", "t3", "k4", "kb"].map(sat).join("")}</tbody></table>`;
     h = h.replace(/giriş kuralını her saatte yeniden oynatıp [0-9.]+ farklı ayarı deniyor/, "8 stratejiyi her gün yeniden eğitiyor: kriptoda tepe kırılımı ve dipten dönüş (24 saat / 2-3 gün), küçük coinlerde 1 haftalık piyango, BIST'te 2 haftalık piyango (toplam 6.912 ayar), ayrıca kripto ve BIST için TradingView'in klasik indikatörlerinden (EMA, MACD, RSI, Supertrend, UT Bot, Squeeze, ADX, Bollinger, Ichimoku, hacim, göreli güç) hangisinin ne zaman işe yaradığını geçmiş kazanan/kaybeden işlemlerden öğrenen bir model (Kumar)");
     return h.replace('<div class="pzKarne"><b>Nasıl çalışıyor?</b>', tablo + '<div class="pzKarne"><b>Nasıl çalışıyor?</b>'); }; }
 // gercege gecis listesi: disiplinli kasanin GERCEKTEN yaptigi islemlerle olculur (hangi strateji olursa olsun)
@@ -25134,7 +25153,7 @@ pzGecisKontrol = function(){
     ${tamam ? "" : `<small>Hepsi ✓ olana kadar bot sanal devam eder. Ölçü disiplinli kasanın gerçekten yaptığı işlemler; hepsi tamamlanmadan gerçek paraya geç demeyeceğim.</small>`}</div>`; };
 // "onerilen ayarlarla" kutusu: artik 4 strateji var; acik olani adiyla soyle
 { const eski = pzSanalKatlaHtml; pzSanalKatlaHtml = function(){ const h = eski(), A = pzAlgo(), K = PZ.bot?.row?.kasa?.kanit || {};
-    const acik = ["g1", "g3", "d1", "d3", "p4", "bp", "pd", "bd", "k4", "kb"].filter(tf => A?.[tf]?.aktif || K[tf]).map(pzStratAd);
+    const acik = ["g1", "g3", "d1", "d3", "p4", "bp", "pd", "bd", "t1", "t2", "t3", "k4", "kb"].filter(tf => A?.[tf]?.aktif || K[tf]).map(pzStratAd);
     return h.replace("Şu an iki süre de kapalı: program “bekle” diyor, 5.000 ₺ cepte duruyor.", acik.length ? `Açık strateji: ${acik.join(", ")}. Sinyal gelince disiplinli kasa girer; ilk işlemler sonuçlanınca burada görünür.` : "Şu an hiçbir strateji açık değil: program “bekle” diyor, 5.000 ₺ cepte duruyor."); }; }
 
 // canli sonuc AYARIN KENDISINE gore (bot 1.9.1+): her egitimde surum degisse de ayni ayarin canli islemleri birikir
@@ -25144,7 +25163,7 @@ const pzAyarKimlik = (tf, P) => tf + ":" + Object.keys(P || {}).sort().map(k => 
     return { n, ort: n ? L.reduce((t, x) => t + x.net, 0)/n : null, isabet: n ? L.filter(x => x.net > 0).length/n : null }; }; }
 { const eski = pzAlgoHtml; pzAlgoHtml = function(){ let h = eski(); const A = pzAlgo(); if(!A?.surum) return h;
     // strateji yarisi tablosundaki "canli sanal": en iyi ayarin (ayar 1) kendi canli sonucu
-    ["g1", "g3", "d1", "d3", "p4", "bp", "pd", "bd", "k4", "kb"].forEach(tf => { const c = A[tf]?.ilk5?.length ? pzAyarCanli(A, tf, 0) : null; if(!c) return;
+    ["g1", "g3", "d1", "d3", "p4", "bp", "pd", "bd", "t1", "t2", "t3", "k4", "kb"].forEach(tf => { const c = A[tf]?.ilk5?.length ? pzAyarCanli(A, tf, 0) : null; if(!c) return;
       const ad = pzStratAd(tf), i = h.indexOf(`<b>${ad}</b>`); if(i < 0) return; const j = h.indexOf("</tr>", i), satir = h.slice(i, j);
       const yeni = satir.replace(/(<td class="sag">)(?:birikiyor|<span[^>]*>[^<]*<\/span> <small>\(\d+\)<\/small>)(<\/td><td>(?:<span class="soluk">|<span class="pzNeK))/, `$1${c.n ? `<span class="${c.ort > 0 ? "art" : "az"}">${pzYuzde(c.ort, 2)}</span> <small>(${c.n} · %${Math.round(c.isabet*100)})</small>` : "birikiyor"}$2`);
       h = h.slice(0, i) + yeni + h.slice(j); });
