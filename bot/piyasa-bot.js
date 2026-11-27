@@ -353,7 +353,8 @@ const KASA_BAS = 50000, KASA_BATTI = 1000, SAAT = 3600000;
 const KASA_AYAR = { disiplin:{ risk:5, maks:2, payTavan:.33, ad:"Disiplinli" },
                     her:{ risk:2, maks:5, ad:"Piyango", buyukKat:2, tavan:.2 },
                     kumar:{ risk:2, maks:3, ad:"Kumar", kelly:.25, tavan:.15, ayiMaks:2, ayiKat:.5 },
-                    trader:{ risk:1.5, maks:3, payTavan:.33, ad:"Trader" } };
+                    trader:{ risk:1.5, maks:3, payTavan:.33, ad:"Trader" },
+                    karma:{ risk:2.5, maks:5, payTavan:.25, ad:"Ana kasa (karma)" } };   // v2.12: disiplinli (swing) + trader (gun ici) + aktif ogrenen model; "nihai bot" adayi
 const BUYUK = /^KRIPTO:(BTC|ETH|SOL|XRP|BNB|ADA|DOGE|TRX|LTC|AVAX|LINK|DOT|BCH|SUI|TON|XLM|HBAR)$/;   // birlikte hareket eden buyukler: kasa basina ayni anda 1
 const FREN = { seri:3, seriSaat:24, dusus:.15, dususKat:.5, sogukSaat:24 };
 // canli kanit: ayarin KENDISINE gore (surum/sira degil). Egitim ayni ayari tekrar secerse gecmis canli sonuclari birikmeye devam eder.
@@ -711,17 +712,24 @@ async function oneriler(B, N, C, eski){ const t0 = Date.now(), R = { t:Date.now(
   const traderAday = sira(T1.eklenen.filter(x => { if(!TRADER.has(x.alt)) return false; const k = kanit[x.alt]; if(k) return x.ai === k.i; if(A[x.alt]?.aktif) return x.ai === 0; return trDeneme(x); }).map(x => trDeneme(x) ? { ...x, deneme:true } : x));
   const kumarAday = T1.eklenen.filter(x => x.oz?.tip === "ml" && A[x.alt]?.aktif).sort((a, b) => b.oz.p - a.oz.p);   // kumar kasasi
   // kasadaki acik pozisyonlarin guncel durumu (ayni calismada acilip kapananlar dahil)
-  const idler = [...new Set([...(kasa.disiplin?.acik || []), ...(kasa.her?.acik || []), ...(kasa.kumar?.acik || []), ...(kasa.trader?.acik || [])].map(p => p.id))], kapanmis = {};
+  const idler = [...new Set([...(kasa.disiplin?.acik || []), ...(kasa.her?.acik || []), ...(kasa.kumar?.acik || []), ...(kasa.trader?.acik || []), ...(kasa.karma?.acik || [])].map(p => p.id))], kapanmis = {};
   for(let i = 0; i < idler.length; i += 100){ const L = await sb(`piyasa_sanal?id=in.(${idler.slice(i, i + 100).join(",")})&select=id,durum,net,ct,neden`); (L || []).forEach(x => { if(x.durum === "kapali") kapanmis[x.id] = { net:+x.net, ct:new Date(x.ct).getTime(), neden:x.neden }; }); }
   // 5.000'lik eski donem -> 50.000'lik yeni kasa (eski ozet saklanir)
-  for(const k of ["disiplin", "her", "kumar", "trader"]) if(kasa[k] && kasa[k].bas !== KASA_BAS && !kasa[k].turlar?.some(t => t.bas === KASA_BAS)){ const o = kasa[k]; kasa[k] = { ...kasaYeni(), eski:{ bas:o.bas, son:+(+o.bakiye).toFixed(2), islem:(o.turlar || []).reduce((t, x) => t + (x.islem || 0), 0) + (o.islem || 0), bitis:Date.now() } }; }
+  for(const k of ["disiplin", "her", "kumar", "trader", "karma"]) if(kasa[k] && kasa[k].bas !== KASA_BAS && !kasa[k].turlar?.some(t => t.bas === KASA_BAS)){ const o = kasa[k]; kasa[k] = { ...kasaYeni(), eski:{ bas:o.bas, son:+(+o.bakiye).toFixed(2), islem:(o.turlar || []).reduce((t, x) => t + (x.islem || 0), 0) + (o.islem || 0), bitis:Date.now() } }; }
   const ortam = { rejim:RJ.simdi, simdi:Date.now() };
-  kasa.disiplin = kasaIsle(kasa.disiplin || kasaYeni(), kapanmis, disiplinAday, KASA_AYAR.disiplin, ortam); kasa.her = kasaIsle(kasa.her || kasaYeni(), kapanmis, herAday, KASA_AYAR.her, ortam); kasa.kumar = kasaIsle(kasa.kumar || kasaYeni(), kapanmis, kumarAday, KASA_AYAR.kumar, ortam); kasa.trader = kasaIsle(kasa.trader || kasaYeni(), kapanmis, traderAday, KASA_AYAR.trader, ortam); kasa.ayar = { surum:"2.6", KASA_AYAR, FREN }; kasa.kanit = kanit;
+  kasa.disiplin = kasaIsle(kasa.disiplin || kasaYeni(), kapanmis, disiplinAday, KASA_AYAR.disiplin, ortam); kasa.her = kasaIsle(kasa.her || kasaYeni(), kapanmis, herAday, KASA_AYAR.her, ortam); kasa.kumar = kasaIsle(kasa.kumar || kasaYeni(), kapanmis, kumarAday, KASA_AYAR.kumar, ortam); kasa.trader = kasaIsle(kasa.trader || kasaYeni(), kapanmis, traderAday, KASA_AYAR.trader, ortam);
+  { const gor = new Set(), karmaAday = [...disiplinAday.map(x => ({ ...x, kaynak:"swing" })), ...traderAday.filter(x => !x.deneme).map(x => ({ ...x, kaynak:"trader" })), ...kumarAday.map(x => ({ ...x, kaynak:"model" }))].filter(x => !gor.has(x.k) && gor.add(x.k));
+    kasa.karma = kasaIsle(kasa.karma || kasaYeni(), kapanmis, karmaAday, KASA_AYAR.karma, ortam); } kasa.ayar = { surum:"2.6", KASA_AYAR, FREN }; kasa.kanit = kanit;
   const eskiD = satir?.durum || {}, bistTaze = eskiD.bistSinyal?.t && Date.now() - eskiD.bistSinyal.t < 3*3600000 && eskiD.bistSinyal.makro?.faiz === MAKRO.faiz && eskiD.bistSinyal.makro?.enflasyon === MAKRO.enflasyon && !!eskiD.kriptoSinyal && eskiD.kriptoSinyal.makro?.fed === MAKRO_ABD.fed;
   let bistSin = bistTaze ? eskiD.bistSinyal : null, bistFr = bistTaze ? (eskiD.bistFirsat || []) : null, ksin = bistTaze ? eskiD.kriptoSinyal || null : null, nsin = bistTaze ? eskiD.nasdaqSinyal || null : null;
   if(!bistTaze){ if(RJB) bistSin = await bistSinyal(RJB).catch(e => { console.log("BIST sinyali hesaplanamadi:", e.message); return eskiD.bistSinyal || null; }); if(RJB) bistFr = await bistFirsat(ctx).catch(e => { console.log("BIST firsat taramasi olmadi:", e.message); return eskiD.bistFirsat || []; });
     ksin = await kriptoSinyal(ctx).catch(e => { console.log("kripto sinyali hesaplanamadi:", e.message); return eskiD.kriptoSinyal || null; });
     nsin = await nasdaqSinyal().catch(e => { console.log("NASDAQ sinyali hesaplanamadi:", e.message); return eskiD.nasdaqSinyal || null; });
+    // v2.12: karar degistiyse hangi sart bozuldu/duzeldi kaydet (ekranda "neden degisti" yazar)
+    const degis = (yeni, eski) => { if(!yeni || !eski?.karar) return yeni; if(yeni.karar === eski.karar){ if(eski.degisim) yeni.degisim = eski.degisim; return yeni; }
+      const ok = S => Object.fromEntries((S.M || []).map(m => [m.ad, !!m.ok])), A = ok(eski), B = ok(yeni);
+      yeni.degisim = { onceki:eski.karar, t:Date.now(), bozulan:Object.keys(B).filter(k => A[k] && !B[k]), duzelen:Object.keys(B).filter(k => !A[k] && B[k]) }; return yeni; };
+    bistSin = degis(bistSin, eskiD.bistSinyal); ksin = degis(ksin, eskiD.kriptoSinyal); nsin = degis(nsin, eskiD.nasdaqSinyal);
     if(ksin) console.log(`kripto sinyali: ${ksin.karar} (${ksin.puan}/${ksin.maks}) · korku ${ksin.fg?.v ?? "-"}`); if(nsin) console.log(`NASDAQ sinyali: ${nsin.karar} (${nsin.puan}/${nsin.maks}) · VIX ${nsin.vix ?? "-"}`);
     if(bistSin) console.log(`BIST giris sinyali: ${bistSin.karar} (${bistSin.puan}/${bistSin.maks}) · dolar bazli endeks ${bistSin.usd} $ · firsat ${bistFr.length}: ${bistFr.map(f => f.kod + " hedef " + f.hedef + " (" + f.pot + "%)").join(", ")}`); }
   // ihale avcisi: gunde bir kez (20 saatten eskiyse) tara, aradaki turlarda son sonucu tasi
@@ -735,6 +743,6 @@ async function oneriler(B, N, C, eski){ const t0 = Date.now(), R = { t:Date.now(
   if(ihale?.liste){ const n = await meDetayTamamla(ihale).catch(e => { console.log("ihale detay tamamlama:", e.message); return 0; }); if(n) console.log(`ihale detay: +${n} (toplam ${Object.keys(ihale.detay).length}/${ihale.liste.length})`); }
   const kayit = { user_id:UID, algo:A, kasa, son_tarama:new Date().toISOString(), ...(egitildi ? { son_egitim:new Date().toISOString() } : {}), durum:{ rejim:RJ.simdi, btcFark:+(RJ.fark*100).toFixed(2), acikStrateji:[...Object.keys(TF), ...Object.keys(KUMAR)].filter(tf => A[tf]?.aktif || kanit[tf]), bistRejim:RJB?.simdi || 0, bistFark:RJB ? +(RJB.fark*100).toFixed(2) : null, bist:T1.bist, bistSinyal:bistSin, bistFirsat:bistFr || [], kriptoSinyal:ksin, nasdaqSinyal:nsin, ihale, oneri, taranan:T1.taranan, yeni:T1.yeni, acik:S1.acik - S1.bitti, bitti:S1.bitti, sure:Math.round((Date.now() - bas)/1000), masraf } };
   await sb("piyasa_bot?on_conflict=user_id", "POST", kayit, { Prefer:"resolution=merge-duplicates,return=minimal" });
-  console.log(`kasa: disiplinli tur ${kasa.disiplin.tur} ${Math.round(kasa.disiplin.bakiye)} TL (${kasa.disiplin.acik.length} acik) · piyango tur ${kasa.her.tur} ${Math.round(kasa.her.bakiye)} TL (${kasa.her.acik.length} acik) · kumar tur ${kasa.kumar.tur} ${Math.round(kasa.kumar.bakiye)} TL (${kasa.kumar.acik.length} acik) · trader tur ${kasa.trader.tur} ${Math.round(kasa.trader.bakiye)} TL (${kasa.trader.acik.length} acik)`);
+  console.log(`kasa: disiplinli tur ${kasa.disiplin.tur} ${Math.round(kasa.disiplin.bakiye)} TL (${kasa.disiplin.acik.length} acik) · piyango tur ${kasa.her.tur} ${Math.round(kasa.her.bakiye)} TL (${kasa.her.acik.length} acik) · kumar tur ${kasa.kumar.tur} ${Math.round(kasa.kumar.bakiye)} TL (${kasa.kumar.acik.length} acik) · trader tur ${kasa.trader.tur} ${Math.round(kasa.trader.bakiye)} TL (${kasa.trader.acik.length} acik) · ana kasa ${Math.round(kasa.karma.bakiye)} TL (${kasa.karma.acik.length} acik)`);
   console.log(`tamam: ${T1.taranan} coin + ${T1.bist} BIST + ${T1.nasdaq || 0} NASDAQ hissesi tarandi, +${T1.yeni} yeni sanal islem, ${S1.bitti} sonuclandi, acik ${S1.acik - S1.bitti}, algoritma v${A.surum}${egitildi ? " (yeni egitildi)" : ""}, ${Math.round((Date.now() - bas)/1000)} sn`);
 })().catch(e => { console.error("HATA:", e.message); process.exit(1); });
