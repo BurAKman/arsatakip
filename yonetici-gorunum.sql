@@ -15,7 +15,7 @@ $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['piyasa_bot','piyasa_sanal','piyasa_portfoy','piyasa_takip','piyasa_alarm','piyasa_olay','piyasa_ayar'] loop
+  foreach t in array array['piyasa_bot','piyasa_sanal'] loop
     if to_regclass('public.' || t) is not null then
       execute format('drop policy if exists yonetici_admini_gorur on public.%I', t);
       execute format('create policy yonetici_admini_gorur on public.%I for select to authenticated using (public.ben_yonetici() and public.admin_mi(user_id))', t);
@@ -26,3 +26,14 @@ end $$;
 -- Profiller: yönetici ana hesabı bulabilsin diye herkesin adını/rolünü okuyabilmeli
 drop policy if exists yonetici_profilleri_gorur on public.profiles;
 create policy yonetici_profilleri_gorur on public.profiles for select to authenticated using (public.ben_yonetici());
+
+-- v3.3.1 · Kişisel veriler (portföy, takip, alarm, olay, ayarlar) herkese özel: yönetici de admin'inkini göremez
+do $$
+declare t text;
+begin
+  foreach t in array array['piyasa_portfoy','piyasa_takip','piyasa_alarm','piyasa_olay','piyasa_ayar'] loop
+    if to_regclass('public.' || t) is not null then
+      execute format('drop policy if exists yonetici_admini_gorur on public.%I', t);
+    end if;
+  end loop;
+end $$;
