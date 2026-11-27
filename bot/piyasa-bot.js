@@ -494,6 +494,8 @@ const meSatirlar = t => (t.match(/<tr[\s\S]*?<\/tr>/g) || []).map(tr => { const 
     const idx = +((tr.match(/index=(\d+)/) || [])[1] ?? -1), c = td.map(meTemiz);
     return { no, cins:c[0], imar:c[2], il:c[3], ilce:c[4], mah:c[5], m2:trSayi(c[6]), fiyat:trSayi(c[7]), idx, resim:!!ref }; }).filter(Boolean);
 const meAnahtar = x => x.no || `${x.il}|${x.ilce}|${x.mah}|${x.fiyat}`;
+const meDolu = D => !!(D && (D.ada || D.parsel || D.tarih || D.bedel));
+let ME_ORNEK = 0;
 const meKucuk = v => String(v || "").toLocaleLowerCase("tr").replace(/\s+/g, " ").trim();
 function meDetay(d){ { const i = d.indexOf("Taşınmaz Bilgileri"); if(i >= 0) d = d.slice(i); } const g = re => (d.match(re) || [])[1]?.trim() || null, apa = d.match(/Pafta \/ Ada \/ Parsel\s*([^/]*?)\s*\/\s*([\w.]+)\s*\/\s*([\w.]+)/), kim = d.match(/İl\s+(.+?)\s+İlçe\s+(.+?)\s+Taşınmaz Numarası\s*(\d+)/);
   return { il:kim?.[1] || null, ilce:kim?.[2] || null, no:kim?.[3] || g(/Taşınmaz Numarası\s*(\d+)/), pafta:apa?.[1] || null, ada:apa?.[2] || null, parsel:apa?.[3] || null,
@@ -509,23 +511,25 @@ async function milliEmlak(eskiDetay = {}){ const { U, C, al } = meOturum();
       await bekle(3000 * dene); if(dene === 2){ for(const k in C) delete C[k]; await al(U); } t = await al(U + "?sf=" + sf); L = meSatirlar(t); }
     return L; };
   for(let sf = 0; sf < Math.max(top, 1); sf += 20){ const L = sf === 0 ? meSatirlar(ilk) : await sayfa(sf); await bekle(700); for(const x of L){ x.sf = sf; liste.push(x);
-      const k = meAnahtar(x); if(eskiDetay[k]?.ada || eskiDetay[k]?.tarih){ detay[k] = eskiDetay[k]; continue; }   // onceki gunlerde okunmus detay korunur
+      const k = meAnahtar(x); if(meDolu(eskiDetay[k])){ detay[k] = eskiDetay[k]; continue; }   // onceki gunlerde okunmus detay korunur
       if(IHALE_ILLER.includes(x.il) && x.idx >= 0){ try{ const D = meDetay(meTemiz(await al(`${U}?detay=bilgisi&sf=${sf}&index=${x.idx}`))); await bekle(400);
-          if(!D.il || meKucuk(D.il) === meKucuk(x.il)) detay[k] = D;
-          if(sf !== 0) await al(U + "?sf=" + sf);   // oturumun liste sayfasini koru
+          if(meDolu(D) && (!D.il || meKucuk(D.il) === meKucuk(x.il))) detay[k] = D;
+          await al(U + "?sf=" + sf);   // oturumun liste sayfasini koru
         }catch(e){ console.log("ihale detay alinamadi:", e.message); } } }
     if(!L.length) break; }
   return { t:Date.now(), kaynak:"Milli Emlak (e-Devlet)", toplam:top, iller:IHALE_ILLER, liste, detay }; }
 // eksik detaylari tamamla (tum iller): her calismada sure/adet butcesiyle; ayni ilan en fazla 3 kez denenir
 async function meDetayTamamla(I, sure = 150000, maks = 250){ if(!I?.liste?.length) return 0; I.detay = I.detay || {}; I.dene = I.dene || {};
-  const eksik = new Set(I.liste.filter(x => !I.detay[meAnahtar(x)] && (I.dene[meAnahtar(x)] || 0) < 3).map(meAnahtar)); if(!eksik.size) return 0;
+  for(const k in I.detay) if(!meDolu(I.detay[k])) delete I.detay[k];   // bos okunmuslari tekrar dene
+  const eksik = new Set(I.liste.filter(x => !I.detay[meAnahtar(x)] && (I.dene[meAnahtar(x)] || 0) < 4).map(meAnahtar)); if(!eksik.size) return 0;
   const { U, al } = meOturum(), bas = Date.now(); let n = 0; const ilk = await al(U);
   for(let sf = 0; sf < Math.max(I.toplam || 0, I.liste.length) && n < maks && Date.now() - bas < sure && eksik.size; sf += 20){
     let L = []; try{ L = meSatirlar(sf ? await al(U + "?sf=" + sf) : ilk); }catch(e){ continue; } await bekle(500);
     for(const x of L){ const k = meAnahtar(x); if(!eksik.has(k) || x.idx < 0) continue; if(n >= maks || Date.now() - bas >= sure) break; I.dene[k] = (I.dene[k] || 0) + 1;
-      try{ const D = meDetay(meTemiz(await al(`${U}?detay=bilgisi&sf=${sf}&index=${x.idx}`))); await bekle(350);
-        if(!D.il || (meKucuk(D.il) === meKucuk(x.il) && (!D.ilce || meKucuk(D.ilce) === meKucuk(x.ilce)))){ I.detay[k] = D; eksik.delete(k); n++; }
-        if(sf) await al(U + "?sf=" + sf); }catch(e){} } }
+      try{ const ham = meTemiz(await al(`${U}?detay=bilgisi&sf=${sf}&index=${x.idx}`)), D = meDetay(ham); await bekle(350);
+        if(meDolu(D) && (!D.il || (meKucuk(D.il) === meKucuk(x.il) && (!D.ilce || meKucuk(D.ilce) === meKucuk(x.ilce))))){ I.detay[k] = D; eksik.delete(k); n++; }
+        else if(ME_ORNEK++ < 2) console.log(`ihale detay okunamadi (${x.il}/${x.ilce} sf=${sf} i=${x.idx}): ${ham.slice(ham.indexOf("Taşınmaz") >= 0 ? ham.indexOf("Taşınmaz") : 0).slice(0, 400)}`);
+        await al(U + "?sf=" + sf); }catch(e){ if(ME_ORNEK++ < 2) console.log("ihale detay hata:", e.message); } } }
   return n; }
 
 /* ---------- ana akis ---------- */

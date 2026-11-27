@@ -4449,7 +4449,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.9.2";
+const SURUM_MORDOR = "v 2.9.3";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -24785,7 +24785,7 @@ function pzIhTablo(L, D){ const tl = v => v == null ? "—" : Math.round(v).toLo
   if(!L.length) return `<div class="pzIhBos">Filtreye uyan ihale yok.</div>`;
   return `<table class="pzIhT"><thead><tr><th>Yer</th><th>Ada / Parsel</th><th>Tür · imar</th><th>m²</th><th>Fiyat</th><th>İhale</th></tr></thead><tbody>${L.map(x => { const d = D[pzIhKey(x)] || {}, m2 = d.m2 || x.m2, fy = d.bedel ?? x.fiyat, im = pzIhImar(x, d);
     return `<tr class="pzIhS" data-k="${esc(pzIhKey(x))}" onclick="pzIhaleAc(this.dataset.k)"><td><b>${esc(x.il)} / ${esc(x.ilce)}</b><small>${esc(x.mah || "")}</small></td>
-      <td>${d.ada || d.parsel ? `<b class="mono">${esc(d.ada || "—")} / ${esc(d.parsel || "—")}</b>` : `<small class="soluk">okunuyor…</small>`}</td>
+      <td>${d.ada || d.parsel ? `<b class="mono">${esc(d.ada || "—")} / ${esc(d.parsel || "—")}</b>` : `<small class="soluk">${(I => I && ((I.dene || {})[pzIhKey(x)] || 0) >= 4)(PZ.bot?.row?.durum?.ihale) ? "okunamadı" : "sırada"}</small>`}</td>
       <td><span class="pzIhCins">${esc(x.cins || "—")}</span>${im === null ? "" : `<em class="pzImar ${im ? "evet" : "hayir"}">${im ? "İmarlı" : "İmarsız"}</em>`}${d.imarOz ? `<small>${esc(d.imarOz)}</small>` : ""}</td>
       <td class="mono">${m2 ? Math.round(m2).toLocaleString("tr-TR") : "—"}</td>
       <td><b class="mono">${tl(fy)}</b>${m2 && fy ? `<small class="mono">${Math.round(fy/m2).toLocaleString("tr-TR")} ₺/m²</small>` : ""}</td>
@@ -24803,16 +24803,16 @@ function pzIhaleAc(k){ const I = PZ.bot?.row?.durum?.ihale; if(!I) return; const
       ${sat("Tahmini bedel", tl(fy))}${sat("m² fiyatı", m2 && fy ? Math.round(fy/m2).toLocaleString("tr-TR") + " ₺/m²" : "")}${sat("Geçici teminat", d.teminat ? tl(d.teminat) : "")}${sat("İhale tarihi", d.tarih ? esc(d.tarih) : "")}
       ${sat("Hazine hissesi", d.hisse && d.hisse !== "0" ? esc(d.hisse) + (d.satilacakM2 ? ` · satılacak ${Math.round(d.satilacakM2).toLocaleString("tr-TR")} m²` : "") : "")}${sat("Yasal dayanak", d.dayanak ? esc(d.dayanak) : "")}</div>
     ${d.ada || d.parsel ? "" : `<p class="pzIhNot">Bu ilanın ada/parsel ayrıntısı henüz okunmadı; bot her turda yenilerini çekiyor.</p>`}
-    <div class="pzIhTus">${d.parsel ? `<button class="btn" onclick="pzIhaleHarita('${esc(k)}')">🗺️ Parseli haritada gör (TKGM)</button>` : ""}
+    <div class="pzIhTus"><button class="btn" onclick="pzIhaleHarita('${esc(k)}')">🗺️ ${d.parsel ? "Parseli haritada gör (TKGM)" : "Köyü haritada aç (ada/parsel gelince parsel açılır)"}</button>
       <button class="btn ghost" onclick="window.open('https://www.turkiye.gov.tr/csb-tasinmaz-satis-ilanlari-ihaleye-cikanlar?ilan=Sorgulama', '_blank')">🌐 e-Devlet ilan sayfası</button>
       <button class="btn ghost" onclick="navigator.clipboard.writeText(${esc(JSON.stringify([x.il + " / " + x.ilce + " · " + (x.mah || ""), d.ada || d.parsel ? "Ada/parsel: " + (d.ada || "") + "/" + (d.parsel || "") : "", (d.no || x.no) ? "Taşınmaz no: " + (d.no || x.no) : "", fy ? "Bedel: " + tl(fy) : "", d.teminat ? "Teminat: " + tl(d.teminat) : "", d.tarih ? "İhale: " + d.tarih : ""].filter(Boolean).join("\n")))}).then(() => toast('Kopyalandı'))">📋 Bilgileri kopyala</button></div>
     <p class="pzIhNot">e-Devlet bu ilanlara tek tek kalıcı link vermiyor. Sayfada <b>İlan Filtrele</b>'den il ve ilçeyi seçince bu ilan listede çıkar; "Detay" ile şartname ve ihale yerini görürsün. Taşınmaz numarası: <b>${esc(d.no || x.no || "—")}</b></p></div></div>`); }
-async function pzIhaleHarita(k){ const I = PZ.bot?.row?.durum?.ihale, x = I?.liste.find(y => pzIhKey(y) === k), d = (I?.detay || {})[k] || {}; if(!x || !d.parsel) return;
+async function pzIhaleHarita(k){ const I = PZ.bot?.row?.durum?.ihale, x = I?.liste.find(y => pzIhKey(y) === k), d = (I?.detay || {})[k] || {}; if(!x) return;
   document.getElementById("pzIhMod")?.remove(); go("harita"); toast("TKGM'de aranıyor: " + x.il + " / " + x.ilce + " · " + (x.mah || "") + " " + (d.ada || "") + "/" + d.parsel);
   const mah = String(x.mah || "").replace(/\s+(köyü|mahallesi|mah\.?|mh\.?)$/i, "");
   const ok1 = await secenekSec("hil", x.il), ok2 = ok1 && await secenekSec("hilce", x.ilce), ok3 = ok2 && await secenekSec("hmah", mah);
   const a = document.getElementById("hada"), p = document.getElementById("hpar"); if(a) a.value = String(d.ada || "").replace(/\D/g, ""); if(p) p.value = String(d.parsel || "").replace(/\D/g, "");
-  if(ok3 && p?.value) document.getElementById("sor")?.click(); else toast("İl / ilçe / köy listede tam eşleşmedi; eksik olanı elle seçip Sorgula'ya bas"); }
+  if(ok3 && p?.value) document.getElementById("sor")?.click(); else if(ok3 && !d.parsel) toast("Köy seçildi; ada/parsel henüz okunmadığı için parseli elle yazabilirsin"); else toast("İl / ilçe / köy listede tam eşleşmedi; eksik olanı elle seçip Sorgula'ya bas"); }
 function pzIhaleYenile(){ const el = document.querySelector('details.pzBistS[data-tip="ihale"]'); if(!el || !PZ.bot?.row?.durum?.ihale) return; el.outerHTML = pzIhaleHtml(PZ.bot.row.durum.ihale); }
 function pzIhaleBildir(I){ if(!I?.liste) return; const o = pzLS.oku("pzIhaleBildir", null), ilgi = I.iller || [];
   const ids = I.liste.filter(x => ilgi.includes(x.il)).map(x => x.no || `${x.il}|${x.ilce}|${x.mah}|${x.fiyat}`);
