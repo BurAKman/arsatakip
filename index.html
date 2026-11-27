@@ -3779,6 +3779,17 @@ body:not(.pc) .pzdIzgara,body:not(.pc) .pzdYZ{display:flex!important;flex-direct
 body:not(.pc) .pzEksIzgara,body:not(.pc) .pzDokL,body:not(.pc) .pzdAlt,body:not(.pc) .pzKartlar{grid-template-columns:minmax(0,1fr)!important}
 body:not(.pc) #app[data-ekran^="piyasa"] .btn svg,body:not(.pc) #app[data-ekran^="piyasa"] button > svg{width:18px;height:18px;flex:0 0 auto}body:not(.pc) #app[data-ekran^="piyasa"] .pcBox{max-width:100%;min-width:0}
 body:not(.pc) .pzIzgara{display:flex!important;flex-direction:column;gap:12px}body:not(.pc) .pzIzgara > *{width:100%;min-width:0}
+.pzIhT{width:100%;border-collapse:collapse}.pzIhT th{font-size:11px;color:#8E8C93;font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.1);white-space:nowrap}
+.pzIhT td{padding:8px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:top}.pzIhT td small{display:block;color:#8E8C93;font-size:11px;margin-top:1px}.pzIhT td b{color:#fff}
+.pzIhS{cursor:pointer}.pzIhS:hover{background:rgba(91,141,239,.12)}.pzIhCins{font-weight:700;color:#E6E4EA;margin-right:6px}
+.pzImar{font-style:normal;font-size:10.5px;font-weight:800;padding:1px 7px;border-radius:999px;background:rgba(255,255,255,.1);color:#ccc;white-space:nowrap;display:inline-block;margin:1px 4px 1px 0}.pzImar.evet{background:rgba(70,190,120,.22);color:#6BE39C}.pzImar.hayir{background:rgba(255,255,255,.08);color:#A9A7AE}
+.pzIhBos{color:#8E8C93;padding:8px}.pzIhaleF select,.pzIhaleF input{width:auto!important;flex:1 1 150px;max-width:260px;min-height:0}.pzIhKut h3{text-transform:none!important;letter-spacing:0!important;color:#fff!important}.soluk{color:#77757C}
+.pzIhMod{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+.pzIhKut{position:relative;width:min(560px,100%);max-height:90vh;overflow:auto;background:#15171C;border:1px solid rgba(91,141,239,.45);border-radius:16px;padding:18px 18px 14px;color:#D9D7DC;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.pzIhKut h3{margin:4px 0 8px;font-size:18px;color:#fff}.pzIhUst{color:#8E8C93}.pzIhKapat{position:absolute;top:10px;right:10px;background:none;border:0;color:#aaa;font-size:18px;cursor:pointer}
+.pzIhRoz{margin-bottom:10px}.pzIhIz{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}.pzIhIz div{background:rgba(255,255,255,.04);border-radius:10px;padding:8px 10px}.pzIhIz small{display:block;color:#8E8C93;font-size:11px}.pzIhIz b{color:#fff;font-size:14px}
+.pzIhTus{display:flex;flex-direction:column;gap:8px;margin:6px 0}.pzIhNot{color:#9E9CA3;font-size:12px;line-height:1.5;margin:8px 0 0}
+@media (max-width:700px){.pzIhT thead{display:none}.pzIhT tr{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 4px;border-bottom:1px solid rgba(255,255,255,.08)}.pzIhT td{border:0;padding:0}.pzIhT td:nth-child(2){text-align:right}.pzIhT td:nth-child(4){display:none}.pzIhT td:nth-child(5){text-align:right}.pzIhT td:nth-child(6){grid-column:1/-1;display:flex;gap:6px;align-items:baseline}.pzIhT td:nth-child(6):before{content:"ihale:";color:#8E8C93;font-size:11px}.pzIhIz{grid-template-columns:1fr 1fr}}
 .pzSinSerit{margin:0 0 12px;padding:12px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.12)}
 .pzSinBas{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;margin-bottom:9px}.pzSinBas small{font-weight:400;letter-spacing:0;text-transform:none;color:#8E8C93;margin-left:8px;font-size:11.5px}
 .pzSinIz{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
@@ -4438,7 +4449,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.9.1";
+const SURUM_MORDOR = "v 2.9.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -24740,8 +24751,9 @@ function pzIhaleHtml(I){ if(!I?.liste) return ""; const ilgi = I.iller || [], D 
   const trS = (a, b) => String(a ?? "").localeCompare(String(b ?? ""), "tr");
   const iller = Object.keys(say).filter(x => x && x !== "undefined").sort(trS), ilceler = f.il ? [...new Set(I.liste.filter(x => x.il === f.il).map(x => x.ilce).filter(Boolean))].sort(trS) : [];
   const cinsler = [...new Set(I.liste.map(x => x.cins).filter(Boolean))].sort(trS);
-  const sirala = { fiyat:(a, b) => (a.fiyat || 0) - (b.fiyat || 0), fiyatA:(a, b) => (b.fiyat || 0) - (a.fiyat || 0), m2:(a, b) => (b.m2 || 0) - (a.m2 || 0), birim:(a, b) => ((a.fiyat || 1e18)/(a.m2 || 1e-9)) - ((b.fiyat || 1e18)/(b.m2 || 1e-9)), yer:(a, b) => trS(`${a.il}${a.ilce}${a.mah}`, `${b.il}${b.ilce}${b.mah}`) };
-  const uy = I.liste.filter(x => (!f.il || x.il === f.il) && (!f.ilce || x.ilce === f.ilce) && (!f.cins || x.cins === f.cins) && (!f.maks || (x.fiyat || 0) <= +f.maks) && (!f.minM2 || (x.m2 || 0) >= +f.minM2) && (!f.ara || kucuk(x.mah + " " + x.ilce + " " + x.cins + " " + x.imar).includes(kucuk(f.ara)))).sort(sirala[f.sira] || sirala.fiyat);
+  const sirala = { fiyat:(a, b) => (a.fiyat || 0) - (b.fiyat || 0), fiyatA:(a, b) => (b.fiyat || 0) - (a.fiyat || 0), m2:(a, b) => m2Of(b) - m2Of(a), birim:(a, b) => ((fyOf(a) || 1e18)/(m2Of(a) || 1e-9)) - ((fyOf(b) || 1e18)/(m2Of(b) || 1e-9)), yer:(a, b) => trS(`${a.il}${a.ilce}${a.mah}`, `${b.il}${b.ilce}${b.mah}`) };
+  const m2Of = x => D[key(x)]?.m2 || x.m2 || 0, fyOf = x => D[key(x)]?.bedel ?? x.fiyat ?? 0;
+  const uy = I.liste.filter(x => (!f.il || x.il === f.il) && (!f.ilce || x.ilce === f.ilce) && (!f.cins || x.cins === f.cins) && (!f.maks || (x.fiyat || 0) <= +f.maks) && (!f.minM2 || m2Of(x) >= +f.minM2) && (!f.ara || kucuk(x.mah + " " + x.ilce + " " + x.cins + " " + x.imar).includes(kucuk(f.ara)))).sort(sirala[f.sira] || sirala.fiyat);
   const adet = Math.max(50, +f.adet || 50), tum = uy.slice(0, adet);
   const yaz = (ad, deger, ek = "") => `const o = pzLS.oku('pzIhaleF', {}); o['${ad}'] = ${deger}; ${ek} o.adet = 50; pzLS.yaz('pzIhaleF', o); pzIhaleYenile()`;
   const sec = (ad, L, v, bos, etiket = x => x, ek = "") => `<select onchange="${yaz(ad, "this.value", ek)}"><option value="">${bos}</option>${L.map(x => `<option value="${esc(x)}"${x === v ? " selected" : ""}>${esc(etiket(x))}</option>`).join("")}</select>`;
@@ -24749,7 +24761,7 @@ function pzIhaleHtml(I){ if(!I?.liste) return ""; const ilgi = I.iller || [], D 
   return `<details class="pzBistS ihale" data-tip="ihale"${pzLS.oku("pzSinAcik", {}).ihale ? " open" : ""} ontoggle="const o = pzLS.oku('pzSinAcik', {}); o.ihale = this.open; pzLS.yaz('pzSinAcik', o)">
     <summary class="pzBistSB"><b>🏛️ İhale avcısı <em class="pzSinRoz ihale">${yakin.length ? yakin.length + " yaklaşan" : "takipte"}</em></b><span>${I.liste.length.toLocaleString("tr-TR")} ihale · ${iller.length} il ▾</span></summary>
     <div class="pzBistSA">Hazine (Milli Emlak) taşınmaz satış ihaleleri · bot günde 1 kez tarar · son tarama: ${new Date(I.t).toLocaleString("tr-TR", { dateStyle:"short", timeStyle:"short" })}${eksik ? ` · <b class="az">e-Devlet ${I.toplam.toLocaleString("tr-TR")} kayıt diyor, ${I.liste.length.toLocaleString("tr-TR")} tanesi okunabildi (kalan bir sonraki taramada)</b>` : ` · e-Devlet'teki listenin tamamı`}</div>
-    ${yakin.length ? `<div class="pzBistSF"><b>Takip ettiğin illerde yaklaşan ihaleler</b> <small>(${esc(ilgi.join(", "))} · ada/parsel, ihale tarihi, teminat bu illerde çekiliyor)</small><table><thead><tr><th>Yer</th><th>Ada/Parsel</th><th>m²</th><th>Tahmini bedel</th><th>İhale</th><th>Teminat</th></tr></thead><tbody>${yakin.map(x => `<tr><td><b>${esc(x.il)} / ${esc(x.ilce)}</b> <small>${esc(x.mah)} · ${esc(x.cins)}</small></td><td>${esc(x.d.ada || "—")}/${esc(x.d.parsel || "—")}</td><td>${x.d.m2 ? m2(x.d.m2) : "—"}</td><td class="art">${tl(x.d.bedel ?? x.fiyat)}${x.d.m2 && (x.d.bedel ?? x.fiyat) ? ` <small>${Math.round((x.d.bedel ?? x.fiyat)/x.d.m2).toLocaleString("tr-TR")} ₺/m²</small>` : ""}</td><td>${esc(x.d.tarih || "—")}</td><td><small>${tl(x.d.teminat)}</small></td></tr>`).join("")}</tbody></table></div>`
+    ${yakin.length ? `<div class="pzBistSF"><b>Takip ettiğin illerde yaklaşan ihaleler</b> <small>(${esc(ilgi.join(", "))})</small>${pzIhTablo(yakin, D)}</div>`
       : `<div class="pzBistSF"><small>Takip ettiğin illerde (${esc(ilgi.join(", "))}) şu an yaklaşan Hazine ihalesi yok.</small></div>`}
     <div class="pzBistSF"><b>Tüm Türkiye · ${uy.length.toLocaleString("tr-TR")} ihale ${f.il || f.ilce || f.cins || f.maks || f.minM2 || f.ara ? `<button class="pzIhaleT" onclick="pzLS.yaz('pzIhaleF', {}); pzIhaleYenile()">filtreyi temizle ✕</button>` : ""}</b>
       <div class="pzIhaleF">${sec("il", iller, f.il, `tüm iller (${iller.length})`, x => `${x} (${say[x]})`, "o.ilce = '';")}${f.il ? sec("ilce", ilceler, f.ilce, "tüm ilçeler") : ""}${sec("cins", cinsler, f.cins, "tüm türler")}
@@ -24757,15 +24769,50 @@ function pzIhaleHtml(I){ if(!I?.liste) return ""; const ilgi = I.iller || [], D 
         <input type="number" placeholder="en az m²" value="${esc(f.minM2 || "")}" onchange="${yaz("minM2", "this.value")}">
         <input type="number" placeholder="en fazla ₺" value="${esc(f.maks || "")}" onchange="${yaz("maks", "this.value")}">
         <select onchange="${yaz("sira", "this.value")}">${[["fiyat", "en ucuz"], ["fiyatA", "en pahalı"], ["birim", "₺/m² en düşük"], ["m2", "en büyük"], ["yer", "il/ilçe sırası"]].map(([v, a]) => `<option value="${v}"${(f.sira || "fiyat") === v ? " selected" : ""}>sırala: ${a}</option>`).join("")}</select></div>
-      <table><thead><tr><th>Yer</th><th>Tür · imar</th><th>m²</th><th>Fiyat</th></tr></thead><tbody>${tum.map(x => `<tr><td><b>${esc(x.il)} / ${esc(x.ilce)}</b> <small>${esc(x.mah)}</small></td><td>${esc(x.cins)}${x.imar && x.imar !== "-" ? ` <small>${esc(x.imar)}</small>` : ""}</td><td>${m2(x.m2)}</td><td>${tl(x.fiyat)}${x.m2 && x.fiyat ? ` <small>${Math.round(x.fiyat/x.m2).toLocaleString("tr-TR")} ₺/m²</small>` : ""}</td></tr>`).join("") || `<tr><td colspan="4"><small>Filtreye uyan ihale yok.</small></td></tr>`}</tbody></table>
+      ${pzIhTablo(tum, D)}
       ${uy.length > tum.length ? `<button class="pzIhaleT genis" onclick="${yaz("adet", adet + 100).replace("o.adet = 50;", "")}">${(uy.length - tum.length).toLocaleString("tr-TR")} ihale daha var · 100 tane daha göster</button>` : ""}
-      <small class="pzIhaleN">Ada/parsel, ihale tarihi ve teminat sadece takip ettiğin illerde çekiliyor. Diğerlerinin ayrıntısı için e-Devlet'te aynı il/ilçeyi aç.</small></div>
+      <small class="pzIhaleN">Satıra dokun: ada/parsel, teminat, ihale tarihi ve "haritada gör" açılır. Ada/parsel bilgisi bot her turda biraz daha tamamlıyor (${Object.keys(D).length.toLocaleString("tr-TR")}/${I.liste.length.toLocaleString("tr-TR")} hazır).</small></div>
     <details class="pzIhaleK"><summary>🔗 Bu listede OLMAYAN ihaleler · neleri göremiyoruz?</summary>
       <p>Bot sadece <b>Hazine'nin (Milli Emlak)</b> sattığı taşınmazları okuyabiliyor. Şunlar bu listede yok, çünkü bu siteler botların okumasını engelliyor; elle bakman gerekiyor:</p>
       <ul><li><b>İcra satışları</b> (borç yüzünden haczedilen tarla, arsa, ev) → <a href="https://esatis.uyap.gov.tr/" target="_blank" rel="noopener">UYAP e-Satış</a>. Piyasanın altında fiyata en çok burada denk gelinir, ama tapudaki şerhleri ve işgalci durumunu mutlaka kontrol et.</li>
         <li><b>Gazete ilanlı ihaleler</b>: icra/iflas, belediye arsa satışları, vakıf ve diğer kamu kurumlarının satışları → <a href="https://www.ilan.gov.tr/ilan/kategori/9/icra-ve-iflas-mudurlukleri" target="_blank" rel="noopener">ilan.gov.tr</a></li>
         <li><b>Milli Emlak'ın kendi sayfası</b> (ayrıntılar, şartname, ihale yeri) → <a href="https://www.turkiye.gov.tr/csb-tasinmaz-satis-ilanlari-ihaleye-cikanlar" target="_blank" rel="noopener">e-Devlet</a></li>
         <li>TOKİ, Özelleştirme İdaresi, banka/varlık yönetim şirketi satışları ve kiralama ihaleleri de listede yok.</li></ul></details></details>`; }
+// v2.9.2 ihale tablo satiri (yer · ada/parsel · tur/imar · m² · fiyat + ₺/m² · ihale tarihi), satira dokununca ayrinti penceresi
+const pzIhKey = x => x.no || `${x.il}|${x.ilce}|${x.mah}|${x.fiyat}`;
+const pzIhImar = (x, d) => { const v = String(d?.imar || x.imar || "").toLocaleLowerCase("tr"); return /evet|var|imarl/.test(v) ? true : /hay|yok|imars/.test(v) ? false : null; };
+function pzIhTablo(L, D){ const tl = v => v == null ? "—" : Math.round(v).toLocaleString("tr-TR") + " ₺";
+  if(!L.length) return `<div class="pzIhBos">Filtreye uyan ihale yok.</div>`;
+  return `<table class="pzIhT"><thead><tr><th>Yer</th><th>Ada / Parsel</th><th>Tür · imar</th><th>m²</th><th>Fiyat</th><th>İhale</th></tr></thead><tbody>${L.map(x => { const d = D[pzIhKey(x)] || {}, m2 = d.m2 || x.m2, fy = d.bedel ?? x.fiyat, im = pzIhImar(x, d);
+    return `<tr class="pzIhS" data-k="${esc(pzIhKey(x))}" onclick="pzIhaleAc(this.dataset.k)"><td><b>${esc(x.il)} / ${esc(x.ilce)}</b><small>${esc(x.mah || "")}</small></td>
+      <td>${d.ada || d.parsel ? `<b class="mono">${esc(d.ada || "—")} / ${esc(d.parsel || "—")}</b>` : `<small class="soluk">okunuyor…</small>`}</td>
+      <td><span class="pzIhCins">${esc(x.cins || "—")}</span>${im === null ? "" : `<em class="pzImar ${im ? "evet" : "hayir"}">${im ? "İmarlı" : "İmarsız"}</em>`}${d.imarOz ? `<small>${esc(d.imarOz)}</small>` : ""}</td>
+      <td class="mono">${m2 ? Math.round(m2).toLocaleString("tr-TR") : "—"}</td>
+      <td><b class="mono">${tl(fy)}</b>${m2 && fy ? `<small class="mono">${Math.round(fy/m2).toLocaleString("tr-TR")} ₺/m²</small>` : ""}</td>
+      <td>${d.tarih ? `<b>${esc(d.tarih.split(" ")[0])}</b>${d.tarih.split(" ")[1] ? `<small>${esc(d.tarih.split(" ")[1])}</small>` : ""}` : "—"}</td></tr>`; }).join("")}</tbody></table>`; }
+function pzIhaleAc(k){ const I = PZ.bot?.row?.durum?.ihale; if(!I) return; const x = I.liste.find(y => pzIhKey(y) === k); if(!x) return; const d = (I.detay || {})[k] || {};
+  const tl = v => v == null ? "—" : Math.round(v).toLocaleString("tr-TR") + " ₺", m2 = d.m2 || x.m2, fy = d.bedel ?? x.fiyat, im = pzIhImar(x, d);
+  const sat = (a, v) => v ? `<div><small>${a}</small><b>${v}</b></div>` : "";
+  document.getElementById("pzIhMod")?.remove();
+  document.body.insertAdjacentHTML("beforeend", `<div id="pzIhMod" class="pzIhMod" onclick="if(event.target === this) this.remove()"><div class="pzIhKut">
+    <button class="pzIhKapat" onclick="document.getElementById('pzIhMod').remove()">✕</button>
+    <small class="pzIhUst">Hazine (Milli Emlak) satış ihalesi${d.no || x.no ? ` · taşınmaz no ${esc(d.no || x.no)}` : ""}</small>
+    <h3>${esc(x.il)} / ${esc(x.ilce)} · ${esc(x.mah || "")}</h3>
+    <div class="pzIhRoz"><span class="pzIhCins">${esc(x.cins || "")}</span>${im === null ? "" : `<em class="pzImar ${im ? "evet" : "hayir"}">${im ? "İmarlı" : "İmarsız"}</em>`}${d.imarOz ? `<em class="pzImar">${esc(d.imarOz)}</em>` : ""}</div>
+    <div class="pzIhIz">${sat("Ada / parsel", d.ada || d.parsel ? esc(`${d.ada || "—"} / ${d.parsel || "—"}`) + (d.pafta ? ` <small>pafta ${esc(d.pafta)}</small>` : "") : "")}${sat("Yüzölçümü", m2 ? Math.round(m2).toLocaleString("tr-TR") + " m²" : "")}
+      ${sat("Tahmini bedel", tl(fy))}${sat("m² fiyatı", m2 && fy ? Math.round(fy/m2).toLocaleString("tr-TR") + " ₺/m²" : "")}${sat("Geçici teminat", d.teminat ? tl(d.teminat) : "")}${sat("İhale tarihi", d.tarih ? esc(d.tarih) : "")}
+      ${sat("Hazine hissesi", d.hisse && d.hisse !== "0" ? esc(d.hisse) + (d.satilacakM2 ? ` · satılacak ${Math.round(d.satilacakM2).toLocaleString("tr-TR")} m²` : "") : "")}${sat("Yasal dayanak", d.dayanak ? esc(d.dayanak) : "")}</div>
+    ${d.ada || d.parsel ? "" : `<p class="pzIhNot">Bu ilanın ada/parsel ayrıntısı henüz okunmadı; bot her turda yenilerini çekiyor.</p>`}
+    <div class="pzIhTus">${d.parsel ? `<button class="btn" onclick="pzIhaleHarita('${esc(k)}')">🗺️ Parseli haritada gör (TKGM)</button>` : ""}
+      <button class="btn ghost" onclick="window.open('https://www.turkiye.gov.tr/csb-tasinmaz-satis-ilanlari-ihaleye-cikanlar?ilan=Sorgulama', '_blank')">🌐 e-Devlet ilan sayfası</button>
+      <button class="btn ghost" onclick="navigator.clipboard.writeText(${esc(JSON.stringify([x.il + " / " + x.ilce + " · " + (x.mah || ""), d.ada || d.parsel ? "Ada/parsel: " + (d.ada || "") + "/" + (d.parsel || "") : "", (d.no || x.no) ? "Taşınmaz no: " + (d.no || x.no) : "", fy ? "Bedel: " + tl(fy) : "", d.teminat ? "Teminat: " + tl(d.teminat) : "", d.tarih ? "İhale: " + d.tarih : ""].filter(Boolean).join("\n")))}).then(() => toast('Kopyalandı'))">📋 Bilgileri kopyala</button></div>
+    <p class="pzIhNot">e-Devlet bu ilanlara tek tek kalıcı link vermiyor. Sayfada <b>İlan Filtrele</b>'den il ve ilçeyi seçince bu ilan listede çıkar; "Detay" ile şartname ve ihale yerini görürsün. Taşınmaz numarası: <b>${esc(d.no || x.no || "—")}</b></p></div></div>`); }
+async function pzIhaleHarita(k){ const I = PZ.bot?.row?.durum?.ihale, x = I?.liste.find(y => pzIhKey(y) === k), d = (I?.detay || {})[k] || {}; if(!x || !d.parsel) return;
+  document.getElementById("pzIhMod")?.remove(); go("harita"); toast("TKGM'de aranıyor: " + x.il + " / " + x.ilce + " · " + (x.mah || "") + " " + (d.ada || "") + "/" + d.parsel);
+  const mah = String(x.mah || "").replace(/\s+(köyü|mahallesi|mah\.?|mh\.?)$/i, "");
+  const ok1 = await secenekSec("hil", x.il), ok2 = ok1 && await secenekSec("hilce", x.ilce), ok3 = ok2 && await secenekSec("hmah", mah);
+  const a = document.getElementById("hada"), p = document.getElementById("hpar"); if(a) a.value = String(d.ada || "").replace(/\D/g, ""); if(p) p.value = String(d.parsel || "").replace(/\D/g, "");
+  if(ok3 && p?.value) document.getElementById("sor")?.click(); else toast("İl / ilçe / köy listede tam eşleşmedi; eksik olanı elle seçip Sorgula'ya bas"); }
 function pzIhaleYenile(){ const el = document.querySelector('details.pzBistS[data-tip="ihale"]'); if(!el || !PZ.bot?.row?.durum?.ihale) return; el.outerHTML = pzIhaleHtml(PZ.bot.row.durum.ihale); }
 function pzIhaleBildir(I){ if(!I?.liste) return; const o = pzLS.oku("pzIhaleBildir", null), ilgi = I.iller || [];
   const ids = I.liste.filter(x => ilgi.includes(x.il)).map(x => x.no || `${x.il}|${x.ilce}|${x.mah}|${x.fiyat}`);

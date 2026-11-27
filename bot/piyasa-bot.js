@@ -480,32 +480,53 @@ async function nasdaqSinyal(){ const Q = kapaliMumlar(await yahoo("QQQ", "1d", "
 const IHALE_ILLER = ["Kırklareli", "Edirne", "Tekirdağ", "İstanbul", "Çanakkale"];
 const enSayi = v => v == null ? null : (isFinite(+String(v).replace(/,/g, "")) ? +String(v).replace(/,/g, "") : null);   // detay sayfasi: 10400.38
 const trSayi = v => { const x = String(v || "").replace(/[^\d,.-]/g, ""); if(!x || x === "-") return null; return +x.replace(/\./g, "").replace(",", "."); };
-async function milliEmlak(){ const U = "https://www.turkiye.gov.tr/csb-tasinmaz-satis-ilanlari-ihaleye-cikanlar", C = {};
+// v2.9.2: oturum yardimcilari ayrildi; detay her ilan icin (kademeli: her calismada en fazla ~250 yeni detay, liste sirasi oturuma gore degistigi icin detay il/ilce ile dogrulanir)
+const ME_U = "https://www.turkiye.gov.tr/csb-tasinmaz-satis-ilanlari-ihaleye-cikanlar";
+function meOturum(){ const U = ME_U, C = {};
   const al = async (u, d = 0) => { const r = await fetch(u, { redirect:"manual", headers:{ "User-Agent":UA.headers["User-Agent"], "Accept-Language":"tr-TR,tr;q=0.9", Referer:U, Cookie:Object.entries(C).map(([k, v]) => k + "=" + v).join("; ") } });
     for(const c of r.headers.getSetCookie?.() || []){ const kv = c.split(";")[0], i = kv.indexOf("="); C[kv.slice(0, i).trim()] = kv.slice(i + 1); }
     if(r.status >= 300 && r.status < 400 && r.headers.get("location") && d < 3) return al(new URL(r.headers.get("location"), u).href, d + 1);
     if(!r.ok) throw new Error("milli emlak " + r.status); return r.text(); };
-  const temiz = h => h.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
-  const satirlar = t => (t.match(/<tr[\s\S]*?<\/tr>/g) || []).map(tr => { const td = (tr.match(/<td[\s\S]*?<\/td>/g) || []); if(td.length < 8) return null;
-      const ref = (tr.match(/ref_no=([A-Za-z0-9+/=]+)/) || [])[1]; let no = null; try{ no = ref ? Buffer.from(ref, "base64").toString("utf8").replace(/\D/g, "") : null; }catch(e){}
-      const idx = +((tr.match(/index=(\d+)/) || [])[1] ?? -1), c = td.map(temiz);
-      return { no, cins:c[0], imar:c[2], il:c[3], ilce:c[4], mah:c[5], m2:trSayi(c[6]), fiyat:trSayi(c[7]), idx, resim:!!ref }; }).filter(Boolean);
+  return { U, C, al }; }
+const meTemiz = h => h.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&#39;/g, "'").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+const meSatirlar = t => (t.match(/<tr[\s\S]*?<\/tr>/g) || []).map(tr => { const td = (tr.match(/<td[\s\S]*?<\/td>/g) || []); if(td.length < 8) return null;
+    const ref = (tr.match(/ref_no=([A-Za-z0-9+/=]+)/) || [])[1]; let no = null; try{ no = ref ? Buffer.from(ref, "base64").toString("utf8").replace(/\D/g, "") : null; }catch(e){}
+    const idx = +((tr.match(/index=(\d+)/) || [])[1] ?? -1), c = td.map(meTemiz);
+    return { no, cins:c[0], imar:c[2], il:c[3], ilce:c[4], mah:c[5], m2:trSayi(c[6]), fiyat:trSayi(c[7]), idx, resim:!!ref }; }).filter(Boolean);
+const meAnahtar = x => x.no || `${x.il}|${x.ilce}|${x.mah}|${x.fiyat}`;
+const meKucuk = v => String(v || "").toLocaleLowerCase("tr").replace(/\s+/g, " ").trim();
+function meDetay(d){ { const i = d.indexOf("Taşınmaz Bilgileri"); if(i >= 0) d = d.slice(i); } const g = re => (d.match(re) || [])[1]?.trim() || null, apa = d.match(/Pafta \/ Ada \/ Parsel\s*([^/]*?)\s*\/\s*([\w.]+)\s*\/\s*([\w.]+)/), kim = d.match(/İl\s+(.+?)\s+İlçe\s+(.+?)\s+Taşınmaz Numarası\s*(\d+)/);
+  return { il:kim?.[1] || null, ilce:kim?.[2] || null, no:kim?.[3] || g(/Taşınmaz Numarası\s*(\d+)/), pafta:apa?.[1] || null, ada:apa?.[2] || null, parsel:apa?.[3] || null,
+    m2:enSayi(g(/Taşınmaz Yüz Ölçümü\s*([\d.,]+)/)), satilacakM2:enSayi(g(/Satılacak Yüz Ölçümü\s*([\d.,]+)/)), hisse:g(/Hazine Hissesi\s*([\d./,]+)/),
+    bedel:enSayi(g(/Toplam Tahmini Bedel\s*([\d.,]+)/)), teminat:enSayi(g(/Geçici Teminat Bedeli\s*([\d.,]+)/)), tarih:g(/İhale Tarihi ve Saati\s*([\d/]+(?:\s+[\d:]+)?)/),
+    imar:g(/İmar Durumu\s*(\S+)/), imarOz:g(/İmar Özellik Adı\s*(.*?)\s*İmar Tarihi/), dayanak:g(/Yasal Dayanak\s*([\d /]+)/) }; }
+async function milliEmlak(eskiDetay = {}){ const { U, C, al } = meOturum();
   const ilk = await al(U), top = Math.min(6000, +(((ilk.match(/Toplam\s+([\d.]+)\s+kayıttan/) || [])[1] || "0").replace(/\./g, "")));
   const liste = [], detay = {};
-  const sayfa = async sf => { let t = await al(U + "?sf=" + sf), L = satirlar(t);
+  const sayfa = async sf => { let t = await al(U + "?sf=" + sf), L = meSatirlar(t);
     for(let dene = 1; !L.length && dene <= 2; dene++){   // e-Devlet arada bos sayfa donebiliyor: bekle, oturumu tazele, tekrar dene
       console.log(`ihale sayfa ${sf} bos (${t.length} bayt, ${(t.match(/<title>([^<]*)/) || [])[1] || "?"}) -> tekrar ${dene}`);
-      await bekle(3000 * dene); if(dene === 2){ for(const k in C) delete C[k]; await al(U); } t = await al(U + "?sf=" + sf); L = satirlar(t); }
+      await bekle(3000 * dene); if(dene === 2){ for(const k in C) delete C[k]; await al(U); } t = await al(U + "?sf=" + sf); L = meSatirlar(t); }
     return L; };
-  for(let sf = 0; sf < Math.max(top, 1); sf += 20){ const L = sf === 0 ? satirlar(ilk) : await sayfa(sf); await bekle(700); for(const x of L){ x.sf = sf; liste.push(x);
-      if(IHALE_ILLER.includes(x.il) && x.idx >= 0){ try{ const d = temiz(await al(`${U}?detay=bilgisi&sf=${sf}&index=${x.idx}`)); await bekle(400);
-          const g = re => (d.match(re) || [])[1]?.trim() || null, apa = d.match(/Pafta \/ Ada \/ Parsel\s*([^/]*?)\s*\/\s*([\w.]+)\s*\/\s*([\w.]+)/);
-          detay[x.no || `${x.il}|${x.ilce}|${x.mah}|${x.fiyat}`] = { ada:apa?.[2] || null, parsel:apa?.[3] || null, m2:enSayi(g(/Taşınmaz Yüz Ölçümü\s*([\d.,]+)/)), satilacakM2:enSayi(g(/Satılacak Yüz Ölçümü\s*([\d.,]+)/)), hisse:g(/Hazine Hissesi\s*([\d./,]+)/),
-            bedel:enSayi(g(/Toplam Tahmini Bedel\s*([\d.,]+)/)), teminat:enSayi(g(/Geçici Teminat Bedeli\s*([\d.,]+)/)), tarih:g(/İhale Tarihi ve Saati\s*([\d/]+(?:\s+[\d:]+)?)/), imar:g(/İmar Durumu\s*(\S+)/), dayanak:g(/Yasal Dayanak\s*([\d /]+)/) };
+  for(let sf = 0; sf < Math.max(top, 1); sf += 20){ const L = sf === 0 ? meSatirlar(ilk) : await sayfa(sf); await bekle(700); for(const x of L){ x.sf = sf; liste.push(x);
+      const k = meAnahtar(x); if(eskiDetay[k]?.ada || eskiDetay[k]?.tarih){ detay[k] = eskiDetay[k]; continue; }   // onceki gunlerde okunmus detay korunur
+      if(IHALE_ILLER.includes(x.il) && x.idx >= 0){ try{ const D = meDetay(meTemiz(await al(`${U}?detay=bilgisi&sf=${sf}&index=${x.idx}`))); await bekle(400);
+          if(!D.il || meKucuk(D.il) === meKucuk(x.il)) detay[k] = D;
           if(sf !== 0) await al(U + "?sf=" + sf);   // oturumun liste sayfasini koru
         }catch(e){ console.log("ihale detay alinamadi:", e.message); } } }
     if(!L.length) break; }
   return { t:Date.now(), kaynak:"Milli Emlak (e-Devlet)", toplam:top, iller:IHALE_ILLER, liste, detay }; }
+// eksik detaylari tamamla (tum iller): her calismada sure/adet butcesiyle; ayni ilan en fazla 3 kez denenir
+async function meDetayTamamla(I, sure = 150000, maks = 250){ if(!I?.liste?.length) return 0; I.detay = I.detay || {}; I.dene = I.dene || {};
+  const eksik = new Set(I.liste.filter(x => !I.detay[meAnahtar(x)] && (I.dene[meAnahtar(x)] || 0) < 3).map(meAnahtar)); if(!eksik.size) return 0;
+  const { U, al } = meOturum(), bas = Date.now(); let n = 0; const ilk = await al(U);
+  for(let sf = 0; sf < Math.max(I.toplam || 0, I.liste.length) && n < maks && Date.now() - bas < sure && eksik.size; sf += 20){
+    let L = []; try{ L = meSatirlar(sf ? await al(U + "?sf=" + sf) : ilk); }catch(e){ continue; } await bekle(500);
+    for(const x of L){ const k = meAnahtar(x); if(!eksik.has(k) || x.idx < 0) continue; if(n >= maks || Date.now() - bas >= sure) break; I.dene[k] = (I.dene[k] || 0) + 1;
+      try{ const D = meDetay(meTemiz(await al(`${U}?detay=bilgisi&sf=${sf}&index=${x.idx}`))); await bekle(350);
+        if(!D.il || (meKucuk(D.il) === meKucuk(x.il) && (!D.ilce || meKucuk(D.ilce) === meKucuk(x.ilce)))){ I.detay[k] = D; eksik.delete(k); n++; }
+        if(sf) await al(U + "?sf=" + sf); }catch(e){} } }
+  return n; }
 
 /* ---------- ana akis ---------- */
 (async () => {
@@ -546,8 +567,9 @@ async function milliEmlak(){ const U = "https://www.turkiye.gov.tr/csb-tasinmaz-
     if(bistSin) console.log(`BIST giris sinyali: ${bistSin.karar} (${bistSin.puan}/${bistSin.maks}) · dolar bazli endeks ${bistSin.usd} $ · firsat ${bistFr.length}: ${bistFr.map(f => f.kod + " hedef " + f.hedef + " (" + f.pot + "%)").join(", ")}`); }
   // ihale avcisi: gunde bir kez (20 saatten eskiyse) tara, aradaki turlarda son sonucu tasi
   let ihale = eskiD.ihale || null;
-  if(!ihale?.t || Date.now() - ihale.t > 20*3600000 || (ihale.toplam && (ihale.liste?.length || 0) < ihale.toplam * .9 && Date.now() - ihale.t > 40*60000)){ ihale = await milliEmlak().catch(e => { console.log("ihale avcisi calismadi:", e.message); return eskiD.ihale || null; });
-    if(ihale?.liste) console.log(`ihale avcisi: ${ihale.liste.length}/${ihale.toplam} Hazine ihalesi, ${Object.keys(ihale.detay || {}).length} ilgilenilen ilde detay`); }
+  if(!ihale?.t || Date.now() - ihale.t > 20*3600000 || (ihale.toplam && (ihale.liste?.length || 0) < ihale.toplam * .9 && Date.now() - ihale.t > 40*60000)){ ihale = await milliEmlak(eskiD.ihale?.detay || {}).catch(e => { console.log("ihale avcisi calismadi:", e.message); return eskiD.ihale || null; });
+    if(ihale?.liste) console.log(`ihale avcisi: ${ihale.liste.length}/${ihale.toplam} Hazine ihalesi, ${Object.keys(ihale.detay || {}).length} detay`); }
+  if(ihale?.liste){ const n = await meDetayTamamla(ihale).catch(e => { console.log("ihale detay tamamlama:", e.message); return 0; }); if(n) console.log(`ihale detay: +${n} (toplam ${Object.keys(ihale.detay).length}/${ihale.liste.length})`); }
   const kayit = { user_id:UID, algo:A, kasa, son_tarama:new Date().toISOString(), ...(egitildi ? { son_egitim:new Date().toISOString() } : {}), durum:{ rejim:RJ.simdi, btcFark:+(RJ.fark*100).toFixed(2), acikStrateji:[...Object.keys(TF), ...Object.keys(KUMAR)].filter(tf => A[tf]?.aktif || kanit[tf]), bistRejim:RJB?.simdi || 0, bistFark:RJB ? +(RJB.fark*100).toFixed(2) : null, bist:T1.bist, bistSinyal:bistSin, bistFirsat:bistFr || [], kriptoSinyal:ksin, nasdaqSinyal:nsin, ihale, taranan:T1.taranan, yeni:T1.yeni, acik:S1.acik - S1.bitti, bitti:S1.bitti, sure:Math.round((Date.now() - bas)/1000), masraf } };
   await sb("piyasa_bot?on_conflict=user_id", "POST", kayit, { Prefer:"resolution=merge-duplicates,return=minimal" });
   console.log(`kasa: disiplinli tur ${kasa.disiplin.tur} ${Math.round(kasa.disiplin.bakiye)} TL (${kasa.disiplin.acik.length} acik) · piyango tur ${kasa.her.tur} ${Math.round(kasa.her.bakiye)} TL (${kasa.her.acik.length} acik) · kumar tur ${kasa.kumar.tur} ${Math.round(kasa.kumar.bakiye)} TL (${kasa.kumar.acik.length} acik) · trader tur ${kasa.trader.tur} ${Math.round(kasa.trader.bakiye)} TL (${kasa.trader.acik.length} acik)`);
