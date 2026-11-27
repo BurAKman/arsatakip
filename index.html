@@ -10,6 +10,10 @@
 <link rel="apple-touch-icon" href="icon.png?v=a1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://fhydzzogwyhfssbnfokw.supabase.co" crossorigin>
+<link rel="preconnect" href="https://api.binance.com" crossorigin>
+<link rel="dns-prefetch" href="https://s3-symbol-logo.tradingview.com">
+<link rel="dns-prefetch" href="https://api.coingecko.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Cinzel:wght@500;600;700&family=Playfair+Display:wght@700;800&family=Anton&family=Oswald:wght@500;600;700&family=Inter:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
@@ -4467,7 +4471,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.12.2";
+const SURUM_MORDOR = "v 3.0.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -25749,7 +25753,7 @@ const BM_KASA = {
     kural:["Aynı anda en fazla 5 işlem", "Her işlemde kasanın en fazla %2'si riske girer", "Canlıda kanıtlanmış fırsatta risk 2 katına çıkar (en fazla kasanın %20'si)", "Kripto + BIST sinyalleri"] },
   kumar:{ ad:"🎲 Kumar kasası", ozet:"Sık işlem. 20+ indikatöre bakan öğrenen model karar verir; para, kazanma ihtimaline göre ayarlanır.",
     kural:["Aynı anda en fazla 3 işlem", "Her işlemde en fazla %2 risk ve kasanın en fazla %15'i", "BTC düşüş trendindeyse en fazla 2 işlem ve yarım pozisyon", "Model kazanma ihtimalini düşük görürse hiç girmez"] },
-  trader:{ ad:"⚡ Trader kasası", ozet:"Gün içi al-sat: kripto 15 dk / 1 saat, BIST ve NASDAQ 1 saatlik mumlar. İşlemler en fazla birkaç saat sürer, gece taşımaz; küçük ama sık kazanç arar.",
+  trader:{ ad:"⚡ Trader kasası", ozet:"Gün içi al-sat: kripto 15 dk / 1 saat, BIST ve NASDAQ 1 saatlik mumlar. “Gün içi” = her piyasanın kendi seansı: BIST işlemi 18:00'de, NASDAQ işlemi New York kapanışında (TR saatiyle kışın 00:00, yazın 23:00) kapanır, ertesi güne taşınmaz. Kripto 7/24 açık, orada kural süre: 15 dk stratejisi en fazla 4 saat, 1 saatlik en fazla 8 saat. Yani TR saatiyle gece işlem görmesi normal.",
     kural:["Aynı anda en fazla 3 işlem", "Her işlemde kasanın en fazla %1,5'i riske girer, en fazla %33'ü bağlanır", "Sadece ileri testi geçen kısa vadeli stratejilerle girer", "Komisyon + kayma payı her işlemden %0,3 düşülür"] },
   karma:{ ad:"🏦 Ana kasa (karma)", ozet:"Nihai bot adayı: Disiplinli'nin kanıtlanmış 1-3 günlük işlemleri + Trader'ın kanıtlanmış gün içi işlemleri + aktif öğrenen model. Hem düzenli al-sat hem gün içi trade; amaç aylık istikrarlı artı.",
     kural:["Aynı anda en fazla 5 işlem", "Her işlemde kasanın en fazla %2,5'i riske girer, en fazla %25'i bağlanır", "Sadece kanıtlı sinyaller: deneme modu işlemleri buraya girmez", "Kripto + BIST + NASDAQ"] } };
@@ -27257,6 +27261,664 @@ async function pzAnaOzetKoy(yer, once){ try{ const b = await pzBotYukle(), h = p
       const b = app.querySelector("#pysAna")?.closest(".pcBox")?.querySelector("header b"); if(b) b.innerHTML = '<i class="pipo"></i> Piyasaların özeti · Bay Pipo'; }catch(e){}
     try{ return await p; }catch(e){ return null; } }; }
 
+/* ================= v3.0 PIYASALAR: tam genislik paneller, gruplu sekmeler, yeni araclar =================
+   - Sag/sol kolon kalkti: her sekme tam genislikte tek panel. Eski yan kutular (portfoy, hareketliler, radar, olaylar) "🏠 Ozet" sekmesinde izgara olur.
+   - Sekmeler gruplu: Ana / Piyasalar / Kesfet / Benim / Bot & araclar
+   - Yeni: Tarayici, Isi haritasi, Takvim, Portfoy analizi, Net servet + hedef, Strateji lab, Ogren (sozluk + ⓘ)
+   - Hiz: listeler + bot verisi cihazda saklanir, ekran ANINDA eski veriyle acilir, arkada tazelenir. */
+const V3 = { tarama:null, isiPazar:"bist", isiDonem:"deg", labSonuc:null };
+PZ_SEKMELER.unshift(["ozet", "🏠 Özet"]);
+PZ_SEKMELER.push(["tarama", "🔎 Tarayıcı"], ["isi", "🟩 Isı haritası"], ["takvim", "📅 Takvim"], ["analitik", "📈 Portföy analizi"], ["servet", "💰 Net servet & hedef"], ["lab", "🧪 Strateji lab"], ["ogren", "📚 Öğren"]);
+const PZ_GRUP = [["Ana", ["ozet", "takip", "oneri", "gunluk"]], ["Piyasalar", ["bist", "nasdaq", "kripto", "maden", "doviz"]], ["Keşfet", ["tarama", "isi", "takvim", "olay"]],
+  ["Benim", ["portfoy", "analitik", "servet", "alarm"]], ["Bot & araçlar", ["ekstrem", "lab", "ogren"]]];
+PZ.sekme = "ozet";
+const PZ_LISTE_SEK = new Set(["takip", "bist", "nasdaq", "kripto", "maden", "doviz", "portfoy"]);
+pzSekmeCiz = function(){
+  const k = document.getElementById("pzSekmeler"); if(!k) return; const ad = Object.fromEntries(PZ_SEKMELER), kul = new Set();
+  const say = { takip:PZ.takip.length, portfoy:PZ.portfoy.length, bist:PZ.liste.bist?.length, nasdaq:PZ.liste.nasdaq?.length, kripto:PZ.liste.kripto?.length, alarm:PZ.alarm.filter(a => a.aktif).length };
+  const G = PZ_GRUP.map(([g, L]) => { L.forEach(v => kul.add(v)); return [g, L.filter(v => ad[v])]; });
+  const kalan = PZ_SEKMELER.map(([v]) => v).filter(v => !kul.has(v)); if(kalan.length) G[G.length - 1][1].push(...kalan);
+  k.innerHTML = G.filter(([, L]) => L.length).map(([g, L]) => `<div class="pzGrp"><small>${g}</small><div>${L.map(v => `<button class="${PZ.sekme === v ? "on" : ""}" onclick="pzSekmeSec('${v}')">${ad[v]}${say[v] ? `<em>${say[v]}</em>` : ""}</button>`).join("")}</div></div>`).join("");
+};
+function pzSekmeSec(v){ PZ.sekme = v; pzSekmeCiz(); pzTablo();
+  try{ const b = document.querySelector(".pzSekmeBar"); if(b && b.getBoundingClientRect().top < 0) b.scrollIntoView({ block:"start" }); }catch(e){} }
+// her sekme kendi paneli: V3_PANEL[sekme](kutu)
+const V3_PANEL = {};
+{ const eski = pzTablo; pzTablo = function(){
+    const iz = document.querySelector(".pzIzgara"), T = PZ.sekme; if(iz){ iz.dataset.sek = T; iz.classList.toggle("ozetMod", T === "ozet"); }
+    try{ app.classList.toggle("pzOzetMod", T === "ozet"); app.classList.toggle("pzListeMod", PZ_LISTE_SEK.has(T)); }catch(e){}
+    const k = document.getElementById("pzTablo"), f = V3_PANEL[T];
+    if(f && k){ try{ const r = f(k); Promise.resolve(r).then(() => pzBilgiSus(k)).catch(e => { console.error("panel", T, e); k.innerHTML = `<div class="pzSqlUyar">Bu panel çizilemedi: ${esc(e?.message || e)}</div>`; }); }
+      catch(e){ console.error("panel", T, e); k.innerHTML = `<div class="pzSqlUyar">Bu panel çizilemedi: ${esc(e?.message || e)}</div>`; } return; }
+    const r = eski.apply(this, arguments); Promise.resolve(r).then(() => pzBilgiSus(k)).catch(() => {}); return r; }; }
+// ekran kurulunca: gece analizi kutusu (YZ kapali) yerine "Yaklasanlar" kutusu
+{ const eski = pzEkran; pzEkran = async function(){ const p = eski.apply(this, arguments);
+    try{ const g = document.getElementById("pzGece"); const h = g?.closest("section")?.querySelector("header"); if(h) h.innerHTML = `<b>📅 Yaklaşanlar</b><button class="pcLink" onclick="pzSekmeSec('takvim')">Takvim →</button>`;
+      const r = document.getElementById("pzRadar")?.closest("section")?.querySelector("header small"); if(r) r.textContent = "teknik tarama";
+      pzSekmeCiz(); pzTablo(); }catch(e){}
+    const r = await p; try{ pzSekmeCiz(); if(PZ.sekme === "ozet" || !PZ_LISTE_SEK.has(PZ.sekme)) pzTablo(); }catch(e){} return r; }; ekranlar.piyasa = pzEkran; }
+pzGeceKutu = function(){ const k = document.getElementById("pzGece"); if(!k) return; const L = v3TakvimOlay(10).slice(0, 7);
+  k.innerHTML = L.length ? `<div class="v3YakL">${L.map(o => `<button onclick="${o.git || "pzSekmeSec('takvim')"}"><span class="v3Gun ${o.kalan <= 1 ? "yakin" : ""}">${o.kalan <= 0 ? "bugün" : o.kalan === 1 ? "yarın" : o.kalan + " gün"}</span><b>${esc(o.ad)}</b><em>${esc(o.tur)}</em></button>`).join("")}</div>`
+    : `<div class="pcBos">Önümüzdeki 10 günde takip/portföyünde bilanço, temettü ya da önemli veri yok.</div>`; };
+
+/* ---------- 🏠 OZET ---------- */
+V3_PANEL.ozet = function(k){
+  const row = PZ.bot?.row, O = row?.durum?.oneri, en = O?.pazar ? ["bist", "nasdaq", "kripto"].flatMap(p => (O.pazar[p] || []).map(x => ({ ...x, pazar:p }))).filter(x => x.eylem === "AL").sort((a, b) => b.puan - a.puan).slice(0, 6) : [];
+  const ao = row ? pzAnaOzetHtml(row) : "";
+  k.innerHTML = `<div class="v3Oz">
+    ${ao ? `<section class="v3Kart genis"><header><b><i class="pipo"></i> Bay Pipo'nun piyasa özeti</b><small>bot 15 dakikada bir bakar</small></header>${ao}</section>` : ""}
+    <section class="v3Kart"><header><b>🟩 BIST ısı haritası</b><button class="pcLink" onclick="V3.isiPazar='bist';pzSekmeSec('isi')">Büyüt →</button></header><div class="v3MiniIsi" id="v3MiniIsi"></div></section>
+    <section class="v3Kart"><header><b><i class="pipo"></i> Bay Pipo'nun en güçlü AL'ları</b><button class="pcLink" onclick="pzSekmeSec('oneri')">Tümü →</button></header>
+      ${en.length ? `<div class="v3EnL">${en.map(x => `<button onclick="go('piyasaDetay','${x.k}')"><b>${esc(x.kod)}</b><small>${({ bist:"BIST", nasdaq:"NASDAQ", kripto:"Kripto" })[x.pazar]}</small><span class="v3Puan" style="--p:${Math.max(0, Math.min(100, (x.puan + 100)/2))}">${x.puan > 0 ? "+" : ""}${x.puan}</span><em>${x.rr ? "R/Ö 1:" + (+x.rr).toFixed(1).replace(".", ",") : ""}</em></button>`).join("")}</div>`
+        : `<div class="pcBos">${O ? "Şu an AL veren güçlü aday yok. Bay Pipo nakitte beklemeyi seçiyor." : "Bay Pipo ilk hesabını yapınca burada çıkar."}</div>`}</section>
+    <section class="v3Kart"><header><b>🔎 Hazır taramalar</b><button class="pcLink" onclick="pzSekmeSec('tarama')">Tarayıcı →</button></header>
+      <div class="v3HazirL">${V3_HAZIR.map((h, i) => `<button onclick="v3TaramaHazir(${i})"><b>${h.ik} ${h.ad}</b><small>${h.not}</small></button>`).join("")}</div></section>
+  </div>`;
+  v3IsiCiz(document.getElementById("v3MiniIsi"), "bist", "deg", 60);
+};
+
+/* ---------- HIZ: cihazda onbellek, ekran aninda acilir ---------- */
+const V3_HIZ = { ver:1, zam:null };
+function v3HizKaydet(){ clearTimeout(V3_HIZ.zam); V3_HIZ.zam = setTimeout(() => { try{
+    const L = {}; ["bist", "nasdaq", "kripto", "maden", "doviz"].forEach(t => { if(PZ.liste[t]?.length) L[t] = PZ.liste[t]; });
+    localStorage.setItem("v3Liste", JSON.stringify({ v:V3_HIZ.ver, t:Date.now(), usd:PZ.usd, L })); }catch(e){ try{ localStorage.removeItem("v3Liste"); }catch(e2){} } }, 1500); }
+(function v3HizYukle(){ try{ const o = JSON.parse(localStorage.getItem("v3Liste") || "null"); if(!o || o.v !== V3_HIZ.ver || Date.now() - o.t > 3*86400000) return;
+    Object.entries(o.L || {}).forEach(([t, L]) => { if(!PZ.liste[t]) PZ.liste[t] = L; }); PZ.usd = PZ.usd || o.usd; PZ.bayatT = o.t; }catch(e){} })();
+[["pzBist"], ["pzNasdaq"], ["pzKripto"], ["pzMadenDoviz"]].forEach(([ad]) => { const eski = window[ad]; if(typeof eski !== "function") return;
+  window[ad] = function(){ const p = eski.apply(this, arguments); Promise.resolve(p).then(() => { PZ.bayatT = null; v3HizKaydet(); }).catch(() => {}); return p; }; });
+try{ pzBist = window.pzBist; pzNasdaq = window.pzNasdaq; pzKripto = window.pzKripto; pzMadenDoviz = window.pzMadenDoviz; }catch(e){}
+// bot verisi: son okunan satir cihazda; ilk acilista hemen gosterilir, arkada tazelenir
+{ const ic = pzBotYukle; pzBotYukle = function(zorla){
+    if(!PZ.bot && !zorla){ try{ const o = JSON.parse(localStorage.getItem("v3Bot") || "null"); if(o?.row && o.uid === ME?.id && Date.now() - o.t < 12*3600000){ PZ.bot = { row:o.row, acik:o.acik || [], kapali:o.kapali || [], t:Date.now() - 3*60000, bayat:true };
+          setTimeout(() => ic(true).then(b => { if(b?.row){ v3BotKaydet(b); if(app?.dataset?.ekran === "piyasa") try{ pzTablo(); }catch(e){} } }), 50); return Promise.resolve(PZ.bot); } }catch(e){} }
+    const p = ic(zorla); Promise.resolve(p).then(b => { if(b?.row && !b.bayat) v3BotKaydet(b); }).catch(() => {}); return p; }; }
+function v3BotKaydet(b){ try{ localStorage.setItem("v3Bot", JSON.stringify({ t:Date.now(), uid:ME?.id, row:b.row, acik:(b.acik || []).slice(-60), kapali:(b.kapali || []).slice(-150) })); }catch(e){} }
+// ust bilgi: eski veriyle aciliyorsa kucuk rozet
+{ const eski = pzSeritCiz; pzSeritCiz = async function(){ const r = await eski.apply(this, arguments);
+    try{ const k = document.getElementById("pzSerit"); if(k && PZ.bayatT && !k.querySelector(".v3Bayat")) k.insertAdjacentHTML("beforeend", `<span class="v3Bayat" title="Ekran hızlı açılsın diye son kaydedilen veriyle açıldı; tazesi arkada geliyor">⚡ hızlı açılış · tazeleniyor</span>`);
+      if(k && !PZ.bayatT) k.querySelector(".v3Bayat")?.remove(); }catch(e){} return r; }; }
+
+/* ---------- 📚 OGREN: sozluk + ⓘ ---------- */
+const PZ_SOZ = [
+  // temel analiz
+  ["F/K", "Temel", "Fiyat / Kazanç. Hisse fiyatı, şirketin hisse başına yıllık kârının kaç katı? F/K 8 ise: şirket kârını hiç değiştirmezse ödediğin parayı 8 yılda kârla geri çıkarır. Düşükse ucuz olabilir ama bazen şirket sorunlu olduğu için düşüktür.", "BIST'te 5-12 arası makul sayılır, teknoloji hisselerinde 30+ normaldir.", ["F/K", "Fiyat/Kazanç", "FK"]],
+  ["PD/DD", "Temel", "Piyasa Değeri / Defter Değeri. Borsadaki fiyatın, şirketin kâğıt üzerindeki öz varlığına oranı. 1'in altıysa şirket, kasasındakinden ucuza satılıyor demek.", "PD/DD 0,8: 100 liralık malı 80'e satıyorlar gibi düşün.", ["PD/DD", "PDDD"]],
+  ["FD/FAVÖK", "Temel", "Şirketin borç dahil toplam değeri ÷ esas faaliyetten yıllık kazancı. F/K'dan daha dürüst bir ucuzluk ölçüsü, çünkü borcu da hesaba katar.", "6'nın altı genelde ucuz, 15'in üstü pahalı.", ["FD/FAVÖK", "EV/EBITDA"]],
+  ["Piyasa değeri", "Temel", "Şirketin borsadaki toplam fiyatı: hisse fiyatı × hisse adedi. Büyük şirketler daha az oynar, küçükler sert oynar.", "", ["Piyasa değ.", "Piyasa değeri", "Piyasa değ"]],
+  ["Temettü verimi", "Temel", "Şirketin yılda dağıttığı kâr payının hisse fiyatına oranı. %5 ise 100 TL'lik hisseden yılda ~5 TL nakit gelir.", "Yüksek temettü güzel ama şirket büyümüyorsa fiyat düşebilir.", ["Temettü", "Temettü %", "Temettü verimi"]],
+  ["ROE (özkaynak kârlılığı)", "Temel", "Şirket, ortakların koyduğu her 100 liradan yılda kaç lira kâr çıkarıyor. Yüksekse şirket parayı iyi çalıştırıyor.", "Enflasyonlu ülkede ROE enflasyonun üstünde olmalı.", ["ROE", "Özkaynak kârlılığı"]],
+  ["Net kâr marjı", "Temel", "Her 100 liralık satıştan masraflar düştükten sonra kaç lira kâr kalıyor.", "", ["Net marj", "Net kâr marjı"]],
+  ["Borç / özkaynak", "Temel", "Şirketin borcu, kendi parasının kaç katı. 2'nin üstü riskli sayılır, faizler artınca canı yanar.", "", ["Borç/özk.", "Borç / özkaynak", "Borç/Özkaynak"]],
+  ["Beta", "Temel", "Hisse, endekse göre ne kadar sert oynuyor. Beta 1,5: endeks %10 düşerse bu hisse ~%15 düşer.", "", ["Beta"]],
+  ["Bilanço", "Temel", "Şirketin 3 ayda bir açıkladığı karne: satış, kâr, borç. Açıklama günü fiyat sert oynar; bot o günlerde dikkatli davranır.", "", ["Bilanço"]],
+  ["Bedelsiz / bedelli", "Temel", "Bedelsiz: şirket kendi kaynağından ortaklara ücretsiz yeni hisse verir (fiyat bölünür, servet değişmez). Bedelli: ortaklar para koyup yeni hisse alır.", "", ["Bedelsiz", "Bedelli"]],
+  ["Sektör", "Temel", "Şirketin iş kolu (banka, enerji, teknoloji…). Aynı sektör hisseleri genelde beraber hareket eder; portföyü tek sektöre yığmamak lazım.", "", ["Sektör"]],
+  // teknik
+  ["RSI", "Teknik", "0-100 arası 'yorgunluk' göstergesi. 70 üstü: çok hızlı yükseldi, nefeslenebilir. 30 altı: çok düştü, tepki gelebilir.", "Tek başına al-sat sinyali değil, trendle birlikte okunur.", ["RSI"]],
+  ["MACD", "Teknik", "İki ortalamanın farkı. Mavi çizgi sarıyı yukarı keserse ivme yukarı dönüyor, aşağı keserse aşağı.", "", ["MACD"]],
+  ["Hareketli ortalama (SMA/EMA)", "Teknik", "Son X günün ortalama fiyatı. Fiyat ortalamanın üstündeyse trend yukarı sayılır. 50 günlük orta vade, 200 günlük uzun vade trendi gösterir.", "", ["SMA", "EMA", "Ortalama", "200 ort.", "50 ort."]],
+  ["Altın / ölüm kesişimi", "Teknik", "50 günlük ortalama 200 günlüğü yukarı keserse 'altın kesişim' (olumlu), aşağı keserse 'ölüm kesişimi' (olumsuz).", "", ["Altın kesişim", "Ölüm kesişimi"]],
+  ["Bollinger bantları", "Teknik", "Fiyatın normal oynama koridoru. Bant daralırsa sert hareket yaklaşıyor olabilir.", "", ["Bollinger"]],
+  ["ATR (oynaklık)", "Teknik", "Bir mumda fiyatın ortalama kaç lira oynadığı. Stoplar ATR'ye göre konur ki normal kıpırtıda patlamasın.", "", ["ATR"]],
+  ["VWAP", "Teknik", "Hacim ağırlıklı ortalama fiyat: o dönemde alınıp satılan her lotun ortalama maliyeti. Fiyat VWAP üstündeyse alıcılar güçlü sayılır.", "", ["VWAP"]],
+  ["Destek / direnç", "Teknik", "Destek: fiyatın düşerken durup döndüğü taban. Direnç: yükselirken takıldığı tavan. Kırılırsa rol değiştirir.", "", ["Destek", "Direnç", "Destek/direnç"]],
+  ["Hacim / göreli hacim", "Teknik", "Hacim: o gün el değiştiren para. Göreli hacim 3x: bugün normalin 3 katı işlem var, bir şeyler oluyor demek.", "", ["Hacim", "Göreli hacim", "Hacim 24s", "Rel. hacim"]],
+  ["Boğa / ayı piyasası", "Teknik", "Boğa: genel yükseliş dönemi. Ayı: genel düşüş dönemi. Bot ayı piyasasında daha az ve daha küçük işlem açar.", "", ["Boğa", "Ayı"]],
+  ["52 hafta zirve/dip", "Teknik", "Son bir yılın en yüksek ve en düşük fiyatı. Zirveye yakın hisse güçlü, dibe yakın hisse zayıf ya da ucuz olabilir.", "", ["52H zirve", "Zirveye", "52 hafta"]],
+  ["Momentum (performans)", "Teknik", "Son 1 hafta / 1 ay / 1 yılda yüzde kaç gitti. Güçlü giden hisse bir süre daha güçlü gitme eğilimindedir.", "", ["1 ay", "1 yıl", "Gün", "24 saat", "7 gün", "30 gün", "3 ay", "Hafta"]],
+  // risk
+  ["Zarar kes (stop)", "Risk", "Önceden belirlenen çıkış fiyatı: fiyat buraya düşerse zararı büyütmeden satarsın. Bot her işleme mutlaka stop koyar.", "Stopsuz işlem, frensiz araba.", ["Stop", "Zarar kes"]],
+  ["Hedef / kâr al", "Risk", "Önceden belirlenen satış fiyatı. Bay Pipo 3 hedef verir; ilkinde bir kısmını satıp kalanı sürdürmek klasik yöntemdir.", "", ["Hedef", "Kâr al"]],
+  ["Risk / ödül", "Risk", "Kaybedebileceğin paraya karşı kazanabileceğin para. 1:2 = 1 lira riske 2 lira kazanç. 1:1,5'in altındaki işlemlere bot girmez.", "", ["R/Ö", "Risk / ödül", "Risk/ödül"]],
+  ["İsabet oranı", "Risk", "İşlemlerin yüzde kaçı kârla kapandı. %40 isabetle bile kazanılır, yeter ki kazançlar kayıplardan büyük olsun.", "", ["İsabet", "İsabet oranı"]],
+  ["Maksimum düşüş", "Risk", "Kasa, zirvesinden en fazla yüzde kaç eridi. Gerçek parada 'ne kadar acıya katlanabilirim' sorusunun cevabı.", "", ["Max düşüş", "Maks. düşüş", "Düşüş"]],
+  ["Çeşitlendirme / yoğunlaşma", "Risk", "Tüm yumurtaları aynı sepete koymamak. Tek varlık portföyün %25'inden fazlaysa uygulama uyarır.", "", ["Ağırlık", "Pay"]],
+  ["Reel getiri", "Risk", "Enflasyondan arındırılmış kazanç. %40 kazandın ama enflasyon %35 ise gerçekte %3,7 zenginleştin.", "", ["Reel", "Enflasyon"]],
+  ["Kaldıraç", "Risk", "Borçla büyütülmüş pozisyon. Kazancı da kaybı da katlar; 10x kaldıraçta %10 ters hareket parayı sıfırlar. Bot kaldıraç kullanmaz.", "", ["Kaldıraç"]],
+  ["Komisyon & kayma", "Risk", "Her alım-satımda aracı kuruma giden pay + istediğin fiyattan biraz kötüsüne dolma. Sık işlemde kârı yer; bot bunu her işlemden düşer.", "", ["Masraf", "Komisyon"]],
+  // bot
+  ["Bay Pipo puanı", "Bot", "-100 ile +100 arası. 30+ indikatörün oyu toplanır: +15 üstü AL tarafı, +40 üstü güçlü AL, -15 altı SAT tarafı.", "", ["Puan", "Bay Pipo puanı", "Pipo"]],
+  ["Piyasa havası (GİR / HAZIRLAN / BEKLE)", "Bot", "Bütün piyasanın genel durumu. GİR: alım için uygun dönem. HAZIRLAN: şartlar oluşuyor, izle. BEKLE: şimdilik nakitte dur.", "", ["Piyasa havası", "Sinyal"]],
+  ["Kasa", "Bot", "Botun sanal parası. 5 kasa aynı anda, birbirinden bağımsız çalışır; gerçek para yok. Gerçek paraya geçişte Ana kasa baz alınır.", "", ["Kasa", "Kasalar"]],
+  ["Gün içi (trader)", "Bot", "Her piyasanın kendi seansında açılıp kapanan işlem. BIST 18:00, NASDAQ New York kapanışı (TR kışın 00:00), kripto 4-8 saat süre sınırı.", "", ["Trader", "Gün içi"]],
+  ["Swing", "Bot", "Birkaç gün ile birkaç hafta tutulan işlem. Disiplinli kasa böyle çalışır.", "", ["Swing"]],
+  ["Backtest (geriye dönük test)", "Bot", "Bir kuralı geçmiş fiyatlarda çalıştırıp 'bunu yapsaydım ne olurdu' diye bakmak. Geçmiş başarı garanti değildir ama kötü fikirleri ucuza eler.", "", ["Backtest", "Test"]],
+  ["Al-tut", "Bot", "Başta alıp hiç dokunmadan beklemek. Her stratejinin yenmesi gereken rakip budur; yenemiyorsa boşa uğraşıyoruz.", "", ["Al-tut", "Al ve tut"]],
+  // genel
+  ["BIST 100 (XU100)", "Genel", "Borsa İstanbul'un en büyük 100 şirketinin endeksi. Borsanın genel nabzı.", "", ["XU100", "BIST 100"]],
+  ["Dolar endeksi (DXY)", "Genel", "Doların dünya paralarına karşı gücü. DXY yükselirse altın, kripto ve gelişen ülke borsaları genelde baskılanır.", "", ["DXY", "Dolar endeksi"]],
+  ["Gram altın", "Genel", "Ons altın × dolar/TL ÷ 31,1035. Türkiye'de en yaygın 'değer saklama' ölçüsü.", "", ["Gram altın"]],
+  ["Fonlama oranı", "Genel", "Kripto vadeli işlemlerde alıcı ile satıcı arasındaki faiz. Çok yüksekse herkes kaldıraçla almış, düşüş riski artar.", "", ["Fonlama"]],
+  ["Halka arz", "Genel", "Şirketin hisselerini ilk kez borsada satışa çıkarması. İlk günler çok oynak olur.", "", ["Halka arz"]],
+  ["Net servet", "Genel", "Sahip olduğun her şey (arsa, hisse, nakit, alacak) eksi borçların. Dolar ve altın cinsinden de bakmak gerçek zenginleşmeyi gösterir.", "", ["Net servet"]],
+].map(([t, k, d, o, a]) => ({ t, k, d, o, a }));
+const PZ_SOZ_IND = (() => { const m = new Map(); PZ_SOZ.forEach((x, i) => x.a.concat([x.t]).forEach(a => m.set(a.toLocaleLowerCase("tr"), i))); return m; })();
+function pzSozBul(ad){ const i = PZ_SOZ_IND.get(String(ad || "").replace(/[↑↓ⓘ]/g, "").trim().toLocaleLowerCase("tr")); return i == null ? null : PZ_SOZ[i]; }
+// tablo basliklarina ⓘ
+function pzBilgiSus(k){ try{ (k || document).querySelectorAll("th, .v3Ib").forEach(th => { if(th.querySelector(".pzI")) return; const x = pzSozBul(th.childNodes[0]?.textContent || th.textContent); if(!x) return;
+      (th.classList.contains("v3Ib") ? th.querySelector(":scope > span, :scope > small") || th : th).insertAdjacentHTML("beforeend", `<i class="pzI" data-t="${esc(x.t)}" title="Bu ne demek?">ⓘ</i>`); }); }catch(e){} }
+document.addEventListener("click", e => { const i = e.target.closest?.(".pzI"); if(!i) { if(!e.target.closest?.(".pzPop")) document.querySelector(".pzPop")?.remove(); return; }
+  e.stopPropagation(); e.preventDefault(); pzBilgi(i.dataset.t, i); }, true);
+function pzBilgi(t, el){ document.querySelector(".pzPop")?.remove(); const x = PZ_SOZ.find(s => s.t === t) || pzSozBul(t); if(!x) return;
+  const d = document.createElement("div"); d.className = "pzPop"; d.innerHTML = `<b>${esc(x.t)}</b><p>${esc(x.d)}</p>${x.o ? `<small>💡 ${esc(x.o)}</small>` : ""}<button onclick="this.parentNode.remove();PZ.sekme='ogren';V3.ogrenAra='${esc(x.t).replace(/'/g, "")}';pcGit('piyasa')">Öğren köşesinde aç →</button>`;
+  document.body.appendChild(d); const r = el?.getBoundingClientRect?.() || { left:innerWidth/2, bottom:innerHeight/2 }, w = Math.min(320, innerWidth - 24);
+  d.style.width = w + "px"; d.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.left - 20)) + "px"; d.style.top = Math.min(innerHeight - d.offsetHeight - 12, r.bottom + 8) + "px"; }
+const V3_DERS = [
+  ["🪙 Borsa ve kripto 5 dakikada", ["Hisse = şirkete ortaklık. Şirket kâr ettikçe hissenin değeri artar, temettü verir.", "Kripto = şirketi olmayan dijital varlık; değeri tamamen alıcı-satıcı dengesine bağlı, çok daha oynak.", "Fiyat; beklenti, faiz, dolar ve haberle oynar. Kısa vadede gürültü, uzun vadede şirketin kârı belirler."]],
+  ["📈 Grafik nasıl okunur", ["Yeşil mum: o dönem fiyat yükselmiş, kırmızı: düşmüş. Fitiller en yüksek/en düşük fiyat.", "Önce trende bak: fiyat 200 günlük ortalamanın üstündeyse büyük resim olumlu.", "Sonra seviyelere bak: yeşil çizgiler destek (alım bölgesi), kırmızılar direnç (satış bölgesi)."]],
+  ["🛡 Risk yönetiminin 3 kuralı", ["Tek işlemde kasanın en fazla %1-2'sini riske at (stop'a kadar olan kayıp).", "Stop'u girmeden önce belirle ve oynatma.", "Tek varlığa portföyün %25'inden fazlasını koyma."]],
+  ["🤖 Bay Pipo nasıl karar veriyor", ["30+ indikatör (trend, momentum, hacim, üst zaman dilimi, piyasa rejimi) oy veriyor.", "Oylar puana dönüşüyor: +15 üstü AL tarafı. Ama puan yetmez, risk/ödül de 1:1,5'i geçmeli.", "Her strateji önce geçmiş veride, sonra canlıda sanal parayla kendini kanıtlıyor. Kanıtlamayan kasaya giremez."]],
+  ["💸 Gerçek paraya geçmeden önce", ["Bot ekranındaki 'Gerçek paraya geçiş' listesi tamamen ✓ olmalı.", "Önce küçük para, yarım pozisyon. Sanal ile gerçek sonuç 2-4 hafta uyumlu giderse büyüt.", "Kaybetmeye dayanamayacağın parayla asla."]] ];
+V3_PANEL.ogren = function(k){ const q = V3.ogrenAra || "", kat = V3.ogrenKat || "";
+  const qq = q.toLocaleLowerCase("tr"), L = PZ_SOZ.filter(x => (!kat || x.k === kat) && (!qq || (x.t + " " + x.d + " " + x.a.join(" ")).toLocaleLowerCase("tr").includes(qq)));
+  k.innerHTML = `<div class="v3Ogren"><div class="v3OgUst"><div><h3>📚 Öğren köşesi</h3><small>Borsa dilini sade Türkçeye çeviren sözlük. Uygulamada başlıkların yanındaki <i class="pzI sus">ⓘ</i> işaretine dokununca da açıklama çıkar.</small></div>
+      <input class="pzAra v3OgAra" placeholder="Terim ara: F/K, RSI, stop…" value="${esc(q)}" oninput="V3.ogrenAra=this.value;clearTimeout(V3.ogZ);V3.ogZ=setTimeout(()=>{pzTablo();const i=document.querySelector('.v3OgAra');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},180)"></div>
+    <div class="v3Cipler">${["", "Temel", "Teknik", "Risk", "Bot", "Genel"].map(c => `<button class="${kat === c ? "on" : ""}" onclick="V3.ogrenKat='${c}';pzTablo()">${c || "Hepsi"}</button>`).join("")}</div>
+    ${!q && !kat ? `<div class="v3Dersler">${V3_DERS.map(([b, M]) => `<details class="v3Ders"><summary>${b}</summary><ol>${M.map(m => `<li>${esc(m)}</li>`).join("")}</ol></details>`).join("")}</div>` : ""}
+    <div class="v3SozL">${L.map(x => `<article class="v3Soz"><header><b>${esc(x.t)}</b><span class="v3Kat ${x.k}">${x.k}</span></header><p>${esc(x.d)}</p>${x.o ? `<small>💡 ${esc(x.o)}</small>` : ""}</article>`).join("") || `<div class="pcBos">"${esc(q)}" için bir şey bulamadım.</div>`}</div></div>`; };
+
+/* ---------- 🔎 TARAYICI (screener) ---------- */
+const V3_ALAN = [ // [anahtar, etiket, tv alani / fonksiyon, birim]
+  ["fk", "F/K", s => s.tv?.price_earnings_ttm], ["pddd", "PD/DD", s => s.tv?.price_book_ratio], ["fv", "FD/FAVÖK", s => s.tv?.enterprise_value_ebitda_ttm],
+  ["tem", "Temettü %", s => s.tv?.dividends_yield_current], ["roe", "ROE %", s => s.tv?.return_on_equity], ["nm", "Net marj %", s => s.tv?.net_margin],
+  ["de", "Borç/özk.", s => s.tv?.debt_to_equity], ["rsi", "RSI", s => s.tv?.RSI], ["w1", "Hafta %", s => s.tv?.["Perf.W"]], ["m1", "1 ay %", s => s.tv?.["Perf.1M"]],
+  ["m3", "3 ay %", s => s.tv?.["Perf.3M"]], ["y1", "1 yıl %", s => s.tv?.["Perf.Y"]], ["pd", "Piyasa değ. (Mn)", s => s.tv?.market_cap_basic != null ? s.tv.market_cap_basic/1e6 : null],
+  ["rv", "Göreli hacim", s => s.tv?.relative_volume_10d_calc], ["beta", "Beta", s => s.tv?.beta_1_year], ["zir", "Zirveye %", s => s.tv?.price_52_week_high ? (s.f/s.tv.price_52_week_high - 1)*100 : null] ];
+const V3_ALANF = Object.fromEntries(V3_ALAN.map(a => [a[0], a]));
+const V3_KOS = [ // onay kutulari
+  ["s200", "Fiyat 200 günlük ort. üstünde", s => s.tv?.SMA200 ? s.f > s.tv.SMA200 : null], ["s50", "Fiyat 50 günlük ort. üstünde", s => s.tv?.SMA50 ? s.f > s.tv.SMA50 : null],
+  ["kar", "Kâr ediyor", s => s.tv?.net_income != null ? s.tv.net_income > 0 : s.tv?.price_earnings_ttm != null ? s.tv.price_earnings_ttm > 0 : null],
+  ["tval", "TradingView: AL", s => s.tv?.["Recommend.All"] != null ? s.tv["Recommend.All"] >= .1 : null], ["pipo", "Bay Pipo: AL", s => V3.pipoAl?.has(s.k) || false] ];
+const V3_HAZIR = [
+  { ik:"💎", ad:"Ucuz değer", not:"F/K < 10, PD/DD < 1,5, kâr ediyor", f:{ fk:[0.1, 10], pddd:[null, 1.5], kar:1 } },
+  { ik:"💰", ad:"Temettü kralları", not:"Temettü ≥ %5, kâr ediyor", f:{ tem:[5, null], kar:1 } },
+  { ik:"🚀", ad:"Momentum", not:"1 ayda +%10, trend yukarı, RSI 50-72", f:{ m1:[10, null], rsi:[50, 72], s200:1 } },
+  { ik:"🩹", ad:"Yükselen trendde geri çekilme", not:"RSI < 40 ama fiyat 200'lüğün üstünde", f:{ rsi:[null, 40], s200:1 } },
+  { ik:"🏆", ad:"Kaliteli şirket", not:"ROE ≥ %25, net marj ≥ %10, borç/özk. < 1", f:{ roe:[25, null], nm:[10, null], de:[null, 1] } },
+  { ik:"🔥", ad:"Hacim patlaması", not:"Bugün normalin 2,5 katı işlem", f:{ rv:[2.5, null] } },
+  { ik:"🐣", ad:"Dipte, toparlanıyor", not:"Zirveden %40+ aşağıda, son hafta artıda", f:{ zir:[null, -40], w1:[0.5, null] } },
+  { ik:"🧭", ad:"Bay Pipo AL + ucuz", not:"Bay Pipo AL diyor ve F/K < 15", f:{ pipo:1, fk:[0.1, 15] } } ];
+function v3TaramaHazir(i){ const h = V3_HAZIR[i]; V3.tf = { pazar:V3.tf?.pazar || "bist", ...h.f }; V3.tAd = h.ik + " " + h.ad; PZ.sekme = "tarama"; if(document.getElementById("pzTablo")){ pzSekmeCiz(); pzTablo(); } else pcGit("piyasa"); }
+function v3PipoSet(){ const O = PZ.bot?.row?.durum?.oneri, S = new Set(); ["bist", "nasdaq", "kripto"].forEach(p => (O?.pazar?.[p] || []).forEach(x => { if(x.eylem === "AL") S.add(x.k); })); V3.pipoAl = S; return S; }
+const V3_SEKTOR = { "Finance":"Finans", "Producer Manufacturing":"Sanayi üretimi", "Process Industries":"Kimya & malzeme", "Non-Energy Minerals":"Metal & madencilik", "Energy Minerals":"Enerji (petrol, gaz)",
+  "Utilities":"Elektrik & su", "Consumer Durables":"Dayanıklı tüketim", "Consumer Non-Durables":"Gıda & tüketim", "Retail Trade":"Perakende", "Transportation":"Ulaşım", "Communications":"İletişim",
+  "Electronic Technology":"Elektronik & çip", "Technology Services":"Yazılım & internet", "Health Technology":"İlaç & medikal", "Health Services":"Sağlık hizmetleri", "Industrial Services":"Sanayi hizmetleri",
+  "Commercial Services":"Ticari hizmetler", "Distribution Services":"Dağıtım", "Consumer Services":"Turizm & hizmet", "Miscellaneous":"Diğer", "Government":"Kamu", "Sanayi":"Sanayi", "Technology":"Teknoloji" };
+const v3Sek = s => V3_SEKTOR[s] || s || "Diğer";
+V3_PANEL.tarama = function(k){
+  const f = V3.tf = V3.tf || { pazar:"bist" }, kay = PZ.ayar?.v3Tarama || []; v3PipoSet();
+  const inp = (a, i) => `<input type="number" step="any" inputmode="decimal" data-a="${a}" data-i="${i}" value="${f[a]?.[i] ?? ""}" placeholder="${i ? "en çok" : "en az"}" oninput="v3TOku()">`;
+  const sekL = [...new Set((PZ.liste[f.pazar] || []).map(s => v3Sek(s.tv?.sector)))].sort((a, b) => a.localeCompare(b, "tr"));
+  k.innerHTML = `<div class="v3Tar">
+    <div class="v3TarUst"><span class="hspSeg">${[["bist", "BIST"], ["nasdaq", "ABD"]].map(([v, a]) => `<button class="${f.pazar === v ? "on" : ""}" onclick="V3.tf.pazar='${v}';V3.tf.sek='';pzTablo()">${a}</button>`).join("")}</span>
+      <div class="v3HazirSat">${V3_HAZIR.map((h, i) => `<button class="v3Cip" title="${esc(h.not)}" onclick="v3TaramaHazir(${i})">${h.ik} ${h.ad}</button>`).join("")}</div></div>
+    ${kay.length ? `<div class="v3HazirSat kay"><small>Kayıtlıların:</small>${kay.map((x, i) => `<span class="v3Cip kay"><button onclick="v3TYukle(${i})">⭐ ${esc(x.ad)}</button><i onclick="v3TSil(${i})" title="Sil">×</i></span>`).join("")}</div>` : ""}
+    <details class="v3TarForm" ${V3.tAc === false ? "" : "open"} ontoggle="V3.tAc=this.open"><summary>🎛 Filtreler${V3.tAd ? ` · <b>${esc(V3.tAd)}</b>` : ""}</summary>
+      <div class="v3TarIz">${V3_ALAN.map(([a, ad]) => `<label class="v3Ib"><span>${ad}</span><div>${inp(a, 0)}${inp(a, 1)}</div></label>`).join("")}
+        <label class="v3Ib"><span>Sektör</span><select onchange="V3.tf.sek=this.value;v3TSonuc()"><option value="">Hepsi</option>${sekL.map(x => `<option ${f.sek === x ? "selected" : ""}>${esc(x)}</option>`).join("")}</select></label></div>
+      <div class="v3TarKos">${V3_KOS.map(([a, ad]) => `<label><input type="checkbox" ${f[a] ? "checked" : ""} onchange="V3.tf['${a}']=this.checked?1:0;v3TSonuc()">${ad}</label>`).join("")}</div>
+      <div class="v3TarTus"><button class="btn ghost" onclick="V3.tf={pazar:V3.tf.pazar};V3.tAd='';pzTablo()">Temizle</button><button class="btn" onclick="v3TKaydet()">⭐ Bu filtreyi kaydet</button></div></details>
+    <div id="v3TSonuc"></div></div>`;
+  v3TSonuc(); };
+function v3TOku(){ document.querySelectorAll(".v3TarIz input[data-a]").forEach(i => { const a = i.dataset.a, j = +i.dataset.i, v = i.value === "" ? null : +i.value.replace(",", ".");
+    const o = V3.tf[a] = V3.tf[a] || [null, null]; o[j] = isFinite(v) ? v : null; if(o[0] == null && o[1] == null) delete V3.tf[a]; }); clearTimeout(V3.tZ); V3.tZ = setTimeout(v3TSonuc, 160); }
+function v3TFiltre(f){ const L = PZ.liste[f.pazar] || [];
+  return L.filter(s => { for(const [a, r] of Object.entries(f)){ if(!Array.isArray(r)) continue; const al = V3_ALANF[a]; if(!al) continue; const v = al[2](s); if(v == null || !isFinite(v)) return false; if(r[0] != null && v < r[0]) return false; if(r[1] != null && v > r[1]) return false; }
+    for(const [a, , fn] of V3_KOS) if(f[a] && fn(s) !== true) return false; if(f.sek && v3Sek(s.tv?.sector) !== f.sek) return false; return true; }); }
+function v3TSonuc(){ const k = document.getElementById("v3TSonuc"); if(!k) return; const f = V3.tf, L0 = PZ.liste[f.pazar];
+  if(!L0){ k.innerHTML = `<div class="spin"></div>`; return; }
+  const sr = V3.tSira || { a:"pd", art:false }, deg = (s, a) => a === "kod" ? s.kod : a === "f" ? s.f : a === "deg" ? s.deg : V3_ALANF[a]?.[2](s);
+  const L = v3TFiltre(f).sort((x, y) => { const p = deg(x, sr.a), q = deg(y, sr.a); const c = typeof p === "string" ? p.localeCompare(q, "tr") : (p ?? -Infinity) - (q ?? -Infinity); return sr.art ? c : -c; });
+  const th = (a, ad, sag) => `<th class="${sag ? "sag" : ""} ${sr.a === a ? "on" : ""}" onclick="V3.tSira={a:'${a}',art:${sr.a === a ? !sr.art : false}};v3TSonuc()">${ad}${sr.a === a ? (sr.art ? " ↑" : " ↓") : ""}</th>`;
+  const n = (v, d = 1) => v == null || !isFinite(v) ? "—" : (+v).toFixed(d).replace(".", ",");
+  k.innerHTML = `<div class="v3TarSay"><b>${L.length}</b> hisse uydu <small>· ${L0.length} hisse tarandı · tıklayınca detay, ★ ile takibe al</small></div>
+    ${L.length ? `<div class="v3TabloK"><table class="pzT"><thead><tr><th></th>${th("kod", "Hisse")}${th("f", "Fiyat", 1)}${th("deg", "Gün", 1)}${th("fk", "F/K", 1)}${th("pddd", "PD/DD", 1)}${th("tem", "Temettü", 1)}${th("roe", "ROE", 1)}${th("rsi", "RSI", 1)}${th("m1", "1 ay", 1)}${th("y1", "1 yıl", 1)}${th("pd", "Piyasa değ.", 1)}<th>Sinyal</th></tr></thead><tbody>
+      ${L.slice(0, 250).map(s => { const tv = pzTvKarar(s.tv?.["Recommend.All"]), pp = V3.pipoAl?.has(s.k);
+        return `<tr onclick="go('piyasaDetay','${s.k}')"><td>${pzYildiz(s.k)}</td><td><div class="pzSem">${pzLogo(s)}<span><b>${esc(s.kod)}</b><small>${esc(s.ad)} · ${esc(v3Sek(s.tv?.sector))}</small></span></div></td>
+          <td class="sag mono">${pzPara(s.f, s.para)}</td><td class="sag mono ${pzYon(s.deg)}">${pzYuzde(s.deg)}</td><td class="sag mono">${n(s.tv?.price_earnings_ttm)}</td><td class="sag mono">${n(s.tv?.price_book_ratio, 2)}</td>
+          <td class="sag mono">${s.tv?.dividends_yield_current ? "%" + n(s.tv.dividends_yield_current) : "—"}</td><td class="sag mono">${s.tv?.return_on_equity != null ? "%" + n(s.tv.return_on_equity, 0) : "—"}</td>
+          <td class="sag mono ${s.tv?.RSI > 70 ? "az" : s.tv?.RSI < 30 ? "art" : ""}">${n(s.tv?.RSI, 0)}</td><td class="sag mono ${pzYon(s.tv?.["Perf.1M"])}">${pzYuzde(s.tv?.["Perf.1M"], 1)}</td><td class="sag mono ${pzYon(s.tv?.["Perf.Y"])}">${pzYuzde(s.tv?.["Perf.Y"], 1)}</td>
+          <td class="sag mono">${pzBuyuk(s.tv?.market_cap_basic, s.para)}</td><td>${pp ? `<span class="pzKarar gal"><i class="pipo"></i> AL</span>` : tv ? `<span class="pzKarar ${tv[1]}">${tv[0]}</span>` : ""}</td></tr>`; }).join("")}</tbody></table></div>`
+      : `<div class="pcBos">Bu filtreye uyan hisse yok. Birkaç şartı gevşet.</div>`}
+    <div class="pzNot">Veriler TradingView tarayıcısından · BIST ~15 dk gecikmeli · temel oranlar son bilançoya göre</div>`;
+  pzBilgiSus(k); }
+async function v3TKaydet(){ const ad = prompt("Bu filtreye bir ad ver:", V3.tAd?.replace(/^\S+\s/, "") || "Benim taramam"); if(!ad) return;
+  const { pazar, ...f } = V3.tf; const L = (PZ.ayar?.v3Tarama || []).filter(x => x.ad !== ad).concat([{ ad, f }]).slice(-12);
+  try{ await pzAyarYaz({ v3Tarama:L }); toast("⭐ Kaydedildi"); }catch(e){ toast("Kaydedilemedi"); } pzTablo(); }
+function v3TYukle(i){ const x = (PZ.ayar?.v3Tarama || [])[i]; if(!x) return; V3.tf = { pazar:V3.tf?.pazar || "bist", ...x.f }; V3.tAd = "⭐ " + x.ad; pzTablo(); }
+async function v3TSil(i){ const L = (PZ.ayar?.v3Tarama || []).slice(); L.splice(i, 1); try{ await pzAyarYaz({ v3Tarama:L }); }catch(e){} pzTablo(); }
+
+/* ---------- 🟩 ISI HARITASI (treemap) ---------- */
+function v3Sq(V, x, y, w, h){ const out = []; const tot = V.reduce((t, a) => t + a.v, 0); if(!tot || w <= 0 || h <= 0) return out;
+  let R = V.map(a => ({ ...a, a:a.v*w*h/tot }));
+  const kotu = (r, s) => { let mx = 0, mn = Infinity, t = 0; r.forEach(a => { t += a.a; mx = Math.max(mx, a.a); mn = Math.min(mn, a.a); }); return Math.max(s*s*mx/(t*t), t*t/(s*s*mn)); };
+  while(R.length){ const kisa = Math.min(w, h); let i = 1; while(i < R.length && kotu(R.slice(0, i + 1), kisa) <= kotu(R.slice(0, i), kisa)) i++;
+    const row = R.slice(0, i), t = row.reduce((s, a) => s + a.a, 0), kal = t/kisa; let o = 0;
+    row.forEach(a => { const l = a.a/kal; out.push(w >= h ? { ...a, x, y:y + o, w:kal, h:l } : { ...a, x:x + o, y, w:l, h:kal }); o += l; });
+    if(w >= h){ x += kal; w -= kal; } else { y += kal; h -= kal; } R = R.slice(i); }
+  return out; }
+const V3_DON = { deg:["Gün", 3], w:["Hafta", 7], m:["1 ay", 15], ytd:["Yılbaşı", 40] };
+function v3IsiDeg(s, d){ return d === "deg" ? s.deg : d === "w" ? s.tv?.["Perf.W"] ?? s.cg?.price_change_percentage_7d_in_currency : d === "m" ? s.tv?.["Perf.1M"] ?? s.cg?.price_change_percentage_30d_in_currency : s.tv?.["Perf.YTD"] ?? s.cg?.price_change_percentage_1y_in_currency; }
+function v3Renk(v, sinir){ if(v == null || !isFinite(v)) return "#2A2D33"; const x = Math.max(-1, Math.min(1, v/sinir)), a = Math.abs(x);
+  return x >= 0 ? `rgb(${Math.round(38 - 8*a)},${Math.round(48 + 110*a)},${Math.round(52 + 30*a)})` : `rgb(${Math.round(52 + 160*a)},${Math.round(46 - 6*a)},${Math.round(52 - 4*a)})`; }
+function v3IsiCiz(k, pazar, don, enCok){ if(!k) return; const L0 = PZ.liste[pazar]; if(!L0?.length){ k.innerHTML = `<div class="spin"></div>`; return; }
+  const mc = s => s.tv?.market_cap_basic ?? s.cg?.market_cap ?? 0, L = L0.filter(s => mc(s) > 0).sort((a, b) => mc(b) - mc(a)).slice(0, enCok || 160);
+  const G = {}; L.forEach(s => { const g = pazar === "kripto" ? "Kripto" : v3Sek(s.tv?.sector); (G[g] = G[g] || []).push(s); });
+  const W = Math.max(280, k.clientWidth || 800), H = enCok && enCok <= 60 ? Math.round(Math.min(340, W*.55)) : Math.round(Math.max(380, Math.min(720, W*(innerWidth < 700 ? 1.25 : .52)))), sinir = V3_DON[don][1];
+  const gr = v3Sq(Object.entries(G).map(([g, A]) => ({ g, A, v:A.reduce((t, s) => t + mc(s), 0) })).sort((a, b) => b.v - a.v), 0, 0, W, H);
+  let h = ""; gr.forEach(b => { const bas = b.h > 40 && b.w > 60 && pazar !== "kripto" ? 15 : 0;
+    h += `<div class="v3IsG" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px">${bas ? `<span>${esc(b.g)}</span>` : ""}</div>`;
+    v3Sq(b.A.map(s => ({ s, v:mc(s) })), b.x + 1, b.y + bas + 1, b.w - 2, b.h - bas - 2).forEach(c => { const v = v3IsiDeg(c.s, don), buyuk = c.w > 46 && c.h > 30;
+      h += `<button class="v3IsK" data-ul="1" style="left:${c.x}px;top:${c.y}px;width:${Math.max(0, c.w - 1)}px;height:${Math.max(0, c.h - 1)}px;background:${v3Renk(v, sinir)}" title="${esc(c.s.kod)} · ${esc(c.s.ad)} · ${pzYuzde(v, 1)}" onclick="go('piyasaDetay','${c.s.k}')">${c.w > 30 && c.h > 16 ? `<b style="font-size:${Math.max(10, Math.min(20, Math.sqrt(c.w*c.h)/5.5))}px">${esc(c.s.kod)}</b>` : ""}${buyuk ? `<small>${pzYuzde(v, 1)}</small>` : ""}</button>`; }); });
+  k.innerHTML = `<div class="v3Isi" style="height:${H}px">${h}</div>`; }
+V3_PANEL.isi = function(k){ const p = V3.isiPazar, d = V3.isiDonem;
+  k.innerHTML = `<div class="v3IsiUst"><span class="hspSeg">${[["bist", "BIST"], ["nasdaq", "ABD"], ["kripto", "Kripto"]].map(([v, a]) => `<button class="${p === v ? "on" : ""}" onclick="V3.isiPazar='${v}';pzTablo()">${a}</button>`).join("")}</span>
+    <span class="hspSeg">${Object.entries(V3_DON).map(([v, [a]]) => `<button class="${d === v ? "on" : ""}" onclick="V3.isiDonem='${v}';pzTablo()">${a}</button>`).join("")}</span>
+    <span class="v3IsiLej"><i style="background:${v3Renk(-V3_DON[d][1], V3_DON[d][1])}"></i>-%${V3_DON[d][1]}<i style="background:#2A2D33"></i>0<i style="background:${v3Renk(V3_DON[d][1], V3_DON[d][1])}"></i>+%${V3_DON[d][1]}</span></div>
+    <div id="v3IsiK"></div><div class="pzNot">Kutunun büyüklüğü = şirketin piyasa değeri · renk = seçili dönemdeki değişim · sektörler gruplanmış. Kutuya dokun, detay açılsın.</div>`;
+  requestAnimationFrame(() => v3IsiCiz(document.getElementById("v3IsiK"), p, d)); };
+addEventListener("resize", () => { clearTimeout(V3.rz); V3.rz = setTimeout(() => { try{ if(PZ.sekme === "isi") v3IsiCiz(document.getElementById("v3IsiK"), V3.isiPazar, V3.isiDonem); if(PZ.sekme === "ozet") v3IsiCiz(document.getElementById("v3MiniIsi"), "bist", "deg", 60); }catch(e){} }, 250); });
+
+/* ---------- 📅 TAKVIM: ekonomik veriler (bot cekiyor) + bilanco + temettu + olaylar ---------- */
+const V3_ULKE = { US:"🇺🇸", TR:"🇹🇷", EU:"🇪🇺", DE:"🇩🇪", GB:"🇬🇧", CN:"🇨🇳", JP:"🇯🇵" };
+function v3Ms(t){ if(t == null) return null; if(typeof t === "number") return t > 1e12 ? t : t*1000; const m = Date.parse(t); return isFinite(m) ? m : null; }
+function v3TakvimOlay(gun = 30, hepsi){ const now = Date.now(), b0 = new Date(); b0.setHours(0, 0, 0, 0); const son = now + gun*86400000, R = [];
+  const ilgili = new Set(PZ.portfoy.map(p => p.sembol).concat(PZ.takip.map(t => t.sembol)));
+  const kal = ms => Math.floor((ms - b0.getTime())/86400000);
+  const buyuk = new Set([].concat((PZ.liste.bist || []).slice().sort((a, b) => (b.tv?.market_cap_basic || 0) - (a.tv?.market_cap_basic || 0)).slice(0, 30), (PZ.liste.nasdaq || []).slice(0, 25)).map(s => s.k));
+  [].concat(PZ.liste.bist || [], PZ.liste.nasdaq || []).forEach(s => { const ben = ilgili.has(s.k); if(!ben && !(hepsi && buyuk.has(s.k))) return;
+    const e = v3Ms(s.tv?.earnings_release_next_date); if(e && e >= b0.getTime() && e <= son) R.push({ ms:e, tur:"Bilanço", ad:`${s.kod} bilançosu`, ben, git:`go('piyasaDetay','${s.k}')`, onem:ben ? 2 : 1, saatYok:1 });
+    const d = v3Ms(s.tv?.dividend_ex_date_upcoming); if(d && d >= b0.getTime() && d <= son) R.push({ ms:d, tur:"Temettü", ad:`${s.kod} temettü (hak kesim)`, ben, git:`go('piyasaDetay','${s.k}')`, onem:ben ? 2 : 1, saatYok:1,
+      detay:s.tv?.dividends_yield_current ? `verim ~%${(+s.tv.dividends_yield_current).toFixed(1).replace(".", ",")}` : "" }); });
+  (PZ.olay || []).forEach(o => { const m = v3Ms(o.tarih); if(!m || m < b0.getTime() || m > son || !/bedelsiz|bedelli|bolunme|temettu|halka_arz|genel_kurul/.test(o.tur)) return;
+    R.push({ ms:m, tur:PZ_OLAY_AD[o.tur] || "Olay", ad:o.baslik || o.sembol || "", ben:!o.sembol || ilgili.has(o.sembol), git:o.sembol ? `go('piyasaDetay','${esc(o.sembol)}')` : "", onem:1, saatYok:1 }); });
+  (PZ.bot?.row?.durum?.takvim?.L || []).forEach(e => { const m = v3Ms(e.t); if(!m || m < b0.getTime() - 3600e3 || m > son) return; if(!hepsi && e.onem < 1) return;
+    R.push({ ms:m, tur:"Ekonomi", ulke:e.u, ad:e.ad, onem:e.onem, beklenti:e.b, onceki:e.o, gercek:e.g, birim:e.br || "", ben:e.onem >= 1 }); });
+  return R.map(x => ({ ...x, kalan:kal(x.ms) })).sort((a, b) => a.ms - b.ms); }
+V3_PANEL.takvim = function(k){ const f = V3.tkF || "hepsi", L0 = v3TakvimOlay(f === "ekonomi" ? 14 : 45, true);
+  const L = L0.filter(x => f === "hepsi" ? true : f === "ben" ? x.ben : f === "ekonomi" ? x.tur === "Ekonomi" : f === "bilanco" ? x.tur === "Bilanço" : x.tur === "Temettü");
+  const T = PZ.bot?.row?.durum?.takvim, gunAd = ms => new Date(ms).toLocaleDateString("tr-TR", { weekday:"long", day:"numeric", month:"long" });
+  const G = []; L.forEach(x => { const g = new Date(x.ms).toDateString(); if(!G.length || G[G.length - 1].g !== g) G.push({ g, ms:x.ms, L:[] }); G[G.length - 1].L.push(x); });
+  const v = (x, br) => x == null || x === "" ? "—" : esc(String(x).replace(".", ",")) + esc(br || "");
+  k.innerHTML = `<div class="v3Tak"><div class="v3Cipler">${[["hepsi", "Hepsi"], ["ben", "★ Benimkiler"], ["ekonomi", "🌍 Ekonomi"], ["bilanco", "🧾 Bilanço"], ["temettu", "💰 Temettü"]].map(([a, b]) => `<button class="${f === a ? "on" : ""}" onclick="V3.tkF='${a}';pzTablo()">${b}</button>`).join("")}</div>
+    ${f !== "bilanco" && f !== "temettu" && !T?.L?.length ? `<div class="pzSqlUyar">Ekonomik takvimi Bay Pipo çekiyor (ABD, Türkiye, Euro bölgesi · 6 saatte bir). Bot bir sonraki turunda doldurur.</div>` : ""}
+    ${G.length ? G.map(g => { const kl = Math.floor((new Date(g.ms).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0))/86400000);
+      return `<section class="v3TakG"><h4>${kl === 0 ? "Bugün · " : kl === 1 ? "Yarın · " : ""}${gunAd(g.ms)}</h4>${g.L.map(x => `<div class="v3TakS ${x.ben ? "ben" : ""} ${x.git ? "tik" : ""}" ${x.git ? `onclick="${x.git}"` : ""}>
+        <span class="v3TakSaat mono">${x.saatYok ? "—" : new Date(x.ms).toLocaleTimeString("tr-TR", { hour:"2-digit", minute:"2-digit" })}</span>
+        <span class="v3TakTur ${x.tur === "Ekonomi" ? "eko" : x.tur === "Bilanço" ? "bil" : "tem"}">${x.ulke ? (V3_ULKE[x.ulke] || x.ulke) + " " : ""}${esc(x.tur)}</span>
+        <b>${esc(x.ad)}${x.ben && x.tur !== "Ekonomi" ? " ★" : ""}</b>${x.tur === "Ekonomi" ? `<span class="v3Onem" title="önem">${"●".repeat(Math.max(1, (x.onem ?? 0) + 2))}</span>
+          <span class="v3TakSay"><small>Beklenti</small>${v(x.beklenti, x.birim)}</span><span class="v3TakSay"><small>Önceki</small>${v(x.onceki, x.birim)}</span><span class="v3TakSay ${x.gercek != null && x.beklenti != null ? (+x.gercek > +x.beklenti ? "art" : +x.gercek < +x.beklenti ? "az" : "") : ""}"><small>Gerçek</small>${v(x.gercek, x.birim)}</span>` : x.detay ? `<small>${esc(x.detay)}</small>` : ""}</div>`).join("")}</section>`; }).join("")
+      : `<div class="pcBos">Bu filtrede yaklaşan bir şey yok.</div>`}
+    <div class="pzNot">●●● = piyasayı çok oynatır (faiz kararı, enflasyon, istihdam). Bu günlerde Bay Pipo raporunda uyarı çıkar. Bilanço/temettü tarihleri TradingView'den${T?.t ? ` · ekonomik takvim ${new Date(T.t).toLocaleString("tr-TR", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" })} güncellendi` : ""}.</div></div>`; };
+// Bay Pipo raporuna takvim uyarisi
+{ const eski = kzRapor; kzRapor = function(Z, s){ const X = eski.apply(this, arguments);
+    try{ const t = pzTur(s.k), now = Date.now(), e = v3Ms(s.tv?.earnings_release_next_date), d = v3Ms(s.tv?.dividend_ex_date_upcoming), gun = m => Math.ceil((m - now)/86400000);
+      if(e && e > now - 86400000 && gun(e) <= 7) X.R.unshift(`📅 Bilanço ${gun(e) <= 0 ? "bugün" : gun(e) === 1 ? "yarın" : gun(e) + " gün sonra"}: açıklama günü fiyat sert oynar, yeni girişte pozisyonu küçük tut.`);
+      if(d && d > now && gun(d) <= 10) X.R.push(`💰 ${gun(d)} gün sonra temettü hak kesimi: o sabah fiyat temettü kadar düşer (kayıp değil, paran temettü olarak gelir).`);
+      const ul = t === "BIST" ? ["TR"] : ["US"], E = (PZ.bot?.row?.durum?.takvim?.L || []).filter(x => x.onem >= 1 && ul.includes(x.u) && v3Ms(x.t) > now && v3Ms(x.t) - now < 2*86400000);
+      if(E.length) X.R.unshift(`🌍 Önümüzdeki 48 saatte önemli veri: ${E.slice(0, 2).map(x => x.ad).join(", ")}. Veri saatinde ani oynaklık olur.`); }catch(e){}
+    return X; }; }
+
+/* ---------- 📈 PORTFOY ANALIZI ---------- */
+const V3_TUR_RENK = { BIST:"#E0313C", NASDAQ:"#5B8DEF", KRIPTO:"#E8B661", MADEN:"#C9A227", DOVIZ:"#5BD08B" };
+function v3Seri(R){ const t = R?.t || [], c = R?.c || []; return (ms) => { const s = ms/1000; let lo = 0, hi = t.length - 1, j = -1; while(lo <= hi){ const m = (lo + hi) >> 1; if(t[m] <= s){ j = m; lo = m + 1; } else hi = m - 1; } return j < 0 ? (c.length ? c[0] : null) : c[j]; }; }
+async function v3Kiyas(){ return pzOnbellek("v3kiyas", 30*60000, async () => { const g = (k, ys) => pzGecmis({ k, kod:k, ys }, "5Y").catch(() => null);
+    const [xu, usd, gc] = await Promise.all([g("ENDEKS:XU100", "XU100.IS"), g("DOVIZ:USDTRY", "USDTRY=X"), g("MADEN:XAU", "GC=F")]);
+    const U = v3Seri(usd), G = v3Seri(gc); return { xu:v3Seri(xu), usd:U, altin: ms => { const a = G(ms), u = U(ms); return a && u ? a*u/31.1035 : null; }, ok:!!(xu?.c?.length || usd?.c?.length) }; }); }
+V3_PANEL.analitik = async function(k){
+  if(!PZ.portfoy.length){ k.innerHTML = `<div class="pcBos">Analiz için önce portföye pozisyon ekle.<br><br><button class="btn" onclick="pzPozisyon()">+ Pozisyon ekle</button></div>`; return; }
+  k.innerHTML = `<div class="spin"></div>`; const H = await pzPortHesap(); if(PZ.sekme !== "analitik") return;
+  const S = H.S.filter(x => x.deger > 0), top = H.top || 1, enf = +(PZ.ayar?.v3Enf ?? 30);
+  const tur = {}, sek = {}; S.forEach(x => { const t = pzTur(x.p.sembol); tur[t] = (tur[t] || 0) + x.deger; const g = t === "KRIPTO" ? "Kripto" : t === "MADEN" ? "Değerli maden" : t === "DOVIZ" ? "Döviz" : v3Sek(x.s.tv?.sector); sek[g] = (sek[g] || 0) + x.deger; });
+  const U = []; S.forEach(x => { const w = x.deger/top; if(w > .25) U.push(`⚠️ <b>${esc(pzKod(x.p.sembol))}</b> portföyün %${Math.round(w*100)}'i. Tek varlık %25'i geçince, o batarsa her şey sallanır.`); });
+  Object.entries(sek).forEach(([g, v]) => { if(v/top > .4 && Object.keys(sek).length > 1) U.push(`⚠️ <b>${esc(g)}</b> sektörü %${Math.round(v/top*100)}. Aynı sektör beraber düşer; başka sektörlerle dengele.`); });
+  if((tur.KRIPTO || 0)/top > .35) U.push(`⚠️ Kripto payı %${Math.round(tur.KRIPTO/top*100)}. Kripto çok oynak; %35 üstü sert düşüşte canını yakar.`);
+  if(S.length < 4) U.push(`💡 Sadece ${S.length} varlık var. 5-10 farklı varlık riski epey azaltır.`);
+  const tem = S.filter(x => x.s.tv?.dividends_yield_current > 0).map(x => ({ x, y:x.deger*x.s.tv.dividends_yield_current/100 })).sort((a, b) => b.y - a.y), temTop = tem.reduce((t, a) => t + a.y, 0);
+  const betaW = S.reduce((t, x) => t + (x.s.tv?.beta_1_year ?? (pzTur(x.p.sembol) === "KRIPTO" ? 2 : 1))*x.deger, 0)/top;
+  const cubuk = (M, renk) => { const E = Object.entries(M).sort((a, b) => b[1] - a[1]); return `<div class="pzDagilim">${E.map(([t, v], i) => `<i style="flex:${v};background:${renk(t, i)}" title="${esc(t)} %${(v/top*100).toFixed(0)}"></i>`).join("")}</div>
+    <div class="v3DagL">${E.map(([t, v], i) => `<div><i style="background:${renk(t, i)}"></i><span>${esc(t)}</span><b class="mono">%${(v/top*100).toFixed(1).replace(".", ",")}</b><small class="mono">${pzPara(v, "TRY", 0)}</small></div>`).join("")}</div>`; };
+  const pal = ["#5B8DEF", "#E8B661", "#5BD08B", "#B49CFF", "#FF8A65", "#4DD0E1", "#F06292", "#AED581", "#90A4AE", "#FFD54F"];
+  k.innerHTML = `<div class="v3An">
+    <div class="v3KpiS">
+      <div class="v3Kpi"><small>Toplam değer</small><b class="mono">${pzPara(H.top, "TRY", 0)}</b>${PZ.usd ? `<em class="mono">≈ ${pzPara(H.top/PZ.usd, "USD", 0)}</em>` : ""}</div>
+      <div class="v3Kpi"><small>Kâr / zarar</small><b class="mono ${pzYon(H.kz)}">${H.kz >= 0 ? "+" : ""}${pzPara(H.kz, "TRY", 0)}</b><em class="${pzYon(H.kz)}">${H.mal ? pzYuzde(H.kz/H.mal*100, 1) : ""}</em></div>
+      <div class="v3Kpi"><small>Bugün</small><b class="mono ${pzYon(H.gun)}">${H.gun >= 0 ? "+" : ""}${pzPara(H.gun, "TRY", 0)}</b></div>
+      <div class="v3Kpi v3Ib"><small>Beta</small><b class="mono">${betaW.toFixed(2).replace(".", ",")}</b><em>${betaW > 1.3 ? "piyasadan sert oynar" : betaW < .8 ? "sakin portföy" : "piyasa kadar oynar"}</em></div>
+      <div class="v3Kpi"><small>Tahmini yıllık temettü</small><b class="mono art">${pzPara(temTop, "TRY", 0)}</b><em>ayda ~${pzPara(temTop/12, "TRY", 0)}</em></div></div>
+    <div class="v3Iki">
+      <section class="v3Kart"><header><b>Varlık türüne göre</b></header>${cubuk(Object.fromEntries(Object.entries(tur).map(([t, v]) => [pzTurAd(t + ":"), v])), (t) => V3_TUR_RENK[Object.keys(V3_TUR_RENK).find(x => pzTurAd(x + ":") === t)] || "#888")}</section>
+      <section class="v3Kart"><header><b>Sektöre göre</b></header>${cubuk(sek, (t, i) => pal[i % pal.length])}</section></div>
+    <section class="v3Kart"><header><b>🩺 Sağlık kontrolü</b></header>${U.length ? `<ul class="v3Uyar">${U.map(u => `<li>${u}</li>`).join("")}</ul>` : `<p class="v3Iyi">✅ Dağılım dengeli görünüyor: tek varlık %25'i, tek sektör %40'ı geçmiyor.</p>`}</section>
+    <section class="v3Kart"><header><b>⚖️ Aynı parayı başka yere koysaydın?</b><label class="v3Enf">Yıllık enflasyon (TÜFE) %<input type="number" value="${enf}" step="0.1" onchange="pzAyarYaz({v3Enf:+this.value||0}).then(()=>pzTablo())"></label></header>
+      <div id="v3Kiyas"><div class="spin"></div></div></section>
+    ${tem.length ? `<section class="v3Kart"><header><b>💰 Temettü getirenler</b><small>son verim oranına göre tahmin</small></header><div class="v3TemL">${tem.map(({ x, y }) => `<button onclick="go('piyasaDetay','${x.p.sembol}')"><b>${esc(pzKod(x.p.sembol))}</b><span class="mono">%${(+x.s.tv.dividends_yield_current).toFixed(1).replace(".", ",")}</span><em class="mono">${pzPara(y, "TRY", 0)}/yıl</em></button>`).join("")}</div></section>` : ""}
+  </div>`;
+  pzBilgiSus(k);
+  // karsilastirma
+  try{ const B = await v3Kiyas(), now = Date.now(); const T = S.filter(x => x.p.alis_tarihi && x.malTl > 0);
+    const yer = document.getElementById("v3Kiyas"); if(!yer) return;
+    if(!T.length){ yer.innerHTML = `<div class="pcBos">Pozisyonlara <b>alış tarihi</b> girersen, "aynı parayı aynı gün BIST 100'e / dolara / altına koysaydım ne olurdu" diye hesaplarım.</div>`; return; }
+    let mal = 0, simdi = 0; const K = { xu:0, usd:0, altin:0, enf:0 }, eksik = { xu:0, usd:0, altin:0 };
+    T.forEach(x => { const ms = Date.parse(x.p.alis_tarihi); mal += x.malTl; simdi += x.deger; ["xu", "usd", "altin"].forEach(a => { const o = B[a](ms), s = B[a](now); if(o && s) K[a] += x.malTl*s/o; else { K[a] += x.malTl; eksik[a]++; } });
+      K.enf += x.malTl*Math.pow(1 + enf/100, Math.max(0, now - ms)/(365.25*86400000)); });
+    const sat = (ad, v, not) => { const f = simdi - v; return `<div class="v3KiS"><span>${ad}</span><b class="mono">${pzPara(v, "TRY", 0)}</b><em class="mono">${pzYuzde((v/mal - 1)*100, 1)}</em><span class="v3KiF ${f >= 0 ? "art" : "az"}">${f >= 0 ? "sen önde " : "geridesin "}${pzPara(Math.abs(f), "TRY", 0)}</span>${not ? `<small>${not}</small>` : ""}</div>`; };
+    const enfReel = (simdi/K.enf - 1)*100;
+    yer.innerHTML = `<p class="v3KiBas">Alış tarihi girilmiş ${T.length} pozisyona koyduğun <b>${pzPara(mal, "TRY", 0)}</b> bugün <b class="${pzYon(simdi - mal)}">${pzPara(simdi, "TRY", 0)}</b> (${pzYuzde((simdi/mal - 1)*100, 1)}). Aynı parayı aynı günlerde şuraya koysaydın:</p>
+      <div class="v3KiL">${sat("📊 BIST 100", K.xu, eksik.xu ? "bir kısmında veri yok" : "")}${sat("💵 Dolar", K.usd)}${sat("🥇 Gram altın", K.altin)}${sat("🛒 Enflasyon (alım gücünü korumak)", K.enf, "")}</div>
+      <p class="v3KiSon ${enfReel >= 0 ? "art" : "az"}">${enfReel >= 0 ? `✅ Enflasyonu %${enfReel.toFixed(1).replace(".", ",")} yendin, gerçekten zenginleşmişsin.` : `⚠️ Enflasyonun %${Math.abs(enfReel).toFixed(1).replace(".", ",")} gerisindesin: TL olarak artmış görünse de alım gücün azalmış.`}</p>`; }
+  catch(e){ const y = document.getElementById("v3Kiyas"); if(y) y.innerHTML = `<div class="pcBos">Karşılaştırma verisi alınamadı (${esc(e.message || e)}).</div>`; } };
+
+/* ---------- 💰 NET SERVET + HEDEF ---------- */
+const V3_PARA = [["TRY", "₺ TL"], ["USD", "$ Dolar"], ["EUR", "€ Euro"], ["GRALTIN", "gr Altın"]];
+function v3Kur(p){ if(p === "TRY" || !p) return 1; if(p === "USD") return PZ.usd || PZ.liste.doviz?.find(x => x.kod === "USDTRY")?.f || 0; if(p === "EUR") return PZ.liste.doviz?.find(x => x.kod === "EURTRY")?.f || 0;
+  if(p === "GRALTIN") return PZ.liste.maden?.find(x => x.kod === "GRALTIN")?.f || 0; return 1; }
+async function v3ServetVeri(){ return pzOnbellek("v3servet", 120000, async () => {
+    const [{ data:P }, { data:PC }, { data:H }, { data:V }] = await Promise.all([ sb.from("parcels").select("id,alan_m2,mahalle,ada,parsel"), sb.from("parca").select("m2,satilik,satildi,m2_fiyat,parcel_id"), sb.from("hesap").select("*"), sb.from("hesap_vade").select("*") ]);
+    const grup = {}; (V || []).forEach(v => (grup[v.hesap_id] = grup[v.hesap_id] || []).push(v)); let borc = 0, alacak = 0, nB = 0, nA = 0;
+    (H || []).forEach(h => { let o; try{ o = hesapOzet(h, grup[h.id] || []); }catch(e){ return; } if(o.kalan < .5) return; if(h.tip === "borc"){ borc += o.kalan; nB++; } else { alacak += o.kalan; nA++; } });
+    const fiyatli = new Set(); let arsa = 0; (PC || []).forEach(p => { if(p.satildi || !(+p.m2_fiyat > 0)) return; arsa += (+p.m2 || 0)*(+p.m2_fiyat); fiyatli.add(p.parcel_id); });
+    const fiyatsiz = (P || []).filter(p => !fiyatli.has(p.id)); return { arsa, nParsel:(P || []).length, fiyatsiz:fiyatsiz.length, fiyatsizM2:fiyatsiz.reduce((t, p) => t + (+p.alan_m2 || 0), 0), borc, alacak, nB, nA }; }); }
+V3_PANEL.servet = async function(k){
+  k.innerHTML = `<div class="spin"></div>`;
+  await Promise.all([pzMadenDoviz().catch(() => {}), PZ.portfoy.length ? null : null]);
+  const [D, H] = await Promise.all([v3ServetVeri().catch(e => ({ hata:e.message })), PZ.portfoy.length ? pzPortHesap() : { top:0 }]); if(PZ.sekme !== "servet") return;
+  const A = PZ.ayar?.v3Servet || {}, M = A.manuel || [], usd = v3Kur("USD"), gr = v3Kur("GRALTIN");
+  const arsaDeg = A.arsaElle > 0 ? +A.arsaElle : (D.arsa || 0) + (A.m2Tahmin > 0 ? (D.fiyatsizM2 || 0)*A.m2Tahmin : 0);
+  const man = M.map(x => ({ ...x, tl:(+x.tutar || 0)*v3Kur(x.para) })), manTop = man.reduce((t, x) => t + x.tl, 0);
+  const K = [["🌾 Arsalar", arsaDeg, A.arsaElle > 0 ? "elle girdiğin değer" : `${D.nParsel || 0} parsel · satılmamış parça fiyatlarından${D.fiyatsiz ? ` · ${D.fiyatsiz} parselin fiyatı yok` : ""}`],
+    ["📈 Hisse & kripto", H.top || 0, `${PZ.portfoy.length} pozisyon · canlı fiyat`], ["🏦 Nakit, banka, döviz, altın", manTop, `${man.length} kalem · aşağıdan ekle`],
+    ["🤝 Alacaklar", D.alacak || 0, `${D.nA || 0} açık kayıt · Hesap-Kitap`], ["💳 Borçlar", -(D.borc || 0), `${D.nB || 0} açık kayıt · Hesap-Kitap`]];
+  const net = K.reduce((t, x) => t + x[1], 0), poz = K.filter(x => x[1] > 0).reduce((t, x) => t + x[1], 0) || 1;
+  // aylik anlik goruntu (her ay 1 kayit, ay icinde guncellenir)
+  const ay = new Date().toISOString().slice(0, 7), AN = (A.anlik || []).slice(), son = AN[AN.length - 1], yeni = { ay, tl:Math.round(net), usd:usd ? Math.round(net/usd) : null, gr:gr ? Math.round(net/gr) : null };
+  if(net && (!son || son.ay !== ay || Math.abs(son.tl - yeni.tl) > Math.abs(son.tl)*.005)){ if(son?.ay === ay) AN[AN.length - 1] = yeni; else AN.push(yeni); clearTimeout(V3.svZ); V3.svZ = setTimeout(() => pzAyarYaz({ v3Servet:{ ...(PZ.ayar?.v3Servet || {}), anlik:AN.slice(-60) } }).catch(() => {}), 1500); }
+  const hd = A.hedef || {}, hedefHtml = v3HedefHtml(hd, net, (H.top || 0) + manTop);
+  k.innerHTML = `<div class="v3Sv">
+    <div class="v3SvUst"><div><small>Net servetin</small><b class="mono">${pzPara(net, "TRY", 0)}</b></div><div><small>Dolar olarak</small><b class="mono">${usd ? pzPara(net/usd, "USD", 0) : "—"}</b></div><div><small>Gram altın olarak</small><b class="mono">${gr ? nf(Math.round(net/gr)) + " gr" : "—"}</b></div></div>
+    <div class="v3SvDag">${K.filter(x => x[1] > 0).map(([a, v], i) => `<i style="flex:${v};background:${["#C9A227", "#5B8DEF", "#5BD08B", "#B49CFF"][i % 4]}" title="${a}"></i>`).join("")}</div>
+    <div class="v3SvL">${K.map(([a, v, n]) => `<div class="v3SvS ${v < 0 ? "eksi" : ""}"><span>${a}</span><b class="mono ${v < 0 ? "az" : ""}">${v < 0 ? "−" : ""}${pzPara(Math.abs(v), "TRY", 0)}</b><em>${v > 0 ? "%" + Math.round(v/poz*100) : ""}</em><small>${esc(n)}</small></div>`).join("")}</div>
+    <div class="v3Iki">
+      <section class="v3Kart"><header><b>📉📈 Servetin aylar içinde</b><small>her ay kendiliğinden kaydedilir</small></header>${v3SvGrafik(AN)}</section>
+      <section class="v3Kart"><header><b>🎯 Hedef planlayıcı</b></header>${hedefHtml}</section></div>
+    <section class="v3Kart"><header><b>🏦 Nakit, banka, döviz, altın</b><small>uygulamanın bilmediği varlıkların</small></header>
+      <div class="v3ManL">${man.map((x, i) => `<div class="v3ManS"><b>${esc(x.ad)}</b><span class="mono">${(+x.tutar).toLocaleString("tr-TR")} ${(V3_PARA.find(p => p[0] === x.para) || ["", x.para])[1]}</span><em class="mono">${pzPara(x.tl, "TRY", 0)}</em><button class="pzIkon" title="Sil" onclick="v3ManSil(${i})">×</button></div>`).join("") || `<div class="pcBos">Henüz yok. Banka hesabı, yastık altı dolar, bilezik… ne varsa ekle.</div>`}</div>
+      <div class="v3ManForm"><input id="v3MAd" placeholder="Ne? (ör. Ziraat vadeli)"><input id="v3MTu" type="number" step="any" inputmode="decimal" placeholder="Tutar"><select id="v3MPa">${V3_PARA.map(([v, a]) => `<option value="${v}">${a}</option>`).join("")}</select><button class="btn" onclick="v3ManEkle()">+ Ekle</button></div></section>
+    <details class="v3Kart v3SvAyar"><summary>⚙️ Arsa değeri nasıl hesaplansın?</summary>
+      <p>Varsayılan: satılmamış parçalarda girdiğin m² fiyatı × m². Fiyatı girilmemiş ${D.fiyatsiz || 0} parsel (${nf(Math.round(D.fiyatsizM2 || 0))} m²) için bir m² tahmini yazabilir ya da toplamı elle girebilirsin.</p>
+      <div class="v3ManForm"><label>Fiyatsız parseller için m² tahmini (₺)<input type="number" value="${A.m2Tahmin || ""}" onchange="v3SvAyar({m2Tahmin:+this.value||0})"></label>
+        <label>Ya da arsaların toplam değeri (₺)<input type="number" value="${A.arsaElle || ""}" onchange="v3SvAyar({arsaElle:+this.value||0})"></label></div></details>
+    ${D.hata ? `<div class="pzSqlUyar">Arsa / hesap verisi okunamadı: ${esc(D.hata)}</div>` : ""}
+    <p class="pzNot">Bu ekran sadece senin hesabına özel. Rakamlar cihazında değil, senin Supabase kaydında tutulur.</p></div>`; };
+async function v3SvAyar(ek){ await pzAyarYaz({ v3Servet:{ ...(PZ.ayar?.v3Servet || {}), ...ek } }).catch(() => {}); pzTablo(); }
+function v3ManEkle(){ const ad = document.getElementById("v3MAd")?.value.trim(), tu = +String(document.getElementById("v3MTu")?.value || "").replace(",", "."), pa = document.getElementById("v3MPa")?.value;
+  if(!ad || !(tu > 0)) return toast("Ad ve tutar yaz"); v3SvAyar({ manuel:(PZ.ayar?.v3Servet?.manuel || []).concat([{ ad, tutar:tu, para:pa }]) }); }
+function v3ManSil(i){ const L = (PZ.ayar?.v3Servet?.manuel || []).slice(); L.splice(i, 1); v3SvAyar({ manuel:L }); }
+function v3SvGrafik(AN){ if(!AN || AN.length < 2) return `<div class="pcBos">Her ay bu ekrana girdiğinde servetin kaydedilir. 2. aydan itibaren burada TL, dolar ve altın olarak nasıl değiştiği çizilir.<br><small>${AN?.length ? "İlk kayıt: " + AN[0].ay : ""}</small></div>`;
+  const W = 520, H = 170, p = 8, S = [["tl", "#E6E4E8", "TL"], ["usd", "#5BD08B", "Dolar"], ["gr", "#E8B661", "Altın"]], idx = a => AN.map(x => x[a] && AN[0][a] ? x[a]/AN[0][a]*100 : null);
+  const V = S.map(([a]) => idx(a)), hep = V.flat().filter(v => v != null), mn = Math.min(...hep, 100), mx = Math.max(...hep, 100), y = v => H - p - (v - mn)/((mx - mn) || 1)*(H - 2*p), x = i => p + i*(W - 2*p)/(AN.length - 1);
+  return `<svg class="v3SvG" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><line x1="0" x2="${W}" y1="${y(100)}" y2="${y(100)}" stroke="rgba(255,255,255,.15)" stroke-dasharray="4 4"/>
+    ${S.map(([a, r], j) => `<polyline fill="none" stroke="${r}" stroke-width="2" points="${V[j].map((v, i) => v == null ? "" : x(i) + "," + y(v)).join(" ")}"/>`).join("")}</svg>
+    <div class="pzDagAd">${S.map(([a, r, ad], j) => { const v = V[j][V[j].length - 1]; return `<span><i style="background:${r}"></i>${ad} ${v != null ? pzYuzde(v - 100, 1) : ""}</span>`; }).join("")}<span class="soluk">${AN[0].ay} → ${AN[AN.length - 1].ay} · ilk ay = 100</span></div>`; }
+function v3HedefHtml(h, net, yatirim){ const baz = h.baz === "yatirim" ? yatirim : net, T = +h.tutar || 0;
+  const form = `<div class="v3HdForm"><label>Hedef<input placeholder="ör. Ev peşinatı" value="${esc(h.ad || "")}" onchange="v3Hd({ad:this.value})"></label><label>Tutar (₺)<input type="number" value="${T || ""}" onchange="v3Hd({tutar:+this.value||0})"></label>
+    <label>Tarih<input type="month" value="${esc(h.tarih || "")}" onchange="v3Hd({tarih:this.value})"></label><label>Aylık ekleyeceğin (₺)<input type="number" value="${h.aylik || ""}" onchange="v3Hd({aylik:+this.value||0})"></label>
+    <label>Beklenen yıllık getiri %<input type="number" value="${h.getiri ?? 30}" onchange="v3Hd({getiri:+this.value||0})"></label><label>Neyi sayalım?<select onchange="v3Hd({baz:this.value})"><option value="net" ${h.baz !== "yatirim" ? "selected" : ""}>Bütün net servet</option><option value="yatirim" ${h.baz === "yatirim" ? "selected" : ""}>Sadece yatırım + nakit</option></select></label></div>`;
+  if(!T) return form + `<p class="pzNot">Bir hedef tutarı ve tarih yaz; ayda ne kadar kenara koyman gerektiğini hesaplayayım.</p>`;
+  const r = (+(h.getiri ?? 30))/1200, now = new Date(), [yy, mm] = String(h.tarih || "").split("-").map(Number), n = yy ? Math.max(1, (yy - now.getFullYear())*12 + (mm - 1 - now.getMonth())) : null;
+  const fv = (pv, a, n) => r ? pv*Math.pow(1 + r, n) + a*(Math.pow(1 + r, n) - 1)/r : pv + a*n;
+  let ne = ""; if(n){ const gerek = r ? (T - baz*Math.pow(1 + r, n))*r/(Math.pow(1 + r, n) - 1) : (T - baz)/n, olur = fv(baz, +h.aylik || 0, n);
+    ne = `<div class="v3HdSon"><div><small>${n} ayda hedefe ulaşmak için aylık</small><b class="mono">${gerek <= 0 ? "0 ₺ · zaten yetiyor 🎉" : pzPara(gerek, "TRY", 0)}</b></div>
+      <div><small>Şu planla (${pzPara(+h.aylik || 0, "TRY", 0)}/ay) o tarihte</small><b class="mono ${olur >= T ? "art" : "az"}">${pzPara(olur, "TRY", 0)}</b></div></div>`; }
+  let ay = 0, v = baz; if(baz < T && ((+h.aylik || 0) > 0 || r > 0)) while(v < T && ay < 600){ v = v*(1 + r) + (+h.aylik || 0); ay++; }
+  const yuz = Math.max(0, Math.min(100, baz/T*100));
+  return form + `<div class="v3HdBar"><i style="width:${yuz}%"></i><span>%${yuz.toFixed(0)} · ${pzPara(baz, "TRY", 0)} / ${pzPara(T, "TRY", 0)}</span></div>${ne}
+    ${baz >= T ? `<p class="v3Iyi">🎉 Hedefe ulaşmışsın!</p>` : ay && ay < 600 ? `<p class="pzNot">Bu tempoyla hedefe <b>${ay < 12 ? ay + " ayda" : (ay/12).toFixed(1).replace(".", ",") + " yılda"}</b> (${new Date(now.getFullYear(), now.getMonth() + ay, 1).toLocaleDateString("tr-TR", { month:"long", year:"numeric" })}) ulaşırsın. Getiri tahmini sadece hesap içindir, garanti değil.</p>` : ""}`; }
+function v3Hd(ek){ v3SvAyar({ hedef:{ ...(PZ.ayar?.v3Servet?.hedef || {}), ...ek } }); }
+
+/* ---------- 🧪 STRATEJI LAB: kural sec, gecmiste dene ---------- */
+const V3_GIR = [ // [anahtar, ad, varsayilan, aciklama]
+  ["rsiAlt", "RSI şu değerin altında", 30, "Aşırı satılmışta al"], ["trend", "Fiyat N günlük ortalamanın üstünde", 200, "Sadece yükselen trendde işlem"],
+  ["kesis", "Kısa ortalama uzunu yukarı keser (kısa/uzun)", "20/50", "Trend dönüşü"], ["kirilim", "N günün zirvesini kırar", 20, "Kırılım"],
+  ["macd", "MACD sinyal çizgisini yukarı keser", "", "İvme yukarı dönüyor"], ["pipo", "Bay Pipo puanı en az", 15, "Bay Pipo'nun 24 indikatörlük konseyi"] ];
+const V3_CIK = [ ["rsiUst", "RSI şu değerin üstünde", 70], ["kesisA", "Kısa ortalama uzunu aşağı keser", "20/50"], ["stop", "Zarar kes %", 8], ["hedef", "Kâr al %", 20], ["gun", "En fazla gün tut", 40], ["pipoA", "Bay Pipo puanı şunun altına düşer", -15] ];
+const V3_LAB_HAZIR = [ ["🩹 RSI dip avcısı", { rsiAlt:30, trend:200, rsiUst:65, stop:8, gun:30 }], ["✨ Altın kesişim", { kesis:"50/200", kesisA:"50/200", stop:12 }],
+  ["🚀 Kırılım + trend", { kirilim:20, trend:50, stop:7, hedef:20, gun:30 }], ["⚡ MACD ivme", { macd:1, trend:200, kesisA:"20/50", stop:8 }], ["<i class=\"pipo\"></i> Bay Pipo puanı", { pipo:15, pipoA:-15, stop:10 }] ];
+function v3Sma(c, n){ const o = new Array(c.length).fill(null); let t = 0; for(let i = 0; i < c.length; i++){ t += c[i]; if(i >= n) t -= c[i - n]; if(i >= n - 1) o[i] = t/n; } return o; }
+function v3Ema(c, n){ const o = new Array(c.length).fill(null), k = 2/(n + 1); let e = null; for(let i = 0; i < c.length; i++){ e = e == null ? c[i] : c[i]*k + e*(1 - k); if(i >= n - 1) o[i] = e; } return o; }
+function v3Rsi(c, n = 14){ const o = new Array(c.length).fill(null); let g = 0, l = 0; for(let i = 1; i < c.length; i++){ const d = c[i] - c[i - 1], G = Math.max(0, d), L = Math.max(0, -d);
+    if(i <= n){ g += G; l += L; if(i === n){ g /= n; l /= n; o[i] = l ? 100 - 100/(1 + g/l) : 100; } } else { g = (g*(n - 1) + G)/n; l = (l*(n - 1) + L)/n; o[i] = l ? 100 - 100/(1 + g/l) : 100; } } return o; }
+V3_PANEL.lab = function(k){ const K = V3.labK = V3.labK || { sembol:"BIST:THYAO", aralik:"2Y", ...V3_LAB_HAZIR[0][1] };
+  const sec = [].concat(PZ.takip.map(t => t.sembol), PZ.portfoy.map(p => p.sembol), (PZ.liste.bist || []).slice(0, 60).map(s => s.k), (PZ.liste.nasdaq || []).slice(0, 30).map(s => s.k), (PZ.liste.kripto || []).slice(0, 20).map(s => s.k));
+  const sat = (L) => L.map(([a, ad, v]) => `<label class="v3LabK ${K[a] != null && K[a] !== "" && K[a] !== 0 ? "on" : ""}"><input type="checkbox" ${K[a] != null && K[a] !== "" && K[a] !== 0 ? "checked" : ""} onchange="V3.labK['${a}']=this.checked?(this.parentNode.querySelector('input[type=text]')?.value||${JSON.stringify(v === "" ? 1 : v).replace(/"/g, "'")}):null;this.parentNode.classList.toggle('on',this.checked)">
+      <span>${ad}</span>${v !== "" ? `<input type="text" value="${esc(String(K[a] ?? v))}" onchange="if(V3.labK['${a}']!=null)V3.labK['${a}']=this.value">` : ""}</label>`).join("");
+  k.innerHTML = `<div class="v3Lab"><div class="v3LabUst"><div><h3>🧪 Strateji laboratuvarı</h3><small>"Şu kurala uysaydım geçmişte ne kazanırdım?" Kuralı seç, geçmiş günlük fiyatlarda dene, al-tut ile kıyasla. Sanal hesap, para yok.</small></div></div>
+    <div class="v3HazirSat">${V3_LAB_HAZIR.map(([ad], i) => `<button class="v3Cip" onclick="V3.labK={sembol:V3.labK.sembol,aralik:V3.labK.aralik,...V3_LAB_HAZIR[${i}][1]};pzTablo()">${ad}</button>`).join("")}</div>
+    <div class="v3LabIz"><section class="v3Kart"><header><b>1 · Ne üzerinde?</b></header>
+        <label class="v3Ib"><span>Varlık (BIST:THYAO, NASDAQ:AAPL, KRIPTO:BTC…)</span><input list="v3LabDl" value="${esc(K.sembol)}" onchange="V3.labK.sembol=this.value.trim().toUpperCase()"><datalist id="v3LabDl">${[...new Set(sec)].map(s => `<option value="${esc(s)}">`).join("")}</datalist></label>
+        <span class="hspSeg">${["2Y", "5Y"].map(a => `<button class="${K.aralik === a ? "on" : ""}" onclick="V3.labK.aralik='${a}';pzTablo()">${a === "2Y" ? "Son 2 yıl" : "Son 5 yıl"}</button>`).join("")}</span></section>
+      <section class="v3Kart"><header><b>2 · Ne zaman AL?</b><small>seçtiklerinin hepsi aynı anda olunca</small></header>${sat(V3_GIR)}</section>
+      <section class="v3Kart"><header><b>3 · Ne zaman SAT?</b><small>herhangi biri olunca</small></header>${sat(V3_CIK)}</section></div>
+    <div class="v3LabTus"><button class="btn" onclick="v3LabCalis(this)">▶ Geçmişte dene</button><small>Her işlemden %0,2 alım + %0,2 satım masrafı düşülür. Sinyal günün kapanışında oluşur, ertesi gün açılışta işleme girilir.</small></div>
+    <div id="v3LabSonuc">${V3.labSonuc ? v3LabCiz(V3.labSonuc) : ""}</div></div>`; };
+async function v3LabCalis(btn){ const K = V3.labK, yer = document.getElementById("v3LabSonuc"); if(!yer) return; if(btn) btn.disabled = true; yer.innerHTML = `<div class="spin"></div>`;
+  try{ let k = K.sembol; if(!/:/.test(k)) k = (PZ.liste.bist || []).some(s => s.kod === k) ? "BIST:" + k : (PZ.liste.kripto || []).some(s => s.kod === k) ? "KRIPTO:" + k : "NASDAQ:" + k;
+    const s = await pzSatirBul(k), R0 = await pzGecmis(s, K.aralik === "5Y" && pzTur(k) !== "KRIPTO" ? "5Y" : "2Y"); let R = kzTemiz(R0);
+    if(K.aralik === "5Y" && pzTur(k) === "KRIPTO"){ try{ const r = await pzJson(`https://api.binance.com/api/v3/klines?symbol=${s.bn || pzKod(k) + "USDT"}&interval=1d&limit=1000`); const v = { t:[], o:[], h:[], l:[], c:[], v:[] }; (r || []).forEach(x => { v.t.push(Math.round(x[0]/1000)); v.o.push(+x[1]); v.h.push(+x[2]); v.l.push(+x[3]); v.c.push(+x[4]); v.v.push(+x[7]); }); if(v.c.length > R.c.length) R = kzTemiz(v); }catch(e){} }
+    if(R.c.length < 120) throw new Error(`yetersiz geçmiş (${R.c.length} gün)`);
+    if(R.c.length > 400 && /\b1wk\b|week/i.test(String(R0.meta?.iv || ""))) throw new Error("haftalık veri geldi");
+    V3.labSonuc = v3Backtest(R, K, s); yer.innerHTML = v3LabCiz(V3.labSonuc); }
+  catch(e){ yer.innerHTML = `<div class="pzSqlUyar">Test yapılamadı: ${esc(e.message || e)}</div>`; } finally{ if(btn) btn.disabled = false; } }
+function v3Backtest(R, K, s){ const c = R.c, o = R.o, n = c.length, M = .002, ip = x => String(x).split("/").map(Number);
+  const rsi = v3Rsi(c), ma = {}, mav = p => ma[p] = ma[p] || v3Sma(c, p), e12 = v3Ema(c, 12), e26 = v3Ema(c, 26), mc = c.map((_, i) => e12[i] != null && e26[i] != null ? e12[i] - e26[i] : null);
+  const ms = (() => { const v = mc.map(x => x ?? 0), e = v3Ema(v, 9); return mc.map((x, i) => x == null ? null : e[i]); })();
+  let P = null; if(K.pipo != null || K.pipoA != null){ try{ const G = kzCerceve(R, null, "1d", pzTur(s.k), c[n - 1]); P = G.P.length === n ? G.P : null; }catch(e){ P = null; } }
+  const kes = (a, b, i, yukari) => a[i] != null && b[i] != null && a[i - 1] != null && b[i - 1] != null && (yukari ? a[i - 1] <= b[i - 1] && a[i] > b[i] : a[i - 1] >= b[i - 1] && a[i] < b[i]);
+  const gir = i => { if(K.rsiAlt != null && !(rsi[i] != null && rsi[i] < +K.rsiAlt)) return false; if(K.trend != null){ const m = mav(+K.trend); if(!(m[i] != null && c[i] > m[i])) return false; }
+    if(K.kesis != null){ const [a, b] = ip(K.kesis); if(!kes(mav(a), mav(b), i, true)) return false; } if(K.kirilim != null){ const N = +K.kirilim; if(i < N) return false; let mx = -Infinity; for(let j = i - N; j < i; j++) mx = Math.max(mx, R.h[j]); if(!(c[i] > mx)) return false; }
+    if(K.macd != null && !kes(mc, ms, i, true)) return false; if(K.pipo != null){ if(!P || !(P[i] >= +K.pipo)) return false; }
+    return [K.rsiAlt, K.trend, K.kesis, K.kirilim, K.macd, K.pipo].some(v => v != null); };
+  const cik = (i, poz) => { if(K.rsiUst != null && rsi[i] > +K.rsiUst) return "RSI yüksek"; if(K.kesisA != null){ const [a, b] = ip(K.kesisA); if(kes(mav(a), mav(b), i, false)) return "ortalama kesişimi"; }
+    if(K.stop != null && R.l[i] <= poz.g*(1 - K.stop/100)) return "zarar kes"; if(K.hedef != null && R.h[i] >= poz.g*(1 + K.hedef/100)) return "kâr al";
+    if(K.gun != null && i - poz.i >= +K.gun) return "süre doldu"; if(K.pipoA != null && P && P[i] != null && P[i] < +K.pipoA) return "Bay Pipo SAT"; return null; };
+  const bas = Math.min(n - 2, Math.max(1, P ? 211 : 30)); let para = 1, poz = null, zirve = 1, dd = 0, gunIc = 0; const I = [], E = [], BH = [];
+  for(let i = bas; i < n; i++){
+    if(poz){ const neden = cik(i, poz); if(neden){ let f = neden === "zarar kes" ? Math.min(o[i], poz.g*(1 - K.stop/100)) : neden === "kâr al" ? Math.max(o[i], poz.g*(1 + K.hedef/100)) : c[i];
+        const r = f/poz.g*(1 - M)/(1 + M) - 1; para *= 1 + r; I.push({ gi:poz.i, ci:i, g:poz.g, f, r, neden }); poz = null; } else gunIc++; }
+    else if(i < n - 1 && gir(i)) poz = { i:i + 1, g:o[i + 1] };
+    const deger = poz ? para*c[i]/poz.g : para; zirve = Math.max(zirve, deger); dd = Math.max(dd, 1 - deger/zirve); E.push(deger); BH.push(c[i]/c[bas]); }
+  if(poz){ const r = c[n - 1]/poz.g*(1 - M)/(1 + M) - 1; I.push({ gi:poz.i, ci:n - 1, g:poz.g, f:c[n - 1], r, neden:"açık (bugün)" , acik:1 }); para *= 1 + r; }
+  let bz = 1, bdd = 0; BH.forEach(v => { bz = Math.max(bz, v); bdd = Math.max(bdd, 1 - v/bz); });
+  const kaz = I.filter(x => x.r > 0); return { s, K:{ ...K }, R, bas, I, E, BH, top:para - 1, bh:c[n - 1]/c[bas] - 1, dd, bdd, isabet:I.length ? kaz.length/I.length : 0, ort:I.length ? I.reduce((t, x) => t + x.r, 0)/I.length : 0,
+    ortGun:I.length ? I.reduce((t, x) => t + (x.ci - x.gi), 0)/I.length : 0, maruz:gunIc/(n - bas), gun:n - bas, pipoYok:(K.pipo != null || K.pipoA != null) && !P }; }
+function v3LabCiz(X){ const W = 760, H = 200, p = 6, A = X.E, B = X.BH, hep = A.concat(B), mn = Math.min(...hep), mx = Math.max(...hep), y = v => H - p - (v - mn)/((mx - mn) || 1)*(H - 2*p), x = i => i*(W/(A.length - 1 || 1));
+  const tarih = i => new Date(X.R.t[i]*1000).toLocaleDateString("tr-TR", { day:"2-digit", month:"short", year:"2-digit" }), yz = v => pzYuzde(v*100, 1), yen = X.top > X.bh;
+  const yorum = !X.I.length ? "Bu kurallarla seçilen dönemde hiç işlem açılmadı; şartlar çok sıkı. Birini gevşet."
+    : X.I.length < 8 ? `Sadece ${X.I.length} işlem var; bu kadar az örnekle "çalışıyor" demek erken. Daha uzun dönem ya da başka varlıkta da dene.`
+    : yen ? `Strateji al-tut'u ${yz(X.top - X.bh)} puan yendi${X.dd < X.bdd ? " ve düşüşü de daha az yaşadı. Umut verici" : ", ama düşüşü daha sert. Risk yüksek"}. Yine de başka varlıklarda da denemeden güvenme.`
+    : `Al-tut daha iyi (${yz(X.bh)} vs ${yz(X.top)}). ${X.dd < X.bdd * .6 ? "Ama strateji düşüşleri çok daha az yaşattı; rahat uyumak istersen değer." : "Bu kuralla uğraşmaya değmez, alıp beklemek daha kârlı olmuş."}`;
+  return `<div class="v3LabSon"><div class="v3KpiS">
+      <div class="v3Kpi"><small>Strateji getirisi</small><b class="mono ${pzYon(X.top)}">${yz(X.top)}</b><em>${X.gun} işlem günü</em></div><div class="v3Kpi v3Ib"><small>Al-tut</small><b class="mono ${pzYon(X.bh)}">${yz(X.bh)}</b><em>başta alıp beklesen</em></div>
+      <div class="v3Kpi"><small>İşlem</small><b class="mono">${X.I.length}</b><em>ort. ${X.ortGun.toFixed(0)} gün · %${Math.round(X.maruz*100)} süre piyasada</em></div><div class="v3Kpi v3Ib"><small>İsabet</small><b class="mono">%${Math.round(X.isabet*100)}</b><em>ort. işlem ${yz(X.ort)}</em></div>
+      <div class="v3Kpi v3Ib"><small>Max düşüş</small><b class="mono az">-%${(X.dd*100).toFixed(1).replace(".", ",")}</b><em>al-tut: -%${(X.bdd*100).toFixed(1).replace(".", ",")}</em></div></div>
+    <p class="v3LabYorum ${yen && X.I.length >= 8 ? "art" : ""}"><i class="pipo"></i> ${esc(yorum)}</p>${X.pipoYok ? `<p class="pzNot">Bay Pipo puanı için en az 240 günlük veri lazım; bu varlıkta hesaplanamadı, o kural yok sayıldı.</p>` : ""}
+    <svg class="v3LabG" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5" points="${B.map((v, i) => x(i) + "," + y(v)).join(" ")}"/><polyline fill="none" stroke="#5BD08B" stroke-width="2" points="${A.map((v, i) => x(i) + "," + y(v)).join(" ")}"/>
+      ${X.I.map(t => `<circle cx="${x(t.gi - X.bas)}" cy="${y(A[t.gi - X.bas] ?? 1)}" r="2.6" fill="#5B8DEF"/>`).join("")}</svg>
+    <div class="pzDagAd"><span><i style="background:#5BD08B"></i>strateji</span><span><i style="background:rgba(255,255,255,.4)"></i>al-tut</span><span><i style="background:#5B8DEF"></i>giriş</span><span class="soluk">${esc(X.s.kod)} · ${tarih(X.bas)} → ${tarih(X.R.c.length - 1)}</span></div>
+    ${X.I.length ? `<details class="v3Kart"><summary>🧾 İşlemler (${X.I.length})</summary><div class="v3TabloK"><table class="pzT"><thead><tr><th>Giriş</th><th>Çıkış</th><th class="sag">Giriş fiyatı</th><th class="sag">Çıkış fiyatı</th><th class="sag">Sonuç</th><th>Neden</th></tr></thead><tbody>
+      ${X.I.slice().reverse().map(t => `<tr><td>${tarih(t.gi)}</td><td>${t.acik ? "açık" : tarih(t.ci)}</td><td class="sag mono">${pzPara(t.g, X.s.para)}</td><td class="sag mono">${pzPara(t.f, X.s.para)}</td><td class="sag mono ${pzYon(t.r)}">${yz(t.r)}</td><td>${esc(t.neden)}</td></tr>`).join("")}</tbody></table></div></details>` : ""}
+    <p class="pzNot">Geçmişte işe yaraması gelecekte de yarayacağının garantisi değil. Komisyon ve kayma düşüldü, vergi düşülmedi.</p></div>`; }
+
+/* ---------- grafikte Bay Pipo katmani: plan seviyeleri + VWAP + Bay Pipo AL/SAT isaretleri ---------- */
+if(typeof PZD !== "undefined" && PZD.katman && PZD.katman.pipo == null) PZD.katman.pipo = true;
+{ const eski = pzdKatmanCiz; pzdKatmanCiz = function(){ const r = eski.apply(this, arguments); const k = document.getElementById("pzdKatman");
+    if(k && PZD.sekme === "bizim" && !k.querySelector(".pipoK")) k.insertAdjacentHTML("afterbegin", `<label class="pipoK ${PZD.katman.pipo ? "on" : ""}"><input type="checkbox" ${PZD.katman.pipo ? "checked" : ""} onchange="PZD.katman.pipo=this.checked;pzdGrafikCiz()"><i class="pipo"></i> Bay Pipo planı + VWAP</label>`); return r; }; }
+{ const eski = pzdGrafikCiz; pzdGrafikCiz = async function(){ const r = await eski.apply(this, arguments);
+    try{ if(PZD.sekme !== "bizim" || !PZD.katman.pipo) return r; const ana = PZD.grafikler[0], s = PZD.s, LC = window.LightweightCharts; if(!ana || !s || !LC) return r; const kk = s.k;
+      let R = PZD.R; if(!/^(1Y|2Y)$/.test(PZD.aralik) || !R) R = await pzGecmis(s, PZD.aralik).catch(() => null); if(!R?.c?.length || PZD.grafikler[0] !== ana) return r;
+      if(PZD.aralik === "1Y" && R === PZD.R){ const n = Math.min(R.c.length, pzAyGun(s)*12 + 5), a = R.c.length - n; R = { t:R.t.slice(a), o:R.o.slice(a), h:R.h.slice(a), l:R.l.slice(a), c:R.c.slice(a), v:R.v.slice(a) }; }
+      const T = R.t.map(t => t + 3*3600), gun = !/^(1G|5G|1A)$/.test(PZD.aralik), vw = []; let pv = 0, vv = 0, Q = [];
+      for(let i = 0; i < R.c.length; i++){ const tp = (R.h[i] + R.l[i] + R.c[i])/3, v = R.v[i] || 0;
+        if(gun){ Q.push([tp*v, v]); pv += tp*v; vv += v; if(Q.length > 20){ const q = Q.shift(); pv -= q[0]; vv -= q[1]; } }
+        else { if(i && Math.floor(T[i]/86400) !== Math.floor(T[i - 1]/86400)){ pv = 0; vv = 0; } pv += tp*v; vv += v; }
+        vw.push(vv > 0 ? pv/vv : null); }
+      const sr = ana.addLineSeries({ color:"#4DD0E1", lineWidth:1.5, lineStyle:0, priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false, title:"VWAP" });
+      sr.setData(T.map((t, i) => vw[i] != null ? { time:t, value:vw[i] } : null).filter(Boolean));
+      const lej = document.getElementById("pzdLejant"), ekLej = h => lej && lej.insertAdjacentHTML("afterbegin", h); ekLej(`<span><i style="background:#4DD0E1"></i>VWAP ${gun ? "(20 mum)" : "(gün içi)"}</span>`);
+      const Z = await kzHesapla(s).catch(() => null); if(!Z?.G || PZD.grafikler[0] !== ana || PZD.s?.k !== kk) return r; const G = Z.G, P = G.plan;
+      const pl = (f, renk, t, st = 0, w = 2) => f && isFinite(f) && sr.createPriceLine({ price:f, color:renk, lineWidth:w, lineStyle:st, axisLabelVisible:true, title:t });
+      pl(P.al[0], "rgba(160,120,80,.95)", "Pipo al", 1, 2); pl(P.al[1], "rgba(160,120,80,.95)", "", 1, 2); pl(P.stop, "#FF2D3A", "Pipo stop", 0, 2); P.H.forEach((h, i) => pl(h, "rgba(232,182,97,.9)", "H" + (i + 1), 1, 1));
+      if(gun && G.P && G.R?.t){ const tset = new Map(T.map((t, i) => [Math.floor(t/86400), t])), M = [];
+        for(let i = 212; i < G.P.length; i++){ const a = G.P[i], b = G.P[i - 1]; if(a == null || b == null) continue; const yon = a >= 15 && b < 15 ? "AL" : a <= -15 && b > -15 ? "SAT" : null; if(!yon) continue;
+          const t = tset.get(Math.floor((G.R.t[i] + 3*3600)/86400)); if(t) M.push({ time:t, position: yon === "AL" ? "belowBar" : "aboveBar", color: yon === "AL" ? "#8BC34A" : "#FF7043", shape:"circle", text:"Pipo " + yon }); }
+        if(M.length){ const ms = ana.addLineSeries({ color:"rgba(0,0,0,0)", lineWidth:1, priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false });
+          ms.setData(T.map((t, i) => ({ time:t, value:R.c[i] }))); const Ms = M.sort((a, b) => a.time - b.time).slice(-8); Ms.forEach((m, i) => { if(i < Ms.length - 3) m.text = ""; }); ms.setMarkers(Ms); } }
+      ekLej(`<span><i style="background:#A07850"></i><i class="pipo"></i> Bay Pipo: al bölgesi · stop · H1-H3 · ● Pipo AL/SAT</span>`); }catch(e){ console.log("pipo katman", e); }
+    return r; }; }
+
+/* ---------- bot ekrani: kasa rehberi (hangisi calisiyor, hangisi baz, rapor neyi kapsar, plan) ---------- */
+const V3_KASA_ROL = { karma:["👑 Nihai bot adayı", "aday"], disiplin:["📏 Şimdiki referans", "baz"], trader:["⏱ Kanıt topluyor", "kanit"], her:["🧪 Deney", "deney"], kumar:["🧪 Deney", "deney"] };
+function v3KasaAnahtar(ad){ return /ana kasa|karma/i.test(ad) ? "karma" : /disiplin/i.test(ad) ? "disiplin" : /trader/i.test(ad) ? "trader" : /piyango/i.test(ad) ? "her" : /kumar/i.test(ad) ? "kumar" : null; }
+{ const eski = bmCiz; bmCiz = function(){ const r = eski.apply(this, arguments);
+    try{ const k = document.getElementById("bmS"); if(!k) return r;
+      k.querySelectorAll(".bmKasa").forEach(c => { if(c.querySelector(".v3Rol")) return; const a = v3KasaAnahtar(c.querySelector(".bmKUst small")?.textContent || ""), R = V3_KASA_ROL[a]; if(!R) return;
+        c.dataset.kasa = a; c.querySelector(".bmKUst")?.insertAdjacentHTML("afterend", `<div class="v3Rol ${R[1]}"><span>● çalışıyor · sanal</span><b>${R[0]}</b></div>`); });
+      if(!k.querySelector(".v3Rehber")){ const hedef = k.querySelector(".bmIz") || k.querySelector(".bmKasa"); if(hedef) hedef.insertAdjacentHTML("beforebegin", `<details class="v3Rehber" ${pzLS.oku("v3Reh", 1) ? "open" : ""} ontoggle="pzLS.yaz('v3Reh',this.open?1:0)"><summary>🗺 Kasalar ne iş yapıyor? · hangisi baz · rapor neyi kapsıyor · plan</summary>
+        <div class="v3RehIz">
+          <div><b>▶ Hangisi çalışıyor?</b><p>5'i de aynı anda, birbirinden bağımsız çalışıyor; hepsi <b>sanal</b> para (her biri 50.000 ₺ ile başladı). Bot 15 dakikada bir uyanıp her kasayı kendi kuralıyla yönetir.</p></div>
+          <div><b>🎯 Neyi baz alıyoruz?</b><p>Gerçek paraya geçişte ölçüt <b>👑 Ana kasa</b>. O kendini kanıtlayana kadar (en az 30 kapanmış işlem, 4+ gün) referans <b>📏 Disiplinli</b>. Piyango ve Kumar deney: ne getirdiğini ölçmek için var, gerçek paraya asla baz alınmaz.</p></div>
+          <div><b>📥 Tecrübe raporu neyi kapsar?</b><p>5 kasanın hepsini: bütün sanal işlemler (giriş, çıkış, neden, net), her stratejinin isabeti ve ortalaması, kasa bakiye geçmişi ve düşüşleri, eğitilen modeller ve son öneriler.</p></div>
+          <div><b>🛣 Plan</b><ol><li><b>Şimdi:</b> 5'i de veri topluyor.</li><li><b>2-4 hafta sonra:</b> rapora bakıp Piyango/Kumar'ın işe yarayan kurallarını Ana kasaya alırız, gerisini emekliye ayırırız.</li><li><b>Sonra:</b> "Gerçek paraya geçiş" listesi tamamen ✓ olursa küçük parayla, yarım pozisyonla başlarız.</li></ol></div>
+        </div></details>`); } }catch(e){ console.log("kasa rehber", e); }
+    return r; }; }
+
+{ const st = document.createElement("style"); st.textContent = `/* v3.0 piyasalar: tam genislik paneller */
+body .pzIzgara{display:flex!important;flex-direction:column!important;gap:14px;align-items:stretch!important}
+body .pzIzgara > .pzAna{width:100%;overflow:visible!important}
+body .pzIzgara:not(.ozetMod) > .pzYan{display:none!important}
+body .pzIzgara.ozetMod > .pzYan{display:block!important;column-width:330px;column-gap:14px;width:100%;border:0!important;background:none!important;padding:0!important;box-shadow:none!important}
+body .pzIzgara.ozetMod > .pzYan > .pcBox{break-inside:avoid;display:block;margin:0 0 14px!important}
+#pzSinK,#pzDuyuruK{display:none}.pzOzetMod #pzSinK,.pzOzetMod #pzDuyuruK{display:block}
+#pzAra{display:none}.pzListeMod #pzAra{display:block}
+body .pzSekmeBar{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#15151A,#101014);border-bottom:1px solid rgba(255,255,255,.07);border-radius:12px 12px 0 0;align-items:flex-end!important}
+body:not(.pc) .pzSekmeBar{top:0}
+body .pzSekmeler{display:flex!important;flex-wrap:wrap;gap:8px 12px!important;align-items:flex-end;min-width:0}
+.pzGrp{display:flex;flex-direction:column;gap:3px;min-width:0}
+.pzGrp > small{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#77757D;padding-left:6px;font-weight:800}
+.pzGrp > div{display:flex;gap:2px;padding:3px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.065)}
+body .pzGrp button{white-space:nowrap;padding:6px 10px!important}
+body .pzGrp button em{font-style:normal;font-size:10.5px;color:#C9C7CC;background:rgba(255,255,255,.08);padding:0 6px;border-radius:9px}
+body:not(.pc) .pzSekmeler{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;width:100%;flex:1 1 100%}
+body:not(.pc) .pzSekmeler::-webkit-scrollbar{display:none}
+body:not(.pc) .pzGrp{flex:0 0 auto}
+.pzTabloK{min-height:240px}
+.v3Bayat{align-self:center;font-size:11px;color:#E8B661;padding:3px 8px;border-radius:8px;background:rgba(232,182,97,.1);white-space:nowrap}
+/* ortak kart */
+.v3Kart{border-radius:13px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.075);padding:12px 14px;min-width:0}
+.v3Kart > header,.v3Kart > summary{display:flex;align-items:center;gap:10px;margin:-2px 0 10px;flex-wrap:wrap}
+.v3Kart > header b,.v3Kart > summary{font-size:13.5px;font-weight:700;color:#F2F0F4}.v3Kart > header small{color:#8E8C93;font-size:11.5px}.v3Kart > header .pcLink{margin-left:auto}
+details.v3Kart > summary{cursor:pointer;margin:0;list-style:none}details.v3Kart[open] > summary{margin-bottom:10px}
+.v3Iki{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px}
+.v3Cipler,.v3HazirSat{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.v3Cipler button,.v3Cip,.v3Cip > button{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:#D7D5DA;font:inherit;font-size:12.5px;padding:6px 11px;border-radius:20px;cursor:pointer;white-space:nowrap}
+.v3Cipler button.on{background:rgba(232,182,97,.18);border-color:rgba(232,182,97,.6);color:#FFE2A8}.v3Cipler button:hover,.v3Cip:hover{border-color:rgba(255,255,255,.28)}
+.v3Cip.kay{display:inline-flex;align-items:center;padding:0;border-color:rgba(232,182,97,.4)}.v3Cip.kay > button{border:0;background:none}.v3Cip.kay i{font-style:normal;padding:0 10px 0 2px;cursor:pointer;color:#FF7A83}
+.v3HazirSat.kay small{color:#8E8C93;font-size:11.5px}
+.v3KpiS{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.v3Kpi{padding:11px 13px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:3px;min-width:0}
+.v3Kpi small{font-size:11px;color:#8E8C93;text-transform:uppercase;letter-spacing:.05em;font-weight:700}.v3Kpi b{font-size:19px;color:#F4F2F0}.v3Kpi em{font-style:normal;font-size:11.5px;color:#9A98A0}
+.v3TabloK{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pzI{font-style:normal;display:inline-block;margin-left:4px;font-size:11px;color:#8FB4FF;cursor:help;opacity:.75;vertical-align:1px}.pzI:hover{opacity:1}.pzI.sus{cursor:default}
+.pzPop{position:fixed;z-index:9999;background:#1B1B21;border:1px solid rgba(143,180,255,.45);border-radius:12px;padding:12px 14px;box-shadow:0 14px 40px rgba(0,0,0,.6);font-size:13px;color:#E6E4E8;line-height:1.5}
+.pzPop b{color:#fff;font-size:14px}.pzPop p{margin:6px 0}.pzPop small{display:block;color:#E8C98A;margin-bottom:8px}.pzPop button{background:none;border:0;color:#8FB4FF;cursor:pointer;padding:0;font:inherit;font-size:12px}
+/* ozet */
+.v3Oz{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:14px}
+.v3Oz .genis{grid-column:1/-1}.v3Oz .pzAoSat:has(.pzAoSin),.v3Oz .pzAoSat:has(.pipo){display:none}.v3Oz #pzAo,.v3Oz .pzAo{margin:0;background:none;border:0;padding:0}
+.v3MiniIsi{min-height:200px}
+.v3EnL{display:flex;flex-direction:column;gap:6px}.v3EnL button,.v3HazirL button,.v3YakL button,.v3TemL button{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:8px 11px;color:#E6E4E8;font:inherit;text-align:left;cursor:pointer}
+.v3EnL button:hover,.v3HazirL button:hover,.v3YakL button:hover,.v3TemL button:hover{border-color:rgba(232,182,97,.45)}
+.v3EnL small{color:#8E8C93;font-size:11.5px}.v3EnL em{font-style:normal;font-size:11.5px;color:#9A98A0}
+.v3Puan{font-weight:800;font-size:13px;color:#6BE39C;padding:2px 8px;border-radius:8px;background:rgba(46,170,100,.16)}
+.v3HazirL{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px}.v3HazirL button{display:flex;flex-direction:column;align-items:flex-start;gap:2px}.v3HazirL small{color:#8E8C93;font-size:11.5px}
+.v3YakL{display:flex;flex-direction:column;gap:5px}.v3YakL button{grid-template-columns:62px 1fr auto}.v3YakL em{font-style:normal;color:#8E8C93;font-size:11.5px}
+.v3Gun{font-size:11.5px;font-weight:700;color:#C9C7CC}.v3Gun.yakin{color:#FFCF5E}
+/* tarayici */
+.v3Tar{display:flex;flex-direction:column;gap:12px}.v3TarUst{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.v3TarForm{border-radius:13px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.075);padding:10px 14px}.v3TarForm summary{cursor:pointer;font-weight:700;font-size:13.5px;padding:2px 0}
+.v3TarIz{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px 12px;margin:12px 0}
+.v3Ib{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#A9A7AE;min-width:0}.v3Ib > div{display:flex;gap:4px}
+.v3Ib input,.v3Ib select,.v3ManForm input,.v3ManForm select,.v3HdForm input,.v3HdForm select,.v3Enf input,.v3LabK input[type=text]{min-width:0;width:100%;background:#0B0B0E;border:1px solid rgba(255,255,255,.12);color:#F2F0F4;border-radius:8px;padding:7px 9px;font:inherit;font-size:13px}
+.v3TarKos{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:#D7D5DA}.v3TarKos label,.v3LabK{display:flex!important;flex-direction:row!important;align-items:center;gap:7px;cursor:pointer;width:auto!important;font-size:13px!important;color:#D7D5DA!important;margin:0!important;text-transform:none!important;letter-spacing:0!important}.v3TarKos input[type=checkbox],.v3LabK input[type=checkbox]{width:16px!important;height:16px;margin:0;flex:0 0 auto;accent-color:#E8B661}
+.v3TarTus{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}.v3TarTus .btn,.v3ManForm .btn,.v3LabTus .btn{width:auto;padding:0 16px;min-height:38px}
+.v3TarSay{font-size:13px;color:#D7D5DA;margin:2px 0 8px}.v3TarSay b{font-size:18px;color:#FFE2A8;margin-right:4px}.v3TarSay small{color:#8E8C93}
+/* isi haritasi */
+.v3IsiUst{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.v3IsiLej{display:flex;align-items:center;gap:5px;font-size:11px;color:#8E8C93;margin-left:auto}.v3IsiLej i{width:18px;height:10px;border-radius:3px;display:inline-block}
+.v3Isi{position:relative;width:100%;border-radius:10px;overflow:hidden;background:#0B0B0E}
+.v3IsG{position:absolute;box-sizing:border-box;border:1px solid #0B0B0E}.v3IsG > span{position:absolute;left:4px;top:1px;font-size:10px;font-weight:800;letter-spacing:.04em;color:#B9B7BE;text-transform:uppercase;white-space:nowrap;overflow:hidden;right:4px;text-overflow:ellipsis}
+.v3IsK{position:absolute;box-sizing:border-box;border:0;border-radius:2px;color:#fff;font:inherit;padding:2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.v3IsK:hover{outline:2px solid #fff;z-index:2}.v3IsK b{line-height:1.05;font-weight:800}.v3IsK small{font-size:11px;opacity:.92}
+/* takvim */
+.v3Tak{display:flex;flex-direction:column;gap:12px}.v3TakG h4{margin:4px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#E8C98A}
+.v3TakS{display:grid;grid-template-columns:52px 120px minmax(0,1fr) auto auto auto auto;gap:10px;align-items:center;padding:8px 11px;border-radius:10px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);margin-bottom:5px;font-size:13px}
+.v3TakS.ben{border-color:rgba(232,182,97,.4)}.v3TakS.tik{cursor:pointer}.v3TakS.tik:hover{border-color:rgba(255,255,255,.25)}.v3TakS b{font-weight:600;color:#F2F0F4;min-width:0}.v3TakS > small{color:#9A98A0}
+.v3TakSaat{color:#A9A7AE;font-size:12px}.v3TakTur{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap;justify-self:start}
+.v3TakTur.eko{background:rgba(91,141,239,.16);color:#A8C3FA}.v3TakTur.bil{background:rgba(232,182,97,.16);color:#FFD98A}.v3TakTur.tem{background:rgba(46,170,100,.16);color:#7FE3A8}
+.v3Onem{color:#FF7A83;font-size:9px;letter-spacing:1px}.v3TakSay{display:flex;flex-direction:column;align-items:flex-end;font-size:12.5px;color:#E6E4E8;min-width:58px}.v3TakSay small{font-size:10px;color:#77757D}
+@media (max-width:760px){ .v3TakS{grid-template-columns:44px 1fr auto;row-gap:4px}.v3TakS .v3TakTur{grid-column:2}.v3TakS b{grid-column:1/-1}.v3TakS .v3Onem{grid-column:3;grid-row:1}.v3TakS .v3TakSay{align-items:flex-start} }
+/* analiz + servet */
+.v3An,.v3Sv,.v3Lab,.v3Ogren{display:flex;flex-direction:column;gap:14px}
+.v3DagL{display:flex;flex-direction:column;gap:5px;margin-top:10px}.v3DagL > div{display:grid;grid-template-columns:10px 1fr auto auto;gap:8px;align-items:center;font-size:13px}.v3DagL i{width:10px;height:10px;border-radius:3px}.v3DagL small{color:#8E8C93;min-width:90px;text-align:right}
+.v3Uyar{margin:0;padding-left:4px;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.5}.v3Iyi{color:#7FE3A8;margin:0;font-size:13px}
+.v3Enf{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:#A9A7AE}.v3Enf input{width:70px}
+.v3KiBas{font-size:13px;line-height:1.55;margin:0 0 10px;color:#D7D5DA}.v3KiL{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.v3KiS{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07)}.v3KiS > span:first-child{font-size:12px;color:#A9A7AE}.v3KiS b{font-size:16px}.v3KiS em{font-style:normal;font-size:12px;color:#9A98A0}.v3KiS small{font-size:11px;color:#77757D}
+.v3KiF{font-size:12px;font-weight:700}.v3KiSon{margin:10px 0 0;font-size:13.5px;font-weight:600}
+.v3TemL{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px}.v3TemL button{grid-template-columns:1fr auto auto}.v3TemL em{font-style:normal;color:#7FE3A8;font-size:12px}
+.v3SvUst{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.v3SvUst > div{padding:14px 16px;border-radius:14px;background:linear-gradient(180deg,rgba(232,182,97,.12),rgba(232,182,97,.03));border:1px solid rgba(232,182,97,.3)}
+.v3SvUst small{display:block;font-size:11px;color:#C9B48A;text-transform:uppercase;letter-spacing:.06em;font-weight:700}.v3SvUst b{font-size:24px;color:#FFE9BE}
+.v3SvDag{display:flex;height:10px;border-radius:6px;overflow:hidden;gap:2px}
+.v3SvL{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}.v3SvS{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 12px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07)}
+.v3SvS > span{font-size:13px;color:#D7D5DA}.v3SvS b{font-size:15px;text-align:right}.v3SvS em{font-style:normal;font-size:11.5px;color:#9A98A0;grid-column:2;text-align:right}.v3SvS small{grid-column:1;grid-row:2;font-size:11px;color:#77757D}.v3SvS.eksi{border-color:rgba(255,74,85,.25)}
+.v3SvG{width:100%;height:170px;display:block}
+.v3ManL{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}.v3ManS{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:7px 10px;border-radius:9px;background:rgba(255,255,255,.03);font-size:13px}.v3ManS em{font-style:normal;color:#9A98A0}
+.v3ManForm{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:end}.v3ManForm label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#A9A7AE}
+.v3SvAyar p{font-size:12.5px;color:#A9A7AE;line-height:1.5;margin:0 0 10px}.v3SvAyar .v3ManForm{grid-template-columns:1fr 1fr}
+.v3HdForm{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}.v3HdForm label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#A9A7AE}
+.v3HdBar{position:relative;height:26px;border-radius:13px;background:rgba(255,255,255,.06);overflow:hidden;margin:12px 0 8px}.v3HdBar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#3FBF78,#E8B661)}.v3HdBar span{position:relative;display:block;text-align:center;line-height:26px;font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 2px #000}
+.v3HdSon{display:grid;grid-template-columns:1fr 1fr;gap:8px}.v3HdSon > div{padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.03)}.v3HdSon small{display:block;font-size:11px;color:#8E8C93}.v3HdSon b{font-size:15px}
+@media (max-width:700px){ .v3ManForm{grid-template-columns:1fr 1fr}.v3ManForm .btn{grid-column:1/-1}.v3HdSon{grid-template-columns:1fr} }
+/* lab */
+.v3LabUst h3,.v3OgUst h3{margin:0 0 4px;font-size:17px}.v3LabUst small,.v3OgUst small{color:#9A98A0;font-size:12.5px;line-height:1.5}
+.v3LabIz{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.v3LabK > span{flex:1}.v3LabK input[type=text]{width:74px!important;flex:0 0 74px}.v3LabK{gap:8px;align-items:center;padding:6px 8px;border-radius:9px;font-size:12.5px;color:#A9A7AE;cursor:pointer;margin-bottom:3px}
+.v3LabK.on{background:rgba(91,141,239,.1);color:#EDEBF0}.v3LabK input[type=text]{padding:5px 7px;text-align:center}.v3LabK:not(:has(input[type=text])){grid-template-columns:auto 1fr}
+.v3LabTus{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.v3LabTus small{color:#8E8C93;font-size:11.5px;flex:1;min-width:200px}
+.v3LabSon{display:flex;flex-direction:column;gap:10px}.v3LabYorum{margin:0;padding:10px 13px;border-radius:11px;background:rgba(232,182,97,.08);border:1px solid rgba(232,182,97,.3);font-size:13px;line-height:1.5}.v3LabYorum.art{background:rgba(46,170,100,.1);border-color:rgba(63,191,120,.4)}
+.v3LabG{width:100%;height:200px;display:block;background:#0B0B0E;border-radius:10px}
+/* ogren */
+.v3OgUst{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;justify-content:space-between}.v3OgUst > div{flex:1;min-width:240px}.v3OgAra{max-width:320px;display:block!important}
+.v3Dersler{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px}
+.v3Ders{border-radius:12px;background:linear-gradient(180deg,rgba(91,141,239,.09),rgba(91,141,239,.02));border:1px solid rgba(91,141,239,.25);padding:10px 13px}.v3Ders summary{cursor:pointer;font-weight:700;font-size:13.5px}.v3Ders ol{margin:8px 0 2px;padding-left:20px;font-size:13px;line-height:1.55;color:#D7D5DA}
+.v3SozL{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:10px}
+.v3Soz{padding:11px 13px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07)}.v3Soz header{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px}.v3Soz b{font-size:14px;color:#fff}
+.v3Soz p{margin:0;font-size:13px;line-height:1.55;color:#D7D5DA}.v3Soz small{display:block;margin-top:6px;font-size:12px;color:#E8C98A}
+.v3Kat{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:8px;background:rgba(255,255,255,.07);color:#B9B7BE}.v3Kat.Temel{color:#FFD98A}.v3Kat.Teknik{color:#A8C3FA}.v3Kat.Risk{color:#FF9AA1}.v3Kat.Bot{color:#C9B4FF}.v3Kat.Genel{color:#7FE3A8}
+/* bot kasa rehberi */
+.v3Rol{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:6px 0 2px;font-size:11.5px;padding:5px 9px;border-radius:9px;background:rgba(255,255,255,.04)}
+.v3Rol span{color:#7FE3A8}.v3Rol b{font-weight:800}.v3Rol.aday{background:rgba(232,182,97,.14);border:1px solid rgba(232,182,97,.45)}.v3Rol.aday b{color:#FFE2A8}
+.v3Rol.baz b{color:#A8C3FA}.v3Rol.kanit b{color:#C9B4FF}.v3Rol.deney b{color:#B9B7BE}
+.bmKasa[data-kasa=karma]{box-shadow:0 0 0 1px rgba(232,182,97,.5),0 0 22px -10px rgba(232,182,97,.8)}
+.v3Rehber{margin:0 0 12px;border-radius:13px;border:1px solid rgba(91,141,239,.35);background:linear-gradient(180deg,rgba(91,141,239,.09),rgba(91,141,239,.02));padding:10px 14px}
+.v3Rehber summary{cursor:pointer;font-weight:700;font-size:13.5px}.v3RehIz{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px;margin-top:10px}
+.v3RehIz b{font-size:13px;color:#fff}.v3RehIz p,.v3RehIz ol{margin:5px 0 0;font-size:12.5px;line-height:1.55;color:#D7D5DA}.v3RehIz ol{padding-left:18px}
+.pzdKatman label.pipoK{border-color:rgba(160,120,80,.6)}
+`; document.head.appendChild(st); }
+
+// v3.0 hiz: uygulama acildiktan sonra bos anda grafik kutuphanesi + bot verisi + piyasa listeleri isitilir; Piyasalar ve detay aninda acilir
+setTimeout(() => { const isit = () => { try{ if(!ME?.id || !navigator.onLine) return; pzLib().catch(() => {}); pzBotYukle().catch(() => {});
+    if(!PZ.bayatT && PZ.liste.bist) return; pzBist().catch(() => {}); pzKripto().catch(() => {}); pzMadenDoviz().catch(() => {}); }catch(e){} };
+  (window.requestIdleCallback || (f => setTimeout(f, 1500)))(isit, { timeout:6000 }); }, 5000);
 baslat();
 
 // servis calisani: kurulabilirlik ve cevrimdisi acilis

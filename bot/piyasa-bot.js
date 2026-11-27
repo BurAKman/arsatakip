@@ -44,6 +44,10 @@ const TRB = { pazar:"bist", iv:"60m", H:4, Lb:12, olcek:3, tMin:.008, tMax:.05, 
 const TRN = { ...TRB, pazar:"nasdaq", H:3, gun:7, masraf:MASRAF_NASDAQ, kapanisUtc:20 };   // gun ici: kapanistan H saat once girer, gece tasimaz
 Object.assign(TF, { tb:{ ...TRB, tip:"dip", ad:"Trader · BIST dipten dönüş 1 saat" }, tk:{ ...TRB, tip:"kir", ad:"Trader · BIST kırılım 1 saat" },
                     tn:{ ...TRN, tip:"dip", ad:"Trader · NASDAQ dipten dönüş 1 saat" }, tq:{ ...TRN, tip:"kir", ad:"Trader · NASDAQ kırılım 1 saat" } });
+// v3.0: NASDAQ kapanisi yaz/kis saatine gore (NY 16:00 = kisin 21:00 UTC / TR 00:00, yazin 20:00 UTC / TR 23:00). BIST sabit 15:00 UTC (TR 18:00).
+function kapSaat(T, t){ if(T.pazar !== "nasdaq") return T.kapanisUtc;
+  try{ const m = new Intl.DateTimeFormat("en-US", { timeZone:"America/New_York", timeZoneName:"shortOffset" }).formatToParts(new Date(t)).find(x => x.type === "timeZoneName")?.value.match(/GMT([+-]\d+)/);
+    if(m) return 16 - +m[1]; }catch(e){} return T.kapanisUtc; }
 const TRADER = new Set(["t1", "t2", "t3", "tb", "tk", "tn", "tq"]);
 const ONEK = { kripto:"KRIPTO:", bist:"BIST:", nasdaq:"NASDAQ:" };   // trader kasasinin stratejileri
 const PIYANGO = new Set(["p4", "bp", "pd", "bd"]);   // piyango kasasinin stratejileri (disiplinli kasaya girmez)
@@ -309,7 +313,7 @@ async function tara(A, masraf, RJ, RJB, ctx){
     await havuz(LST, yh ? 4 : 6, async x => { const nM = yh ? 300 : T.tip === "pg" ? 260 : 151, ka = x.bn + T.iv + nM; onb[ka] = onb[ka] || mumlar(T, x, nM); const R = await onb[ka]; if(R.c.length < 100) return; const tGiris = R.kap[R.kap.length - 1];
       if(gunluk && Date.now() - tGiris > 4*86400000) return;   // eski mum (tatil/veri yok) -> sinyal verme
       if(!gunluk && Date.now() - tGiris > (T.bayat || BAYAT_DK)*60000) return;
-      if(T.kapanisUtc != null){ const sa = new Date(tGiris).getUTCHours() + new Date(tGiris).getUTCMinutes()/60; if(sa + T.H > T.kapanisUtc + .01) return; }   // gun ici trader: seans bitmeden kapanmayacak islem acma   // gec kalinmis sinyal: o fiyat artik yok, sahte kazanc/kayip yazmasin
+      if(T.kapanisUtc != null){ const sa = new Date(tGiris).getUTCHours() + new Date(tGiris).getUTCMinutes()/60; if(sa + T.H > kapSaat(T, tGiris) + .01) return; }   // gun ici trader: seans bitmeden kapanmayacak islem acma   // gec kalinmis sinyal: o fiyat artik yok, sahte kazanc/kayip yazmasin
       const d = hazirla(R, tumL(T), RJx, T.ms/1000);
       if(sicrama(R)) return;   // bolunme/yeniden fiyatlama -> sahte dip/kirilim sinyali verme
       for(const a of AY){ const s = sinyal(d, a.P, T); if(!s?.ok || !seviyeOk(s.c, s.hed, s.st, .35)) continue; const k = ONEK[pz] + x.kod, an = `${k}|${tf}|${a.i}`; if(var_.has(an) || mumVar.has(`${an}|${tGiris}`)) continue; var_.add(an); mumVar.add(`${an}|${tGiris}`);
@@ -323,7 +327,7 @@ async function tara(A, masraf, RJ, RJB, ctx){
 async function sonuclandir(masraf){
   const acik = await sbHepsi(`piyasa_sanal?user_id=eq.${UID}&durum=eq.acik&select=id,k,alt,giris,hedef,stop,t,son,oz`); let bitti = 0; const kapanan = {};
   await havuz(acik, 5, async o => { const bist = /^BIST:/.test(o.k), nq = /^NASDAQ:/.test(o.k), bn = o.oz?.bn || (bist ? o.k.slice(5) + ".IS" : nq ? o.k.slice(7) : o.k.replace("KRIPTO:", "") + "USDT"), t0 = new Date(o.t).getTime(); let son = new Date(o.son).getTime(), s = null;
-    if(TF[o.alt]?.kapanisUtc != null){ const k = new Date(t0); k.setUTCHours(TF[o.alt].kapanisUtc, 0, 0, 0); son = Math.min(son, Math.max(k.getTime(), t0 + 3600000)); }   // v2.12: gun ici trader seans kapanisinda kapanir (eski uzun sureli islemler dahil)
+    if(TF[o.alt]?.kapanisUtc != null){ const k = new Date(t0); k.setUTCHours(kapSaat(TF[o.alt], t0), 0, 0, 0); son = Math.min(son, Math.max(k.getTime(), t0 + 3600000)); }   // v2.12: gun ici trader seans kapanisinda kapanir (eski uzun sureli islemler dahil)
     let r; if(bist || nq){ const Y = await yahoo(bn, "60m", null, t0 - 3600000); r = Y.t.map((t, i) => [t*1000, Y.o[i], Y.h[i], Y.l[i], Y.c[i]]).filter(m => m[0] >= t0); }
     else r = await jget(`${BN}/api/v3/klines?symbol=${bn}&interval=15m&startTime=${t0}&limit=1000`);
     let st = +o.stop, tepe = +o.giris; const iz = o.oz?.iz, guv = !(st > 0) || st >= +o.giris; if(guv) st = +o.giris*.75;   // v2.4: bozuk (negatif) stoplu eski islemler icin %25 guvenlik stopu
@@ -689,6 +693,21 @@ async function oneriler(B, N, C, eski){ const t0 = Date.now(), R = { t:Date.now(
     beklenen:K.length ? +(K.reduce((a, o) => a + (o.p || 0), 0)/K.length).toFixed(3) : null, acik:kay.filter(o => !o.sonuc).length };
   R.sure = Math.round((Date.now() - t0)/1000); return R; }
 
+/* ---------- v3.0 ekonomik takvim (TradingView, ucretsiz): ABD, Turkiye, Euro bolgesi + buyukler · 6 saatte bir ---------- */
+const EKO_TR = [[/non[ -]?farm payrolls/i, "Tarım dışı istihdam"], [/core inflation rate yoy/i, "Çekirdek enflasyon (yıllık)"], [/core inflation rate mom/i, "Çekirdek enflasyon (aylık)"],
+  [/inflation rate yoy/i, "Enflasyon (yıllık)"], [/inflation rate mom/i, "Enflasyon (aylık)"], [/core pce price index/i, "Çekirdek PCE enflasyonu"], [/fed interest rate decision/i, "Fed faiz kararı"],
+  [/interest rate decision/i, "Faiz kararı"], [/fomc minutes/i, "Fed toplantı tutanakları"], [/fomc press conference/i, "Fed basın toplantısı"], [/fed chair .* speech/i, "Fed başkanı konuşuyor"],
+  [/unemployment rate/i, "İşsizlik oranı"], [/gdp growth rate/i, "Büyüme (GSYH)"], [/retail sales mom/i, "Perakende satışlar (aylık)"], [/retail sales yoy/i, "Perakende satışlar (yıllık)"],
+  [/ppi mom/i, "ÜFE (aylık)"], [/ppi yoy/i, "ÜFE (yıllık)"], [/ism manufacturing pmi/i, "ISM imalat PMI"], [/ism services pmi/i, "ISM hizmet PMI"], [/initial jobless claims/i, "İşsizlik başvuruları"],
+  [/jolts job openings/i, "Açık iş ilanları (JOLTS)"], [/adp employment change/i, "ADP özel istihdam"], [/michigan consumer sentiment/i, "Michigan tüketici güveni"], [/consumer confidence/i, "Tüketici güveni"],
+  [/current account/i, "Cari denge"], [/balance of trade/i, "Dış ticaret dengesi"], [/industrial production/i, "Sanayi üretimi"], [/manufacturing pmi/i, "İmalat PMI"], [/capacity utilization/i, "Kapasite kullanımı"],
+  [/ecb press conference/i, "ECB basın toplantısı"], [/deposit facility rate/i, "ECB mevduat faizi"], [/one-week repo rate/i, "TCMB politika faizi"]];
+async function ekoTakvim(){ const now = Date.now(), from = new Date(now - 86400000).toISOString(), to = new Date(now + 15*86400000).toISOString();
+  const r = await jget(`https://economic-calendar.tradingview.com/events?from=${from}&to=${to}&countries=US,TR,EU,DE,GB,CN,JP`, 2, { headers:{ Origin:"https://www.tradingview.com", Referer:"https://www.tradingview.com/", "User-Agent":"Mozilla/5.0" } });
+  const tr = t => { for(const [re, a] of EKO_TR) if(re.test(t)) return a; return t; }, sayi = v => v == null || v === "" ? null : v;
+  const L = (r?.result || []).filter(e => e.date && (e.importance >= 0 || ["US", "TR"].includes(e.country))).map(e => ({ t:Date.parse(e.date), u:e.country, ad:tr(e.title || e.indicator || ""), onem:e.importance ?? 0,
+      b:sayi(e.forecast), o:sayi(e.previous), g:sayi(e.actual), br:e.unit && e.unit !== "%" ? "" : e.unit === "%" ? "%" : "" })).filter(e => isFinite(e.t)).sort((a, b) => a.t - b.t).slice(0, 220);
+  if(!L.length) throw new Error("bos cevap"); return { t:now, L }; }
 /* ---------- ana akis ---------- */
 (async () => {
   const bas = Date.now(), satir = (await sb(`piyasa_bot?user_id=eq.${UID}&select=*`))[0] || null, masraf = +(satir?.masraf ?? process.env.MASRAF ?? .5);
@@ -737,12 +756,14 @@ async function oneriler(B, N, C, eski){ const t0 = Date.now(), R = { t:Date.now(
   let ihale = eskiD.ihale || null;
   if(!ihale?.t || Date.now() - ihale.t > 20*3600000 || (ihale.toplam && (ihale.liste?.length || 0) < ihale.toplam * .9 && Date.now() - ihale.t > 40*60000)){ ihale = await milliEmlak(eskiD.ihale?.detay || {}).catch(e => { console.log("ihale avcisi calismadi:", e.message); return eskiD.ihale || null; });
     if(ihale?.liste) console.log(`ihale avcisi: ${ihale.liste.length}/${ihale.toplam} Hazine ihalesi, ${Object.keys(ihale.detay || {}).length} detay`); }
+  let takvim = eskiD.takvim || null;
+  if(!takvim?.t || Date.now() - takvim.t > 6*3600000){ takvim = await ekoTakvim().catch(e => { console.log("ekonomik takvim alinamadi:", e.message); return eskiD.takvim || null; }); if(takvim?.L) console.log(`ekonomik takvim: ${takvim.L.length} olay`); }
   let oneri = eskiD.oneri || null;
   if(!oneri?.t || Date.now() - oneri.t > ONERI_SAAT*3600000){ try{ const B = RJB ? await bistListe() : [], N = RJN ? await nasdaqListe() : [], C = await coinler(80);
       oneri = await oneriler(B, N, C, eskiD.oneri); console.log(`oneri motoru: BIST ${oneri.pazar.bist?.length || 0} · NASDAQ ${oneri.pazar.nasdaq?.length || 0} · kripto ${oneri.pazar.kripto?.length || 0} oneri, karne ${oneri.karne.n} sonuclandi (${oneri.karne.hedef} hedef / ${oneri.karne.stop} stop), ${oneri.sure} sn`); }
     catch(e){ console.log("oneri motoru calismadi:", e.message); oneri = eskiD.oneri || null; } }
   if(ihale?.liste){ const n = await meDetayTamamla(ihale).catch(e => { console.log("ihale detay tamamlama:", e.message); return 0; }); if(n) console.log(`ihale detay: +${n} (toplam ${Object.keys(ihale.detay).length}/${ihale.liste.length})`); }
-  const kayit = { user_id:UID, algo:A, kasa, son_tarama:new Date().toISOString(), ...(egitildi ? { son_egitim:new Date().toISOString() } : {}), durum:{ rejim:RJ.simdi, btcFark:+(RJ.fark*100).toFixed(2), acikStrateji:[...Object.keys(TF), ...Object.keys(KUMAR)].filter(tf => A[tf]?.aktif || kanit[tf]), bistRejim:RJB?.simdi || 0, bistFark:RJB ? +(RJB.fark*100).toFixed(2) : null, bist:T1.bist, bistSinyal:bistSin, bistFirsat:bistFr || [], kriptoSinyal:ksin, nasdaqSinyal:nsin, ihale, oneri, taranan:T1.taranan, yeni:T1.yeni, acik:S1.acik - S1.bitti, bitti:S1.bitti, sure:Math.round((Date.now() - bas)/1000), masraf } };
+  const kayit = { user_id:UID, algo:A, kasa, son_tarama:new Date().toISOString(), ...(egitildi ? { son_egitim:new Date().toISOString() } : {}), durum:{ rejim:RJ.simdi, btcFark:+(RJ.fark*100).toFixed(2), acikStrateji:[...Object.keys(TF), ...Object.keys(KUMAR)].filter(tf => A[tf]?.aktif || kanit[tf]), bistRejim:RJB?.simdi || 0, bistFark:RJB ? +(RJB.fark*100).toFixed(2) : null, bist:T1.bist, bistSinyal:bistSin, bistFirsat:bistFr || [], kriptoSinyal:ksin, nasdaqSinyal:nsin, ihale, oneri, takvim, taranan:T1.taranan, yeni:T1.yeni, acik:S1.acik - S1.bitti, bitti:S1.bitti, sure:Math.round((Date.now() - bas)/1000), masraf } };
   await sb("piyasa_bot?on_conflict=user_id", "POST", kayit, { Prefer:"resolution=merge-duplicates,return=minimal" });
   console.log(`kasa: disiplinli tur ${kasa.disiplin.tur} ${Math.round(kasa.disiplin.bakiye)} TL (${kasa.disiplin.acik.length} acik) · piyango tur ${kasa.her.tur} ${Math.round(kasa.her.bakiye)} TL (${kasa.her.acik.length} acik) · kumar tur ${kasa.kumar.tur} ${Math.round(kasa.kumar.bakiye)} TL (${kasa.kumar.acik.length} acik) · trader tur ${kasa.trader.tur} ${Math.round(kasa.trader.bakiye)} TL (${kasa.trader.acik.length} acik) · ana kasa ${Math.round(kasa.karma.bakiye)} TL (${kasa.karma.acik.length} acik)`);
   console.log(`tamam: ${T1.taranan} coin + ${T1.bist} BIST + ${T1.nasdaq || 0} NASDAQ hissesi tarandi, +${T1.yeni} yeni sanal islem, ${S1.bitti} sonuclandi, acik ${S1.acik - S1.bitti}, algoritma v${A.surum}${egitildi ? " (yeni egitildi)" : ""}, ${Math.round((Date.now() - bas)/1000)} sn`);
