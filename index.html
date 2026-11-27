@@ -4471,7 +4471,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.2.1";
+const SURUM_MORDOR = "v 3.3.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -27183,10 +27183,10 @@ async function kzRaporYukle(k){ const yer = document.getElementById("kzRapor"); 
 const KZ_SEK = [["rapor", '<i class="pipo"></i> Bay Pipo raporu'], ["konsey", "👑 Şah İndikatörü"], ["yz", "🤖 Yapay zeka (isteğe bağlı)"], ["temel", "📊 Temel & temettü"], ["haber", "📰 Haberler & olaylar"]];
 function kzSekmeSec(t){ pzLS.yaz("kzSek", t); document.querySelectorAll(".kzSekTus").forEach(b => b.classList.toggle("on", b.dataset.t === t)); document.querySelectorAll(".kzSekPan").forEach(p => p.classList.toggle("on", p.dataset.t === t)); }
 function kzSekmeKur(k){ const iz = app.querySelector(".pzdIzgara"); if(!iz || document.getElementById("kzSekK")) return;
-  const sec = pzLS.oku("kzSek", "rapor");
+  let sec = pzLS.oku("kzSek", "rapor"); if(!KZ_SEK.some(x => x[0] === sec)) sec = "rapor";
   iz.insertAdjacentHTML("afterend", `<div id="kzSekK" class="kzSekK"><div class="kzSekBar">${KZ_SEK.map(([t, a]) => `<button class="kzSekTus${t === sec ? " on" : ""}" data-t="${t}" onclick="kzSekmeSec('${t}')">${a}</button>`).join("")}</div>
     ${KZ_SEK.map(([t]) => `<div class="kzSekPan${t === sec ? " on" : ""}" data-t="${t}"></div>`).join("")}</div>`);
-  const pan = t => document.querySelector(`.kzSekPan[data-t="${t}"]`), tasi = (t, el) => { if(el) pan(t).appendChild(el); };
+  const pan = t => document.querySelector(`.kzSekPan[data-t="${t}"]`), tasi = (t, el) => { if(el && pan(t)) pan(t).appendChild(el); else if(el && t === "yz") el.remove(); };
   pan("rapor").innerHTML = `<section class="pcBox"><header><b><i class="pipo"></i> Bay Pipo raporu</b><small>Bay Pipo: Arsa Takip'in kendi analiz botu · anında</small></header><div class="pcBoxIc" id="kzRapor"><div class="spin"></div></div></section>`;
   tasi("konsey", document.getElementById("kzP"));
   tasi("yz", document.getElementById("pzdUzlasi")); tasi("yz", app.querySelector(".pzdYZ"));
@@ -28209,6 +28209,57 @@ setTimeout(() => { const tur = async () => { try{ if(!window.arsaPC?.yzOto || !M
 .v3CizTus{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px;color:#A9A7AE}.v3CizYzK{margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(217,119,87,.08);border:1px solid rgba(217,119,87,.35);font-size:13px;line-height:1.55}
 .v3Hp{position:absolute;inset:0 60px 0 auto;width:180px;pointer-events:none;z-index:3}.v3Hp i{position:absolute;right:0;background:rgba(91,141,239,.28);border-radius:2px 0 0 2px}.v3Hp i.poc{background:rgba(232,182,97,.55)}
 .v3Ucr{margin-top:12px}`; document.head.appendChild(st); }
+
+/* ---------- v3.3: Fonlar (TEFAS), KAP akisi, piyasa sagligi, cok yillik bilanco ---------- */
+PZ_SEKMELER.push(["fon", "🏦 Fonlar (TEFAS)"], ["kap", "📢 KAP"]);
+PZ_GRUP.find(g => g[0] === "Piyasalar")[1].push("fon"); PZ_GRUP.find(g => g[0] === "Keşfet")[1].push("kap");
+const v3Dur = () => PZ.bot?.row?.durum || {};
+V3_PANEL.fon = function(k){ const T = v3Dur().tefas, q = (V3.fonAra || "").toLocaleLowerCase("tr"), sr = V3.fonSira || "y1";
+  if(!T?.L?.length){ k.innerHTML = `<div class="pcBos">Fon listesini Bay Pipo TEFAS'tan 6 saatte bir çeker. İlk liste botun bir sonraki turunda gelir.</div>`; return; }
+  const L = T.L.filter(f => !q || (f.k + " " + f.a + " " + (f.tur || "")).toLocaleLowerCase("tr").includes(q)).sort((a, b) => (b[sr] ?? -1e9) - (a[sr] ?? -1e9)).slice(0, 300);
+  const th = (a, ad) => `<th class="sag ${sr === a ? "on" : ""}" onclick="V3.fonSira='${a}';pzTablo()">${ad}${sr === a ? " ↓" : ""}</th>`, y = v => v == null ? "—" : pzYuzde(v, 1);
+  k.innerHTML = `<div class="v3TarUst"><input class="pzAra" style="display:block;max-width:320px" placeholder="Fon ara: kod, ad, tür…" value="${esc(V3.fonAra || "")}" oninput="V3.fonAra=this.value;clearTimeout(V3.fZ);V3.fZ=setTimeout(()=>{pzTablo();const i=document.querySelector('.v3TarUst .pzAra');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length)}},200)"><small class="soluk">${T.L.length} fon · ${new Date(T.t).toLocaleString("tr-TR", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" })}</small></div>
+    <div class="v3TabloK"><table class="pzT"><thead><tr><th>Fon</th><th class="sag">Fiyat</th>${th("g1", "Gün")}${th("a1", "1 ay")}${th("a3", "3 ay")}${th("yb", "Yılbaşı")}${th("y1", "1 yıl")}${th("b", "Büyüklük")}${th("y", "Yatırımcı")}<th></th></tr></thead><tbody>
+    ${L.map(f => `<tr onclick="window.open('https://www.tefas.gov.tr/FonAnaliz.aspx?FonKod=${esc(f.k)}','_blank')"><td><div class="pzSem"><span class="pzLogo bos">${esc(f.k.slice(0, 3))}</span><span><b>${esc(f.k)}</b><small>${esc(f.a)}${f.tur ? " · " + esc(f.tur) : ""}</small></span></div></td>
+      <td class="sag mono">${pzPara(f.f, "TRY", 4)}</td><td class="sag mono ${pzYon(f.g1)}">${y(f.g1)}</td><td class="sag mono ${pzYon(f.a1)}">${y(f.a1)}</td><td class="sag mono ${pzYon(f.a3)}">${y(f.a3)}</td><td class="sag mono ${pzYon(f.yb)}">${y(f.yb)}</td><td class="sag mono ${pzYon(f.y1)}">${y(f.y1)}</td>
+      <td class="sag mono">${pzBuyuk(f.b, "TRY")}</td><td class="sag mono">${nf(f.y || 0)}</td><td><button class="pzIkon" title="Portföye ekle" onclick="event.stopPropagation();v3FonEkle('${esc(f.k)}')">＋</button></td></tr>`).join("")}</tbody></table></div>
+    <div class="pzNot">Kaynak: TEFAS · fon fiyatları günde bir açıklanır · satıra dokununca TEFAS'ta fon sayfası açılır · ＋ ile portföyüne ekle</div>`; };
+async function v3FonEkle(kod){ const f = v3Dur().tefas?.L?.find(x => x.k === kod); if(!f) return; const adet = +String(prompt(`${kod} · kaç pay var?`, "") || "").replace(",", "."); if(!(adet > 0)) return;
+  const mal = +String(prompt("Pay başı maliyet (₺)?", String(f.f)) || "").replace(",", ".") || f.f;
+  try{ const r = await pzEkle("piyasa_portfoy", { sembol:"FON:" + kod, tur:"fon", ad:f.a, adet, maliyet:mal, para:"TRY", alis_tarihi:new Date().toISOString().slice(0, 10) }); PZ.portfoy.push(r); toast("Portföye eklendi"); }catch(e){ toast("Olmadı: " + (e.message || e)); } }
+// fon fiyatlari portfoy hesabina girsin
+{ const eski = pzFiyatlar; pzFiyatlar = async function(K){ const R = await eski.apply(this, arguments); try{ const T = v3Dur().tefas?.L || []; [...new Set(K)].filter(k => pzTur(k) === "FON").forEach(k => { const f = T.find(x => x.k === pzKod(k)); if(f) R[k] = { k, kod:f.k, ad:f.a, f:f.f, deg:f.g1, para:"TRY", gec:"günlük" }; }); }catch(e){} return R; }; }
+{ const eski = ekranlar.piyasaDetay; ekranlar.piyasaDetay = async function(k){ if(pzTur(k) === "FON"){ window.open("https://www.tefas.gov.tr/FonAnaliz.aspx?FonKod=" + encodeURIComponent(pzKod(k)), "_blank"); return; } return eski.apply(this, arguments); }; }
+// KAP
+V3_PANEL.kap = function(k){ const K = v3Dur().kap, ben = V3.kapBen !== false, il = new Set(PZ.portfoy.concat(PZ.takip).map(x => x.sembol).filter(s => /^BIST:/.test(s)).map(s => s.slice(5)));
+  if(!K?.L?.length){ k.innerHTML = `<div class="pcBos">KAP bildirimlerini Bay Pipo 15 dakikada bir çeker; ilk liste botun bir sonraki turunda gelir.</div>`; return; }
+  const L = K.L.filter(b => !ben || b.kod.some(x => il.has(x))).slice(0, 200);
+  k.innerHTML = `<div class="v3Cipler"><button class="${ben ? "on" : ""}" onclick="V3.kapBen=true;pzTablo()">★ Benim hisselerim</button><button class="${!ben ? "on" : ""}" onclick="V3.kapBen=false;pzTablo()">Tüm şirketler</button></div>
+    <div class="v3KapL">${L.map(b => `<a class="v3KapS ${b.kod.some(x => il.has(x)) ? "ben" : ""}" href="https://www.kap.org.tr/tr/Bildirim/${b.idx}" target="_blank" rel="noopener"><span class="mono">${new Date(b.t).toLocaleString("tr-TR", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" })}</span><b>${esc(b.kod.join(", "))}</b><div><strong>${esc(b.baslik)}</strong><small>${esc(String(b.ozet || b.sirket || "").slice(0, 220))}</small></div></a>`).join("") || `<div class="pcBos">Son 2 günde portföy/takip hisselerine KAP bildirimi yok.</div>`}</div>
+    <div class="pzNot">Kaynak: KAP (herkese açık) · dokununca bildirimin aslı açılır · portföy/takip hissene yeni bildirim gelince telefona da bildirim gelir</div>`; };
+// piyasa sagligi (ozet sekmesinde)
+function v3Saglik(L){ L = (L || []).filter(s => s.tv); if(L.length < 20) return null; const n = L.length, p = f => Math.round(L.filter(f).length/n*100);
+  const art = p(s => s.deg > 0), s50 = p(s => s.tv.SMA50 && s.f > s.tv.SMA50), s200 = p(s => s.tv.SMA200 && s.f > s.tv.SMA200), rsi = L.reduce((t, s) => t + (s.tv.RSI || 50), 0)/n;
+  const zir = L.filter(s => s.tv.price_52_week_high && s.f >= s.tv.price_52_week_high*.98).length, dip = L.filter(s => s.tv.price_52_week_low && s.f <= s.tv.price_52_week_low*1.02).length;
+  const puan = Math.round(art*.25 + s50*.3 + s200*.3 + Math.max(0, Math.min(100, (rsi - 30)*2.5))*.15); return { n, art, s50, s200, rsi, zir, dip, puan }; }
+{ const eski = V3_PANEL.ozet; V3_PANEL.ozet = function(k){ const r = eski(k); try{ const S = v3Saglik(PZ.liste.bist); if(S){ const oz = k.querySelector(".v3Oz"); oz?.insertAdjacentHTML("afterbegin", `<section class="v3Kart genis v3Sag"><header><b>🩺 BIST'in sağlığı</b><small>${S.n} hisseye bakarak · profesyonellerin "piyasa genişliği" ölçüsü</small></header>
+      <div class="v3SagIc"><div class="v3SagPuan ${S.puan >= 60 ? "art" : S.puan < 40 ? "az" : ""}"><b>${S.puan}</b><small>/100 · ${S.puan >= 60 ? "geniş katılımlı, sağlıklı" : S.puan < 40 ? "zayıf, çoğu hisse düşüşte" : "karışık"}</small></div>
+        <div class="v3SagL"><span>Bugün yükselen <b>%${S.art}</b></span><span>50 günlüğün üstünde <b>%${S.s50}</b></span><span>200 günlüğün üstünde <b>%${S.s200}</b></span><span>Ortalama RSI <b>${S.rsi.toFixed(0)}</b></span><span>Yıllık zirvede <b class="art">${S.zir}</b> · dipte <b class="az">${S.dip}</b></span></div></div>
+      <p class="pzNot">Endeks yükselirken bu oranlar düşüyorsa yükselişi birkaç büyük hisse taşıyor demek: dikkat. Hepsi birlikte yükseliyorsa sağlıklı.</p></section>`); } }catch(e){} return r; }; }
+// detayda cok yillik bilanco (bot Yahoo'dan toplar)
+{ const eski = ekranlar.piyasaDetay; ekranlar.piyasaDetay = async function(k){ const r = await eski.apply(this, arguments);
+    try{ const T = v3Dur().temel?.[k]; if(!T?.yil?.length || document.getElementById("v3Yil")) return r; const yer = document.getElementById("v3HdfK") || document.querySelector(".pzdAlt"); if(!yer) return r;
+      const sat = (ad, A, para) => { const mx = Math.max(...A.map(v => Math.abs(v || 0))) || 1; return `<tr><td>${ad}</td>${A.map(v => `<td class="sag mono ${v < 0 ? "az" : ""}">${v == null ? "—" : para ? pzBuyuk(v) : (+v).toFixed(2).replace(".", ",")}<i class="v3YilC" style="width:${Math.round(Math.abs(v || 0)/mx*100)}%"></i></td>`).join("")}</tr>`; };
+      const b = (A) => { const s = A.filter(v => v != null); return s.length >= 2 && s[0] > 0 ? Math.pow(s[s.length - 1]/s[0], 1/(s.length - 1)) - 1 : null; }, gb = b(T.gelir), nb = b(T.net);
+      yer.insertAdjacentHTML("afterend", `<section class="pcBox v3HdfK" id="v3Yil"><header><b>📚 Yıllara göre bilanço</b><small>son ${T.yil.length} yıl · ${PZD.s?.para === "USD" ? "dolar" : "şirketin raporladığı para birimi"}</small></header><div class="pcBoxIc">
+        <div class="v3TabloK"><table class="pzT v3YilT"><thead><tr><th></th>${T.yil.map(y => `<th class="sag">${y}</th>`).join("")}</tr></thead><tbody>${sat("Satışlar", T.gelir, 1)}${sat("Net kâr", T.net, 1)}${sat("FAVÖK", T.favok, 1)}${sat("Özkaynak", T.ozk, 1)}${sat("Toplam borç", T.borc, 1)}${sat("Serbest nakit akışı", T.nakit, 1)}${sat("Hisse başı kâr", T.hbk)}</tbody></table></div>
+        <p class="pzNot">${gb != null ? `Satışlar yılda ortalama <b>${pzYuzde(gb*100, 1)}</b> büyümüş` : ""}${nb != null ? `, net kâr <b>${pzYuzde(nb*100, 1)}</b>` : ""}. ${pzTur(k) === "BIST" ? "TL'de enflasyon yüksek olduğu için büyüme enflasyonla kıyaslanmalı." : ""} Kaynak: Yahoo Finance (haftada bir güncellenir).</p></div></section>`); }catch(e){ console.log("yillik", e); }
+    return r; }; }
+{ const st = document.createElement("style"); st.textContent = `.v3KapL{display:flex;flex-direction:column;gap:6px;margin-top:10px}.v3KapS{display:grid;grid-template-columns:110px 110px minmax(0,1fr);gap:10px;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);color:inherit;text-decoration:none;font-size:13px}
+.v3KapS.ben{border-color:rgba(232,182,97,.45)}.v3KapS span{color:#8E8C93;font-size:12px}.v3KapS small{display:block;color:#9A98A0;font-size:12px;margin-top:2px}@media (max-width:700px){ .v3KapS{grid-template-columns:1fr 1fr}.v3KapS > div{grid-column:1/-1} }
+.v3SagIc{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.v3SagPuan b{font-size:34px;font-weight:900}.v3SagPuan small{display:block;color:#9A98A0;font-size:12px}.v3SagPuan.art b{color:#6BE39C}.v3SagPuan.az b{color:#FF7A83}
+.v3SagL{display:flex;flex-wrap:wrap;gap:6px;flex:1}.v3SagL span{padding:6px 10px;border-radius:9px;background:rgba(255,255,255,.04);font-size:12.5px;color:#D7D5DA}
+.v3YilT td{position:relative}.v3YilC{position:absolute;left:4px;bottom:2px;height:3px;border-radius:2px;background:rgba(91,141,239,.45);max-width:calc(100% - 8px)}`; document.head.appendChild(st); }
 
 // v3.0 hiz: uygulama acildiktan sonra bos anda grafik kutuphanesi + bot verisi + piyasa listeleri isitilir; Piyasalar ve detay aninda acilir
 setTimeout(() => { const isit = () => { try{ if(!ME?.id || !navigator.onLine) return; pzLib().catch(() => {}); pzBotYukle().catch(() => {});
