@@ -469,8 +469,12 @@ async function milliEmlak(){ const U = "https://www.turkiye.gov.tr/csb-tasinmaz-
       return { no, cins:c[0], imar:c[2], il:c[3], ilce:c[4], mah:c[5], m2:trSayi(c[6]), fiyat:trSayi(c[7]), idx, resim:!!ref }; }).filter(Boolean);
   const ilk = await al(U), top = Math.min(1000, +(((ilk.match(/Toplam\s+([\d.]+)\s+kayıttan/) || [])[1] || "0").replace(/\./g, "")));
   const liste = [], detay = {};
-  for(let sf = 0; sf < Math.max(top, 1); sf += 20){ const t = sf === 0 ? ilk : await al(U + "?sf=" + sf); await bekle(400);
-    const L = satirlar(t); for(const x of L){ x.sf = sf; liste.push(x);
+  const sayfa = async sf => { let t = await al(U + "?sf=" + sf), L = satirlar(t);
+    for(let dene = 1; !L.length && dene <= 2; dene++){   // e-Devlet arada bos sayfa donebiliyor: bekle, oturumu tazele, tekrar dene
+      console.log(`ihale sayfa ${sf} bos (${t.length} bayt, ${(t.match(/<title>([^<]*)/) || [])[1] || "?"}) -> tekrar ${dene}`);
+      await bekle(3000 * dene); if(dene === 2){ for(const k in C) delete C[k]; await al(U); } t = await al(U + "?sf=" + sf); L = satirlar(t); }
+    return L; };
+  for(let sf = 0; sf < Math.max(top, 1); sf += 20){ const L = sf === 0 ? satirlar(ilk) : await sayfa(sf); await bekle(700); for(const x of L){ x.sf = sf; liste.push(x);
       if(IHALE_ILLER.includes(x.il) && x.idx >= 0){ try{ const d = temiz(await al(`${U}?detay=bilgisi&sf=${sf}&index=${x.idx}`)); await bekle(400);
           const g = re => (d.match(re) || [])[1]?.trim() || null, apa = d.match(/Pafta \/ Ada \/ Parsel\s*([^/]*?)\s*\/\s*([\w.]+)\s*\/\s*([\w.]+)/);
           detay[x.no || `${x.il}|${x.ilce}|${x.mah}|${x.fiyat}`] = { ada:apa?.[2] || null, parsel:apa?.[3] || null, m2:enSayi(g(/Taşınmaz Yüz Ölçümü\s*([\d.,]+)/)), satilacakM2:enSayi(g(/Satılacak Yüz Ölçümü\s*([\d.,]+)/)), hisse:g(/Hazine Hissesi\s*([\d./,]+)/),
@@ -517,7 +521,7 @@ async function milliEmlak(){ const U = "https://www.turkiye.gov.tr/csb-tasinmaz-
     if(bistSin) console.log(`BIST giris sinyali: ${bistSin.karar} (${bistSin.puan}/${bistSin.maks}) · dolar bazli endeks ${bistSin.usd} $ · firsat ${bistFr.length}: ${bistFr.map(f => f.kod + " hedef " + f.hedef + " (" + f.pot + "%)").join(", ")}`); }
   // ihale avcisi: gunde bir kez (20 saatten eskiyse) tara, aradaki turlarda son sonucu tasi
   let ihale = eskiD.ihale || null;
-  if(!ihale?.t || Date.now() - ihale.t > 20*3600000){ ihale = await milliEmlak().catch(e => { console.log("ihale avcisi calismadi:", e.message); return eskiD.ihale || null; });
+  if(!ihale?.t || Date.now() - ihale.t > 20*3600000 || (ihale.toplam && (ihale.liste?.length || 0) < ihale.toplam * .9 && Date.now() - ihale.t > 40*60000)){ ihale = await milliEmlak().catch(e => { console.log("ihale avcisi calismadi:", e.message); return eskiD.ihale || null; });
     if(ihale?.liste) console.log(`ihale avcisi: ${ihale.liste.length}/${ihale.toplam} Hazine ihalesi, ${Object.keys(ihale.detay || {}).length} ilgilenilen ilde detay`); }
   const kayit = { user_id:UID, algo:A, kasa, son_tarama:new Date().toISOString(), ...(egitildi ? { son_egitim:new Date().toISOString() } : {}), durum:{ rejim:RJ.simdi, btcFark:+(RJ.fark*100).toFixed(2), acikStrateji:[...Object.keys(TF), ...Object.keys(KUMAR)].filter(tf => A[tf]?.aktif || kanit[tf]), bistRejim:RJB?.simdi || 0, bistFark:RJB ? +(RJB.fark*100).toFixed(2) : null, bist:T1.bist, bistSinyal:bistSin, bistFirsat:bistFr || [], kriptoSinyal:ksin, nasdaqSinyal:nsin, ihale, taranan:T1.taranan, yeni:T1.yeni, acik:S1.acik - S1.bitti, bitti:S1.bitti, sure:Math.round((Date.now() - bas)/1000), masraf } };
   await sb("piyasa_bot?on_conflict=user_id", "POST", kayit, { Prefer:"resolution=merge-duplicates,return=minimal" });
