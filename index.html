@@ -4449,7 +4449,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.9.3";
+const SURUM_MORDOR = "v 2.10.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -22890,6 +22890,15 @@ function pzSirala(tab, L, f){ const s = PZ.sira[tab]; if(!s?.k) return L; return
 const pzYildiz = k => `<button class="pzYildiz ${pzTakipte(k) ? "on" : ""}" title="${pzTakipte(k) ? "Takipten çıkar" : "Takibe al"}" onclick="event.stopPropagation();pzTakipDegis('${k}')">★</button>`;
 const pzAra = L => { const q = (PZ.ara || "").toLocaleLowerCase("tr").trim(); return q ? L.filter(s => `${s.kod} ${s.ad}`.toLocaleLowerCase("tr").includes(q)) : L; };
 
+// v2.10: listede olmayan bir kodu (TSM, PLTR, yeni halka arz...) borsada bul ve listeye ekle
+async function pzBorsadaAra(kod){ kod = String(kod || "").toUpperCase().replace(/[^A-Z0-9.]/g, ""); if(!kod) return; toast(`"${kod}" ABD borsalarında aranıyor…`);
+  try{ await pzNasdaq(true, [kod]); const v = (PZ.liste.nasdaq || []).find(x => x.kod === kod); if(v){ PZ.sekme = "nasdaq"; PZ.nasAlt = v.grup === "etf" ? "etf" : v.grup === "nyse" ? "nyse" : "sec"; PZ.ara = kod; pzEkran(); toast(`${kod} bulundu · ★ ile takibe ekleyebilirsin`); } else toast(`"${kod}" bulunamadı. Kodu doğru yazdığından emin ol (ör. TSM, BABA).`); }
+  catch(e){ toast("Arama yapılamadı: " + (e.message || e)); } }
+{ const eski = pzTablo; pzTablo = function(){ const r = eski.apply(this, arguments);
+    try{ const q = String(PZ.ara || "").trim(), k = document.getElementById("pzTablo"); if(k && /^[A-Za-z][A-Za-z0-9.]{0,5}$/.test(q) && !k.querySelector(".pzBorsaAra")){
+      const satir = k.querySelectorAll("tbody tr").length; if(satir <= 1 || !(PZ.liste.nasdaq || []).some(x => x.kod === q.toUpperCase()))
+        k.insertAdjacentHTML("beforeend", `<button class="btn ghost pzBorsaAra" style="margin:10px 0" onclick="pzBorsadaAra('${esc(q)}')">🔎 "${esc(q.toUpperCase())}" listede yok mu? ABD borsalarında ara ve ekle</button>`); } }catch(e){}
+    return r; }; }
 function pzTablo(){
   const k = document.getElementById("pzTablo"); if(!k) return;
   const T = PZ.sekme;
@@ -24431,7 +24440,7 @@ PZ_SEKMELER.forEach(x => { if(x[0] === "nasdaq") x[1] = "ABD (NASDAQ · NYSE · 
 pzNasdaq = async function(zorla, ek){ if(zorla) delete PZ.cache.nasdaq;
   const bilinen = new Set(PZ_NASDAQ.concat(PZ_NYSE, PZ_ETF.map(x => x[1])));
   const diger = [...new Set((ek || []).concat(PZ.takip.concat(PZ.portfoy).filter(x => pzTur(x.sembol) === "NASDAQ").map(x => pzKod(x.sembol))))].filter(k => !bilinen.has(k));
-  const T = PZ_NASDAQ.map(k => "NASDAQ:" + k).concat(PZ_NYSE.map(k => "NYSE:" + k), PZ_ETF.map(([b, k]) => b + ":" + k), diger.flatMap(k => ["NASDAQ:" + k, "NYSE:" + k, "AMEX:" + k])).slice(0, 300);
+  const T = PZ_NASDAQ.map(k => "NASDAQ:" + k).concat(PZ_NYSE.flatMap(k => ["NYSE:" + k, "NASDAQ:" + k]), PZ_ETF.map(([b, k]) => b + ":" + k), diger.flatMap(k => ["NASDAQ:" + k, "NYSE:" + k, "AMEX:" + k])).slice(0, 300);
   return pzOnbellek("nasdaq", 45000, async () => { const r = await pzFn({ mod:"tvtara", pazar:"america", tickers:T, kolonlar:PZ_TV_KOLON, sinir:300 });
     const g = {}; r.veri.forEach(x => { const s = pzTvSatir(x, r.kolon, "nasdaq"); s.grup = PZ_ETF_AD[s.kod] ? "etf" : s.borsa === "NASDAQ" ? "nasdaq" : "nyse"; if(PZ_ETF_AD[s.kod]) s.ad = `${s.kod} · ${PZ_ETF_AD[s.kod]}`;
       if(!g[s.kod] || s.borsa === "NASDAQ") g[s.kod] = s; });
@@ -25689,7 +25698,7 @@ const BM_KASA = {
     kural:["Aynı anda en fazla 5 işlem", "Her işlemde kasanın en fazla %2'si riske girer", "Canlıda kanıtlanmış fırsatta risk 2 katına çıkar (en fazla kasanın %20'si)", "Kripto + BIST sinyalleri"] },
   kumar:{ ad:"🎲 Kumar kasası", ozet:"Sık işlem. 20+ indikatöre bakan öğrenen model karar verir; para, kazanma ihtimaline göre ayarlanır.",
     kural:["Aynı anda en fazla 3 işlem", "Her işlemde en fazla %2 risk ve kasanın en fazla %15'i", "BTC düşüş trendindeyse en fazla 2 işlem ve yarım pozisyon", "Model kazanma ihtimalini düşük görürse hiç girmez"] },
-  trader:{ ad:"⚡ Trader kasası", ozet:"Gün içi al-sat. 15 dakikalık ve 1 saatlik mumlarla birkaç saatlik işlemler; küçük ama sık kazanç arar.",
+  trader:{ ad:"⚡ Trader kasası", ozet:"Gün içi al-sat: kripto 15 dk / 1 saat, BIST ve NASDAQ 1 saatlik mumlar. İşlemler en fazla birkaç saat sürer, gece taşımaz; küçük ama sık kazanç arar.",
     kural:["Aynı anda en fazla 3 işlem", "Her işlemde kasanın en fazla %1,5'i riske girer, en fazla %33'ü bağlanır", "Sadece ileri testi geçen kısa vadeli stratejilerle girer", "Komisyon + kayma payı her işlemden %0,3 düşülür"] } };
 const BM_FREN = ["Üst üste 3 kayıp → 24 saat mola", "Kasa zirvesinden %15 düşerse → yarım pozisyon", "Zarar kesen coine → 24 saat tekrar girilmez"];
 function bmKasa(tip, K){ if(!K) return ""; const T = BM_KASA[tip];
@@ -25730,7 +25739,7 @@ function bmCiz(){
   const KL = K ? ["disiplin", "her", "kumar", "trader"].map(x => K[x]).filter(Boolean) : [], topBas = KL.reduce((t, x) => t + x.bas, 0), topSim = KL.reduce((t, x) => t + x.bakiye, 0), topKz = topSim - topBas;
   const ayi = d.rejim === 2, piyasa = d.rejim ? (ayi ? `🐻 BTC düşüş trendinde: bot temkinli, az ve küçük işlem açar.` : `🐂 BTC yükseliş trendinde: bot normal çalışır.`) : "";
   const poz = K ? bmPoz(K.disiplin, "Disiplinli") + bmPoz(K.her, "Piyango") + bmPoz(K.kumar, "Kumar") : "";
-  const gec = K ? [["Disiplinli", K.disiplin], ["Piyango", K.her], ["Kumar", K.kumar]].map(([a, x]) => bmGecmis(x, a)).join("") : "";
+  const gec = K ? [["Disiplinli", K.disiplin], ["Piyango", K.her], ["Kumar", K.kumar], ["⚡ Trader", K.trader]].map(([a, x]) => bmGecmis(x, a)).join("") : "";
   k.innerHTML = `
     <div class="bmDurum ${akt ? "ok" : "kapali"}"><b>${akt ? "✅ Bot çalışıyor" : "⚠ Bot son " + bmOnce(r.son_tarama) + " çalıştı"}</b> · ${bmOnce(r.son_tarama)} ${d.taranan || 0} coin taradı · tamamen sanal para, gerçek işlem yok</div>
     ${KL.length ? `<div class="bmHero"><small>3 kasa toplam</small><b class="${topKz >= 0 ? "art" : "az"}">${bmTl(topSim)}</b><span class="${topKz >= 0 ? "art" : "az"}">${topKz >= 0 ? "+" : "−"}${bmTl(Math.abs(topKz))} (${pzYuzde((topSim/topBas - 1)*100, 1)})</span><em>Başlangıç ${bmTl(topBas)} · her kasa ${bmTl(KL[0].bas)}</em>${piyasa ? `<p>${piyasa}</p>` : ""}</div>` : ""}
@@ -27007,6 +27016,124 @@ function ilanYazisiz(){ const D = ILAN?.D; if(!D) return; const goster = D.ogele
 .ilSonAfis{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;padding:10px 12px;border-radius:12px;background:rgba(232,182,97,.12);border:1px solid rgba(232,182,97,.35);font-size:13px}
 .ilSonAfis span{flex:1;min-width:180px}.ilSonAfis .btn{width:auto;padding:0 14px;min-height:36px}
 .ilYazisiz{margin:0 0 10px}`; document.head.appendChild(st); }
+
+/* ================= PIYASALAR v2.10 · yapay zekasiz program raporu + sekmeli detay =================
+   - Gece otomatik Claude/GPT analizi KAPALI (limit yiyordu). Yapay zeka sadece "Claude + GPT analiz" tusuna basinca calisir.
+   - "📋 Program raporu": Sah konseyi + gecmis karne + ogrenen model + 4 saatlik/gunluk uyum + temel karne + haber tonu (kural tabanli)
+     -> karar, guven, nedenler, riskler, al bolgesi / stop / hedefler. Yapay zeka beklemez, limit harcamaz.
+   - Detay sayfasi alt bolumleri sekmelere toplandi (sayfa asagi uzamasin, kutular sola yigilmasin). */
+pzZamanlayici = async function(){};
+{ const eski = pzGeceKutu; pzGeceKutu = function(){ const r = eski.apply(this, arguments); const k = document.getElementById("pzGece"); if(!k) return r;
+    k.querySelector(".pzOto")?.remove(); k.querySelectorAll(".pzNot.az").forEach(e => e.remove());
+    if(!k.querySelector(".pzGeceKapali")) k.insertAdjacentHTML("afterbegin", `<div class="pzNot pzGeceKapali">Otomatik gece analizi <b>kapalı</b>: Claude/ChatGPT limiti boşa gitmesin. Her varlığın detayındaki <b>📋 Program raporu</b> yapay zekasız, anında hazırlanır. Yapay zekayı istersen detaydaki “Claude + GPT analiz” ya da aşağıdaki tuşla sen başlatırsın.</div>`);
+    return r; }; }
+
+// ---------- haber tonu (kural tabanli, son 30 gun) ----------
+const KZ_IYI_TR = /(artış|arttı|yükseliş|yükseldi|rekor|büyüme|büyüdü|anlaşma imza|sözleşme imza|ihaleyi kazan|ihale kazan|yeni sipariş|onaylandı|yatırım kararı|kârı art|kâr artış|net kârı|temettü dağıt|pay geri alım|geri alım program|hedef fiyatı? (yükselt|art)|al tavsiye|endekse dahil|ihracat rekor)/i;
+const KZ_KOTU_TR = /(düşüş|düştü|geriledi|zarar açıkla|zarar etti|para cezası|ceza aldı|soruşturma|dava açıl|iflas|konkordato|sert düş|satış baskısı|hedef fiyatı? (düşür|indir)|sat tavsiye|tedbir|işlem yasağı|devre kesici|haciz|endeksten çık|kayıp)/i;
+const KZ_IYI_EN = /\b(upgrade[sd]?|beats?|surge[sd]?|soar(s|ed)?|record (high|revenue|profit)|rall(y|ies|ied)|approv(al|ed)|partnership|buyback|raises? (guidance|outlook)|outperform|strong demand|listing on)\b/i;
+const KZ_KOTU_EN = /\b(downgrade[sd]?|miss(es|ed) (estimates|expectations)|plunge[sd]?|slump(s|ed)?|lawsuit|probe|investigation|hack(ed)?|exploit|delist(ing|ed)?|sell-?off|guidance cut|cuts? (guidance|outlook)|fraud|SEC charges|bankrupt(cy)?|layoffs?|recall)\b/i;
+const KZ_IYI = { test:b => KZ_IYI_TR.test(b) || KZ_IYI_EN.test(b) }, KZ_KOTU = { test:b => KZ_KOTU_TR.test(b) || KZ_KOTU_EN.test(b) };
+function kzHaberTon(L){ const simdi = Date.now(), H = (L || []).filter(h => { const t = Date.parse(h.tarih); return !isFinite(t) || simdi - t < 30*86400000; }).slice(0, 25);
+  let iyi = 0, kotu = 0; const S = H.map(h => { const b = String(h.baslik || ""), a = KZ_IYI.test(b), z = KZ_KOTU.test(b), v = a && !z ? 1 : z && !a ? -1 : 0; if(v > 0) iyi++; if(v < 0) kotu++; return { ...h, v, olay:pzOlayTur(b) }; });
+  const ton = H.length ? Math.max(-1, Math.min(1, (iyi - kotu)/Math.max(4, H.length*.6))) : 0;
+  return { n:H.length, iyi, kotu, ton, L:S, olay:[...new Set(S.map(h => h.olay).filter(Boolean))] }; }
+
+// ---------- program raporu ----------
+function kzRapor(Z, s, HT){ const G = Z.G, P = G.plan, K = G.karne, M = Z.model && !Z.model.yok ? Z.model : null, T = Z.temel, f = x => kzFiyat(x, s), pc = x => ((x/G.fiyat - 1)*100).toFixed(1).replace(".", ",") + "%";
+  const guvK = !K.al.n || K.al.n < 15 ? .7 : K.al.isabet - K.baz > .04 ? 1 : K.al.isabet - K.baz < -.02 ? .45 : .75;   // konsey bu varlikta tutuyor mu
+  const kisa = Z.K4 ? Z.K4.puan : null, mP = M ? (M.p - M.esik)*100 : 0, hP = HT ? HT.ton*15 : 0, tP = T ? (T.not - 5)*2.5 : 0;
+  const skor = Math.round(G.puan*guvK + (kisa != null ? kisa*.2 : 0) + mP*.6 + hP + tP);
+  const yonler = [kzSg(G.puan), kisa != null ? kzSg(kisa) : 0, M ? kzSg(M.p - M.esik) : 0, HT ? kzSg(HT.ton) : 0, T ? kzSg(T.not - 5) : 0].filter(x => x), ana = kzSg(skor) || 1, uyum = yonler.filter(x => x === ana).length/Math.max(1, yonler.length);
+  let karar = P.eylem; if(skor >= 25 && P.eylem !== "AL" && P.rr >= 1.5 && G.uzama <= 2.6) karar = "AL"; if(skor <= -25) karar = "SAT"; if(skor > -25 && skor < 25 && karar === "AL" && skor < 10) karar = "BEKLE";
+  const guven = Math.abs(skor) >= 40 && uyum >= .75 && guvK >= .75 ? "yüksek" : Math.abs(skor) >= 18 && uyum >= .6 ? "orta" : "düşük";
+  const N = [], R = [];
+  const guclu = G.V.filter(o => o.w && Math.abs(o.v) >= .6 && kzSg(o.v) === ana).sort((a, b) => b.w*Math.abs(b.v) - a.w*Math.abs(a.v)).slice(0, 2);
+  guclu.forEach(o => N.push(`${o.ad}: ${o.not}`));
+  if(kisa != null) N.push(`Kısa vade (4 saatlik) konsey ${Z.K4.karar[0]} (${kisa > 0 ? "+" : ""}${kisa}), günlük ${G.karar[0]} (${G.puan > 0 ? "+" : ""}${G.puan}) · ${kzSg(kisa) === kzSg(G.puan) ? "iki vade aynı yönde" : "vadeler ayrışıyor, acele etme"}`);
+  if(M) N.push(`Botun öğrenen modeli: hedefe stoptan önce ulaşma ihtimali %${Math.round(M.p*100)} (eşik %${Math.round(M.esik*100)}) → ${M.sinyal ? "sinyal VAR" : "sinyal yok"}`);
+  if(HT?.n) N.push(`Son 30 gün haberleri: ${HT.iyi} olumlu, ${HT.kotu} olumsuz, ${HT.n - HT.iyi - HT.kotu} nötr${HT.olay.length ? " · olaylar: " + HT.olay.map(o => PZ_OLAY_AD[o] || o).join(", ") : ""}`);
+  if(T) N.push(`Temel karne ${T.not}/10 (${T.ad}): ${T.M.slice(0, 3).map(m => m.not).join(", ")}`);
+  if(K.al.n >= 15 && K.al.isabet - K.baz < -.02) R.push(`Konsey bu varlıkta tutmamış: AL dediğinde %${Math.round(K.al.isabet*100)} kârda, rastgele günden kötü. Teknik sinyale az güven.`);
+  if(G.uzama > 2.6) R.push("Fiyat 50 günlük ortalamadan çok uzaklaşmış; kovalarsan geri çekilmede yakalanabilirsin.");
+  if(P.rr < 1.2) R.push(`İlk hedefe kadar risk/ödül zayıf (1:${P.rr.toFixed(1).replace(".", ",")}).`);
+  if(HT?.kotu >= 2) R.push(`Olumsuz haber akışı var (${HT.kotu} başlık): ${HT.L.filter(h => h.v < 0).slice(0, 1).map(h => "“" + h.baslik.slice(0, 90) + "”").join("")}`);
+  if(T && T.not < 4) R.push("Temel veriler zayıf; teknik AL dese bile pozisyonu küçük tut.");
+  if(Z.fon != null && Z.fon > .0005) R.push("Vadeli piyasada longlar kalabalık (fonlama yüksek); ani silkeleme riski.");
+  if(!R.length) R.push("Belirgin ek risk görünmüyor; yine de stopsuz girme.");
+  const basit = karar === "AL" ? `Program alım için uygun görüyor: ${f(P.al[0])}–${f(P.al[1])} arasında al, ${f(P.stop)} altında kapanışta çık, ilk hedef ${f(P.H[0])}.`
+    : karar === "SAT" ? `Program olumsuz: elindeyse ${f(P.stop)} altında kapanışta çık ya da tepkilerde azalt; yeni alım yok.`
+    : karar === "TUT" ? `Elindeyse tut (stop ${f(P.stop)}); yeni alım için ${f(P.al[0])}–${f(P.al[1])} bölgesine geri çekilmeyi bekle.`
+    : `Net yön yok: elindeyse stopla tut, yeni alım için konseyin AL'a dönmesini bekle.`;
+  return { karar, guven, skor, uyum, N:N.slice(0, 5), R:R.slice(0, 3), basit, P, G, HT }; }
+function kzRaporCiz(Z, s, HT){ const X = kzRapor(Z, s, HT), P = X.P, f = x => kzFiyat(x, s), pc = x => { const v = (x/X.G.fiyat - 1)*100; return (v >= 0 ? "+" : "") + v.toFixed(1).replace(".", ",") + "%"; };
+  const sn = X.karar === "AL" ? "al" : X.karar === "SAT" ? "sat" : "not";
+  return `<div class="kzRap">
+    <div class="kzRapUst"><div class="kzRapKarar ${sn}"><small>Program kararı · yapay zekasız</small><b>${X.karar}</b><em>güven: ${X.guven} · skor ${X.skor > 0 ? "+" : ""}${X.skor}</em></div>
+      <div class="kzRapOzet"><small>Ne yapmalı?</small><p>${esc(X.basit)}</p></div></div>
+    <div class="kzRapSev">
+      <div><small>Al bölgesi</small><b class="mono">${f(P.al[0])} – ${f(P.al[1])}</b></div>
+      <div><small>Zarar kes</small><b class="mono az">${f(P.stop)}</b><em>${pc(P.stop)}</em></div>
+      ${P.H.map((h, i) => `<div><small>Hedef ${i + 1}</small><b class="mono art">${f(h)}</b><em>${pc(h)}</em></div>`).join("")}
+      <div><small>Risk / ödül</small><b class="mono">1 : ${P.rr.toFixed(1).replace(".", ",")}</b></div></div>
+    <div class="kzRapIki"><div class="kzRapK"><b>Neden?</b><ul>${X.N.map(n => `<li>${esc(n)}</li>`).join("")}</ul></div>
+      <div class="kzRapK risk"><b>Riskler</b><ul>${X.R.map(n => `<li>${esc(n)}</li>`).join("")}</ul></div></div>
+    ${HT?.n ? `<div class="kzRapK"><b>Haber akışı · son 30 gün</b> <small>${HT.iyi} olumlu · ${HT.kotu} olumsuz · ${HT.n - HT.iyi - HT.kotu} nötr (başlıklara göre kural tabanlı)</small>
+      <div class="kzHabL">${HT.L.slice(0, 6).map(h => `<a href="${esc(h.url || "#")}" target="_blank" rel="noopener" class="kzHab ${h.v > 0 ? "art" : h.v < 0 ? "az" : ""}"><i>${h.v > 0 ? "▲" : h.v < 0 ? "▼" : "•"}</i><span>${esc(h.baslik)}</span><small>${esc(h.kaynak || "")}${h.tarih && isFinite(Date.parse(h.tarih)) ? " · " + new Date(h.tarih).toLocaleDateString("tr-TR", { day:"numeric", month:"short" }) : ""}</small></a>`).join("")}</div></div>` : ""}
+    <p class="kzNot">Bu rapor programın kendi hesabıdır: 22 indikatörlük konsey, bu varlıktaki geçmiş isabeti, botun öğrenen modeli, iki vade uyumu, temel karne ve haber başlıkları. Yapay zeka çalışmaz, limit harcamaz. İstersen “Claude + GPT analiz” ile ikinci görüş al.</p></div>`; }
+async function kzRaporYukle(k){ const yer = document.getElementById("kzRapor"); if(!yer) return;
+  try{ const s = PZD.s?.k === k ? PZD.s : await pzSatirBul(k), [Z, L] = await Promise.all([kzHesapla(s), pzHaberler(s).catch(() => [])]); if(app.dataset.pid !== k) return;
+    const b = document.getElementById("kzRapor"); if(b) b.innerHTML = kzRaporCiz(Z, s, kzHaberTon(L)); }
+  catch(e){ const b = document.getElementById("kzRapor"); if(b) b.innerHTML = `<p class="kzNot">Program raporu hazırlanamadı: ${esc(String(e?.message || e))}</p>`; } }
+
+// ---------- detay: alt bolumleri sekmelere topla ----------
+const KZ_SEK = [["rapor", "📋 Program raporu"], ["konsey", "👑 Şah İndikatörü"], ["yz", "🤖 Yapay zeka (isteğe bağlı)"], ["temel", "📊 Temel & temettü"], ["haber", "📰 Haberler & olaylar"]];
+function kzSekmeSec(t){ pzLS.yaz("kzSek", t); document.querySelectorAll(".kzSekTus").forEach(b => b.classList.toggle("on", b.dataset.t === t)); document.querySelectorAll(".kzSekPan").forEach(p => p.classList.toggle("on", p.dataset.t === t)); }
+function kzSekmeKur(k){ const iz = app.querySelector(".pzdIzgara"); if(!iz || document.getElementById("kzSekK")) return;
+  const sec = pzLS.oku("kzSek", "rapor");
+  iz.insertAdjacentHTML("afterend", `<div id="kzSekK" class="kzSekK"><div class="kzSekBar">${KZ_SEK.map(([t, a]) => `<button class="kzSekTus${t === sec ? " on" : ""}" data-t="${t}" onclick="kzSekmeSec('${t}')">${a}</button>`).join("")}</div>
+    ${KZ_SEK.map(([t]) => `<div class="kzSekPan${t === sec ? " on" : ""}" data-t="${t}"></div>`).join("")}</div>`);
+  const pan = t => document.querySelector(`.kzSekPan[data-t="${t}"]`), tasi = (t, el) => { if(el) pan(t).appendChild(el); };
+  pan("rapor").innerHTML = `<section class="pcBox"><header><b>📋 Program raporu</b><small>yapay zekasız · anında</small></header><div class="pcBoxIc" id="kzRapor"><div class="spin"></div></div></section>`;
+  tasi("konsey", document.getElementById("kzP"));
+  tasi("yz", document.getElementById("pzdUzlasi")); tasi("yz", app.querySelector(".pzdYZ"));
+  const alt = app.querySelector(".pzdAlt"); if(alt){ const B = [...alt.children], bul = re => B.find(b => re.test(b.querySelector("header b, h2, h3")?.textContent || ""));
+    const tem = alt.querySelector(".pzdTemK"), tv = bul(/Temel veriler/i), hb = bul(/Haber/i);
+    tasi("temel", tem); tasi("temel", tv); tasi("haber", hb); B.filter(b => b.parentElement === alt).forEach(b => tasi("temel", b)); alt.remove(); }
+  kzRaporYukle(k); }
+{ const eski = pzDetay; pzDetay = async function(k){ const r = await eski.apply(this, arguments); try{ if(app.dataset.pid === String(k || "")) kzSekmeKur(String(k)); }catch(e){ console.error("sekme", e); } return r; }; if(typeof ekranlar === "object") ekranlar.piyasaDetay = pzDetay; }
+// Sah panelinin yenile tusu panel yerini kaybetmesin
+{ const eski = kzPanel; kzPanel = async function(k){ const pan = document.querySelector('.kzSekPan[data-t="konsey"]'); if(!pan) return eski.apply(this, arguments);
+    if(document.getElementById("kzP")) return; const iz = app.querySelector(".pzdIzgara"); const r = eski.apply(this, arguments); const p = document.getElementById("kzP"); if(p && iz) pan.appendChild(p); return r; }; }
+
+{ const st = document.createElement("style"); st.textContent = `
+.kzSekK{margin-top:14px}
+.kzSekBar{display:flex;gap:6px;flex-wrap:wrap;padding:6px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.1);margin-bottom:12px;position:sticky;top:0;z-index:5;backdrop-filter:blur(8px)}
+.kzSekTus{flex:1 1 auto;padding:10px 14px;border-radius:10px;border:1px solid transparent;background:transparent;color:#BDBBC2;font:inherit;font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap}
+.kzSekTus:hover{background:rgba(255,255,255,.06);color:#fff}.kzSekTus.on{background:linear-gradient(180deg,rgba(220,60,70,.28),rgba(220,60,70,.14));border-color:rgba(255,90,99,.55);color:#fff}
+.kzSekPan{display:none}.kzSekPan.on{display:grid;gap:14px}.kzSekPan > *{margin:0!important;min-width:0}
+.kzSekPan[data-t="temel"].on{grid-template-columns:minmax(0,1fr)}.kzSekPan[data-t="temel"] .pzdTemK{grid-column:1/-1}
+.kzSekPan .pzdYZ{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.kzSekPan .pcBox{border:1px solid rgba(255,255,255,.12);box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.kzRap{display:flex;flex-direction:column;gap:12px}
+.kzRapUst{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:12px}
+.kzRapKarar,.kzRapOzet{border-radius:14px;padding:14px 16px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04)}
+.kzRapKarar small,.kzRapOzet small{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;opacity:.6}
+.kzRapKarar b{display:block;font-size:30px;font-weight:900;margin:4px 0}.kzRapKarar em{font-style:normal;opacity:.75;font-size:12.5px}
+.kzRapKarar.al{background:rgba(70,190,120,.14);border-color:rgba(70,190,120,.5)}.kzRapKarar.al b{color:#6BE39C}
+.kzRapKarar.sat{background:rgba(232,86,95,.14);border-color:rgba(232,86,95,.5)}.kzRapKarar.sat b{color:#FF7A83}
+.kzRapKarar.not{background:rgba(240,185,70,.12);border-color:rgba(240,185,70,.45)}.kzRapKarar.not b{color:#FFCF5E}
+.kzRapOzet p{margin:6px 0 0;font-size:15px;line-height:1.5;color:#fff}
+.kzRapSev{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}.kzRapSev div{border-radius:10px;padding:9px 11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
+.kzRapSev small{display:block;font-size:11px;opacity:.6}.kzRapSev b{font-size:14px}.kzRapSev em{font-style:normal;font-size:11px;opacity:.6;margin-left:5px}
+.kzRapIki{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.kzRapK{border-radius:12px;padding:12px 14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08)}.kzRapK.risk{border-color:rgba(232,86,95,.3)}
+.kzRapK > b{font-size:14px}.kzRapK > small{opacity:.6;margin-left:6px}.kzRapK ul{margin:8px 0 0 18px;padding:0}.kzRapK li{margin:4px 0;line-height:1.45;font-size:13px}
+.kzHabL{display:flex;flex-direction:column;gap:4px;margin-top:8px}.kzHab{display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:6px 8px;border-radius:8px;color:#D9D7DC;text-decoration:none;font-size:13px}
+.kzHab:hover{background:rgba(255,255,255,.06)}.kzHab i{font-style:normal}.kzHab small{opacity:.55;white-space:nowrap}.kzHab.art i{color:#6BE39C}.kzHab.az i{color:#FF7A83}
+@media (max-width:1100px){.kzRapSev{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:700px){body:not(.pc) .pzdIzgara .pzdMasa{order:-1}.kzSekBar{flex-wrap:nowrap;overflow-x:auto}.kzSekTus{flex:0 0 auto;padding:9px 12px}.kzRapUst,.kzRapIki,.kzSekPan[data-t="temel"].on,.kzSekPan .pzdYZ{grid-template-columns:minmax(0,1fr)}.kzRapSev{grid-template-columns:repeat(2,minmax(0,1fr))}.kzHab{grid-template-columns:16px minmax(0,1fr)}.kzHab small{grid-column:2}}
+`; document.head.appendChild(st); }
 
 baslat();
 

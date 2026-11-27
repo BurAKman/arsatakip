@@ -40,8 +40,8 @@ const TF = { g1:{ ...H1, tip:"kir", ad:"Kırılım · 24 saat" }, g3:{ ...H4, ti
              t3:{ ...H1, tip:"dip", ad:"Trader · dipten dönüş 1 saat", H:8, olcek:5, tMin:.01, tMax:.08, sMin:.007, sMax:.05, masraf:MASRAF_TRADER, bayat:30 } };
 const MASRAF_NASDAQ = +(process.env.MASRAF_NASDAQ || .3);   // Midas ABD: dusuk komisyon + kur makasi + kayma payi
 // v2.9 TRADER BIST + NASDAQ: Yahoo 60 dk mumlar. uzat = islem suresini takvim saatine cevirme (seans disi saatler + hafta sonu)
-const TRB = { pazar:"bist", iv:"60m", H:14, Lb:12, olcek:5, tMin:.01, tMax:.08, sMin:.007, sMax:.05, gun:9, ms:3600000, masraf:MASRAF_BIST, bayat:55, uzat:3.6 };
-const TRN = { ...TRB, pazar:"nasdaq", gun:7, masraf:MASRAF_NASDAQ, uzat:4.5 };
+const TRB = { pazar:"bist", iv:"60m", H:4, Lb:12, olcek:3, tMin:.008, tMax:.05, sMin:.006, sMax:.03, gun:9, ms:3600000, masraf:MASRAF_BIST, bayat:55, uzat:1.1, kapanisUtc:15 };   // BIST seans 10-18 TR = 07-15 UTC
+const TRN = { ...TRB, pazar:"nasdaq", H:3, gun:7, masraf:MASRAF_NASDAQ, kapanisUtc:20 };   // gun ici: kapanistan H saat once girer, gece tasimaz
 Object.assign(TF, { tb:{ ...TRB, tip:"dip", ad:"Trader · BIST dipten dönüş 1 saat" }, tk:{ ...TRB, tip:"kir", ad:"Trader · BIST kırılım 1 saat" },
                     tn:{ ...TRN, tip:"dip", ad:"Trader · NASDAQ dipten dönüş 1 saat" }, tq:{ ...TRN, tip:"kir", ad:"Trader · NASDAQ kırılım 1 saat" } });
 const TRADER = new Set(["t1", "t2", "t3", "tb", "tk", "tn", "tq"]);
@@ -308,7 +308,8 @@ async function tara(A, masraf, RJ, RJB, ctx){
     const pz = pazarOf(T), bist = pz === "bist", yh = pz !== "kripto", gunluk = yh && T.iv === "1d", LP = bist ? B : pz === "nasdaq" ? N : null; if(LP && !LP.length) continue; const LST = LP || C, RJx = bist ? RJB : pz === "nasdaq" ? ctx.RJN : RJ;
     await havuz(LST, yh ? 4 : 6, async x => { const nM = yh ? 300 : T.tip === "pg" ? 260 : 151, ka = x.bn + T.iv + nM; onb[ka] = onb[ka] || mumlar(T, x, nM); const R = await onb[ka]; if(R.c.length < 100) return; const tGiris = R.kap[R.kap.length - 1];
       if(gunluk && Date.now() - tGiris > 4*86400000) return;   // eski mum (tatil/veri yok) -> sinyal verme
-      if(!gunluk && Date.now() - tGiris > (T.bayat || BAYAT_DK)*60000) return;   // gec kalinmis sinyal: o fiyat artik yok, sahte kazanc/kayip yazmasin
+      if(!gunluk && Date.now() - tGiris > (T.bayat || BAYAT_DK)*60000) return;
+      if(T.kapanisUtc != null){ const sa = new Date(tGiris).getUTCHours() + new Date(tGiris).getUTCMinutes()/60; if(sa + T.H > T.kapanisUtc + .01) return; }   // gun ici trader: seans bitmeden kapanmayacak islem acma   // gec kalinmis sinyal: o fiyat artik yok, sahte kazanc/kayip yazmasin
       const d = hazirla(R, tumL(T), RJx, T.ms/1000);
       if(sicrama(R)) return;   // bolunme/yeniden fiyatlama -> sahte dip/kirilim sinyali verme
       for(const a of AY){ const s = sinyal(d, a.P, T); if(!s?.ok || !seviyeOk(s.c, s.hed, s.st, .35)) continue; const k = ONEK[pz] + x.kod, an = `${k}|${tf}|${a.i}`; if(var_.has(an) || mumVar.has(`${an}|${tGiris}`)) continue; var_.add(an); mumVar.add(`${an}|${tGiris}`);
