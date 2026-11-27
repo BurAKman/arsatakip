@@ -563,9 +563,11 @@ function kzEk(I, R){ const n = R.c.length, mfi = new Float64Array(n).fill(NaN), 
   return { mfi, cmf, ll20, avw, srsi }; }
 const KZ_GRUP = { trend:"Trend", mom:"Momentum", hacim:"Hacim & para akışı", yapi:"Yapı & formasyon", turev:"Türev piyasa" };
 // tek mumda konsey oylamasi. ayrinti=false iken sadece puan hesaplar (gecmis karne icin)
+// v3.0 OGRENEN KONSEY: her indikatorun oyu, o piyasada gecmiste ne kadar ise yaradigina gore agirlik carpani alir (oneri motorunda gunde bir ogrenilir)
+let KZW_SIMDI = null;
 function kzOyla(I, E, R, i, BM, ayrinti){
   const c = I.c[i], a = I.atr[i]; if(!(a > 0) || i < 210) return null; const V = [], ap = a/c, f = (x, d = 2) => isFinite(x) ? (+x).toFixed(d).replace(".", ",") : "—";
-  const ekle = (ad, grup, v, w, not, ops) => { v = kzKs(v); if(ops && !v) { if(ayrinti) V.push({ ad, grup, v:0, w:0, not }); return; } V.push({ ad, grup, v, w, not: ayrinti ? not : "" }); };
+  const ekle = (ad, grup, v, w, not, ops) => { v = kzKs(v); w *= (KZW_SIMDI && KZW_SIMDI[ad]) || 1; if(ops && !v) { if(ayrinti) V.push({ ad, grup, v:0, w:0, not }); return; } V.push({ ad, grup, v, w, not: ayrinti ? not : "" }); };
   // --- trend
   ekle("EMA 9 / 21", "trend", kzSg(I.e9[i] - I.e21[i]), 1, I.e9[i] > I.e21[i] ? "kısa ortalama uzunun üstünde" : "kısa ortalama uzunun altında");
   ekle("EMA 50", "trend", kzSg(c - I.e50[i]), 1, `fiyat 50'liğin ${c > I.e50[i] ? "üstünde" : "altında"} (${f((c/I.e50[i] - 1)*100, 1)}%)`);
@@ -655,10 +657,15 @@ function kzKarne(P, c, H){
 // ---- v2.11 ONERI MOTORU: Sah konseyi (24 indikator) her hisse/coinde gunluk mumla hesaplanir; yuzde = bu varlikta konseyin gecmis isabeti,
 //      ayni piyasanin ortalamasina dogru cekilerek (az ornekte abartmasin). Her gun ilk 5'ler kaydedilir, 10 gun sonra hedef/stop sonucuyla puanlanir.
 const ONERI_H = 10, ONERI_SAAT = 3;
-function konseyHesap(R, BR, pazar){ const n = R.c.length; if(n < 240) return null;
+function konseyHesap(R, BR, pazar, ogr){ const n = R.c.length; if(n < 240) return null;
   const I = indikatorler(R), E = kzEk(I, R), ic = n - 1, anah = t => Math.floor((t + 3*3600)/86400); let BM = null;
   if(BR?.c?.length > 60){ const bm = new Map(); BR.t.forEach((t, j) => bm.set(anah(t), BR.c[j])); BM = (t, t0) => { const x = bm.get(anah(t)), y = bm.get(anah(t0)); return x && y ? x/y - 1 : 0; }; }
   const P = new Array(n).fill(null); for(let i = 210; i <= ic; i++){ const o = kzOyla(I, E, R, i, BM, false); if(o) P[i] = o.puan; }
+  if(ogr){ const bol = 210 + Math.floor((n - ONERI_H - 210)*.65), eskiW = KZW_SIMDI; KZW_SIMDI = null;   // ham oylar (carpansiz) ile ogren
+    for(let i = 212; i < n - ONERI_H; i += 2){ const o = kzOyla(I, E, R, i, BM, true); if(!o) continue; const ap = I.atr[i]/R.c[i]; if(!(ap > 0)) continue;
+      const z = Math.max(-3, Math.min(3, (R.c[i + ONERI_H]/R.c[i] - 1)/(ap*Math.sqrt(ONERI_H)))), D = i < bol ? "tr" : "te";
+      for(const v of o.V){ if(!v.w || !v.v) continue; const S = (ogr[v.ad] = ogr[v.ad] || { tr:[0, 0, 0, 0, 0, 0], te:[0, 0, 0, 0, 0, 0] })[D]; S[0]++; S[1] += v.v; S[2] += z; S[3] += v.v*z; S[4] += v.v*v.v; S[5] += z*z; } }
+    KZW_SIMDI = eskiW; }
   const son = kzOyla(I, E, R, ic, BM, true); if(!son) return null; const f = R.c[ic], sev = kzSeviye(I, R, ic, f), uzama = (f - I.e50[ic])/I.atr[ic];
   const plan = kzPlan(sev, f, son.puan, uzama), karne = kzKarne(P, R.c, ONERI_H);
   let yas = 0; for(let i = ic; i > ic - 60 && P[i] != null && kzSg(P[i]) === kzSg(son.puan) && Math.abs(P[i]) >= 15; i--) yas++;
@@ -668,15 +675,21 @@ async function oneriler(B, N, C, eski){ const t0 = Date.now(), R = { t:Date.now(
   const BR = { bist:await yahoo("XU100.IS", "1d", "2y").then(kapaliMumlar).catch(() => null), nasdaq:await yahoo("QQQ", "1d", "2y").then(kapaliMumlar).catch(() => null), kripto:await klines("BTCUSDT", "1d", 730).then(kapaliMumlar).catch(() => null) };
   const kaynak = { bist:B.map(x => ({ ...x, k:"BIST:" + x.kod, ys:x.bn })), nasdaq:N.map(x => ({ ...x, k:"NASDAQ:" + x.kod, ys:x.bn })), kripto:C.slice(0, 60).map(x => ({ ...x, k:"KRIPTO:" + x.kod })) };
   const fiyatlar = {};   // karne icin son 15 gunluk mumlar
+  // v3.0 ogrenme: konsey agirliklari (gunde bir) + piyasa basina AL esigi (oneri karnesine gore)
+  const KW = eski?.kzW || { t:0, pazar:{} }, ogrenGun = !KW.t || Date.now() - KW.t > 20*3600000, OG = {}, W0 = {};
+  for(const pz of ["bist", "nasdaq", "kripto"]){ const M = KW.pazar?.[pz]; W0[pz] = M ? Object.fromEntries(Object.entries(M).map(([a, o]) => [a, o.c])) : null; }
+  const ES = { ...(eski?.esik || {}) };
+  // not: KZW_SIMDI konseyHesap boyunca senkron ayarlanip sifirlanir (arada await yok), paralel indirmeyle yarismaz
   for(const pz of ["bist", "nasdaq", "kripto"]){
     const L = (await havuz(kaynak[pz], 4, async x => { try{ const D = pz === "kripto" ? kapaliMumlar(await klines(x.bn, "1d", 730)) : kapaliMumlar(await yahoo(x.ys, "1d", "2y"));
-        fiyatlar[x.k] = { t:D.t.slice(-25), h:D.h.slice(-25), l:D.l.slice(-25), c:D.c.slice(-25) }; const K = konseyHesap(D, pz === "kripto" && x.kod === "BTC" ? null : BR[pz], pz); return K ? { k:x.k, kod:x.kod, ...K } : null; }catch(e){ return null; } })).filter(Boolean);
+        fiyatlar[x.k] = { t:D.t.slice(-25), h:D.h.slice(-25), l:D.l.slice(-25), c:D.c.slice(-25) }; KZW_SIMDI = W0[pz]; const K = konseyHesap(D, pz === "kripto" && x.kod === "BTC" ? null : BR[pz], pz, ogrenGun ? (OG[pz] = OG[pz] || {}) : null); KZW_SIMDI = null; return K ? { k:x.k, kod:x.kod, ...K } : null; }catch(e){ KZW_SIMDI = null; return null; } })).filter(Boolean);
     // piyasa ortalamasi (havuz): konsey AL dediginde 10 gun sonra karda olma orani + ortalama getiri
     let n = 0, k = 0, top = 0, bz = 0, bzP = 0; L.forEach(x => { const a = x.karne.al; n += a.n; k += a.isabet*a.n; top += a.ort*a.n; bz += x.karne.bz; bzP += x.karne.baz*x.karne.bz; });
     const pG = n ? k/n : .5, oG = n ? top/n : 0, bG = bz ? bzP/bz : .5, m = 25; R.havuz[pz] = { pG, oG, bG, n, varlik:L.length };
     L.forEach(x => { const a = x.karne.al; x.p = (a.isabet*a.n + pG*m)/(a.n + m); x.ort = (a.ort*a.n + oG*m)/(a.n + m); x.n = a.n; x.baz = x.karne.baz;
       x.edge = x.p - x.baz; delete x.karne; });
-    const al = L.filter(x => x.puan >= 15 && x.plan.eylem === "AL" && x.ort > 0 && x.p > x.baz - .01).sort((a, b) => (b.ort*(.5 + b.p)) - (a.ort*(.5 + a.p)));
+    const esik = ES[pz]?.v ?? 15;
+    const al = L.filter(x => x.puan >= esik && x.plan.eylem === "AL" && x.ort > 0 && x.p > x.baz - .01).sort((a, b) => (b.ort*(.5 + b.p)) - (a.ort*(.5 + a.p)));
     const izle = L.filter(x => !al.includes(x) && x.puan >= 0 && x.puan < 15 && x.egim >= 10 && x.ort > 0).sort((a, b) => b.egim - a.egim);
     const kac = L.filter(x => x.puan <= -40).sort((a, b) => a.puan - b.puan);
     const kisa = x => ({ k:x.k, kod:x.kod, f:x.f, puan:x.puan, karar:x.karar, eylem:x.plan.eylem, al:x.plan.al, stop:x.plan.stop, H:x.plan.H, rr:+x.plan.rr.toFixed(2), p:+x.p.toFixed(3), ort:+(x.ort*100).toFixed(2), n:x.n, baz:+x.baz.toFixed(3), yas:x.yas, uzama:+x.uzama.toFixed(2), one:x.one, egim:x.egim, rsi:+(x.rsi || 0).toFixed(0) });
@@ -691,6 +704,23 @@ async function oneriler(B, N, C, eski){ const t0 = Date.now(), R = { t:Date.now(
   R.kayit = kay; const K = kay.filter(o => o.sonuc && Date.now() - o.t < 90*86400000);
   R.karne = { n:K.length, hedef:K.filter(o => o.sonuc === "hedef").length, stop:K.filter(o => o.sonuc === "stop").length, kar:K.filter(o => o.getiri > 0).length, ort:K.length ? +(K.reduce((a, o) => a + o.getiri, 0)/K.length).toFixed(2) : null,
     beklenen:K.length ? +(K.reduce((a, o) => a + (o.p || 0), 0)/K.length).toFixed(3) : null, acik:kay.filter(o => !o.sonuc).length };
+  // konsey agirliklarini ogren: egitim donemindeki korelasyon (IC) agirligi belirler, test doneminde tutmuyorsa etkisi kisilir; eski agirliklarla yumusatilir
+  if(ogrenGun){ const ic = S => { const [n, sx, sy, sxy, sxx, syy] = S; if(n < 80) return null; const vx = sxx/n - (sx/n)**2, vy = syy/n - (sy/n)**2; return vx > 1e-9 && vy > 1e-9 ? (sxy/n - sx*sy/n/n)/Math.sqrt(vx*vy) : null; };
+    const yeni = { t:Date.now(), pazar:{} }; let deg = 0;
+    for(const pz of Object.keys(OG)){ const M = {}; for(const [ad, S] of Object.entries(OG[pz])){ const a = ic(S.tr), b = ic(S.te); if(a == null) continue;
+        let c = Math.max(.3, Math.min(2, 1 + 8*a)); if(b == null || Math.sign(b) !== Math.sign(a) || Math.abs(b) < .01) c = 1 + (c - 1)*.3;
+        const o = KW.pazar?.[pz]?.[ad]?.c ?? 1, cc = +(o*.6 + c*.4).toFixed(3); if(Math.abs(cc - o) > .02) deg++; M[ad] = { c:cc, tr:+a.toFixed(4), te:b == null ? null : +b.toFixed(4), n:S.tr[0] + S.te[0] }; }
+      yeni.pazar[pz] = M; }
+    yeni.degisen = deg; yeni.gecmis = (KW.gecmis || []).concat([{ t:Date.now(), degisen:deg }]).slice(-60); R.kzW = yeni;
+    console.log(`konsey ogrendi: ${Object.entries(yeni.pazar).map(([pz, M]) => { const E = Object.entries(M).sort((x, y) => y[1].c - x[1].c); return `${pz} ↑${E.slice(0, 2).map(e => e[0] + " x" + e[1].c).join(", ")} ↓${E.slice(-2).map(e => e[0] + " x" + e[1].c).join(", ")}`; }).join(" | ")} · ${deg} agirlik degisti`); }
+  else R.kzW = KW;
+  // AL esigi: son 60 gunde sonuclanan onerilerin ortalamasi negatifse esik yukselir (daha secici), iyiyse yavasca 15'e iner. Gunde en fazla bir adim.
+  for(const pz of ["bist", "nasdaq", "kripto"]){ const o = ES[pz] || { v:15, t:0 }, Kp = kay.filter(x => x.pz === pz && x.sonuc && Date.now() - x.t < 60*86400000);
+    if(Kp.length >= 15 && Date.now() - (o.t || 0) > 20*3600000){ const ort = Kp.reduce((a, x) => a + x.getiri, 0)/Kp.length, isb = Kp.filter(x => x.getiri > 0).length/Kp.length;
+      const v = ort < 0 || isb < .42 ? Math.min(45, o.v + 5) : ort > .8 && isb >= .5 ? Math.max(15, o.v - 5) : o.v;
+      ES[pz] = { v, t:Date.now(), n:Kp.length, ort:+ort.toFixed(2), isabet:+isb.toFixed(3), onceki:o.v }; if(v !== o.v) console.log(`oneri esigi ${pz}: ${o.v} -> ${v} (son ${Kp.length} oneri ort %${ort.toFixed(2)}, isabet %${Math.round(isb*100)})`); }
+    else ES[pz] = { ...o, v:o.v ?? 15 }; }
+  R.esik = ES;
   R.sure = Math.round((Date.now() - t0)/1000); return R; }
 
 /* ---------- v3.0 ekonomik takvim (TradingView, ucretsiz): ABD, Turkiye, Euro bolgesi + buyukler · 6 saatte bir ---------- */
@@ -719,6 +749,9 @@ async function ekoTakvim(){ const now = Date.now(), from = new Date(now - 864000
   const T1 = await tara(A, masraf, RJ, RJB, ctx), S1 = await sonuclandir(masraf);
   // sanal kasalar
   const kasa = satir?.kasa || {}, kanit = await canliKanit(A).catch(() => ({}));
+  // v3.0 canlida cokme korumasi: testte iyi gorunup canlida (sanal) en az 20 islemde zarar yazan ayar kasalara giremez; sanal kaydi surer, duzelirse geri doner
+  const blok = {}; let nBlok = 0; for(const tf of Object.keys(TF)) (A[tf]?.ilk5 || []).forEach((a, i) => { const c = a.canli; if(c && c.n >= 20 && c.ort < -.15 && c.isabet < .45){ (blok[tf] = blok[tf] || new Set()).add(i); a.blok = { t:Date.now(), n:c.n, ort:c.ort }; nBlok++; } else if(a.blok) delete a.blok; });
+  if(nBlok){ T1.eklenen = T1.eklenen.filter(x => !blok[x.alt]?.has(x.ai)); console.log(`canli cokme korumasi: ${nBlok} ayar kasalardan cikarildi (sanalda izlenmeye devam)`); }
   const sira = L => L.slice().sort((a, b) => +b.oz?.hk - +a.oz?.hk);
   const disiplinAday = sira(T1.eklenen.filter(x => { if(PIYANGO.has(x.alt) || TRADER.has(x.alt)) return false; const k = kanit[x.alt]; return k ? x.ai === k.i : A[x.alt]?.aktif && x.ai === 0; }));
   const buyukMu = x => { const c = A[x.alt]?.ilk5?.[x.ai]?.canli; return !!(c && c.n >= 20 && c.ort >= 2 && c.isabet >= .45); };

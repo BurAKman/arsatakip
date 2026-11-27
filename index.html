@@ -4471,7 +4471,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 3.0.0";
+const SURUM_MORDOR = "v 3.1.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -26162,9 +26162,10 @@ function kzEk(I, R){ const n = R.c.length, mfi = new Float64Array(n).fill(NaN), 
   return { mfi, cmf, ll20, avw, srsi }; }
 const KZ_GRUP = { trend:"Trend", mom:"Momentum", hacim:"Hacim & para akışı", yapi:"Yapı & formasyon", turev:"Türev piyasa" };
 // tek mumda konsey oylamasi. ayrinti=false iken sadece puan hesaplar (gecmis karne icin)
+let KZW_SIMDI = null;   // v3.0: botun ogrendigi indikator agirlik carpanlari (piyasa basina)
 function kzOyla(I, E, R, i, BM, ayrinti){
   const c = I.c[i], a = I.atr[i]; if(!(a > 0) || i < 210) return null; const V = [], ap = a/c, f = (x, d = 2) => isFinite(x) ? (+x).toFixed(d).replace(".", ",") : "—";
-  const ekle = (ad, grup, v, w, not, ops) => { v = kzKs(v); if(ops && !v) { if(ayrinti) V.push({ ad, grup, v:0, w:0, not }); return; } V.push({ ad, grup, v, w, not: ayrinti ? not : "" }); };
+  const ekle = (ad, grup, v, w, not, ops) => { v = kzKs(v); w *= (KZW_SIMDI && KZW_SIMDI[ad]) || 1; if(ops && !v) { if(ayrinti) V.push({ ad, grup, v:0, w:0, not }); return; } V.push({ ad, grup, v, w, not: ayrinti ? not : "" }); };
   // --- trend
   ekle("EMA 9 / 21", "trend", kzSg(I.e9[i] - I.e21[i]), 1, I.e9[i] > I.e21[i] ? "kısa ortalama uzunun üstünde" : "kısa ortalama uzunun altında");
   ekle("EMA 50", "trend", kzSg(c - I.e50[i]), 1, `fiyat 50'liğin ${c > I.e50[i] ? "üstünde" : "altında"} (${f((c/I.e50[i] - 1)*100, 1)}%)`);
@@ -27914,6 +27915,34 @@ details.v3Kart > summary{cursor:pointer;margin:0;list-style:none}details.v3Kart[
 .v3RehIz b{font-size:13px;color:#fff}.v3RehIz p,.v3RehIz ol{margin:5px 0 0;font-size:12.5px;line-height:1.55;color:#D7D5DA}.v3RehIz ol{padding-left:18px}
 .pzdKatman label.pipoK{border-color:rgba(160,120,80,.6)}
 `; document.head.appendChild(st); }
+
+/* ---------- v3.0 OGRENEN BAY PIPO: botun ogrendigi konsey agirliklari uygulamada da kullanilir + "Ne ogrendi?" paneli ---------- */
+function kzwPazar(tur){ const pz = tur === "BIST" ? "bist" : tur === "NASDAQ" ? "nasdaq" : tur === "KRIPTO" ? "kripto" : null, M = pz && PZ.bot?.row?.durum?.oneri?.kzW?.pazar?.[pz];
+  return M ? Object.fromEntries(Object.entries(M).map(([a, o]) => [a, o.c])) : null; }
+{ const eski = kzCerceve; kzCerceve = function(R0, BR0, iv, tur){ const o = KZW_SIMDI; KZW_SIMDI = iv === "1d" ? kzwPazar(tur) : null; try{ return eski.apply(this, arguments); } finally{ KZW_SIMDI = o; } }; }
+function v3OgrenHtml(row){ const A = row?.algo || {}, O = row?.durum?.oneri || {}, W = O.kzW, ES = O.esik || {}, K = O.karne, PZA = { bist:"BIST", nasdaq:"ABD", kripto:"Kripto" };
+  const saat = t => t ? new Date(t).toLocaleString("tr-TR", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" }) : "—", yz = v => v == null ? "—" : (v > 0 ? "+" : "") + (+v).toFixed(2).replace(".", ",") + "%";
+  const TF = Object.entries(A).filter(([k, v]) => v && typeof v === "object" && Array.isArray(v.ilk5));
+  let canliN = 0, kanitli = 0, blok = 0; TF.forEach(([, v]) => v.ilk5.forEach(a => { if(a.canli?.n) canliN += a.canli.n; if(a.blok) blok++; })); kanitli = Object.keys(row?.kasa?.kanit || {}).length;
+  const ML = ["k4", "kb"].map(k => A[k]).filter(Boolean);
+  const agir = W?.pazar ? Object.entries(W.pazar).map(([pz, M]) => { const E = Object.entries(M).sort((x, y) => y[1].c - x[1].c);
+      return `<div class="v3OgP"><b>${PZA[pz] || pz}</b><div>${E.filter(e => e[1].c > 1.02).slice(0, 3).map(([a, o]) => `<span class="art" title="eğitim IC ${o.tr} · test IC ${o.te ?? "—"}">▲ ${esc(a)} ×${String(o.c).replace(".", ",")}</span>`).join("")}${E.filter(e => e[1].c < .98).slice(-3).reverse().map(([a, o]) => `<span class="az" title="eğitim IC ${o.tr} · test IC ${o.te ?? "—"}">▼ ${esc(a)} ×${String(o.c).replace(".", ",")}</span>`).join("")}</div></div>`; }).join("") : `<p class="pzNot">İlk öğrenme turu öneri motorunun bir sonraki çalışmasında (en geç 3 saat) yapılır.</p>`;
+  return `<details class="v3Rehber v3Ogr" ${pzLS.oku("v3Ogr", 1) ? "open" : ""} ontoggle="pzLS.yaz('v3Ogr',this.open?1:0)"><summary>🧠 Bay Pipo ne öğrendi? · kendini nasıl eğitiyor</summary>
+    <div class="v3RehIz">
+      <div><b>1 · Strateji ayarları (her gün)</b><p>Son eğitim <b>${saat(A.t)}</b> · algoritma sürümü <b>v${A.surum || "—"}</b>. Her stratejinin yüzlerce ayarı eski veride denenir; sonra hiç görmediği son %35'lik dönemde (ileri test) sınanır. Geçemeyen ayar kasaya giremez.</p></div>
+      <div><b>2 · Kendi işlemlerinden ders (sürekli)</b><p>Ayarların sanal işlem sonuçları ayrı ayrı tutulur: <b>${nf(canliN)}</b> canlı sonuç. Canlıda kendini kanıtlayan ayar (30+ işlem, 4+ gün, kârda) öne geçer: şu an <b>${kanitli}</b> strateji. Testte iyi görünüp canlıda zarar yazan ayar kasalardan çıkarılır: şu an <b>${blok}</b> ayar cezada.</p></div>
+      <div><b>3 · İndikatör ağırlıkları (her gün)</b><p>Bay Pipo puanındaki her indikatörün oyu, o piyasada geçmişte işe yarama derecesine göre büyür ya da küçülür. Test döneminde tutmayanın etkisi kısılır, değişim yavaş yapılır.${W?.t ? ` Son öğrenme <b>${saat(W.t)}</b>, ${W.degisen || 0} ağırlık değişti.` : ""}</p>${agir}</div>
+      <div><b>4 · Önerilerin karnesi → seçicilik</b><p>Her gün ilk 5 öneri kaydedilir, 10 gün sonra hedef/stop sonucuyla puanlanır${K?.n ? ` (son 90 gün: ${K.n} öneri, ${K.hedef} hedef, ${K.stop} stop, ort. ${yz(K.ort)})` : ""}. Bir piyasada öneriler zarar yazarsa AL eşiği yükselir, iyi giderse iner:</p>
+        <div class="v3OgP"><div>${["bist", "nasdaq", "kripto"].map(pz => `<span title="${ES[pz]?.n ? `son ${ES[pz].n} öneri · ort ${ES[pz].ort}% · isabet %${Math.round((ES[pz].isabet || 0)*100)}` : "henüz yeterli sonuç yok"}">${PZA[pz]}: puan ≥ <b>${ES[pz]?.v ?? 15}</b></span>`).join("")}</div></div></div>
+      <div><b>5 · Öğrenen modeller (her gün)</b><p>${ML.length ? ML.map(m => `${esc(m.ad || "model")}: ${m.aktif ? "<b class='art'>açık</b>" : "<b class='az'>kapalı</b>"}${m.te?.ort != null ? ` · ileri test ${yz(m.te.ort)} (${m.te.n || "?"} işlem)` : ""}`).join("<br>") : "Model henüz eğitilmedi."}<br>20+ indikatörden kazanan/kaybeden örnekleri ayırmayı öğrenir; ileri testte kârlı değilse kendini kapatır.</p></div>
+      <div><b>⚠️ Dürüst not</b><p>Bay Pipo "her şeyi bilen" bir yapay zeka değil; ölçtüğü şeylerden öğreniyor. Piyasa karakter değiştirince birkaç gün geç kalabilir; bu yüzden frenler ve canlı kanıt şartı var.</p></div>
+    </div></details>`; }
+{ const eski = bmCiz; bmCiz = function(){ const r = eski.apply(this, arguments);
+    try{ const k = document.getElementById("bmS"), reh = k?.querySelector(".v3Rehber:not(.v3Ogr)"); if(reh && !k.querySelector(".v3Ogr")) reh.insertAdjacentHTML("afterend", v3OgrenHtml(PZ.bot?.row)); }catch(e){ console.log("ogren panel", e); }
+    return r; }; }
+{ const st = document.createElement("style"); st.textContent = `.v3Ogr{border-color:rgba(232,182,97,.4);background:linear-gradient(180deg,rgba(232,182,97,.08),rgba(232,182,97,.02))}
+.v3OgP{display:flex;flex-direction:column;gap:4px;margin-top:6px}.v3OgP > b{font-size:12px;color:#E8C98A}.v3OgP > div{display:flex;flex-wrap:wrap;gap:4px}.v3OgP span{font-size:11.5px;padding:2px 8px;border-radius:8px;background:rgba(255,255,255,.05)}
+.v3OgP span.art{color:#7FE3A8}.v3OgP span.az{color:#FF9AA1}`; document.head.appendChild(st); }
 
 // v3.0 hiz: uygulama acildiktan sonra bos anda grafik kutuphanesi + bot verisi + piyasa listeleri isitilir; Piyasalar ve detay aninda acilir
 setTimeout(() => { const isit = () => { try{ if(!ME?.id || !navigator.onLine) return; pzLib().catch(() => {}); pzBotYukle().catch(() => {});
