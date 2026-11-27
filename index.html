@@ -4417,7 +4417,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.7.0";
+const SURUM_MORDOR = "v 2.7.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -21196,7 +21196,7 @@ function pcDurumCiz(){
 
 /* ---- otomatik yedek (masaustu programi): gunde bir, Belgeler\Arsa Takip Yedek ---- */
 async function pcOtoYedek(){
-  if(!window.arsaPC?.yedekYaz || ME?.role !== "admin") return;
+  if(!window.arsaPC?.yedekYaz || !yetkili()) return;
   const bugun = new Date().toISOString().slice(0, 10); if((PC_SON_YEDEK || "").slice(0, 10) === bugun) return;
   setTimeout(async () => {
     try{ const paket = await yedekVerisi(); const r = await window.arsaPC.yedekYaz(yedekDosyaAdi(), JSON.stringify(paket));
@@ -21860,7 +21860,7 @@ async function capTarifCevabi(t){
 function parselSil(yilKaydiId, parselId){ return parselTamSilAc(parselId, yilKaydiId); }
 
 async function parselTamSilAc(pid, yilKaydiId){
-  if(ME?.role !== "admin") return toast("Silme yetkisi sadece admin'de");
+  if(!yetkili()) return toast("Silme yetkisi sadece admin ve yöneticide");
   const { data:p } = await sb.from("parcels").select("*").eq("id", pid).single();
   if(!p) return toast("Parsel bulunamadı");
   const say = async (t, kol = "parcel_id") => { try{ const { data } = await sb.from(t).select("id").eq(kol, pid); return (data || []).length; }catch(e){ return 0; } };
@@ -22035,7 +22035,7 @@ async function yzGonder(){
   const eskiDetay = ekranlar.parsel;
   const yeni = async function(id){
     const r = await eskiDetay.apply(this, arguments);
-    if(ME?.role === "admin" && app.dataset.ekran === "parsel" && !app.querySelector(".silSatir")){
+    if(yetkili() && app.dataset.ekran === "parsel" && !app.querySelector(".silSatir")){
       const d = document.createElement("div"); d.className = "silSatir";
       d.innerHTML = `<button onclick="parselTamSilAc('${id}')">${svg("trash")}Parseli sil</button><small>Parsel, belgeleri, çapı, parçaları ve notlarıyla birlikte kalıcı olarak silinir.</small>`;
       app.appendChild(d); }
@@ -22192,7 +22192,7 @@ async function hspDuzen(id){
     satir: vs.map(v => ({ id:v.id, tarih:v.tarih, tutar:+v.tutar || 0, odenen: v.odendi ? (+v.odenen || +v.tutar || 0) : (+v.odenen || 0), ilkOdenen: v.odendi ? (+v.odenen || +v.tutar || 0) : (+v.odenen || 0), odeme_tarihi:v.odeme_tarihi })),
     silinen: [] };
   document.querySelector(".hspModal")?.remove();
-  const yaz = hspYaz(), adm = ME?.role === "admin";
+  const yaz = hspYaz(), adm = yetkili();
   const d = document.createElement("div"); d.className = "ekOnizle hspModal";
   d.innerHTML = `<div class="hspPen">
     <div class="hspPenBas"><b>${id ? "Kaydı düzenle" : "Yeni kayıt"}</b>${k?.kapandi ? `<span class="hspOk">kapandı</span>` : ""}<span style="flex:1"></span><button class="hspX" onclick="hspKapatPen()">✕</button></div>
@@ -25418,13 +25418,18 @@ pzAlgoTara = async function(){ const A = pzAlgo(); if(!A.g1?.P && !A.g3?.P) retu
 PZ.bot = null; let PZ_BOT_IS = null;
 const pzBotAktif = () => !!(PZ.bot?.row?.son_tarama && Date.now() - new Date(PZ.bot.row.son_tarama).getTime() < 45*60000);
 const pzMs = v => v ? new Date(v).getTime() : null;
+/* yonetici, ana hesabin (admin) botunu / kasalarini / sinyallerini / ihale listesini birebir gorur */
+let PZ_SAHIP = null;
+async function pzSahipId(){ if(ME?.role !== "yonetici") return ME?.id; if(PZ_SAHIP) return PZ_SAHIP;
+  try{ const { data } = await sb.from("profiles").select("id").eq("role", "admin").order("created_at").limit(1); PZ_SAHIP = data?.[0]?.id || null; }catch(e){}
+  return PZ_SAHIP || ME?.id; }
 async function pzBotYukle(zorla){
   if(PZ_BOT_IS || PZ.dbYok || !ME?.id) return PZ.bot; if(!zorla && PZ.bot && Date.now() - PZ.bot.t < 4*60000) return PZ.bot; PZ_BOT_IS = true;
-  try{ const r = await sb.from("piyasa_bot").select("*").eq("user_id", ME.id).maybeSingle(); if(r.error) throw r.error;
+  try{ const SID = await pzSahipId(); const r = await sb.from("piyasa_bot").select("*").eq("user_id", SID).maybeSingle(); if(r.error) throw r.error;
     if(!r.data){ PZ.bot = { row:null, acik:[], kapali:[], t:Date.now() }; return PZ.bot; }
     const esle = x => ({ id:x.id, k:x.k, alt:x.alt, ai:x.ai ?? 0, algo:x.algo, giris:+x.giris, hedef:+x.hedef, stop:+x.stop, t:pzMs(x.t), son:pzMs(x.son), oz:x.oz, cikis:x.cikis != null ? +x.cikis : null, neden:x.neden, ct:pzMs(x.ct), net:x.net != null ? +x.net : null, bn:x.oz?.bn, kaynak:x.kaynak });
-    const [a, k] = await Promise.all([ sb.from("piyasa_sanal").select("*").eq("user_id", ME.id).eq("durum", "acik").order("t", { ascending:true }).limit(5000),
-      sb.from("piyasa_sanal").select("*").eq("user_id", ME.id).eq("durum", "kapali").order("ct", { ascending:false }).limit(8000) ]);
+    const [a, k] = await Promise.all([ sb.from("piyasa_sanal").select("*").eq("user_id", SID).eq("durum", "acik").order("t", { ascending:true }).limit(5000),
+      sb.from("piyasa_sanal").select("*").eq("user_id", SID).eq("durum", "kapali").order("ct", { ascending:false }).limit(8000) ]);
     PZ.bot = { row:r.data, acik:(a.data || []).map(esle), kapali:(k.data || []).map(esle).reverse(), t:Date.now() }; }
   catch(e){ const m = String(e?.message || e); PZ.bot = { row:null, acik:[], kapali:[], t:Date.now(), hata: /exist|schema cache|piyasa_bot|404/i.test(m) ? "Supabase'de piyasa-bot.sql henüz çalıştırılmamış" : m }; }
   finally { PZ_BOT_IS = null; } return PZ.bot; }
@@ -25653,7 +25658,7 @@ document.addEventListener("visibilitychange", () => { try{ if(document.visibilit
     try{ if(pcAcik() || !ME?.id || !yetkili()) return r; const v = app.querySelector(".vitrin"); if(!v || v.querySelector(".bmSerit")) return r;
       const b = document.createElement("div"); b.innerHTML = `<button class="serit kizil" onclick="go('botMob')"><div class="sDoku"></div><div class="sCizgi"></div><span class="sIkon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M4 16l5-5 4 3 7-8"/><path d="M15 6h5v5"/></svg></span><div class="sIcerik"><b>Bot Kasası</b><small class="bmSerit" id="bmSerit">5.000 ₺ ne oldu?</small></div><span class="sOk">${svg("chevron")}</span></button>`;
       const ilk = v.querySelector(".kurSerit"); ilk ? ilk.after(b.firstElementChild) : v.prepend(b.firstElementChild);
-      sb.from("piyasa_bot").select("kasa").eq("user_id", ME.id).maybeSingle().then(({ data }) => { const K = data?.kasa, e = document.getElementById("bmSerit"); if(!e || !K) return;
+      pzSahipId().then(SID => sb.from("piyasa_bot").select("kasa").eq("user_id", SID).maybeSingle()).then(({ data }) => { const K = data?.kasa, e = document.getElementById("bmSerit"); if(!e || !K) return;
         e.textContent = `Disiplinli ${bmTl(K.disiplin?.bakiye)} · Piyango ${bmTl(K.her?.bakiye)} · Kumar ${bmTl(K.kumar?.bakiye ?? 50000)}`; }).catch(() => {});
     }catch(e){} return r; }; ekranlar.ana = anaMenu; }
 
@@ -25837,8 +25842,8 @@ setTimeout(() => setInterval(() => { try{ if(PZ.sekme === "ekstrem" && PZ.eksAlt
 
 // ===== TECRUBE RAPORU: botun butun sanal islemleri + kasalar + modeller tek dosyada (sonra Claude'a verip nihai botu yazdirmak icin) =====
 async function pzTecrubeIndir(btn){ try{ if(btn) btn.textContent = "Hazırlanıyor…";
-    const { data:bot } = await sb.from("piyasa_bot").select("*").eq("user_id", ME.id).maybeSingle(); const L = [];
-    for(let i = 0; i < 40; i++){ const { data, error } = await sb.from("piyasa_sanal").select("*").eq("user_id", ME.id).order("t", { ascending:true }).range(i*1000, i*1000 + 999); if(error) throw error; L.push(...(data || [])); if(!data || data.length < 1000) break; }
+    const { data:bot } = await sb.from("piyasa_bot").select("*").eq("user_id", await pzSahipId()).maybeSingle(); const L = [];
+    const SID2 = await pzSahipId(); for(let i = 0; i < 40; i++){ const { data, error } = await sb.from("piyasa_sanal").select("*").eq("user_id", SID2).order("t", { ascending:true }).range(i*1000, i*1000 + 999); if(error) throw error; L.push(...(data || [])); if(!data || data.length < 1000) break; }
     const ozet = {}; L.filter(x => x.durum === "kapali").forEach(x => { const o = ozet[x.alt] = ozet[x.alt] || { n:0, kazanan:0, toplamNet:0, hedef:0, zararKes:0, sure:0 }; o.n++; o.toplamNet += +x.net; if(+x.net > 0) o.kazanan++; if(x.neden === "hedef") o.hedef++; else if(x.neden === "zarar kes") o.zararKes++; else o.sure++; });
     Object.values(ozet).forEach(o => { o.ortNet = +(o.toplamNet/o.n).toFixed(3); o.isabet = +(o.kazanan/o.n).toFixed(3); o.toplamNet = +o.toplamNet.toFixed(2); });
     const kasa = Object.fromEntries(Object.entries(bot?.kasa || {}).filter(([k]) => k !== "kanit").map(([k, K]) => [k, { tur:K.tur, bakiye:K.bakiye, islem:K.islem, kazan:K.kazan, maxDus:K.maxDus, turlar:K.turlar, eski:K.eski, gecmis:K.gecmis }]));
