@@ -690,7 +690,29 @@ function konseyHesap(R, BR, pazar, ogr){ const n = R.c.length; if(n < 240) retur
   const plan = kzPlan(sev, f, son.puan, uzama), karne = kzKarne(P, R.c, ONERI_H);
   let yas = 0; for(let i = ic; i > ic - 60 && P[i] != null && kzSg(P[i]) === kzSg(son.puan) && Math.abs(P[i]) >= 15; i--) yas++;
   const one = son.V.filter(o => o.w && Math.abs(o.v) >= .6 && kzSg(o.v) === kzSg(son.puan)).sort((a, b) => b.w*Math.abs(b.v) - a.w*Math.abs(a.v)).slice(0, 4).map(o => `${o.ad}: ${o.not}`);
-  return { f, puan:son.puan, egim:P[ic] - (P[ic - 3] ?? P[ic]), karar:kzKarar(son.puan)[0], plan, karne, uzama, yas, one, atrp:I.atr[ic]/f, rsi:I.rs[ic] }; }
+  const lr = []; for(let i = Math.max(1, ic - 120); i <= ic; i++) lr.push(Math.log(R.c[i]/R.c[i - 1])); const mo = lr.reduce((a, b) => a + b, 0)/(lr.length || 1), vol = Math.sqrt(lr.reduce((a, b) => a + (b - mo)**2, 0)/Math.max(1, lr.length - 1))*Math.sqrt(252);
+  const r1y = ic >= 252 ? R.c[ic]/R.c[ic - 252] - 1 : ic >= 120 ? Math.pow(R.c[ic]/R.c[ic - 120], 252/120) - 1 : 0;
+  return { f, puan:son.puan, egim:P[ic] - (P[ic - 3] ?? P[ic]), karar:kzKarar(son.puan)[0], plan, karne, uzama, yas, one, atrp:I.atr[ic]/f, rsi:I.rs[ic], vol, r1y }; }
+/* v4.2 TEMEL KALITE PUANI (0-100): ayni piyasadaki hisselerle kiyasla (yuzdelik sira) · deger 35 · karlilik 30 · saglamlik 15 · buyume 20
+   + TAHMINI FIYAT YOLU: 1/3/6/12 ay · beklenen + %10 kotu / %90 iyi senaryo. Beklenen getiri = piyasanin dogal kaymasi (TL'de enflasyon) + trend + Bay Pipo puani + temel kalite; bant = oynaklik. */
+let TEMEL_YIL = null;
+const TML_KOL = ["price_earnings_ttm", "price_book_ratio", "enterprise_value_ebitda_ttm", "return_on_equity", "net_margin", "debt_to_equity", "dividends_yield_current"];
+async function temelVeri(pz, L){ if(pz === "kripto" || !L.length) return {}; const O = {};
+  try{ const r = await fetch(`${TVB}/${pz === "bist" ? "turkey" : "america"}/scan`, { method:"POST", headers:{ "Content-Type":"application/json", ...UA.headers }, body:JSON.stringify({ symbols:{ tickers:L.flatMap(x => pz === "bist" ? ["BIST:" + x.kod] : ["NASDAQ:" + x.kod, "NYSE:" + x.kod]) }, columns:TML_KOL }) });
+    const j = await r.json(); (j?.data || []).forEach(d => { const kod = d.s.split(":")[1]; if(!O[kod] || d.s.startsWith("NASDAQ")) O[kod] = Object.fromEntries(TML_KOL.map((c, i) => [c, d.d[i]])); }); }catch(e){ console.log("temel veri (TV):", e.message); }
+  return O; }
+function temelPuanla(L, pz, V){ const yuzde = (a, x, buyukIyi) => { const s = a.filter(v => v != null && isFinite(v)); if(x == null || !isFinite(x) || s.length < 4) return null; const k = s.filter(v => buyukIyi ? v < x : v > x).length + (s.filter(v => v === x).length - 1)*.5; return k/(s.length - 1 || 1)*100; };
+  const al = (x, c) => V[x.kod]?.[c], pos = v => v != null && v > 0 ? v : null, A = c => L.map(x => c === "fk" ? pos(al(x, "price_earnings_ttm")) : c === "pd" ? pos(al(x, "price_book_ratio")) : c === "fv" ? pos(al(x, "enterprise_value_ebitda_ttm")) : al(x, c));
+  const buy = x => { const T = TEMEL_YIL?.[x.k]; if(!T?.gelir) return null; const g = T.gelir.filter(v => v > 0), n = T.net.filter(v => v != null); const cg = g.length >= 2 ? Math.pow(g[g.length - 1]/g[0], 1/(g.length - 1)) - 1 : null; const nk = n.length >= 2 && n[0] > 0 && n[n.length - 1] > 0 ? Math.pow(n[n.length - 1]/n[0], 1/(n.length - 1)) - 1 : null; return cg == null ? nk : nk == null ? cg : (cg + nk)/2; };
+  const FK = A("fk"), PD = A("pd"), FV = A("fv"), ROE = A("return_on_equity"), NM = A("net_margin"), DE = A("debt_to_equity"), TM = A("dividends_yield_current"), BY = L.map(buy);
+  const ort = a => { const s = a.filter(v => v != null); return s.length ? s.reduce((t, v) => t + v, 0)/s.length : null; };
+  L.forEach((x, i) => { const deger = ort([yuzde(FK, FK[i], false), yuzde(PD, PD[i], false), yuzde(FV, FV[i], false), TM[i] != null ? yuzde(TM, TM[i], true) : null]), karl = ort([yuzde(ROE, ROE[i], true), yuzde(NM, NM[i], true)]), sag = yuzde(DE, DE[i], false), byu = yuzde(BY, BY[i], true);
+    const P = [[deger, 35], [karl, 30], [sag, 15], [byu, 20]].filter(([v]) => v != null); if(!P.length) return; const puan = Math.round(P.reduce((t, [v, w]) => t + v*w, 0)/P.reduce((t, [, w]) => t + w, 0));
+    const not = []; if(al(x, "price_earnings_ttm") != null && al(x, "price_earnings_ttm") <= 0) not.push("zarar ediyor"); if(deger != null) not.push(deger >= 66 ? "ucuz" : deger <= 33 ? "pahalı" : "fiyatı makul"); if(karl != null) not.push(karl >= 66 ? "çok kârlı" : karl <= 33 ? "kârlılık zayıf" : "kârlılık orta"); if(sag != null && sag <= 25) not.push("borcu yüksek"); if(byu != null) not.push(byu >= 66 ? "hızlı büyüyor" : byu <= 33 ? "büyüme yavaş" : "büyüme orta");
+    x.temel = { puan, deger:deger == null ? null : Math.round(deger), karlilik:karl == null ? null : Math.round(karl), saglam:sag == null ? null : Math.round(sag), buyume:byu == null ? null : Math.round(byu), not:not.join(" · ") }; }); }
+function tahminYol(x, pz){ const dr = pz === "bist" ? MAKRO.enflasyon/100*.75 : pz === "nasdaq" ? .08 : .1, tr = Math.max(-.6, Math.min(1, x.r1y || 0))*.25, sg = (x.puan || 0)/100*.25, tm = x.temel ? (x.temel.puan - 50)/100*.15 : 0;
+  const mu = dr + tr + sg + tm, v = Math.max(.12, Math.min(1.5, x.vol || .4)), f = x.f;
+  return { mu:+(mu*100).toFixed(1), vol:+(v*100).toFixed(0), yol:[1, 3, 6, 12].map(ay => { const h = ay/12; return { ay, m:+(f*Math.exp(mu*h)).toPrecision(6), a:+(f*Math.exp(mu*h - 1.28*v*Math.sqrt(h))).toPrecision(6), u:+(f*Math.exp(mu*h + 1.28*v*Math.sqrt(h))).toPrecision(6) }; }) }; }
 async function oneriler(B, N, C, eski){ const t0 = Date.now(), R = { t:Date.now(), H:ONERI_H, pazar:{}, izle:{}, kacin:{}, havuz:{}, sure:0 };
   const BR = { bist:await yahoo("XU100.IS", "1d", "2y").then(kapaliMumlar).catch(() => null), nasdaq:await yahoo("QQQ", "1d", "2y").then(kapaliMumlar).catch(() => null), kripto:await klines("BTCUSDT", "1d", 730).then(kapaliMumlar).catch(() => null) };
   const kaynak = { bist:B.map(x => ({ ...x, k:"BIST:" + x.kod, ys:x.bn })), nasdaq:N.map(x => ({ ...x, k:"NASDAQ:" + x.kod, ys:x.bn })), kripto:C.slice(0, 60).map(x => ({ ...x, k:"KRIPTO:" + x.kod })) };
@@ -708,11 +730,15 @@ async function oneriler(B, N, C, eski){ const t0 = Date.now(), R = { t:Date.now(
     const pG = n ? k/n : .5, oG = n ? top/n : 0, bG = bz ? bzP/bz : .5, m = 25; R.havuz[pz] = { pG, oG, bG, n, varlik:L.length };
     L.forEach(x => { const a = x.karne.al; x.p = (a.isabet*a.n + pG*m)/(a.n + m); x.ort = (a.ort*a.n + oG*m)/(a.n + m); x.n = a.n; x.baz = x.karne.baz;
       x.edge = x.p - x.baz; delete x.karne; });
+    if(pz !== "kripto"){ const V = await temelVeri(pz, L); temelPuanla(L, pz, V); }
+    L.forEach(x => { x.toplam = x.temel ? Math.round(x.puan*.7 + (x.temel.puan - 50)*2*.3) : x.puan; x.tah = tahminYol(x, pz); });
+    R.tum = R.tum || {}; R.tum[pz] = L.map(x => ({ k:x.k, f:x.f, puan:x.puan, toplam:x.toplam, karar:x.karar, eylem:x.plan.eylem, temel:x.temel || null, tah:x.tah, al:x.plan.al, stop:x.plan.stop, H:x.plan.H }));
     const esik = ES[pz]?.v ?? 15;
-    const al = L.filter(x => x.puan >= esik && x.plan.eylem === "AL" && x.ort > 0 && x.p > x.baz - .01).sort((a, b) => (b.ort*(.5 + b.p)) - (a.ort*(.5 + a.p)));
+    const tk = x => 1 + (x.temel ? (x.temel.puan - 50)/200 : 0);   // v4.2 temel kalite siralamaya katilir; cok zayif temel (< 20) AL listesine girmez
+    const al = L.filter(x => x.puan >= esik && x.plan.eylem === "AL" && x.ort > 0 && x.p > x.baz - .01 && !(x.temel && x.temel.puan < 20)).sort((a, b) => (b.ort*(.5 + b.p)*tk(b)) - (a.ort*(.5 + a.p)*tk(a)));
     const izle = L.filter(x => !al.includes(x) && x.puan >= 0 && x.puan < 15 && x.egim >= 10 && x.ort > 0).sort((a, b) => b.egim - a.egim);
     const kac = L.filter(x => x.puan <= -40).sort((a, b) => a.puan - b.puan);
-    const kisa = x => ({ k:x.k, kod:x.kod, f:x.f, puan:x.puan, karar:x.karar, eylem:x.plan.eylem, al:x.plan.al, stop:x.plan.stop, H:x.plan.H, rr:+x.plan.rr.toFixed(2), p:+x.p.toFixed(3), ort:+(x.ort*100).toFixed(2), n:x.n, baz:+x.baz.toFixed(3), yas:x.yas, uzama:+x.uzama.toFixed(2), one:x.one, egim:x.egim, rsi:+(x.rsi || 0).toFixed(0) });
+    const kisa = x => ({ k:x.k, kod:x.kod, f:x.f, puan:x.puan, toplam:x.toplam, temel:x.temel || null, tah:x.tah, karar:x.karar, eylem:x.plan.eylem, al:x.plan.al, stop:x.plan.stop, H:x.plan.H, rr:+x.plan.rr.toFixed(2), p:+x.p.toFixed(3), ort:+(x.ort*100).toFixed(2), n:x.n, baz:+x.baz.toFixed(3), yas:x.yas, uzama:+x.uzama.toFixed(2), one:x.one, egim:x.egim, rsi:+(x.rsi || 0).toFixed(0) });
     R.pazar[pz] = al.slice(0, 10).map(kisa); R.izle[pz] = izle.slice(0, 6).map(kisa); R.kacin[pz] = kac.slice(0, 6).map(kisa); }
   // karne: gunde bir kez her piyasanin ilk 5'ini kaydet, 10 gun sonra hedef/stop/sure sonucuyla kapat
   const kay = (eski?.kayit || []).slice(-600), gun = new Date(Date.now() + 3*3600000).toISOString().slice(0, 10);
@@ -984,7 +1010,7 @@ async function bildirimTuru(x){ const eski = x.eskiD?.bildirim || {}, gon = { ..
   if(!takvim?.t || Date.now() - takvim.t > 6*3600000){ takvim = await ekoTakvim().catch(e => { console.log("ekonomik takvim alinamadi:", e.message); return eskiD.takvim || null; }); if(takvim?.L) console.log(`ekonomik takvim: ${takvim.L.length} olay`); }
   let oneri = eskiD.oneri || null;
   if(!oneri?.t || Date.now() - oneri.t > ONERI_SAAT*3600000){ try{ const B = RJB ? await bistListe() : [], N = RJN ? await nasdaqListe() : [], C = await coinler(80);
-      oneri = await oneriler(B, N, C, eskiD.oneri); console.log(`oneri motoru: BIST ${oneri.pazar.bist?.length || 0} · NASDAQ ${oneri.pazar.nasdaq?.length || 0} · kripto ${oneri.pazar.kripto?.length || 0} oneri, karne ${oneri.karne.n} sonuclandi (${oneri.karne.hedef} hedef / ${oneri.karne.stop} stop), ${oneri.sure} sn`); }
+      TEMEL_YIL = eskiD.temel || null; oneri = await oneriler(B, N, C, eskiD.oneri); console.log(`oneri motoru: BIST ${oneri.pazar.bist?.length || 0} · NASDAQ ${oneri.pazar.nasdaq?.length || 0} · kripto ${oneri.pazar.kripto?.length || 0} oneri, karne ${oneri.karne.n} sonuclandi (${oneri.karne.hedef} hedef / ${oneri.karne.stop} stop), ${oneri.sure} sn`); }
     catch(e){ console.log("oneri motoru calismadi:", e.message); oneri = eskiD.oneri || null; } }
   if(ihale?.liste){ const n = await meDetayTamamla(ihale).catch(e => { console.log("ihale detay tamamlama:", e.message); return 0; }); if(n) console.log(`ihale detay: +${n} (toplam ${Object.keys(ihale.detay).length}/${ihale.liste.length})`); }
   const bildirim = await bildirimTuru({ eskiD, yeniD:{ bistSinyal:bistSin, kriptoSinyal:ksin, nasdaqSinyal:nsin, oneri, takvim, kap, buyukSinyal, makro }, kasa, eskiKasa:eskiKasaAcik, usd:null }).catch(e => { console.log("bildirim turu hatasi:", e.message); return eskiD.bildirim || null; });

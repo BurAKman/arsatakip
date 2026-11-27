@@ -4471,7 +4471,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 4.1.0";
+const SURUM_MORDOR = "v 4.2.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -28601,7 +28601,7 @@ function v41Gorus(s, O){ const t = s?.tv, f = s?.f, alt = t ? [t.SMA50, t.SMA200
   const ad = p >= 45 ? "GÜÇLÜ AL" : p >= 15 ? "AL" : p > -15 ? "NÖTR" : p > -45 ? "SAT" : "GÜÇLÜ SAT";
   return { ad, sn:Math.round(p), kaynak:"teknik özet (TradingView + ortalamalar)", destek:tvDes, direnc:tvDir, hedef:aiH, ai:!!aiH }; }
 function v41ListeSut(k){ try{ if(!["takip", "bist", "nasdaq", "kripto", "portfoy"].includes(PZ.sekme)) return; const T = k.querySelector("table.pzT"); if(!T || T.dataset.v41) return; T.dataset.v41 = 1;
-    const O = v41D().oneri, M = new Map(); ["bist", "nasdaq", "kripto"].forEach(p => ["pazar", "izle", "kacin"].forEach(a => (O?.[a]?.[p] || []).forEach(x => M.set(x.k, x))));
+    const O = v41D().oneri, M = new Map(); ["bist", "nasdaq", "kripto"].forEach(p => ["tum", "kacin", "izle", "pazar"].forEach(a => (O?.[a]?.[p] || []).forEach(x => M.set(x.k, x))));
     const tum = new Map(); Object.values(PZ.liste).forEach(L => (L || []).forEach(s => tum.set(s.k, s)));
     const hr = T.querySelector("thead tr"); if(!hr) return; const tk = [...hr.children].findIndex(th => /^teknik/i.test(th.textContent.trim())); if(tk >= 0) T.querySelectorAll("tr").forEach(tr => { const c = tr.children[tk]; if(c) c.style.display = "none"; }); hr.insertAdjacentHTML("beforeend", `<th class="v41Th" data-s="g">Görüş</th><th class="sag v41Th" data-s="d">Destek</th><th class="sag v41Th" data-s="r">Direnç</th><th class="sag v41Th" data-s="h">Hedef</th>`);
     T.querySelectorAll("tbody tr").forEach(tr => { const kk = (tr.getAttribute("onclick") || "").match(/piyasaDetay','([^']+)'/)?.[1], s = tum.get(kk), g = kk ? v41Gorus(s, M.get(kk)) : null, f = s?.f;
@@ -28651,6 +28651,74 @@ function v41KarneHtml(row){ const K = row?.kasa; if(!K) return ""; const AD = { 
 .v41Sv small{display:block;font-size:10.5px}.v41Th{cursor:pointer}
 .v41Kw{margin-top:10px}.v41Kw > small{display:block;color:#9A98A0;font-size:12px;margin:3px 0 8px}.v41Kw > div{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}.v41Kw span{display:flex;flex-direction:column;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.03)}.v41Kw i{font-style:normal;font-size:12px;color:#C9C7CC}.v41Kw span b{font-size:20px}.v41Kw span small{font-size:11px;color:#8E8C93}
 .v3Puan{font-size:11px!important;letter-spacing:.02em}`; document.head.appendChild(st); }
+
+/* ================= v4.2: temel kalite puani + tahmini fiyat yolu (1/3/6/12 ay) her yerde · sistem durumu ================= */
+const V42 = { tml:{} };
+const v42Tum = () => { const M = new Map(), O = PZ.bot?.row?.durum?.oneri; ["bist", "nasdaq", "kripto"].forEach(p => (O?.tum?.[p] || []).forEach(x => M.set(x.k, x))); return M; };
+// botun kapsamadigi hisseler icin ayni mantik uygulamada (ayni piyasadaki hisselerle kiyas)
+function v42TemelListe(pz){ const L = (PZ.liste[pz] || []).filter(s => s.tv); const c = V42.tml[pz]; if(c && c.n === L.length) return c.M;
+  const pos = v => v != null && v > 0 ? v : null, A = f => L.map(f), FK = A(s => pos(s.tv.price_earnings_ttm)), PD = A(s => pos(s.tv.price_book_ratio)), FV = A(s => pos(s.tv.enterprise_value_ebitda_ttm)), ROE = A(s => s.tv.return_on_equity), NM = A(s => s.tv.net_margin), DE = A(s => s.tv.debt_to_equity), TM = A(s => s.tv.dividends_yield_current);
+  const yz = (a, x, b) => { const s = a.filter(v => v != null && isFinite(v)); if(x == null || !isFinite(x) || s.length < 4) return null; return (s.filter(v => b ? v < x : v > x).length + (s.filter(v => v === x).length - 1)*.5)/(s.length - 1 || 1)*100; };
+  const ort = a => { const s = a.filter(v => v != null); return s.length ? s.reduce((t, v) => t + v, 0)/s.length : null; }, M = new Map();
+  L.forEach((s, i) => { const d = ort([yz(FK, FK[i], 0), yz(PD, PD[i], 0), yz(FV, FV[i], 0), TM[i] != null ? yz(TM, TM[i], 1) : null]), k = ort([yz(ROE, ROE[i], 1), yz(NM, NM[i], 1)]), sg = yz(DE, DE[i], 0);
+    const P = [[d, 35], [k, 30], [sg, 15]].filter(([v]) => v != null); if(!P.length) return; const puan = Math.round(P.reduce((t, [v, w]) => t + v*w, 0)/P.reduce((t, [, w]) => t + w, 0));
+    const not = []; if(s.tv.price_earnings_ttm != null && s.tv.price_earnings_ttm <= 0) not.push("zarar ediyor"); if(d != null) not.push(d >= 66 ? "ucuz" : d <= 33 ? "pahalı" : "fiyatı makul"); if(k != null) not.push(k >= 66 ? "çok kârlı" : k <= 33 ? "kârlılık zayıf" : "kârlılık orta"); if(sg != null && sg <= 25) not.push("borcu yüksek");
+    M.set(s.k, { puan, deger:d == null ? null : Math.round(d), karlilik:k == null ? null : Math.round(k), saglam:sg == null ? null : Math.round(sg), buyume:null, not:not.join(" · ") }); });
+  V42.tml[pz] = { n:L.length, M }; return M; }
+function v42Tahmin(f, pz, puan, temel, r1y, vol){ const enf = +(PZ.ayar?.v3Enf ?? 30), dr = pz === "bist" ? enf/100*.75 : pz === "nasdaq" ? .08 : .1, mu = dr + Math.max(-.6, Math.min(1, r1y || 0))*.25 + (puan || 0)/100*.25 + (temel ? (temel - 50)/100*.15 : 0), v = Math.max(.12, Math.min(1.5, vol || .4));
+  return { mu:+(mu*100).toFixed(1), vol:Math.round(v*100), yol:[1, 3, 6, 12].map(ay => { const h = ay/12; return { ay, m:f*Math.exp(mu*h), a:f*Math.exp(mu*h - 1.28*v*Math.sqrt(h)), u:f*Math.exp(mu*h + 1.28*v*Math.sqrt(h)) }; }) }; }
+function v42Bilgi(k){ const B = v42Tum().get(k); const pz = pzTur(k) === "BIST" ? "bist" : pzTur(k) === "KRIPTO" ? "kripto" : "nasdaq";
+  let s = null; for(const L of Object.values(PZ.liste)){ s = (L || []).find(x => x.k === k); if(s) break; }
+  if(B) return { kaynak:"Bay Pipo", f:s?.f || B.f, puan:B.puan, toplam:B.toplam, karar:B.karar, temel:B.temel, tah:B.tah && s?.f ? { ...B.tah, yol:B.tah.yol.map(y => ({ ...y, m:y.m*s.f/B.f, a:y.a*s.f/B.f, u:y.u*s.f/B.f })) } : B.tah };
+  if(!s?.f) return null; const g = v41Gorus(s, null), tm = s.tv ? v42TemelListe(pz).get(k) || null : null;
+  const r1y = s.tv?.["Perf.Y"] != null ? s.tv["Perf.Y"]/100 : s.cg?.price_change_percentage_1y_in_currency != null ? s.cg.price_change_percentage_1y_in_currency/100 : 0;
+  const vol = s.tv?.beta_1_year ? Math.max(.15, s.tv.beta_1_year*(pz === "bist" ? .32 : .24)) : pz === "kripto" ? .75 : .35;
+  const puan = g ? Math.max(-100, Math.min(100, g.sn)) : 0; return { kaynak:"teknik özet", f:s.f, puan, toplam:tm ? Math.round(puan*.7 + (tm.puan - 50)*2*.3) : puan, karar:g?.ad, temel:tm, tah:v42Tahmin(s.f, pz, puan, tm?.puan, r1y, vol) }; }
+// listeler: Gorus hucresine toplam + temel, yeni "Tahmin" sutunu (1A · 3A · 6A · 1Y)
+function v42ListeSut(k){ try{ const T = k.querySelector("table.pzT[data-v41]"); if(!T || T.dataset.v42) return; T.dataset.v42 = 1; const hr = T.querySelector("thead tr");
+    hr.insertAdjacentHTML("beforeend", `<th class="sag v41Th" data-s="y">Tahmin · 1A 3A 6A 1Y</th>`);
+    T.querySelectorAll("tbody tr").forEach(tr => { const kk = (tr.getAttribute("onclick") || "").match(/piyasaDetay','([^']+)'/)?.[1], b = kk ? v42Bilgi(kk) : null, Y = b?.tah?.yol;
+      const g = tr.querySelector(".v41G"); if(g && b){ g.insertAdjacentHTML("afterend", `<small class="v42Alt">puan ${b.toplam > 0 ? "+" : ""}${b.toplam}${b.temel ? ` · temel ${b.temel.puan}` : ""}</small>`); tr.dataset.g = b.toplam; }
+      tr.dataset.y = Y ? (Y[3].m/b.f - 1)*100 : -999;
+      tr.insertAdjacentHTML("beforeend", `<td class="sag">${Y ? `<div class="v42Th" title="${Y.map(y => `${y.ay} ay: ${pzPara(y.m, null)} (kötü ${pzPara(y.a, null)} · iyi ${pzPara(y.u, null)})`).join("\n")}">${Y.map(y => { const p = (y.m/b.f - 1)*100; return `<span class="${p >= 0 ? "art" : "az"}">${p >= 0 ? "+" : ""}${Math.abs(p) >= 100 ? Math.round(p) : p.toFixed(1).replace(".", ",")}%</span>`; }).join("")}</div>` : "—"}</td>`); });
+    T.querySelectorAll(".v41Th").forEach(th => th.onclick = e => { e.stopPropagation(); const a = th.dataset.s, bd = T.querySelector("tbody"), art = th.dataset.yon !== "1"; th.dataset.yon = art ? "1" : "0";
+      [...bd.querySelectorAll("tr")].sort((x, y) => (art ? -1 : 1)*((+x.dataset[a]) - (+y.dataset[a]))).forEach(r => bd.appendChild(r)); }); }catch(e){ console.log("v42 liste", e); } }
+{ const eski = v41ListeSut; v41ListeSut = function(k){ const r = eski(k); v42ListeSut(k); return r; }; }
+// detay: tahmini fiyat yolu + temel kalite karti
+function v42DetayHtml(k){ const b = v42Bilgi(k); if(!b?.tah) return ""; const Y = b.tah.yol, f = b.f, P = s => s?.para, s0 = PZD.s, pp = v => pzPara(v, s0?.para), pc = v => { const p = (v/f - 1)*100; return `<small class="${p >= 0 ? "art" : "az"}">${p >= 0 ? "+" : ""}${p.toFixed(1).replace(".", ",")}%</small>`; };
+  const T = b.temel, bar = (ad, v) => v == null ? "" : `<div class="v42Tb"><span>${ad}</span><em><i style="width:${v}%;background:${v >= 66 ? "#4FD08A" : v <= 33 ? "#FF7A83" : "#E8B661"}"></i></em><b class="mono">${v}</b></div>`;
+  const ai = v3HedefOku?.(k), aiO = +ai?.ortalama > 0 ? +ai.ortalama : null;
+  if(!T) return "";
+  return `<section class="pcBox v3HdfK" id="v42Yol"><header><b>🏛 Temel kalite</b><small>aynı piyasadaki şirketlere göre · Bay Pipo'nun hisse seçiminde %30 ağırlık</small></header><div class="pcBoxIc">
+    <div class="v42Tml" style="margin:0;padding:0;border:0"><div class="v42TmlP"><small>Puan</small><b class="${T.puan >= 66 ? "art" : T.puan <= 33 ? "az" : ""}">${T.puan}</b><span>/100</span></div><div>${bar("Değer (ucuzluk)", T.deger)}${bar("Kârlılık", T.karlilik)}${bar("Sağlamlık (borç)", T.saglam)}${bar("Büyüme", T.buyume)}<p class="pzNot">${esc(T.not || "")}</p></div></div>
+    <p class="v42Top">Bay Pipo toplam görüşü: <b>${esc(b.karar || "—")}</b> · puan ${b.toplam > 0 ? "+" : ""}${b.toplam} (teknik %70 + temel %30)${aiO ? ` · analist ortalaması (AI, 12 ay) <b class="mono">${pp(aiO)}</b> ${pc(aiO)}` : ""}</p></div></section>`; }
+{ const eski = ekranlar.piyasaDetay; ekranlar.piyasaDetay = async function(k){ const r = await eski.apply(this, arguments);
+    try{ if(!document.getElementById("v42Yol") && /^(BIST|NASDAQ|KRIPTO):/.test(k)){ const yer = document.querySelector('.kzSekPan[data-t="temel"]'); const h = v42DetayHtml(k); if(yer && h) yer.insertAdjacentHTML("afterbegin", h); } }catch(e){ console.log("v42 detay", e); }
+    return r; }; }
+// ozet: en guclu AL kartina 1 yil tahmini
+{ const eski = V3_PANEL.ozet; V3_PANEL.ozet = function(k){ const r = eski(k); try{ k.querySelectorAll(".v3EnL button").forEach(b => { const kk = (b.getAttribute("onclick") || "").match(/'([^']+)'\)/)?.[1], x = kk && v42Bilgi(kk); const Y = x?.tah?.yol?.[3]; if(!Y) return; const p = (Y.m/x.f - 1)*100;
+      b.querySelector("em")?.insertAdjacentHTML("beforeend", ` · 1 yıl <b class="${p >= 0 ? "art" : "az"}">${p >= 0 ? "+" : ""}${p.toFixed(0)}%</b>${x.temel ? ` · temel ${x.temel.puan}` : ""}`); }); }catch(e){} return r; }; }
+// bot ekrani: sistem durumu (her kaynagin son basarili calismasi)
+function v42SistemHtml(row){ if(!row) return ""; const D = row.durum || {}, A = row.algo || {}, now = Date.now(), ms = v => v ? (typeof v === "number" ? v : Date.parse(v)) : 0;
+  const L = [["🤖 Bot turu", ms(row.son_tarama || row.updated_at), 40], ["🧠 Eğitim", ms(A.t), 30*60], ["🎯 Öneriler", ms(D.oneri?.t), 4*60], ["🌡️ Boğa-Ayı", ms(D.makro?.t), 4*60], ["🚨 Büyük sinyaller", ms(D.buyukSinyal?.t), 7*60], ["📅 Takvim", ms(D.takvim?.t), 7*60],
+    ["🏦 TEFAS", ms(D.tefas?.t), 8*60], ["📢 KAP", ms(D.kap?.t), 60], ["📚 Bilanço verisi", ms(D.temelT), 8*60], ["🔔 Bildirim", D.bildirim?.kurulumYok ? -1 : ms(D.bildirim?.t), 40]];
+  const yas = t => { const d = (now - t)/60000; return d < 60 ? Math.round(d) + " dk" : d < 2880 ? Math.round(d/60) + " sa" : Math.round(d/1440) + " gün"; };
+  return `<div class="v42Sis"><b>🩺 Sistem durumu</b>${L.map(([ad, t, sinir]) => { const c = t === -1 ? "kir" : !t ? "gri" : (now - t)/60000 <= sinir ? "yes" : (now - t)/60000 <= sinir*3 ? "sar" : "kir";
+    return `<span class="${c}" title="${t === -1 ? "Supabase'de bildirim-kurulum.sql çalıştırılmamış" : t ? "son başarılı: " + new Date(t).toLocaleString("tr-TR") : "henüz çalışmadı"}"><i></i>${ad}<small>${t === -1 ? "kurulum yok" : t ? yas(t) : "—"}</small></span>`; }).join("")}</div>`; }
+{ const eski = bmCiz; bmCiz = function(){ const r = eski.apply(this, arguments); try{ const k = document.getElementById("bmS"), reh = k?.querySelector(".v3Rehber"); if(reh && !k.querySelector(".v42Sis")) reh.insertAdjacentHTML("beforebegin", v42SistemHtml(PZ.bot?.row)); }catch(e){} return r; }; }
+{ const st = document.createElement("style"); st.textContent = `
+.v42Alt{display:block;font-size:10.5px;color:#8E8C93;margin-top:2px;white-space:nowrap}
+.v42Th{display:grid;grid-template-columns:repeat(4,auto);gap:2px 8px;justify-content:end;font-family:var(--mono,monospace);font-size:11.5px;white-space:nowrap}.v42Th span{min-width:44px;text-align:right}
+.v42Yol{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.v42Yol > div{padding:10px 12px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:2px}
+.v42Yol small{font-size:11px;color:#8E8C93;text-transform:uppercase;letter-spacing:.05em}.v42Yol b{font-size:17px}.v42Yol > div > small:nth-of-type(2){font-size:12.5px;text-transform:none;letter-spacing:0}.v42Yol span{font-size:11px;color:#8E8C93}
+@media (max-width:700px){ .v42Yol{grid-template-columns:1fr 1fr} }
+.v42Ai{margin:10px 0 0;font-size:13px}.v42Tml{display:grid;grid-template-columns:160px 1fr;gap:14px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.07)}
+.v42TmlP small{display:block;font-size:11.5px;color:#C9B48A}.v42TmlP b{font-size:40px;font-weight:900}.v42TmlP span{display:block;font-size:11px;color:#8E8C93}
+.v42Tb{display:grid;grid-template-columns:130px 1fr 34px;gap:8px;align-items:center;font-size:12.5px;margin-bottom:5px}.v42Tb em{height:8px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}.v42Tb i{display:block;height:100%}
+.v42Top{margin:12px 0 0;font-size:13px;padding:8px 10px;border-radius:10px;background:rgba(160,120,80,.1)}
+.v42Sis{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 12px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);font-size:12px}
+.v42Sis > b{margin-right:4px}.v42Sis span{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:9px;background:rgba(255,255,255,.04)}.v42Sis small{color:#8E8C93}.v42Sis i{width:8px;height:8px;border-radius:50%;background:#555}
+.v42Sis .yes i{background:#4FD08A}.v42Sis .sar i{background:#E8B661}.v42Sis .kir i{background:#FF5A64}`; document.head.appendChild(st); }
 
 // v3.0 hiz: uygulama acildiktan sonra bos anda grafik kutuphanesi + bot verisi + piyasa listeleri isitilir; Piyasalar ve detay aninda acilir
 setTimeout(() => { const isit = () => { try{ if(!ME?.id || !navigator.onLine) return; pzLib().catch(() => {}); pzBotYukle().catch(() => {});
