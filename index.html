@@ -3775,6 +3775,27 @@ body.pc .pzDokK p{font-size:12px;line-height:1.45;margin:6px 0 4px;color:#C9C7CC
 .pzBistS{margin:0 0 12px;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);font-size:12.5px;color:#D9D7DC}
 .pzBistS.bekle{border-color:rgba(224,85,85,.45);background:rgba(224,85,85,.06)}.pzBistS.haz{border-color:rgba(230,180,60,.5);background:rgba(230,180,60,.06)}.pzBistS.gir{border-color:rgba(70,190,120,.55);background:rgba(70,190,120,.07)}
 .pzBistS.ihale{border-color:rgba(91,141,239,.45);background:rgba(91,141,239,.06)}.pzIhaleF{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 6px}.pzIhaleF select,.pzIhaleF input{background:rgba(0,0,0,.3);color:#D9D7DC;border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:4px 6px;font-size:12px}.pzIhaleF input{width:110px}.pzBistSN a{color:#9DB8F5}
+body:not(.pc) .pzdIzgara,body:not(.pc) .pzdYZ{display:flex!important;flex-direction:column;gap:12px}body:not(.pc) .pzdIzgara > *,body:not(.pc) .pzdYZ > *{width:100%;min-width:0;max-width:100%}
+body:not(.pc) .pzEksIzgara,body:not(.pc) .pzDokL,body:not(.pc) .pzdAlt,body:not(.pc) .pzKartlar{grid-template-columns:minmax(0,1fr)!important}
+body:not(.pc) #app[data-ekran^="piyasa"] .btn svg,body:not(.pc) #app[data-ekran^="piyasa"] button > svg{width:18px;height:18px;flex:0 0 auto}body:not(.pc) #app[data-ekran^="piyasa"] .pcBox{max-width:100%;min-width:0}
+body:not(.pc) .pzIzgara{display:flex!important;flex-direction:column;gap:12px}body:not(.pc) .pzIzgara > *{width:100%;min-width:0}
+.pzSinSerit{margin:0 0 12px;padding:12px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.12)}
+.pzSinBas{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;margin-bottom:9px}.pzSinBas small{font-weight:400;letter-spacing:0;text-transform:none;color:#8E8C93;margin-left:8px;font-size:11.5px}
+.pzSinIz{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.pzSinK{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:11px 13px;border-radius:12px;border:2px solid;cursor:pointer;color:#fff;font:inherit;min-width:0}
+.pzSinK small{font-size:12px;opacity:.85}.pzSinK b{font-size:24px;line-height:1.1;font-weight:900;letter-spacing:.02em}.pzSinK span{font-size:11.5px;opacity:.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.pzSinK.gir{background:rgba(46,170,100,.22);border-color:#3FBF78}.pzSinK.gir b{color:#6BE39C}
+.pzSinK.haz{background:rgba(230,170,40,.2);border-color:#E3AE3C}.pzSinK.haz b{color:#FFCF5E}
+.pzSinK.bekle{background:rgba(220,60,70,.2);border-color:#E0525C}.pzSinK.bekle b{color:#FF7A83}
+.pzSinK.ihale{background:rgba(91,141,239,.18);border-color:#6E98F0}.pzSinK.ihale b{color:#A8C3FA}
+.pzSinK:hover{filter:brightness(1.15)}
+.pzSinRoz{font-style:normal;font-size:12px;font-weight:900;letter-spacing:.04em;padding:3px 9px;border-radius:999px;margin-left:6px;vertical-align:2px;color:#111}
+.pzSinRoz.gir{background:#46BE78}.pzSinRoz.haz{background:#F0B946}.pzSinRoz.bekle{background:#E8565F;color:#fff}.pzSinRoz.ihale{background:#7FA4F2}
+details.pzBistS.pzSinParla{box-shadow:0 0 0 3px rgba(255,255,255,.55);transition:box-shadow .3s}
+.pzIhaleT{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#D9D7DC;border-radius:8px;padding:3px 9px;font-size:11.5px;cursor:pointer;margin-left:8px}.pzIhaleT.genis{display:block;width:100%;margin:8px 0 0;padding:8px}
+.pzIhaleF input[type=search]{width:150px}.pzIhaleN{display:block;color:#8E8C93;margin-top:6px}
+.pzIhaleK{margin-top:8px;padding:8px 10px;border-radius:8px;background:rgba(0,0,0,.25)}.pzIhaleK summary{cursor:pointer;font-weight:700;color:#D9D7DC}.pzIhaleK p,.pzIhaleK li{color:#B9B7BE;line-height:1.5}.pzIhaleK ul{margin:6px 0 0 18px;padding:0}.pzIhaleK a{color:#9DB8F5}
+@media (max-width:700px){.pzSinIz{grid-template-columns:repeat(2,minmax(0,1fr))}.pzSinK b{font-size:20px}.pzSinBas small{display:block;margin:2px 0 0}.pzIhaleF select,.pzIhaleF input,.pzIhaleF input[type=search]{flex:1 1 45%;width:auto;min-width:0}}
 .pzSinyaller{display:flex;flex-direction:column;gap:8px;margin:0 0 12px}.pzSinyaller .pzBistS{margin:0}.pzBistSB{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:4px;cursor:pointer;list-style:none}.pzBistSB::-webkit-details-marker{display:none}details.pzBistS:not([open]) .pzBistSB{margin-bottom:0}.pzBistSB b{font-size:14px;color:#fff}.pzBistSB span{color:#8E8C93;font-size:12px}
 .pzBistSA{color:#B9B7BE;margin-bottom:8px}.pzBistSL{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}.pzBistSL > div{display:grid;grid-template-columns:18px 1fr auto;gap:6px;align-items:baseline}
 .pzBistSL i{font-style:normal;font-weight:700}.pzBistSL .ok i{color:#46BE78}.pzBistSL .no i{color:#E05555}.pzBistSL small{color:#8E8C93;text-align:right}
@@ -4417,7 +4438,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 2.7.2";
+const SURUM_MORDOR = "v 2.8.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -22748,8 +22769,8 @@ async function pzAyarYaz(ek){
     if(!error) return; if(!pzTabloYok(error)) return console.log("ayar", error); PZ.dbYok = true; }
   pzYerelYaz("piyasa_ayar", [{ user_id:ME.id, veri:PZ.ayar }]); }
 async function pzKisiselYukle(){
-  const [t, p, a, o] = await Promise.all([ pzOku("piyasa_takip").catch(() => []), pzOku("piyasa_portfoy").catch(() => []), pzOku("piyasa_alarm").catch(() => []),
-    pzOku("piyasa_olay", q => q.order("created_at", { ascending:false }).limit(300)).catch(() => []) ]);
+  const [t, p, a, o] = await Promise.all([ pzOku("piyasa_takip", q => q.eq("user_id", ME.id)).catch(() => []), pzOku("piyasa_portfoy", q => q.eq("user_id", ME.id)).catch(() => []), pzOku("piyasa_alarm", q => q.eq("user_id", ME.id)).catch(() => []),
+    pzOku("piyasa_olay", q => q.eq("user_id", ME.id).order("created_at", { ascending:false }).limit(300)).catch(() => []) ]);
   PZ.takip = t.sort((x, y) => (x.sira || 0) - (y.sira || 0)); PZ.portfoy = p; PZ.alarm = a; PZ.olay = o; await pzAyarOku(); }
 async function pzAnalizOku(sembol){
   const L = await pzOku("piyasa_analiz", q => q.eq("sembol", sembol).order("created_at", { ascending:false }).limit(40)).catch(() => []);
@@ -22804,7 +22825,7 @@ const pzLogo = s => s.logo ? (/^https?:/.test(s.logo) ? `<img class="pzLogo" src
 const pzGecRozet = g => g ? `<span class="pzGec ${g === "anlık" ? "canli" : ""}" title="${g === "anlık" ? "Anlık veri" : g + " gecikmeli veri"}">${g === "anlık" ? "● anlık" : g}</span>` : "";
 
 async function pzEkran(){
-  if(!(typeof PC_ACIK !== "undefined" && PC_ACIK)) return pysEkran ? pysEkran() : null;
+  // v2.8: telefonda da tam Piyasalar ekrani (eski sade ekran yerine)
   app.innerHTML = head("Piyasalar", "pcGit('ana')") + `
     <div class="pzSerit" id="pzSerit"><div class="spin"></div></div>
     ${PZ.dbYok ? pzSqlUyari() : ""}
@@ -24702,38 +24723,65 @@ function pzSinyalKart(tip, S, F){ if(!S?.M) return ""; const T = PZ_SIN[tip], k 
       <table class="frs"><thead><tr><th>Hisse</th><th>Fiyat</th><th>Hedef</th><th>Zarar kes</th><th>Ödül/risk</th><th>Neden</th></tr></thead><tbody>${F.map(f => `<tr onclick="go('piyasaDetay','${f.k}')"><td><b>${esc(f.kod)}</b></td><td>${tl(f.fiyat)} ₺</td><td class="art">${tl(f.hedef)} ₺ <small>+%${vg(f.pot)}</small></td><td class="az">${tl(f.stop)} ₺ <small>-%${vg(f.zarar)}</small></td><td>${vg(f.rr)}</td><td><small>${(f.neden || []).map(esc).join(" · ")}</small></td></tr>`).join("")}</tbody></table></div>`
       : `<div class="pzBistSF"><small>Şu an kriterlere (trend + sağlıklı geri çekilme + ödül/risk ≥ 1,5) uyan hisse yok.</small></div>`;
   return `<details class="pzBistS ${sinif}" data-tip="${tip}"${pzLS.oku("pzSinAcik", {})[tip] ? " open" : ""} ontoggle="const o = pzLS.oku('pzSinAcik', {}); o['${tip}'] = this.open; pzLS.yaz('pzSinAcik', o)">
-    <summary class="pzBistSB"><b>${T.ad} sinyali: ${k}</b><span>${S.puan}/${S.maks} şart ▾</span></summary>
+    <summary class="pzBistSB"><b>${T.ad} sinyali <em class="pzSinRoz ${sinif}">${k}</em></b><span>${S.puan}/${S.maks} şart ▾</span></summary>
     <div class="pzBistSA">${ust}</div>
     <div class="pzBistSL">${S.M.map(m => `<div class="${m.ok ? "ok" : "no"}"><i>${m.ok ? "✓" : "✗"}</i><span>${esc(m.ad)}</span><small>${esc(m.deger)}</small></div>`).join("")}</div>
     <div class="pzBistSN">👉 ${T.ne[k] || ""}</div>${fr}
     <div class="pzBistSZ">Bot 3 saatte bir hesaplar · son: ${new Date(S.t).toLocaleString("tr-TR", { dateStyle:"short", timeStyle:"short" })}${tip === "bist" ? ` · makro: ${esc(S.makro?.enfAy || "")} TÜFE, faiz %${S.makro?.faiz ?? "—"}` : S.makro?.tarih ? ` · Fed notu: ${esc(S.makro.tarih)}` : ""}</div></details>`; }
 
 // v2.7 Ihale avcisi: Milli Emlak (Hazine) satis ihaleleri (bot gunde 1 kez tarar) + UYAP / ilan.gov.tr kisayollari
-function pzIhaleHtml(I){ if(!I?.liste) return ""; const ilgi = I.iller || [], D = I.detay || {}, f = pzLS.oku("pzIhaleF", { il:"", cins:"", maks:"" });
-  const tl = v => v == null ? "—" : Math.round(v).toLocaleString("tr-TR") + " ₺", key = x => x.no || `${x.il}|${x.ilce}|${x.mah}|${x.fiyat}`;
+// v2.8: tum iller + il/ilce/tur/fiyat/m2 filtresi, mahalle arama, siralama, "daha fazla", gorulemeyen kaynaklarin aciklamasi
+function pzIhaleHtml(I){ if(!I?.liste) return ""; const ilgi = I.iller || [], D = I.detay || {}, f = pzLS.oku("pzIhaleF", { il:"", ilce:"", cins:"", maks:"", minM2:"", ara:"", sira:"fiyat", adet:50 });
+  const tl = v => v == null ? "—" : Math.round(v).toLocaleString("tr-TR") + " ₺", key = x => x.no || `${x.il}|${x.ilce}|${x.mah}|${x.fiyat}`, m2 = v => v ? Math.round(v).toLocaleString("tr-TR") : "—";
   const tarihMs = t => { const m = String(t || "").match(/(\d{2})\/(\d{2})\/(\d{4})/); return m ? new Date(+m[3], +m[2] - 1, +m[1]).getTime() : Infinity; };
-  const yakin = I.liste.filter(x => ilgi.includes(x.il)).map(x => ({ ...x, d:D[key(x)] || {} })).filter(x => tarihMs(x.d.tarih) >= Date.now() - 86400000).sort((a, b) => tarihMs(a.d.tarih) - tarihMs(b.d.tarih));
-  const iller = [...new Set(I.liste.map(x => x.il))].sort((a, b) => a.localeCompare(b, "tr")), cinsler = [...new Set(I.liste.map(x => x.cins))].sort((a, b) => a.localeCompare(b, "tr"));
-  const tum = I.liste.filter(x => (!f.il || x.il === f.il) && (!f.cins || x.cins === f.cins) && (!f.maks || (x.fiyat || 0) <= +f.maks)).sort((a, b) => (a.fiyat || 0) - (b.fiyat || 0)).slice(0, 60);
-  const sec = (ad, L, v) => `<select onchange="const o = pzLS.oku('pzIhaleF', {}); o['${ad}'] = this.value; pzLS.yaz('pzIhaleF', o); pzIhaleYenile()"><option value="">${ad === "il" ? "tüm iller" : "tüm türler"}</option>${L.map(x => `<option${x === v ? " selected" : ""}>${esc(x)}</option>`).join("")}</select>`;
+  const kucuk = v => String(v || "").toLocaleLowerCase("tr");
+  const yakin = I.liste.filter(x => ilgi.includes(x.il)).map(x => ({ ...x, d:D[key(x)] || {} })).filter(x => isFinite(tarihMs(x.d.tarih)) && tarihMs(x.d.tarih) >= Date.now() - 86400000).sort((a, b) => tarihMs(a.d.tarih) - tarihMs(b.d.tarih));
+  const say = {}; I.liste.forEach(x => { say[x.il] = (say[x.il] || 0) + 1; });
+  const iller = Object.keys(say).sort((a, b) => a.localeCompare(b, "tr")), ilceler = f.il ? [...new Set(I.liste.filter(x => x.il === f.il).map(x => x.ilce))].sort((a, b) => a.localeCompare(b, "tr")) : [];
+  const cinsler = [...new Set(I.liste.map(x => x.cins))].sort((a, b) => a.localeCompare(b, "tr"));
+  const sirala = { fiyat:(a, b) => (a.fiyat || 0) - (b.fiyat || 0), fiyatA:(a, b) => (b.fiyat || 0) - (a.fiyat || 0), m2:(a, b) => (b.m2 || 0) - (a.m2 || 0), birim:(a, b) => ((a.fiyat || 1e18)/(a.m2 || 1e-9)) - ((b.fiyat || 1e18)/(b.m2 || 1e-9)), yer:(a, b) => (a.il + a.ilce + a.mah).localeCompare(b.il + b.ilce + b.mah, "tr") };
+  const uy = I.liste.filter(x => (!f.il || x.il === f.il) && (!f.ilce || x.ilce === f.ilce) && (!f.cins || x.cins === f.cins) && (!f.maks || (x.fiyat || 0) <= +f.maks) && (!f.minM2 || (x.m2 || 0) >= +f.minM2) && (!f.ara || kucuk(x.mah + " " + x.ilce + " " + x.cins + " " + x.imar).includes(kucuk(f.ara)))).sort(sirala[f.sira] || sirala.fiyat);
+  const adet = Math.max(50, +f.adet || 50), tum = uy.slice(0, adet);
+  const yaz = (ad, deger, ek = "") => `const o = pzLS.oku('pzIhaleF', {}); o['${ad}'] = ${deger}; ${ek} o.adet = 50; pzLS.yaz('pzIhaleF', o); pzIhaleYenile()`;
+  const sec = (ad, L, v, bos, etiket = x => x, ek = "") => `<select onchange="${yaz(ad, "this.value", ek)}"><option value="">${bos}</option>${L.map(x => `<option value="${esc(x)}"${x === v ? " selected" : ""}>${esc(etiket(x))}</option>`).join("")}</select>`;
+  const eksik = I.toplam && I.liste.length < I.toplam;
   return `<details class="pzBistS ihale" data-tip="ihale"${pzLS.oku("pzSinAcik", {}).ihale ? " open" : ""} ontoggle="const o = pzLS.oku('pzSinAcik', {}); o.ihale = this.open; pzLS.yaz('pzSinAcik', o)">
-    <summary class="pzBistSB"><b>🏛️ İhale avcısı: ${yakin.length} ihale ${esc(ilgi.slice(0, 3).join(", "))}${ilgi.length > 3 ? "…" : ""}</b><span>Türkiye geneli ${I.toplam} ▾</span></summary>
-    <div class="pzBistSA">Hazine (Milli Emlak) taşınmaz satış ihaleleri · bot günde 1 kez tarar · son: ${new Date(I.t).toLocaleString("tr-TR", { dateStyle:"short", timeStyle:"short" })}</div>
-    ${yakin.length ? `<div class="pzBistSF"><b>Takip ettiğin illerde yaklaşan ihaleler</b><table><thead><tr><th>Yer</th><th>Ada/Parsel</th><th>m²</th><th>Tahmini bedel</th><th>İhale</th><th>Teminat</th></tr></thead><tbody>${yakin.map(x => `<tr><td><b>${esc(x.il)} / ${esc(x.ilce)}</b> <small>${esc(x.mah)} · ${esc(x.cins)}</small></td><td>${esc(x.d.ada || "—")}/${esc(x.d.parsel || "—")}</td><td>${x.d.m2 ? Math.round(x.d.m2).toLocaleString("tr-TR") : "—"}</td><td class="art">${tl(x.d.bedel ?? x.fiyat)}${x.d.m2 && (x.d.bedel ?? x.fiyat) ? ` <small>${Math.round((x.d.bedel ?? x.fiyat)/x.d.m2).toLocaleString("tr-TR")} ₺/m²</small>` : ""}</td><td>${esc(x.d.tarih || "—")}</td><td><small>${tl(x.d.teminat)}</small></td></tr>`).join("")}</tbody></table></div>`
+    <summary class="pzBistSB"><b>🏛️ İhale avcısı <em class="pzSinRoz ihale">${yakin.length ? yakin.length + " yaklaşan" : "takipte"}</em></b><span>${I.liste.length.toLocaleString("tr-TR")} ihale · ${iller.length} il ▾</span></summary>
+    <div class="pzBistSA">Hazine (Milli Emlak) taşınmaz satış ihaleleri · bot günde 1 kez tarar · son tarama: ${new Date(I.t).toLocaleString("tr-TR", { dateStyle:"short", timeStyle:"short" })}${eksik ? ` · <b class="az">e-Devlet ${I.toplam.toLocaleString("tr-TR")} kayıt diyor, ${I.liste.length.toLocaleString("tr-TR")} tanesi okunabildi (kalan bir sonraki taramada)</b>` : ` · e-Devlet'teki listenin tamamı`}</div>
+    ${yakin.length ? `<div class="pzBistSF"><b>Takip ettiğin illerde yaklaşan ihaleler</b> <small>(${esc(ilgi.join(", "))} · ada/parsel, ihale tarihi, teminat bu illerde çekiliyor)</small><table><thead><tr><th>Yer</th><th>Ada/Parsel</th><th>m²</th><th>Tahmini bedel</th><th>İhale</th><th>Teminat</th></tr></thead><tbody>${yakin.map(x => `<tr><td><b>${esc(x.il)} / ${esc(x.ilce)}</b> <small>${esc(x.mah)} · ${esc(x.cins)}</small></td><td>${esc(x.d.ada || "—")}/${esc(x.d.parsel || "—")}</td><td>${x.d.m2 ? m2(x.d.m2) : "—"}</td><td class="art">${tl(x.d.bedel ?? x.fiyat)}${x.d.m2 && (x.d.bedel ?? x.fiyat) ? ` <small>${Math.round((x.d.bedel ?? x.fiyat)/x.d.m2).toLocaleString("tr-TR")} ₺/m²</small>` : ""}</td><td>${esc(x.d.tarih || "—")}</td><td><small>${tl(x.d.teminat)}</small></td></tr>`).join("")}</tbody></table></div>`
       : `<div class="pzBistSF"><small>Takip ettiğin illerde (${esc(ilgi.join(", "))}) şu an yaklaşan Hazine ihalesi yok.</small></div>`}
-    <div class="pzBistSF"><b>Tüm Türkiye</b><div class="pzIhaleF">${sec("il", iller, f.il)}${sec("cins", cinsler, f.cins)}<input type="number" placeholder="en fazla ₺" value="${esc(f.maks || "")}" onchange="const o = pzLS.oku('pzIhaleF', {}); o.maks = this.value; pzLS.yaz('pzIhaleF', o); pzIhaleYenile()"></div>
-      <table><thead><tr><th>Yer</th><th>Tür</th><th>Fiyat</th></tr></thead><tbody>${tum.map(x => `<tr><td><b>${esc(x.il)} / ${esc(x.ilce)}</b> <small>${esc(x.mah)}</small></td><td>${esc(x.cins)}</td><td>${tl(x.fiyat)}</td></tr>`).join("") || `<tr><td colspan="3"><small>Filtreye uyan ihale yok.</small></td></tr>`}</tbody></table></div>
-    <div class="pzBistSN">🔗 İcra ve diğer ihaleler (otomatik okunamıyor, elle bak):
-      <a href="https://esatis.uyap.gov.tr/" target="_blank" rel="noopener">UYAP e-Satış</a> ·
-      <a href="https://www.ilan.gov.tr/ilan/kategori/9/icra-ve-iflas-mudurlukleri" target="_blank" rel="noopener">ilan.gov.tr icra ilanları</a> ·
-      <a href="https://www.turkiye.gov.tr/csb-tasinmaz-satis-ilanlari-ihaleye-cikanlar" target="_blank" rel="noopener">Milli Emlak (e-Devlet)</a></div></details>`; }
+    <div class="pzBistSF"><b>Tüm Türkiye · ${uy.length.toLocaleString("tr-TR")} ihale ${f.il || f.ilce || f.cins || f.maks || f.minM2 || f.ara ? `<button class="pzIhaleT" onclick="pzLS.yaz('pzIhaleF', {}); pzIhaleYenile()">filtreyi temizle ✕</button>` : ""}</b>
+      <div class="pzIhaleF">${sec("il", iller, f.il, `tüm iller (${iller.length})`, x => `${x} (${say[x]})`, "o.ilce = '';")}${f.il ? sec("ilce", ilceler, f.ilce, "tüm ilçeler") : ""}${sec("cins", cinsler, f.cins, "tüm türler")}
+        <input type="search" placeholder="mahalle / köy ara" value="${esc(f.ara || "")}" onchange="${yaz("ara", "this.value.trim()")}">
+        <input type="number" placeholder="en az m²" value="${esc(f.minM2 || "")}" onchange="${yaz("minM2", "this.value")}">
+        <input type="number" placeholder="en fazla ₺" value="${esc(f.maks || "")}" onchange="${yaz("maks", "this.value")}">
+        <select onchange="${yaz("sira", "this.value")}">${[["fiyat", "en ucuz"], ["fiyatA", "en pahalı"], ["birim", "₺/m² en düşük"], ["m2", "en büyük"], ["yer", "il/ilçe sırası"]].map(([v, a]) => `<option value="${v}"${(f.sira || "fiyat") === v ? " selected" : ""}>sırala: ${a}</option>`).join("")}</select></div>
+      <table><thead><tr><th>Yer</th><th>Tür · imar</th><th>m²</th><th>Fiyat</th></tr></thead><tbody>${tum.map(x => `<tr><td><b>${esc(x.il)} / ${esc(x.ilce)}</b> <small>${esc(x.mah)}</small></td><td>${esc(x.cins)}${x.imar && x.imar !== "-" ? ` <small>${esc(x.imar)}</small>` : ""}</td><td>${m2(x.m2)}</td><td>${tl(x.fiyat)}${x.m2 && x.fiyat ? ` <small>${Math.round(x.fiyat/x.m2).toLocaleString("tr-TR")} ₺/m²</small>` : ""}</td></tr>`).join("") || `<tr><td colspan="4"><small>Filtreye uyan ihale yok.</small></td></tr>`}</tbody></table>
+      ${uy.length > tum.length ? `<button class="pzIhaleT genis" onclick="${yaz("adet", adet + 100).replace("o.adet = 50;", "")}">${(uy.length - tum.length).toLocaleString("tr-TR")} ihale daha var · 100 tane daha göster</button>` : ""}
+      <small class="pzIhaleN">Ada/parsel, ihale tarihi ve teminat sadece takip ettiğin illerde çekiliyor. Diğerlerinin ayrıntısı için e-Devlet'te aynı il/ilçeyi aç.</small></div>
+    <details class="pzIhaleK"><summary>🔗 Bu listede OLMAYAN ihaleler · neleri göremiyoruz?</summary>
+      <p>Bot sadece <b>Hazine'nin (Milli Emlak)</b> sattığı taşınmazları okuyabiliyor. Şunlar bu listede yok, çünkü bu siteler botların okumasını engelliyor; elle bakman gerekiyor:</p>
+      <ul><li><b>İcra satışları</b> (borç yüzünden haczedilen tarla, arsa, ev) → <a href="https://esatis.uyap.gov.tr/" target="_blank" rel="noopener">UYAP e-Satış</a>. Piyasanın altında fiyata en çok burada denk gelinir, ama tapudaki şerhleri ve işgalci durumunu mutlaka kontrol et.</li>
+        <li><b>Gazete ilanlı ihaleler</b>: icra/iflas, belediye arsa satışları, vakıf ve diğer kamu kurumlarının satışları → <a href="https://www.ilan.gov.tr/ilan/kategori/9/icra-ve-iflas-mudurlukleri" target="_blank" rel="noopener">ilan.gov.tr</a></li>
+        <li><b>Milli Emlak'ın kendi sayfası</b> (ayrıntılar, şartname, ihale yeri) → <a href="https://www.turkiye.gov.tr/csb-tasinmaz-satis-ilanlari-ihaleye-cikanlar" target="_blank" rel="noopener">e-Devlet</a></li>
+        <li>TOKİ, Özelleştirme İdaresi, banka/varlık yönetim şirketi satışları ve kiralama ihaleleri de listede yok.</li></ul></details></details>`; }
 function pzIhaleYenile(){ const el = document.querySelector('details.pzBistS[data-tip="ihale"]'); if(!el || !PZ.bot?.row?.durum?.ihale) return; el.outerHTML = pzIhaleHtml(PZ.bot.row.durum.ihale); }
 function pzIhaleBildir(I){ if(!I?.liste) return; const o = pzLS.oku("pzIhaleBildir", null), ilgi = I.iller || [];
   const ids = I.liste.filter(x => ilgi.includes(x.il)).map(x => x.no || `${x.il}|${x.ilce}|${x.mah}|${x.fiyat}`);
   if(o){ const yeni = I.liste.filter(x => ilgi.includes(x.il) && !o.includes(x.no || `${x.il}|${x.ilce}|${x.mah}|${x.fiyat}`)); if(yeni.length){ const m = `Yeni Hazine ihalesi: ${yeni.slice(0, 3).map(x => `${x.il}/${x.ilce} ${x.cins}`).join(", ")}${yeni.length > 3 ? ` (+${yeni.length - 3})` : ""}`;
       try{ toast("🏛️ " + m); }catch(e){} try{ if(window.Notification && Notification.permission === "granted") new Notification("Arsa Takip · İhale avcısı", { body:m }); }catch(e){} } }
   pzLS.yaz("pzIhaleBildir", ids); }
-function pzSinyallerHtml(d){ if(!d) return ""; const h = ["bist", "kripto", "nasdaq"].map(t => pzSinyalKart(t, d[PZ_SIN[t].alan], t === "bist" ? d.bistFirsat : null)).join("") + pzIhaleHtml(d.ihale); return h ? `<div class="pzSinyaller">${h}</div>` : ""; }
+function pzSinyallerHtml(d){ if(!d) return ""; const h = ["bist", "kripto", "nasdaq"].map(t => pzSinyalKart(t, d[PZ_SIN[t].alan], t === "bist" ? d.bistFirsat : null)).join("") + pzIhaleHtml(d.ihale); return h ? `${pzSinSeritHtml(d)}<div class="pzSinyaller">${h}</div>` : ""; }
+// v2.8 "Piyasa havasi" seridi: 3 sinyal + ihale, buyuk renkli kutular; tiklayinca alttaki karti acar
+function pzSinSeritHtml(d){ const K = ["bist", "kripto", "nasdaq"].map(t => { const S = d[PZ_SIN[t].alan]; if(!S?.karar) return "";
+    const sn = S.karar === "GİR" ? "gir" : S.karar === "HAZIRLAN" ? "haz" : "bekle", alt = S.karar === "GİR" ? "alım zamanı" : S.karar === "HAZIRLAN" ? "hazırlan, izle" : "alım yapma";
+    return `<button class="pzSinK ${sn}" onclick="pzSinAc('${t}')"><small>${PZ_SIN[t].ad}</small><b>${S.karar}</b><span>${alt} · ${S.puan}/${S.maks} şart</span></button>`; }).join("");
+  const I = d.ihale; let ih = "";
+  if(I?.liste){ const ilgi = I.iller || [], D = I.detay || {}, key = x => x.no || `${x.il}|${x.ilce}|${x.mah}|${x.fiyat}`, tm = t => { const m = String(t || "").match(/(\d{2})\/(\d{2})\/(\d{4})/); return m ? new Date(+m[3], +m[2] - 1, +m[1]).getTime() : Infinity; };
+    const n = I.liste.filter(x => ilgi.includes(x.il) && isFinite(tm(D[key(x)]?.tarih)) && tm(D[key(x)]?.tarih) >= Date.now() - 86400000).length;
+    ih = `<button class="pzSinK ihale" onclick="pzSinAc('ihale')"><small>🏛️ İhale avcısı</small><b>${n}</b><span>${n ? "yaklaşan ihale (takip illeri)" : "takip illerinde yok"} · TR ${I.liste.length.toLocaleString("tr-TR")}</span></button>`; }
+  return K || ih ? `<div class="pzSinSerit"><div class="pzSinBas">Piyasa havası <small>bot 3 saatte bir hesaplar · kutuya dokun, ayrıntı açılsın</small></div><div class="pzSinIz">${K}${ih}</div></div>` : ""; }
+function pzSinAc(t){ const el = document.querySelector(`details.pzBistS[data-tip="${t}"]`); if(!el) return; el.open = true; el.scrollIntoView({ behavior:"smooth", block:"start" }); el.classList.add("pzSinParla"); setTimeout(() => el.classList.remove("pzSinParla"), 1600); }
 const pzBistSinyalHtml = d => pzSinyalKart("bist", d?.bistSinyal, d?.bistFirsat);   // eski cagrilar icin
 // sinyal degisince ve yeni BIST firsati cikinca bildirim (uygulama ici + sistem bildirimi)
 function pzSinyalBildir(d){ if(!d) return; const o = pzLS.oku("pzSinBildir", {}), mesaj = [];
@@ -25660,6 +25708,15 @@ document.addEventListener("visibilitychange", () => { try{ if(document.visibilit
       const ilk = v.querySelector(".kurSerit"); ilk ? ilk.after(b.firstElementChild) : v.prepend(b.firstElementChild);
       pzSahipId().then(SID => sb.from("piyasa_bot").select("kasa").eq("user_id", SID).maybeSingle()).then(({ data }) => { const K = data?.kasa, e = document.getElementById("bmSerit"); if(!e || !K) return;
         e.textContent = `Disiplinli ${bmTl(K.disiplin?.bakiye)} · Piyango ${bmTl(K.her?.bakiye)} · Kumar ${bmTl(K.kumar?.bakiye ?? 50000)}`; }).catch(() => {});
+    }catch(e){} return r; }; ekranlar.ana = anaMenu; }
+
+// v2.8 telefon ana menusu: "Piyasalar" seridi (her hesap kendi takip/portfoyunu gorur)
+{ const eski = anaMenu; anaMenu = async function(){ const r = await eski.apply(this, arguments);
+    try{ if(pcAcik() || !ME?.id) return r; const v = app.querySelector(".vitrin"); if(!v || v.querySelector(".pzMobSerit")) return r;
+      const b = document.createElement("div"); b.innerHTML = `<button class="serit kizil pzMobSerit" onclick="go('piyasa')"><div class="sDoku"></div><div class="sCizgi"></div><span class="sIkon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></span><div class="sIcerik"><b>Piyasalar</b><small id="pzMobOzet">BIST · kripto · NASDAQ · ihaleler</small></div><span class="sOk">${svg("chevron")}</span></button>`;
+      const bot = v.querySelector(".bmSerit")?.closest("button"), ilk = v.querySelector(".kurSerit"); (bot || ilk) ? (bot || ilk).after(b.firstElementChild) : v.prepend(b.firstElementChild);
+      pzSahipId().then(SID => sb.from("piyasa_bot").select("durum").eq("user_id", SID).maybeSingle()).then(({ data }) => { const d = data?.durum, e = document.getElementById("pzMobOzet"); if(!e || !d) return;
+        const k = ["bist", "kripto", "nasdaq"].map(t => d[PZ_SIN[t].alan]?.karar ? `${PZ_SIN[t].ad.split(" ").pop()} ${d[PZ_SIN[t].alan].karar}` : "").filter(Boolean); if(k.length) e.textContent = k.join(" · "); }).catch(() => {});
     }catch(e){} return r; }; ekranlar.ana = anaMenu; }
 
 // PC algoritma ekraninda "50 coin" yazisi: egitim 50 coinle, tarama ~150 coinle yapiliyor

@@ -467,7 +467,7 @@ async function milliEmlak(){ const U = "https://www.turkiye.gov.tr/csb-tasinmaz-
       const ref = (tr.match(/ref_no=([A-Za-z0-9+/=]+)/) || [])[1]; let no = null; try{ no = ref ? Buffer.from(ref, "base64").toString("utf8").replace(/\D/g, "") : null; }catch(e){}
       const idx = +((tr.match(/index=(\d+)/) || [])[1] ?? -1), c = td.map(temiz);
       return { no, cins:c[0], imar:c[2], il:c[3], ilce:c[4], mah:c[5], m2:trSayi(c[6]), fiyat:trSayi(c[7]), idx, resim:!!ref }; }).filter(Boolean);
-  const ilk = await al(U), top = Math.min(1000, +(((ilk.match(/Toplam\s+([\d.]+)\s+kayıttan/) || [])[1] || "0").replace(/\./g, "")));
+  const ilk = await al(U), top = Math.min(6000, +(((ilk.match(/Toplam\s+([\d.]+)\s+kayıttan/) || [])[1] || "0").replace(/\./g, "")));
   const liste = [], detay = {};
   const sayfa = async sf => { let t = await al(U + "?sf=" + sf), L = satirlar(t);
     for(let dene = 1; !L.length && dene <= 2; dene++){   // e-Devlet arada bos sayfa donebiliyor: bekle, oturumu tazele, tekrar dene
