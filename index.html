@@ -4471,7 +4471,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 4.7.0";
+const SURUM_MORDOR = "v 4.8.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -29052,6 +29052,45 @@ function v47Gorus(X){ const k = document.getElementById("pzdMasa"); if(!k) retur
 { const eski = kzRaporCiz; kzRaporCiz = function(Z, s, HT){ const h = eski.apply(this, arguments); try{ const d = document.createElement("div"); d.innerHTML = h; d.querySelector(".kzRapUst")?.remove(); d.querySelector(".kzRapSev")?.remove();
       const X = kzRapor(Z, s, HT); if(s?.k){ V47[s.k] = { t:Date.now(), X, O:v47O(X, s) }; } const not = d.querySelector(".kzNot"); if(not) not.innerHTML = `<i class="pipo"></i> Karar, seviyeler ve "ne yapmalı" sağ paneldedir; burada nedenleri, riskleri ve haber akışı var. Bay Pipo bu raporu kendi hesabıyla yazar: konsey, bu varlıktaki geçmiş isabeti, öğrenen model, iki vade uyumu, temel karne ve haber başlıkları.`;
       return d.innerHTML; }catch(e){ return h; } }; }
+
+/* ---------- v4.8 TEK ANALIZ RAPORU (detay) + menu duzeltmeleri + arka plan yapay zeka kapali ----------
+   Grafigin altindaki ayri kutular (dip/tepe, grafik ne diyor, senaryo, yontemler, gelecek ihtimaller) tek "Bay Pipo analizi" kutusunda toplanir:
+   ozet her zaman acik, digerleri tek satirlik basligiyla katlanir (acik/kapali tercihi hatirlanir). */
+const V48_AC = (() => { try{ return JSON.parse(localStorage.getItem("v48Ac") || "{}"); }catch(e){ return {}; } })();
+function v48Kurtar(){ const t = document.getElementById("pzdTahmin"), sec = document.querySelector("section.pzdTahmin"); if(t && sec && !sec.contains(t)) sec.appendChild(t); if(sec) sec.style.display = ""; }
+function v48Topla(){ const lej = document.getElementById("pzdLejant"), v45 = document.getElementById("v45"); document.getElementById("v48")?.remove(); if(!lej || !v45) return v48Kurtar();
+  const parca = [], ekle = (id, ad, el, ozet) => { if(el) parca.push({ id, ad, el, ozet }); };
+  const v3 = document.getElementById("v3Ciz"), sc = document.getElementById("v43Sc"), v44 = document.getElementById("v44"), tah = document.getElementById("pzdTahmin");
+  if(v44) v44.remove();
+  ekle("ciz", "📈 Grafik ne diyor? · trend çizgileri, destek/direnç", v3, v3?.querySelector("li")?.textContent || "");
+  ekle("sc", "📐 Senaryo · alım bölgesi, hedefler, bozulma", sc, (PZD.senaryo ? (PZD.senaryo.tip === "yukselis" ? "yükseliş sonrası geri çekilme senaryosu" : "düşüş sonrası tepki senaryosu") + " · " + (PZD.senaryo.durum || "") : ""));
+  ekle("yon", "🧠 Yöntemlerin görüşü · Bay Pipo'nun içindeki uzman yöntemleri", v44, PZD.kurul ? `${PZD.kurul.V.filter(o => Math.abs(o.v) > .15).length} yöntem sinyal veriyor · ortak puan ${PZD.kurul.puan > 0 ? "+" : ""}${PZD.kurul.puan}` : "");
+  ekle("tah", "🎯 Gelecek ihtimaller · 1 ay–1 yıl, programın geçmiş başarısı", tah, "olasılık bandı ve bu varlıkta geçmiş isabet");
+  const w = document.createElement("section"); w.className = "v48"; w.id = "v48";
+  w.innerHTML = `<header class="v48B"><b><i class="pipo"></i> Bay Pipo analizi</b><small>tek rapor · özet üstte, ayrıntılar başlıklara tıklayınca açılır</small></header><div class="v48Oz"></div>${parca.map(p => `<details class="v48D" data-id="${p.id}" ${V48_AC[p.id] ? "open" : ""}><summary><b>${p.ad}</b><small>${esc(String(p.ozet).slice(0, 140))}</small></summary><div class="v48Ic"></div></details>`).join("")}`;
+  lej.after(w); w.querySelector(".v48Oz").appendChild(v45);
+  parca.forEach(p => { const d = w.querySelector(`details[data-id="${p.id}"] .v48Ic`); d.appendChild(p.el); });
+  w.querySelectorAll("details.v48D").forEach(d => d.addEventListener("toggle", () => { V48_AC[d.dataset.id] = d.open; try{ localStorage.setItem("v48Ac", JSON.stringify(V48_AC)); }catch(e){} }));
+  const sec = document.querySelector("section.pzdTahmin"); if(sec && tah) sec.style.display = "none"; }
+{ const eski = pzdGrafikCiz; pzdGrafikCiz = async function(){ try{ v48Kurtar(); }catch(e){} const r = await eski.apply(this, arguments); try{ v48Topla(); }catch(e){ console.log("v48", e); } return r; }; }
+// sol ray: ARSA / PIYASA etiketleri de tiklanir; Piyasa dugmesi ust menuyle ayni yoldan acar; Araziler'in altina Ihale Avcisi
+function v48RayPiyasa(){ if(PC_SIMDI?.r === "piyasa") return v46Grup("ana"); if(!PZ.sekme) PZ.sekme = "ozet"; go("piyasa"); }
+{ const eski = v46RayCiz; v46RayCiz = function(){ const r = eski.apply(this, arguments); try{ const ray = document.getElementById("pcRay"); if(!ray) return r;
+      const pz = ray.querySelector('button[data-r="piyasa"]'); if(pz && pz.getAttribute("onclick") !== "v48RayPiyasa()") pz.setAttribute("onclick", "v48RayPiyasa()");
+      ray.querySelectorAll(".v46Et").forEach(e => { if(e.dataset.tik) return; e.dataset.tik = 1; e.style.cursor = "pointer"; e.onclick = e.classList.contains("piy") ? v48RayPiyasa : () => pcGit("ana"); });
+      if(!ray.querySelector('button[data-r="ihale"]')){ ray.querySelector('button[data-r="araziler"]')?.insertAdjacentHTML("afterend", `<button class="arsa" data-r="ihale" title="Hazine satış ihaleleri" onclick="pcGit('ihale')">${svg("muhur")}<span>İhale</span></button>`); }
+      if(!v46Mod()) ray.querySelectorAll('button[data-r="ihale"]').forEach(b => b.classList.toggle("on", PC_SIMDI?.r === "ihale")); }catch(e){} return r; }; }
+if(typeof PC_AILE !== "undefined") PC_AILE.ihale = "ihale";
+// arka plan yapay zeka (ChatGPT/Claude pencereleri) varsayilan KAPALI: hedef fiyat ve brifing sadece elle istenince; ortak kayitli sonuclar okunmaya devam eder
+const v48Yz = () => { try{ return localStorage.getItem("v48Yz") === "1"; }catch(e){ return false; } };
+{ const eski = v3HedefCek; v3HedefCek = async function(s, zorla){ if(!zorla && !v48Yz()) return v3HedefOrtak(s.k); return eski.apply(this, arguments); }; }
+{ const eski = v41BrifingUret; v41BrifingUret = async function(zorla){ if(!zorla && !v48Yz()) return null; return eski.apply(this, arguments); }; }
+{ const eski = ekranlar.ayarlar; ekranlar.ayarlar = async function(){ const r = await eski.apply(this, arguments); try{ if(!window.arsaPC?.yzOto || document.getElementById("v48YzK")) return r;
+      app.insertAdjacentHTML("beforeend", `<section class="pcBox" id="v48YzK" style="margin-top:16px"><header><b>🤖 Arka plan yapay zekâ</b></header><div class="pcBoxIc"><label style="display:flex;gap:12px;align-items:center;justify-content:space-between"><span><b>ChatGPT/Claude ile otomatik hedef fiyat & dünya brifingi</b><br><small class="soluk">Kapalıyken arka planda pencere açılmaz; Bay Pipo kendi verileriyle çalışır. Detay sayfasında elle "yenile" denince yine araştırır.</small></span><input type="checkbox" ${v48Yz() ? "checked" : ""} onchange="try{localStorage.setItem('v48Yz', this.checked ? '1' : '0')}catch(e){};toast(this.checked ? 'Arka plan yapay zekâ açık' : 'Arka plan yapay zekâ kapalı')"></label></div></section>`); }catch(e){} return r; }; }
+{ const st = document.createElement("style"); st.textContent = `.v48{margin-top:12px;border-radius:14px;background:#0F1319;border:1px solid rgba(255,255,255,.09);overflow:hidden}.v48B{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.07)}.v48B small{color:#8E8C93;font-size:11.5px}
+.v48Oz .v45{margin:0;border:0;border-radius:0;background:transparent}.v48D{border-top:1px solid rgba(255,255,255,.07)}.v48D summary{cursor:pointer;list-style:none;padding:11px 14px;display:flex;flex-direction:column;gap:2px}.v48D summary::-webkit-details-marker{display:none}
+.v48D summary b{font-size:13.5px}.v48D summary b::after{content:" ▾";color:#8E8C93}.v48D[open] summary b::after{content:" ▴"}.v48D summary small{color:#8E8C93;font-size:12px}.v48D summary:hover{background:rgba(255,255,255,.025)}
+.v48Ic{padding:0 14px 12px}.v48Ic > .v3Ciz,.v48Ic > .v43Sc{margin:0;border:0;background:transparent;padding:0}.v48Ic > .v3Ciz > header,.v48Ic > .v43Sc > header{display:none}.v48Ic > .v44{margin:0;border:0;padding:0}.v48Ic > .v44 > header{margin-bottom:6px}`; document.head.appendChild(st); }
 
 // v3.0 hiz: uygulama acildiktan sonra bos anda grafik kutuphanesi + bot verisi + piyasa listeleri isitilir; Piyasalar ve detay aninda acilir
 setTimeout(() => { const isit = () => { try{ if(!ME?.id || !navigator.onLine) return; pzLib().catch(() => {}); pzBotYukle().catch(() => {});
