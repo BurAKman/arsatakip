@@ -4471,7 +4471,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 4.8.0";
+const SURUM_MORDOR = "v 4.9.1";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -23838,7 +23838,7 @@ async function pzEylemHesap(k){
   const o = PZ.eylem[k]; if(o && Date.now() - o.t < 10*60000) return o.v;
   const s = await pzSatirBul(k).catch(() => null); if(!s) return null;
   let A = null; try{ A = PZM.analiz(await pzGecmis(s, "2Y"), s.tv?.["Recommend.All"], pzAyGun(s)); }catch(e){}
-  const Y = PZ.analiz[k] || await pzAnalizOku(k).catch(() => ({})), O = pzOrtak(A, Y), f = (s.bn && PZ.canli[s.bn]?.f) || s.f || A?.fiyat;
+  const Y = PZ.analiz[k] || await pzAnalizOku(k).catch(() => ({})), O = (await v49KonseyO(s)) || pzOrtak(A, Y), f = (s.bn && PZ.canli[s.bn]?.f) || s.f || A?.fiyat;
   const eskiS = PZD.s; PZD.s = s; const E = pzEylem(f, O, pzPozMaliyet(k)); PZD.s = eskiS;
   PZ.eylem[k] = { t:Date.now(), v:{ E, O, s } }; return PZ.eylem[k].v;
 }
@@ -24711,7 +24711,7 @@ async function pzDoktorHesap(){
   await pzKisiselYukle().catch(() => {}); const S = [...new Set(PZ.portfoy.map(p => p.sembol))]; if(!S.length) return null;
   const F = await pzFiyatlar(S).catch(() => ({})); PZ.usd = PZ.usd || PZ.liste.doviz?.find(x => x.kod === "USDTRY")?.f;
   const L = (await pzHavuz(S, 3, async k => { const s = F[k] || await pzSatirBul(k); let A = null; try{ A = PZM.analiz(await pzGecmis(s, "2Y"), s.tv?.["Recommend.All"], pzAyGun(s)); }catch(e){}
-    const Y = PZ.analiz[k] || await pzAnalizOku(k).catch(() => ({})), O = A ? pzOrtak(A, Y) : null, P = PZ.portfoy.filter(p => p.sembol === k);
+    const Y = PZ.analiz[k] || await pzAnalizOku(k).catch(() => ({})), O = (await v49KonseyO(s)) || (A ? pzOrtak(A, Y) : null), P = PZ.portfoy.filter(p => p.sembol === k);   // v4.9: tek karar (Bay Pipo raporu)
     const adet = P.reduce((t, p) => t + (+p.adet || 0), 0), cv = p => p.para === "USD" && s.para !== "USD" ? (PZ.usd || 1) : p.para !== "USD" && s.para === "USD" ? 1/(PZ.usd || 1) : 1;
     const mal = adet ? P.reduce((t, p) => t + (+p.maliyet)*(+p.adet)*cv(p), 0)/adet : null, f = (s.bn && PZ.canli[s.bn]?.f) || s.f || A?.fiyat;
     const tl = v => s.para === "USD" ? v*(PZ.usd || 0) : v, deger = tl(adet*f), kz = mal ? (f/mal - 1)*100 : null;
@@ -24733,7 +24733,7 @@ async function pzDoktorHesap(){
   if(!dag.Maden && L.length >= 3) uyari.push("Portföyde altın / gümüş yok: kötü günlerde sigorta görevi görür, %10-15 düşünülebilir.");
   const V = { t:Date.now(), L:L.map(x => ({ k:x.k, kod:x.s.kod, ad:x.s.ad, para:x.s.para, f:x.f, adet:x.adet, mal:x.mal, kz:x.kz, deger:x.deger, agirlik:x.agirlik, kod2:x.kod, renk:x.renk, not:x.not,
     hedef:x.H?.h, hgetiri:x.H?.getiri, sure:x.H?.sure, ustunde:x.H?.ustunde, stop:x.O?.stop, logo:x.s.logo })), dag, uyari, top };
-  pzLS.yaz("pzDoktor", V); return V;
+  pzLS.yaz("pzDoktor3", V); return V;
 }
 function pzDoktorHtml(V){
   if(!V) return `<div class="pcBos">Portföyün boş. “+ Ekle” ile pozisyonlarını gir, doktor her 5 saatte bir hepsini inceler.</div>`;
@@ -24749,7 +24749,7 @@ function pzDoktorHtml(V){
         ${x.stop ? `<span class="zk">Zarar kes <b class="mono">${pzPara(x.stop, x.para)}</b></span>` : ""}<span>Maliyet <b class="mono">${pzPara(x.mal, x.para)}</b></span></div></button>`).join("")}</div>`;
 }
 let PZ_DOKTOR_IS = null;
-async function pzDoktorCiz(zorla){ const k = document.getElementById("pzDoktor"); let V = pzLS.oku("pzDoktor", null);
+async function pzDoktorCiz(zorla){ const k = document.getElementById("pzDoktor"); let V = pzLS.oku("pzDoktor3", null);
   if(k && V && !zorla) k.innerHTML = pzDoktorHtml(V);
   if(!zorla && V && Date.now() - V.t < PZ_DOKTOR_SAAT*3600000) return; if(PZ_DOKTOR_IS) return; PZ_DOKTOR_IS = true;
   if(k && (!V || zorla)) k.innerHTML = `<div class="pzOnHes"><i class="pzDon"></i><b>Portföyün inceleniyor…</b></div>`;
@@ -24928,7 +24928,7 @@ async function pzRaporCiz(k){
     const c = R.c, n = c.length, gun = pzTur(x) === "KRIPTO" ? 7 : 5, f = (s.bn && PZ.canli[s.bn]?.f) || s.f || c[n - 1];
     return { s, f, h:(f/c[Math.max(0, n - 1 - gun)] - 1)*100, a:(f/c[Math.max(0, n - 1 - (gun === 7 ? 30 : 21))] - 1)*100 }; })).filter(Boolean);
   if(PZ.sekme !== "rapor") return; k = document.getElementById("pzTablo"); if(!k) return;
-  const D = pzLS.oku("pzDoktor", null), V = pzLS.oku("pzOneri", null), bil = pzBilancolar(10), olay = pzDuyurular();
+  const D = pzLS.oku("pzDoktor3", null), V = pzLS.oku("pzOneri", null), bil = pzBilancolar(10), olay = pzDuyurular();
   const bas = new Date(Date.now() - 6*86400000).toLocaleDateString("tr-TR", { day:"numeric", month:"long" }), son = new Date().toLocaleDateString("tr-TR", { day:"numeric", month:"long", year:"numeric" });
   const portT = D?.L?.length ? D.L.reduce((t, x) => t + (x.deger || 0), 0) : 0;
   const sat = x => `<tr onclick="go('piyasaDetay','${x.s.k}')"><td><b>${esc(x.s.kod)}</b> <small class="soluk">${esc(x.s.ad || "")}</small></td><td class="sag mono">${pzIki(x.f, x.s.para)}</td><td class="sag mono ${pzYon(x.h)}">${pzYuzde(x.h, 1)}</td><td class="sag mono ${pzYon(x.a)}">${pzYuzde(x.a, 1)}</td></tr>`;
@@ -29091,6 +29091,19 @@ const v48Yz = () => { try{ return localStorage.getItem("v48Yz") === "1"; }catch(
 .v48Oz .v45{margin:0;border:0;border-radius:0;background:transparent}.v48D{border-top:1px solid rgba(255,255,255,.07)}.v48D summary{cursor:pointer;list-style:none;padding:11px 14px;display:flex;flex-direction:column;gap:2px}.v48D summary::-webkit-details-marker{display:none}
 .v48D summary b{font-size:13.5px}.v48D summary b::after{content:" ▾";color:#8E8C93}.v48D[open] summary b::after{content:" ▴"}.v48D summary small{color:#8E8C93;font-size:12px}.v48D summary:hover{background:rgba(255,255,255,.025)}
 .v48Ic{padding:0 14px 12px}.v48Ic > .v3Ciz,.v48Ic > .v43Sc{margin:0;border:0;background:transparent;padding:0}.v48Ic > .v3Ciz > header,.v48Ic > .v43Sc > header{display:none}.v48Ic > .v44{margin:0;border:0;padding:0}.v48Ic > .v44 > header{margin-bottom:6px}`; document.head.appendChild(st); }
+
+/* v4.9 tek karar her yerde: portfoy doktoru ve hizli eylem de detaydaki Bay Pipo raporuyla (konsey + temel + haber + model) ayni karari kullanir */
+async function v49KonseyO(s){ try{ const V = V47[s.k]; if(V && Date.now() - V.t < 15*60000) return V.O; const Z = await kzHesapla(s); if(!Z?.G) return null; const L = await pzHaberler(s).catch(() => []), X = kzRapor(Z, s, kzHaberTon(L)); V47[s.k] = { t:Date.now(), X, O:v47O(X, s) }; return V47[s.k].O; }catch(e){ return null; } }
+
+{ const eski = v41Gorus; v41Gorus = function(s, O){ const V = s?.k && V47[s.k]; if(V && Date.now() - V.t < 6*3600000){ const X = V.X, P = X.P;
+      const ad = X.karar === "AL" ? (X.skor >= 45 ? "GÜÇLÜ AL" : "AL") : X.karar === "SAT" ? (X.skor <= -45 ? "GÜÇLÜ SAT" : "SAT") : "NÖTR", al = X.karar === "AL";
+      return { ad, sn:X.skor, kaynak:"Bay Pipo", destek:P.al?.[0] || P.stop, direnc:P.H?.[0], hedef:al ? (P.H?.[1] || P.H?.[0]) : null, ai:false }; } return eski.apply(this, arguments); }; }
+{ const eski = pzDoktorCiz; pzDoktorCiz = async function(zorla){ const n0 = Object.keys(V47).length, r = await eski.apply(this, arguments); try{ if(Object.keys(V47).length !== n0 && PZ.sekme === "portfoy" && !PZ_DOKTOR_IS){ document.getElementById("pzDoktor")?.remove(); pzTablo(); } }catch(e){} return r; }; }
+
+{ const eski = pzEylem; pzEylem = function(f, O, poz){ const E = eski.apply(this, arguments);
+    try{ if(O?.oy?.[0]?.[0] === "Bay Pipo" && O.karar === "TUT" && E?.kod === "AL"){ const P = v => pzIkiDuz(v, PZD.s?.para || O.para);
+        return { kod:"BEKLE / TUT", renk:"gri", cumle:`Fiyat alım bölgesinde (${P(O.al[0])} – ${P(O.al[1])}) ama Bay Pipo henüz net AL demiyor. Almak istersen küçük ve kademeli; zarar kes ${P(O.stop)}.` + (poz ? ` Maliyetine göre ${f >= poz ? "%" + ((f/poz - 1)*100).toFixed(1).replace(".", ",") + " kârdasın" : "%" + ((1 - f/poz)*100).toFixed(1).replace(".", ",") + " zarardasın"}.` : "") }; } }catch(e){}
+    return E; }; }
 
 // v3.0 hiz: uygulama acildiktan sonra bos anda grafik kutuphanesi + bot verisi + piyasa listeleri isitilir; Piyasalar ve detay aninda acilir
 setTimeout(() => { const isit = () => { try{ if(!ME?.id || !navigator.onLine) return; pzLib().catch(() => {}); pzBotYukle().catch(() => {});
