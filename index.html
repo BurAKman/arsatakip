@@ -4471,7 +4471,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 4.6.0";
+const SURUM_MORDOR = "v 4.7.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -29034,6 +29034,24 @@ body.pc #pzV4G{display:none!important}.pcBox:has(#pzGece){display:none!important
       v.insertAdjacentHTML("beforeend", `<button class="serit koz" onclick="go('ihale')"><div class="sDoku"></div><div class="sCizgi"></div><span class="sIkon">${svg("muhur")}</span><div class="sIcerik"><b>İhale Avcısı</b><small>Hazine satış ihaleleri</small></div><span class="sOk">${svg("chevron")}</span></button>`);
       if(pz || bot){ v.insertAdjacentHTML("beforeend", `<div class="v46MBas">📈 PİYASA</div>`); if(pz) v.appendChild(pz); if(bot) v.appendChild(bot); } }catch(e){} return r; }; ekranlar.ana = anaMenu; }
 { const st = document.createElement("style"); st.textContent = `.v46MBas{font-size:11px;letter-spacing:.16em;font-weight:800;color:#9A98A0;margin:14px 4px 6px}.vitrin > .v46MBas:first-child{margin-top:2px}`; document.head.appendChild(st); }
+
+/* ---------- v4.7 TEK KARAR: detayda tum "ne yapmali" kutulari Bay Pipo raporundan (konsey + temel + haber + model) beslenir ----------
+   Sag panel (Ne yapmali, cetvel, buradan al/sat/cik, Bay Pipo puani) eskiden ayri bir motorla hesaplaniyordu; artik ayni kaynaktan. Rapor sekmesindeki kopya karar/seviye kartlari kalkti. */
+const V47 = {};
+function v47O(X, s){ const P = X.P, k = X.karar === "AL" ? "AL" : X.karar === "SAT" ? "SAT" : "TUT"; return { al:[P.al[0], P.al[1]], sat:[P.H[0], P.H[1] || P.H[0]*1.03], stop:P.stop, karar:k, oy:[["Bay Pipo", k]], kaynak:0, para:s?.para }; }
+{ const eski = pzdMasaCiz; pzdMasaCiz = function(){ const s = PZD.s; if(!s) return eski.apply(this, arguments); const V = V47[s.k];
+    if(V && Date.now() - V.t < 15*60000){ const o = pzOrtak; pzOrtak = () => V.O; let r; try{ r = eski.apply(this, arguments); } finally{ pzOrtak = o; } try{ v47Gorus(V.X); }catch(e){} return r; }
+    const r = eski.apply(this, arguments); const k = s.k;
+    Promise.all([kzHesapla(s), pzHaberler(s).catch(() => [])]).then(([Z, L]) => { if(PZD.s?.k !== k || !Z?.G) return; const X = kzRapor(Z, s, kzHaberTon(L)); V47[k] = { t:Date.now(), X, O:v47O(X, s) }; pzdMasaCiz(); }).catch(() => {});
+    return r; }; }
+function v47Gorus(X){ const k = document.getElementById("pzdMasa"); if(!k) return; const m = [...k.querySelectorAll(".pzMini")].find(e => /Programın görüşü/.test(e.textContent)); if(!m) return;
+  const kr = X.karar === "AL" ? "AL" : X.karar === "SAT" ? "SAT" : "TUT", cls = typeof pzKararCls === "function" ? pzKararCls(kr) : "";
+  m.innerHTML = `<i class="pipo"></i> Bay Pipo puanı: <span class="pzKarar ${cls}">${kr}</span> <span class="mono soluk">${X.skor > 0 ? "+" : ""}${X.skor}/100 · güven ${esc(X.guven)}</span>`;
+  const g = k.querySelector(".pzGaugeIc"); if(g) g.style.setProperty("--p", Math.max(0, Math.min(100, (X.skor + 100)/2)));
+  const n = k.querySelector(".pzNeden"); if(n) n.innerHTML = X.N.slice(0, 4).map(t => `<li>• ${esc(t)}</li>`).join(""); }
+{ const eski = kzRaporCiz; kzRaporCiz = function(Z, s, HT){ const h = eski.apply(this, arguments); try{ const d = document.createElement("div"); d.innerHTML = h; d.querySelector(".kzRapUst")?.remove(); d.querySelector(".kzRapSev")?.remove();
+      const X = kzRapor(Z, s, HT); if(s?.k){ V47[s.k] = { t:Date.now(), X, O:v47O(X, s) }; } const not = d.querySelector(".kzNot"); if(not) not.innerHTML = `<i class="pipo"></i> Karar, seviyeler ve "ne yapmalı" sağ paneldedir; burada nedenleri, riskleri ve haber akışı var. Bay Pipo bu raporu kendi hesabıyla yazar: konsey, bu varlıktaki geçmiş isabeti, öğrenen model, iki vade uyumu, temel karne ve haber başlıkları.`;
+      return d.innerHTML; }catch(e){ return h; } }; }
 
 // v3.0 hiz: uygulama acildiktan sonra bos anda grafik kutuphanesi + bot verisi + piyasa listeleri isitilir; Piyasalar ve detay aninda acilir
 setTimeout(() => { const isit = () => { try{ if(!ME?.id || !navigator.onLine) return; pzLib().catch(() => {}); pzBotYukle().catch(() => {});
