@@ -587,8 +587,15 @@ function kzEk(I, R){ const n = R.c.length, mfi = new Float64Array(n).fill(NaN), 
   const avw = new Float64Array(n).fill(NaN), srsi = new Float64Array(n).fill(NaN);
   for(let i = 60; i < n; i++){ let lo = i; for(let j = i - 59; j <= i; j++) if(R.l[j] < R.l[lo]) lo = j; let pv = 0, vv = 0; for(let j = lo; j <= i; j++){ pv += tp[j]*(R.v[j] || 1); vv += (R.v[j] || 1); } avw[i] = pv/(vv || 1); }
   const rs = I.rs; for(let i = 28; i < n; i++){ let a = Infinity, b = -Infinity; for(let j = i - 13; j <= i; j++){ if(rs[j] < a) a = rs[j]; if(rs[j] > b) b = rs[j]; } srsi[i] = b > a ? (rs[i] - a)/(b - a) : .5; }
-  return { mfi, cmf, ll20, avw, srsi }; }
-const KZ_GRUP = { trend:"Trend", mom:"Momentum", hacim:"Hacim & para akışı", yapi:"Yapı & formasyon", turev:"Türev piyasa" };
+  // v4.4 UZMAN YONTEMLERI (oylar icin seriler): Fibonacci EMA dizilimi (5..233), 150/200 gunluk SMA (Weinstein/Minervini), 144 ve 233 gunluk dogrusal regresyon kanali (egim + Pearson r + 2 sapma bandi)
+  const uzE = [5, 8, 13, 21, 34, 55, 89, 144, 233].map(k => emaA(R.c, k)), smaS = k => { const o = new Float64Array(n).fill(NaN); let s = 0; for(let i = 0; i < n; i++){ s += R.c[i]; if(i >= k) s -= R.c[i - k]; if(i >= k - 1) o[i] = s/k; } return o; };
+  const s50 = smaS(50), s150 = smaS(150), s200 = smaS(200), regK = k => { const eg = new Float64Array(n).fill(NaN), r = new Float64Array(n).fill(NaN), ort = new Float64Array(n).fill(NaN), sd = new Float64Array(n).fill(NaN);
+    const mx = (k - 1)/2, sxx = k*(k*k - 1)/12; for(let i = k - 1; i < n; i += 1){ let sy = 0, sxy = 0, syy = 0; for(let j = 0; j < k; j++){ const y = Math.log(R.c[i - k + 1 + j]); sy += y; sxy += (j - mx)*y; syy += y*y; }
+      const my = sy/k, b = sxy/sxx, vy = syy/k - my*my, a = my - b*mx; let e2 = 0; for(let j = 0; j < k; j++){ const d = Math.log(R.c[i - k + 1 + j]) - (a + b*j); e2 += d*d; }
+      eg[i] = b; ort[i] = a + b*(k - 1); sd[i] = Math.sqrt(e2/k); r[i] = vy > 0 ? Math.max(-1, Math.min(1, b*Math.sqrt(sxx/k)/Math.sqrt(vy))) : 0; } return { eg, r, ort, sd }; };
+  const k144 = regK(144), k233 = regK(233);
+  return { mfi, cmf, ll20, avw, srsi, uzE, s50, s150, s200, k144, k233 }; }
+const KZ_GRUP = { trend:"Trend", mom:"Momentum", hacim:"Hacim & para akışı", yapi:"Yapı & formasyon", uzman:"Uzman yöntemleri", turev:"Türev piyasa" };
 // tek mumda konsey oylamasi. ayrinti=false iken sadece puan hesaplar (gecmis karne icin)
 // v3.0 OGRENEN KONSEY: her indikatorun oyu, o piyasada gecmiste ne kadar ise yaradigina gore agirlik carpani alir (oneri motorunda gunde bir ogrenilir)
 let KZW_SIMDI = null;
@@ -633,6 +640,25 @@ function kzOyla(I, E, R, i, BM, ayrinti){
     ekle("Mum formasyonu", "yapi", yb || ck ? 1 : ya || ky ? -1 : 0, .5, yb ? "yutan boğa" : ck ? "çekiç" : ya ? "yutan ayı" : ky ? "kayan yıldız" : "belirgin formasyon yok", true); }
   { const kir = c > I.hh20[i-1] ? 1 : c < E.ll20[i-1] ? -1 : 0; ekle("20 mum kırılımı", "yapi", kir, 1, kir > 0 ? "20 mumluk zirve KIRILDI" : kir < 0 ? "20 mumluk dip kırıldı" : "kanal içinde", true); }
   if(BM){ const r20 = c/I.c[i-20] - 1, bm = BM(R.t[i], R.t[i-20]); ekle("Göreli güç", "yapi", Math.tanh((r20 - bm)/(ap*4.5)), 1, `20 mumda ${f(r20*100, 1)}% · kıyas ${f(bm*100, 1)}%`); }
+  // --- v4.4 UZMAN YONTEMLERI: hocalarin yontemleri ayri oy olarak girer; agirliklarini bot her piyasada gecmis isabetine gore OGRENIR (ise yaramayanin sesi kisilir)
+  if(E.uzE){ const U = E.uzE.map(e => e[i]); let sir = 0; for(let k = 0; k < 8; k++) sir += U[k] > U[k + 1] ? 1 : -1; sir /= 8; const ust = U.every(e => c > e), alt89 = c < U[6];
+    const renk = ust && sir >= .75 ? "mavi" : alt89 && sir <= -.5 ? "kırmızı" : "gri";
+    ekle("EMA dizilimi (5…233)", "uzman", renk === "mavi" ? 1 : renk === "kırmızı" ? -1 : .25*kzSg(sir), 1.2, renk === "mavi" ? "tüm ortalamalar ideal yükseliş diziliminde, fiyat hepsinin üstünde · güçlü (mavi)" : renk === "kırmızı" ? "ortalamalar düşüş diziliminde, fiyat 89'luğun altında · zayıf (kırmızı)" : `ara bölge (gri) · ${sir > 0 ? "yükselişin düzeltmesi/tepkisi" : "düşüşün tepkisi"}, dizilim ${Math.round((sir + 1)*50)}/100`); }
+  if(E.k144 && isFinite(E.k233.eg[i])){ const K = [E.k144, E.k233].map(q => ({ e:q.eg[i], r:q.r[i], z:(Math.log(c) - q.ort[i])/(q.sd[i] || 1e-9) })); let v = 0; K.forEach(q => v += kzSg(q.e)*Math.min(1, Math.abs(q.r)/.8)/2); const z = K[0].z;
+    if(z < -2.2) v -= .5; else if(z > 2.2) v -= .3;
+    ekle("Regresyon kanalları 144/233", "uzman", v, 1, `144 günlük kanal ${K[0].e > 0 ? "yukarı" : "aşağı"} (r ${f(K[0].r, 2)}), 233 günlük ${K[1].e > 0 ? "yukarı" : "aşağı"} (r ${f(K[1].r, 2)}) · fiyat ${z > 2.2 ? "kanalın üstüne taşmış" : z < -2.2 ? "kanalın altına sarkmış · plan bozuluyor" : z > 0 ? "kanal ortasının üstünde" : "kanal ortasının altında"}`); }
+  if(isFinite(E.s150?.[i - 20])){ const s = E.s150[i], eg = s/E.s150[i - 20] - 1, ev = c > s && eg > .01 ? 2 : c < s && eg < -.01 ? 4 : Math.abs(eg) <= .01 ? (c > s ? 1 : 3) : (c > s ? 1 : 3);
+    ekle("Weinstein evresi", "uzman", ev === 2 ? 1 : ev === 4 ? -1 : ev === 1 ? .2 : -.3, 1.2, ev === 2 ? "Evre 2 · yükseliş trendi (30 haftalık ortalama yukarı, fiyat üstünde) · alınacak evre" : ev === 4 ? "Evre 4 · düşüş trendi · uzak dur" : ev === 1 ? "Evre 1 · taban yapıyor, henüz kırılım yok" : "Evre 3 · tepe yapıyor / dağıtım"); }
+  if(isFinite(E.s200?.[i - 22])){ const lb = Math.min(252, i); let hi = -Infinity, lo = Infinity; for(let j = i - lb + 1; j <= i; j++){ if(R.h[j] > hi) hi = R.h[j]; if(R.l[j] < lo) lo = R.l[j]; }
+    const k = [c > E.s150[i] && c > E.s200[i], E.s150[i] > E.s200[i], E.s200[i] > E.s200[i - 22], E.s50[i] > E.s150[i] && E.s50[i] > E.s200[i], c > E.s50[i], c >= lo*1.3, c >= hi*.75].filter(Boolean).length;
+    ekle("Minervini trend şablonu", "uzman", k === 7 ? 1 : k >= 5 ? .4 : k <= 2 ? -.6 : 0, 1, `${k}/7 kriter${k === 7 ? " · lider hisse şablonu tam" : k <= 2 ? " · trend şablonunun dışında" : ""}`); }
+  { let lo = Infinity, hi = -Infinity; for(let j = i - 60; j <= i - 6; j++){ if(R.l[j] < lo) lo = R.l[j]; if(R.h[j] > hi) hi = R.h[j]; } let kir = false; for(let j = i - 5; j <= i; j++) if(R.l[j] < lo*.998) kir = true;
+    const sp = kir && c > lo && hi/lo - 1 < 12*ap && c > R.o[i], ut = (() => { let k2 = false; for(let j = i - 5; j <= i; j++) if(R.h[j] > hi*1.002) k2 = true; return k2 && c < hi && hi/lo - 1 < 12*ap && c < R.o[i]; })();
+    ekle("Wyckoff spring / upthrust", "uzman", sp ? 1 : ut ? -1 : 0, 1, sp ? "yatay bandın dibi aşağı kırılıp hemen geri alındı · ayı tuzağı (spring)" : ut ? "bandın tepesi yukarı kırılıp geri verildi · boğa tuzağı (upthrust)" : "tuzak sinyali yok", true); }
+  { const L2 = I.pvL.filter(j => j <= i - 3).slice(-2), H2 = I.pvH.filter(j => j <= i - 3).slice(-2); let v = 0, not = "formasyon yok";
+    if(L2.length === 2 && L2[1] - L2[0] >= 8 && Math.abs(I.l[L2[1]]/I.l[L2[0]] - 1) < 1.2*ap){ let boyun = -Infinity; for(let j = L2[0]; j <= L2[1]; j++) boyun = Math.max(boyun, I.h[j]); if(c > boyun){ v = 1; not = "çift dip tamamlandı (boyun çizgisi üstünde kapanış)"; } else if(c > I.l[L2[1]]){ v = .3; not = "çift dip oluşuyor · boyun " + f(boyun); } }
+    if(!v && H2.length === 2 && H2[1] - H2[0] >= 8 && Math.abs(I.h[H2[1]]/I.h[H2[0]] - 1) < 1.2*ap){ let boyun = Infinity; for(let j = H2[0]; j <= H2[1]; j++) boyun = Math.min(boyun, I.l[j]); if(c < boyun){ v = -1; not = "çift tepe tamamlandı (boyun altında kapanış)"; } else if(c < I.h[H2[1]]){ v = -.3; not = "çift tepe riski · boyun " + f(boyun); } }
+    ekle("Çift dip / çift tepe", "uzman", v, 1, not, true); }
   let sw = 0, sv = 0; V.forEach(o => { sw += o.w; sv += o.w*o.v; }); const puan = Math.round(100*sv/(sw || 1));
   return { puan, V: ayrinti ? V : null }; }
 const kzKarar = p => p >= 40 ? ["GÜÇLÜ AL", "gal"] : p >= 15 ? ["AL", "al"] : p > -15 ? ["NÖTR", "not"] : p > -40 ? ["SAT", "sat"] : ["GÜÇLÜ SAT", "gsat"];
@@ -700,7 +726,8 @@ function konseyHesap(R, BR, pazar, ogr){ const n = R.c.length; if(n < 240) retur
   const lr = []; for(let i = Math.max(1, ic - 120); i <= ic; i++) lr.push(Math.log(R.c[i]/R.c[i - 1])); const mo = lr.reduce((a, b) => a + b, 0)/(lr.length || 1), vol = Math.sqrt(lr.reduce((a, b) => a + (b - mo)**2, 0)/Math.max(1, lr.length - 1))*Math.sqrt(252);
   const r1y = ic >= 252 ? R.c[ic]/R.c[ic - 252] - 1 : ic >= 120 ? Math.pow(R.c[ic]/R.c[ic - 120], 252/120) - 1 : 0;
   let sc = null; try{ sc = scKisa(senaryoKur(R), R); }catch(e){}
-  return { f, puan:son.puan, egim:P[ic] - (P[ic - 3] ?? P[ic]), karar:kzKarar(son.puan)[0], plan, karne, uzama, yas, one, atrp:I.atr[ic]/f, rsi:I.rs[ic], vol, r1y, sc }; }
+  const uzV = son.V.filter(o => o.grup === "uzman" && o.w), uz = uzV.length ? Math.round(100*uzV.reduce((a, o) => a + o.v*o.w, 0)/uzV.reduce((a, o) => a + o.w, 0)) : null;   // v4.4 uzman kurulu ozeti
+  return { uz, f, puan:son.puan, egim:P[ic] - (P[ic - 3] ?? P[ic]), karar:kzKarar(son.puan)[0], plan, karne, uzama, yas, one, atrp:I.atr[ic]/f, rsi:I.rs[ic], vol, r1y, sc }; }
 /* ---------- v4.3 UZMAN SENARYOSU (analistlerin "su seviyeye kadar duser, alim noktasi burasi, hedef surasi" cizimi) ----------
    1) ZigZag ile son buyuk dalga bulunur (yukselis: dip->tepe, dusus: tepe->dip).
    2) Yukselis dalgasindan sonra: ALIM BOLGESI = Fibonacci %50-%61,8 geri cekilme; ayni bolgede baska destekler (eski dipler, 200/50 gunluk ortalama) varsa bolge guclenir.
@@ -780,13 +807,13 @@ async function oneriler(B, N, C, eski){ const t0 = Date.now(), R = { t:Date.now(
       const genel = n >= 10 ? ok/n : .5; L.forEach(x => { const S = x.sc; if(S?.tip !== "yukselis" || S.durum !== "bölgede") return; const k = S.kanit, isb = k?.n >= 3 ? k.isabet : genel;
         if(isb >= .55){ x.scBonus = 1.15; x.one = [`📐 Uzman senaryosu: fiyat Fibonacci alım bölgesinde · geçmişte %${Math.round(isb*100)} tuttu`, ...(x.one || [])].slice(0, 5); } }); }
     L.forEach(x => { x.toplam = x.temel ? Math.round(x.puan*.7 + (x.temel.puan - 50)*2*.3) : x.puan; x.tah = tahminYol(x, pz); });
-    R.tum = R.tum || {}; R.tum[pz] = L.map(x => ({ k:x.k, f:x.f, puan:x.puan, toplam:x.toplam, karar:x.karar, eylem:x.plan.eylem, temel:x.temel || null, tah:x.tah, sc:x.sc || null, al:x.plan.al, stop:x.plan.stop, H:x.plan.H }));
+    R.tum = R.tum || {}; R.tum[pz] = L.map(x => ({ k:x.k, f:x.f, puan:x.puan, toplam:x.toplam, karar:x.karar, eylem:x.plan.eylem, temel:x.temel || null, tah:x.tah, sc:x.sc || null, uz:x.uz ?? null, al:x.plan.al, stop:x.plan.stop, H:x.plan.H }));
     const esik = ES[pz]?.v ?? 15;
     const tk = x => (1 + (x.temel ? (x.temel.puan - 50)/200 : 0))*(x.scBonus || 1);   // v4.2 temel kalite siralamaya katilir; cok zayif temel (< 20) AL listesine girmez
     const al = L.filter(x => x.puan >= esik && x.plan.eylem === "AL" && x.ort > 0 && x.p > x.baz - .01 && !(x.temel && x.temel.puan < 20)).sort((a, b) => (b.ort*(.5 + b.p)*tk(b)) - (a.ort*(.5 + a.p)*tk(a)));
     const izle = L.filter(x => !al.includes(x) && x.puan >= 0 && x.puan < 15 && x.egim >= 10 && x.ort > 0).sort((a, b) => b.egim - a.egim);
     const kac = L.filter(x => x.puan <= -40).sort((a, b) => a.puan - b.puan);
-    const kisa = x => ({ k:x.k, kod:x.kod, f:x.f, puan:x.puan, toplam:x.toplam, temel:x.temel || null, tah:x.tah, sc:x.sc || null, karar:x.karar, eylem:x.plan.eylem, al:x.plan.al, stop:x.plan.stop, H:x.plan.H, rr:+x.plan.rr.toFixed(2), p:+x.p.toFixed(3), ort:+(x.ort*100).toFixed(2), n:x.n, baz:+x.baz.toFixed(3), yas:x.yas, uzama:+x.uzama.toFixed(2), one:x.one, egim:x.egim, rsi:+(x.rsi || 0).toFixed(0) });
+    const kisa = x => ({ k:x.k, kod:x.kod, f:x.f, puan:x.puan, toplam:x.toplam, temel:x.temel || null, tah:x.tah, sc:x.sc || null, uz:x.uz ?? null, karar:x.karar, eylem:x.plan.eylem, al:x.plan.al, stop:x.plan.stop, H:x.plan.H, rr:+x.plan.rr.toFixed(2), p:+x.p.toFixed(3), ort:+(x.ort*100).toFixed(2), n:x.n, baz:+x.baz.toFixed(3), yas:x.yas, uzama:+x.uzama.toFixed(2), one:x.one, egim:x.egim, rsi:+(x.rsi || 0).toFixed(0) });
     R.pazar[pz] = al.slice(0, 10).map(kisa); R.izle[pz] = izle.slice(0, 6).map(kisa); R.kacin[pz] = kac.slice(0, 6).map(kisa); }
   // karne: gunde bir kez her piyasanin ilk 5'ini kaydet, 10 gun sonra hedef/stop/sure sonucuyla kapat
   const kay = (eski?.kayit || []).slice(-600), gun = new Date(Date.now() + 3*3600000).toISOString().slice(0, 10);
