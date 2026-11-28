@@ -267,7 +267,7 @@ async function kumarEgit(mk, M, ctx){ if(M.pazar === "bist" && !ctx.B?.length) t
     let b0 = null; for(const e of es){ const r = isle(TR, e); if(r.n >= 30 && (!b0 || r.ort > b0.tr.ort)) b0 = { esik:e, tr:r }; }
     if(!b0) continue; const te = isle(TE, b0.esik); console.log(`  ${mk} · ${CK.ad}: egitim ${b0.tr.ort.toFixed(2)}% (${b0.tr.n}), ileri test ${te.ort.toFixed(2)}% (${te.n})`);
     if(!en || b0.tr.ort > en.tr.ort) en = { ...b0, te, Mo, CK, n:S.length }; }
-  if(!en) throw new Error("yetersiz ornek ya da esik bulunamadi");
+  if(!en) throw new Error(`yetersiz ornek ya da esik bulunamadi (${V.length} varlik, ${X.length} ornek, bolme %65)`);
   const AD = [...OZ_AD, ...OZ_AD2], onem = en.Mo.w.map((w, f) => ({ ad:AD[f] || ("ö" + f), w:+w.toFixed(3) })).sort((a, b) => Math.abs(b.w) - Math.abs(a.w)).slice(0, 8), te = en.te, Mo = en.Mo;
   const sonuc = { tip:"ml", ad:M.ad, w:Mo.w.map(v => +v.toFixed(5)), b:+Mo.b.toFixed(5), mu:Mo.mu.map(v => +v.toFixed(5)), sd:Mo.sd.map(v => +v.toFixed(5)), esik:+en.esik.toFixed(4), tr:{ n:en.tr.n, ort:en.tr.ort, isabet:en.tr.isabet }, te:te.n ? { n:te.n, ort:te.ort, isabet:te.isabet } : null,
     onem, ornek:en.n, ozellik:AD.length, coin:V.length, H:M.H, kH:M.kH, kS:M.kS, cikis:en.CK, aralik:[tMin, tMax], tBol, aktif:!!(te.n >= 20 && te.ort > .1), P:{ esik:+en.esik.toFixed(4), cikis:en.CK.ad }, ilk5:[] };
@@ -1000,14 +1000,25 @@ async function buyukSinyaller(eski){ const L = [], gunAd = t => new Date(t*1000)
 const TEFAS = "https://www.tefas.gov.tr/api/DB", TEFAS_H = { "Content-Type":"application/x-www-form-urlencoded; charset=UTF-8", "X-Requested-With":"XMLHttpRequest", Origin:"https://www.tefas.gov.tr", Referer:"https://www.tefas.gov.tr/TarihselVeriler.aspx", "User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36", Accept:"application/json, text/javascript, */*; q=0.01" };
 const tfTarih = d => `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
 async function tefasPost(yol, alan){ const r = await fetch(`${TEFAS}/${yol}`, { method:"POST", headers:TEFAS_H, body:new URLSearchParams(alan).toString() }); if(!r.ok) throw new Error("TEFAS " + r.status); const t = await r.text(); try{ return JSON.parse(t); }catch(e){ throw new Error("TEFAS json degil (" + t.slice(0, 60) + ")"); } }
-async function tefasFonlar(){ const bit = new Date(Date.now() + 3*3600000), bas = new Date(bit.getTime() - 8*86400000);
-  const H = await tefasPost("BindHistoryInfo", { fontip:"YAT", sfontur:"", fonkod:"", fongrup:"", bastarih:tfTarih(bas), bittarih:tfTarih(bit), fonturkod:"", fonunvantip:"" });
-  const G = {}; (H?.data || []).forEach(x => { const k = x.FONKODU; (G[k] = G[k] || []).push({ t:+x.TARIH, f:+x.FIYAT, a:x.FONUNVAN, b:+x.PORTFOYBUYUKLUK, y:+x.KISISAYISI }); });
-  let R = {}; try{ const C = await tefasPost("BindComparisonFundReturns", { calismatipi:"2", fontip:"YAT", sfontur:"", kurucukod:"", fongrup:"", bastarih:"Başlangıç", bittarih:"Bitiş", fonturkod:"", fonunvantip:"", strperiod:"1,1,1,1,1,1,1", islemdurum:"1" });
-    (C?.data || []).forEach(x => R[x.FONKODU] = x); }catch(e){ console.log("TEFAS getiri listesi alinamadi:", e.message); }
-  const L = Object.entries(G).map(([k, A]) => { A.sort((a, b) => a.t - b.t); const s = A[A.length - 1], o = A[A.length - 2], g = R[k] || {}, n = v => v == null || v === "" ? null : +(+v).toFixed(2);
-    return { k, a:s.a, f:s.f, g1:o?.f ? +((s.f/o.f - 1)*100).toFixed(2) : null, a1:n(g.GETIRI1A), a3:n(g.GETIRI3A), a6:n(g.GETIRI6A), y1:n(g.GETIRI1Y), yb:n(g.GETIRIYB), y3:n(g.GETIRI3Y), tur:g.FONTURACIKLAMA || null, b:Math.round(s.b || 0), y:s.y || 0, t:s.t }; }).filter(x => x.f > 0);
-  if(!L.length) throw new Error("bos liste"); return { t:Date.now(), L }; }
+/* v4.9.3 TEFAS 2026'da eski ASP.NET uclarini (BindHistoryInfo) kapatti; yeni JSON API: /api/funds/fonGetiriBazliBilgiGetir (liste + getiriler) ve /api/funds/fonFiyatBilgiGetir (fon basina fiyat).
+   Belgesiz oldugu icin alan adlari esnek okunur; ilk turda gelen alan adlari loga yazilir. */
+async function tefasJson(yol, govde){ const r = await fetch(`https://www.tefas.gov.tr/api/funds/${yol}`, { method:"POST", headers:{ "Content-Type":"application/json", "Accept":"application/json, text/plain, */*", "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36", "Origin":"https://www.tefas.gov.tr", "Referer":"https://www.tefas.gov.tr/" }, body:JSON.stringify(govde) });
+  if(!r.ok) throw new Error("TEFAS " + r.status); const j = await r.json(); return j?.resultList || j?.data || (Array.isArray(j) ? j : []); }
+const tfAl = (x, re) => { for(const k of Object.keys(x || {})) if(re.test(k)) return x[k]; return null; };
+const tfSay = v => { if(v == null || v === "") return null; if(typeof v === "number") return v; const t = String(v).trim(); const n = +(/,\d+$/.test(t) ? t.replace(/\./g, "").replace(",", ".") : t); return isFinite(n) ? n : null; };
+const tfZaman = v => { if(v == null) return null; if(typeof v === "number") return v > 1e12 ? v : v > 1e9 ? v*1000 : null; const t = String(v); let m = t.match(/^(\d{4})-?(\d{2})-?(\d{2})/); if(m) return Date.UTC(+m[1], +m[2] - 1, +m[3]); m = t.match(/^(\d{2})\.(\d{2})\.(\d{4})/); return m ? Date.UTC(+m[3], +m[2] - 1, +m[1]) : null; };
+let TEFAS_LOG = false;
+async function tefasFonlar(){
+  const L0 = await tefasJson("fonGetiriBazliBilgiGetir", { dil:"TR", fonTipi:"YAT", kurucuKodu:null, sfonTurKod:null, fonTurAciklama:null, islem:1, fonTurKod:null, fonGrubu:null, donemGetiri1a:"1", donemGetiri3a:"1", donemGetiri6a:"1", donemGetiri1y:"1", donemGetiriyb:"1", donemGetiri3y:"1", donemGetiri5y:"1", basTarih:null, bitTarih:null, calismaTipi:2, getiriOrani:"1" });
+  if(!L0.length) throw new Error("bos liste (yeni API)"); if(!TEFAS_LOG){ TEFAS_LOG = true; console.log("TEFAS yeni API alanlari:", Object.keys(L0[0]).join(",")); }
+  const n2 = v => { const x = tfSay(v); return x == null ? null : +x.toFixed(2); };
+  const L = L0.map(x => ({ k:tfAl(x, /^fon_?kod/i), a:tfAl(x, /unvan/i), tur:tfAl(x, /tur.*aciklama|turaciklama/i), f:tfSay(tfAl(x, /^(son)?fiyat$/i)),
+      a1:n2(tfAl(x, /getiri_?1_?a$/i)), a3:n2(tfAl(x, /getiri_?3_?a$/i)), a6:n2(tfAl(x, /getiri_?6_?a$/i)), y1:n2(tfAl(x, /getiri_?1_?y$/i)), yb:n2(tfAl(x, /getiri_?yb$/i)), y3:n2(tfAl(x, /getiri_?3_?y$/i)), b:Math.round(tfSay(tfAl(x, /portfoy.*buyuk/i)) || 0), y:tfSay(tfAl(x, /kisi.*say|yatirimci/i)) || 0, g1:null, t:null })).filter(x => x.k);
+  // fiyat ve gunluk degisim: en cok getirili / en buyuk ~120 fon icin fon basina fiyat ucu
+  const sec = [...L].sort((a, b) => (b.y1 ?? -1e9) - (a.y1 ?? -1e9)).slice(0, 80).concat([...L].sort((a, b) => b.b - a.b).slice(0, 40)), gor = new Set();
+  await havuz(sec.filter(x => !gor.has(x.k) && gor.add(x.k)), 6, async x => { const F = await tefasJson("fonFiyatBilgiGetir", { fonKodu:x.k, dil:"TR", periyod:1 }); const A = F.map(r => ({ t:tfZaman(tfAl(r, /^tarih$/i)), f:tfSay(tfAl(r, /^fiyat$/i)) })).filter(r => r.t && r.f > 0).sort((a, b) => a.t - b.t);
+    const s = A[A.length - 1], o = A[A.length - 2]; if(s){ x.f = s.f; x.t = s.t; x.g1 = o?.f ? +((s.f/o.f - 1)*100).toFixed(2) : null; } if(!x.a) x.a = tfAl(F[0], /unvan/i); });
+  const S = L.filter(x => x.f > 0 || x.y1 != null); if(!S.length) throw new Error("alanlar okunamadi"); return { t:Date.now(), L:S }; }
 /* ---------- v3.2 cok yillik temel veri (Yahoo, ucretsiz) ---------- */
 const TML_TIP = ["annualTotalRevenue", "annualNetIncome", "annualEBITDA", "annualStockholdersEquity", "annualTotalDebt", "annualDilutedEPS", "annualFreeCashFlow"];
 async function temelYillik(sym){ const r = await jget(`${YH}/ws/fundamentals-timeseries/v1/finance/timeseries/${encodeURIComponent(sym)}?symbol=${encodeURIComponent(sym)}&type=${TML_TIP.join(",")}&period1=1420070400&period2=${Math.floor(Date.now()/1000)}`, 2, UA);
