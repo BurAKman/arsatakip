@@ -4471,7 +4471,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 4.9.1";
+const SURUM_MORDOR = "v 4.9.2";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -29086,7 +29086,7 @@ const v48Yz = () => { try{ return localStorage.getItem("v48Yz") === "1"; }catch(
 { const eski = v3HedefCek; v3HedefCek = async function(s, zorla){ if(!zorla && !v48Yz()) return v3HedefOrtak(s.k); return eski.apply(this, arguments); }; }
 { const eski = v41BrifingUret; v41BrifingUret = async function(zorla){ if(!zorla && !v48Yz()) return null; return eski.apply(this, arguments); }; }
 { const eski = ekranlar.ayarlar; ekranlar.ayarlar = async function(){ const r = await eski.apply(this, arguments); try{ if(!window.arsaPC?.yzOto || document.getElementById("v48YzK")) return r;
-      app.insertAdjacentHTML("beforeend", `<section class="pcBox" id="v48YzK" style="margin-top:16px"><header><b>🤖 Arka plan yapay zekâ</b></header><div class="pcBoxIc"><label style="display:flex;gap:12px;align-items:center;justify-content:space-between"><span><b>ChatGPT/Claude ile otomatik hedef fiyat & dünya brifingi</b><br><small class="soluk">Kapalıyken arka planda pencere açılmaz; Bay Pipo kendi verileriyle çalışır. Detay sayfasında elle "yenile" denince yine araştırır.</small></span><input type="checkbox" ${v48Yz() ? "checked" : ""} onchange="try{localStorage.setItem('v48Yz', this.checked ? '1' : '0')}catch(e){};toast(this.checked ? 'Arka plan yapay zekâ açık' : 'Arka plan yapay zekâ kapalı')"></label></div></section>`); }catch(e){} return r; }; }
+      app.insertAdjacentHTML("beforeend", `<section class="pcBox" id="v48YzK" style="margin-top:16px"><header><b>🤖 Arka plan yapay zekâ</b></header><div class="pcBoxIc"><label style="display:flex;gap:12px;align-items:center;justify-content:space-between"><span><b>ChatGPT/Claude ile otomatik dünya brifingi</b><br><small class="soluk">Kapalıyken arka planda pencere açılmaz; Bay Pipo kendi verileriyle çalışır. Hedef fiyatları artık sadece Bay Pipo hesaplar.</small></span><input type="checkbox" ${v48Yz() ? "checked" : ""} onchange="try{localStorage.setItem('v48Yz', this.checked ? '1' : '0')}catch(e){};toast(this.checked ? 'Arka plan yapay zekâ açık' : 'Arka plan yapay zekâ kapalı')"></label></div></section>`); }catch(e){} return r; }; }
 { const st = document.createElement("style"); st.textContent = `.v48{margin-top:12px;border-radius:14px;background:#0F1319;border:1px solid rgba(255,255,255,.09);overflow:hidden}.v48B{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.07)}.v48B small{color:#8E8C93;font-size:11.5px}
 .v48Oz .v45{margin:0;border:0;border-radius:0;background:transparent}.v48D{border-top:1px solid rgba(255,255,255,.07)}.v48D summary{cursor:pointer;list-style:none;padding:11px 14px;display:flex;flex-direction:column;gap:2px}.v48D summary::-webkit-details-marker{display:none}
 .v48D summary b{font-size:13.5px}.v48D summary b::after{content:" ▾";color:#8E8C93}.v48D[open] summary b::after{content:" ▴"}.v48D summary small{color:#8E8C93;font-size:12px}.v48D summary:hover{background:rgba(255,255,255,.025)}
@@ -29104,6 +29104,10 @@ async function v49KonseyO(s){ try{ const V = V47[s.k]; if(V && Date.now() - V.t 
     try{ if(O?.oy?.[0]?.[0] === "Bay Pipo" && O.karar === "TUT" && E?.kod === "AL"){ const P = v => pzIkiDuz(v, PZD.s?.para || O.para);
         return { kod:"BEKLE / TUT", renk:"gri", cumle:`Fiyat alım bölgesinde (${P(O.al[0])} – ${P(O.al[1])}) ama Bay Pipo henüz net AL demiyor. Almak istersen küçük ve kademeli; zarar kes ${P(O.stop)}.` + (poz ? ` Maliyetine göre ${f >= poz ? "%" + ((f/poz - 1)*100).toFixed(1).replace(".", ",") + " kârdasın" : "%" + ((1 - f/poz)*100).toFixed(1).replace(".", ",") + " zarardasın"}.` : "") }; } }catch(e){}
     return E; }; }
+
+// v4.9.2 sadece guvenilir olan kalsin: yapay zekanin internetten topladigi "analist hedefleri" hicbir yerde gosterilmez (abartili/eski olabiliyor); hedefler sadece Bay Pipo'nun kendi plani
+v3HedefOku = () => null; v3HedefCek = async () => null;   // arka planda hedef arastirmasi da tamamen durdu
+{ const st = document.createElement("style"); st.textContent = `#v3HdfK{display:none!important}`; document.head.appendChild(st); }
 
 // v3.0 hiz: uygulama acildiktan sonra bos anda grafik kutuphanesi + bot verisi + piyasa listeleri isitilir; Piyasalar ve detay aninda acilir
 setTimeout(() => { const isit = () => { try{ if(!ME?.id || !navigator.onLine) return; pzLib().catch(() => {}); pzBotYukle().catch(() => {});
