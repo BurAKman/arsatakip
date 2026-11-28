@@ -57,6 +57,9 @@ const PIYANGO = new Set(["p4", "bp", "pd", "bd"]);   // piyango kasasinin strate
 function sicrama(R, son = 200){ const c = R?.c || []; for(let j = Math.max(1, c.length - son); j < c.length; j++){ const r = c[j]/c[j-1]; if(!(r > 0) || r > 2.5 || r < .4) return true; } return false; }
 const seviyeOk = (giris, hedef, stop, maks) => stop > 0 && stop < giris && hedef > giris && 1 - stop/giris <= maks;
 const pazarOf = T => T.pazar || "kripto";
+// v4.3 kayma / likidite maliyeti: az islem goren varlikta alis-satis makasi ve kayma buyur -> sanal sonuca ek maliyet (gercege yaklassin)
+function likEk(pz, hacim){ const h = +hacim || 0; if(!h) return 0; if(pz === "kripto") return h < 3e6 ? .4 : h < 15e6 ? .2 : h < 50e6 ? .08 : 0; if(pz === "bist") return h < 30e6 ? .4 : h < 150e6 ? .2 : h < 500e6 ? .08 : 0; return h < 20e6 ? .2 : h < 80e6 ? .05 : 0; }
+function likMasraf(T, pz, x, masraf){ const taban = T.masraf ?? (pz === "bist" ? MASRAF_BIST : pz === "nasdaq" ? MASRAF_NASDAQ : masraf), ek = likEk(pz, x.hacim); return ek || T.masraf != null ? { masraf:+(taban + ek).toFixed(3), ...(ek ? { lik:ek } : {}) } : {}; }
 const ayarlar = T => { const S = [];
   if(T.tip === "pg"){ const G = IZGARA_PG; for(const a of G.hedefK) for(const b of G.stopK) for(const r of G.rsiMax) for(const h of G.hk) for(const L of G.L) for(const dm of G.dMin) for(const rj of G.rj) S.push({ hedefK:a, stopK:b, rsiMax:r, hk:h, L, dMin:dm, rj }); return S; }
   if(T.tip === "kir"){ for(const a of IZGARA.hedefK) for(const b of IZGARA.stopK) for(const r of IZGARA.rsiMax) for(const h of IZGARA.hk) for(const L of IZGARA.L) for(const dm of IZGARA.dMin) for(const rj of IZGARA.rj) S.push({ hedefK:a, stopK:b, rsiMax:r, hk:h, L, dMin:dm, rj }); }
@@ -147,7 +150,8 @@ function sim(D, P, T, masraf, tBol){ const out = { tr:{ n:0, kaz:0, top:0 }, te:
   for(const d of D){ let bos = 0;
     for(let i = 100; i < d.n - 1; i++){ if(i < bos) continue; if(!giris(d, i, P, T)) continue; const c = d.c[i], { hed, st } = seviye(c, d.sd[i], P, T);
       if(i + T.H > d.n - 1) break; let cik = null; const son = i + T.H;
-      for(let j = i + 1; j <= son; j++){ if(d.l[j] <= st){ cik = st; bos = j; break; } if(d.h[j] >= hed){ cik = hed; bos = j; break; } }
+      let sk = st; const esik = c + .6*(hed - c), bb = c*(1 + (T.masraf ?? (T.pazar === "bist" ? MASRAF_BIST : masraf))/100);
+      for(let j = i + 1; j <= son; j++){ if(d.l[j] <= sk){ cik = sk; bos = j; break; } if(d.h[j] >= hed){ cik = hed; bos = j; break; } if(d.h[j] >= esik) sk = Math.max(sk, bb); }
       if(cik == null){ cik = d.c[son]; bos = son; }
       const net = (cik/c - 1)*100 - (T.masraf ?? (T.pazar === "bist" ? MASRAF_BIST : masraf)), k = d.t[i] < tBol ? out.tr : out.te; k.n++; k.top += net; if(net > 0) k.kaz++; } }
   return out; }
@@ -292,7 +296,8 @@ async function egit(eski, masraf, RJ, RJB, RJN){
     let tMin = Infinity, tMax = -Infinity; V.forEach(d => { tMin = Math.min(tMin, d.t[0]); tMax = Math.max(tMax, d.t[d.n - 1]); }); const tBol = tMin + (tMax - tMin)*.65;
     const S = ayarlar(T).map(P => ({ P, ...sim(V, P, T, masraf, tBol) }));
     const oz = s => s && s.n ? { n:s.n, ort:s.top/s.n, isabet:s.kaz/s.n } : null, enAz = T.tip === "kir" ? 50 : 30;
-    const gec = S.filter(s => s.tr.n >= enAz && s.te.n >= 15 && (!TRADER.has(tf) || s.tr.kaz/s.tr.n >= .5)).sort((x, y) => (y.tr.top/y.tr.n - x.tr.top/x.tr.n) || (y.tr.n - x.tr.n)), en = gec[0] || null;
+    const gec0 = S.filter(s => s.tr.n >= enAz && s.te.n >= 15), gecT = TRADER.has(tf) ? gec0.filter(s => s.tr.kaz/s.tr.n >= .5) : gec0;   // trader: once isabeti %50+ olanlar; hic yoksa hepsi (kanit toplamaya devam etsin)
+    const gec = (gecT.length ? gecT : gec0).sort((x, y) => (y.tr.top/y.tr.n - x.tr.top/x.tr.n) || (y.tr.n - x.tr.n)), en = gec[0] || null;
     const ilk5 = []; for(const g of gec){ if(ilk5.length >= 5) break; if(ilk5.some(x => ayarAnahtar(T, x.P) === ayarAnahtar(T, g.P))) continue; ilk5.push({ P:g.P, tr:oz(g.tr), te:oz(g.te) }); }
     // v2.4: piyango ayarlarinin hepsi "sadece yukselis trendinde" (rj=1) olursa ayi piyasasinda kasa kilitleniyordu -> en az bir trend sartsiz ayar
     if((T.tip === "pg" || T.G) && ilk5.length && ilk5.every(x => x.P.rj === 1)){ const g = gec.find(s => s.P.rj !== 1 && s.te.n && s.te.top/s.te.n > 0); if(g){ if(ilk5.length >= 5) ilk5.pop(); ilk5.push({ P:g.P, tr:oz(g.tr), te:oz(g.te), cesit:"trend şartsız" }); } }
@@ -322,7 +327,7 @@ async function tara(A, masraf, RJ, RJB, ctx){
       if(sicrama(R)) return;   // bolunme/yeniden fiyatlama -> sahte dip/kirilim sinyali verme
       for(const a of AY){ const s = sinyal(d, a.P, T); if(!s?.ok || !seviyeOk(s.c, s.hed, s.st, .35)) continue; const k = ONEK[pz] + x.kod, an = `${k}|${tf}|${a.i}`; if(var_.has(an) || mumVar.has(`${an}|${tGiris}`)) continue; var_.add(an); mumVar.add(`${an}|${tGiris}`);
         yeni.push({ user_id:UID, k, alt:tf, ai:a.i, algo:A.surum, giris:s.c, hedef:s.hed, stop:s.st, t:new Date(tGiris).toISOString(), son:new Date(tGiris + T.H*T.ms*(T.uzat || (bist ? 1.45 : 1))).toISOString(),
-          oz:{ alt:tf, tip:T.tip, pk:ayarKimlik(tf, a.P), rj:s.rj, pazar:pz, rsi:Math.round(s.rsi), hk:+(s.hk || 0).toFixed(2), kir:T.tip === "kir", deg:x.d, saat:+new Date(tGiris).toLocaleString("en-US", { timeZone:"Europe/Istanbul", hour:"numeric", hour12:false }) % 24, ih:null, bn:x.bn, ...(T.masraf != null ? { masraf:T.masraf } : {}) }, kaynak:"bot", durum:"acik" }); } }); }
+          oz:{ alt:tf, tip:T.tip, pk:ayarKimlik(tf, a.P), rj:s.rj, pazar:pz, rsi:Math.round(s.rsi), hk:+(s.hk || 0).toFixed(2), kir:T.tip === "kir", deg:x.d, saat:+new Date(tGiris).toLocaleString("en-US", { timeZone:"Europe/Istanbul", hour:"numeric", hour12:false }) % 24, ih:null, bn:x.bn, ...likMasraf(T, pz, x, masraf) }, kaynak:"bot", durum:"acik" }); } }); }
   try{ yeni.push(...await kumarTara(A, { ...ctx, B }, var_, mumVar)); }catch(e){ console.log("kumar tarama hatasi:", e.message); }
   const eklenen = []; for(let i = 0; i < yeni.length; i += 200){ const r = await sb("piyasa_sanal", "POST", yeni.slice(i, i + 200), { Prefer:"return=representation" }); if(Array.isArray(r)) eklenen.push(...r); }
   return { taranan:C.length, bist:B.length, nasdaq:N.length, yeni:yeni.length, eklenen }; }
@@ -334,9 +339,10 @@ async function sonuclandir(masraf){
     if(TF[o.alt]?.kapanisUtc != null){ const k = new Date(t0); k.setUTCHours(kapSaat(TF[o.alt], t0), 0, 0, 0); son = Math.min(son, Math.max(k.getTime(), t0 + 3600000)); }   // v2.12: gun ici trader seans kapanisinda kapanir (eski uzun sureli islemler dahil)
     let r; if(bist || nq){ const Y = await yahoo(bn, "60m", null, t0 - 3600000); r = Y.t.map((t, i) => [t*1000, Y.o[i], Y.h[i], Y.l[i], Y.c[i]]).filter(m => m[0] >= t0); }
     else r = await jget(`${BN}/api/v3/klines?symbol=${bn}&interval=15m&startTime=${t0}&limit=1000`);
-    let st = +o.stop, tepe = +o.giris; const iz = o.oz?.iz, guv = !(st > 0) || st >= +o.giris; if(guv) st = +o.giris*.75;   // v2.4: bozuk (negatif) stoplu eski islemler icin %25 guvenlik stopu
-    for(const m of (r || [])){ const t = +m[0]; if(t >= son) break; if(+m[3] <= st){ s = { cikis:st, neden:iz && st > +o.giris ? "iz süren stop (kârda)" : iz && st > +o.stop ? "iz süren stop" : guv ? "zarar kes (güvenlik stopu)" : "zarar kes", ct:t }; break; } if(+m[2] >= +o.hedef){ s = { cikis:+o.hedef, neden:"hedef", ct:t }; break; }
-      if(iz){ tepe = Math.max(tepe, +m[2]); st = Math.max(st, tepe - iz.m*iz.atr); } }
+    let st = +o.stop, tepe = +o.giris, kilit = false; const iz = o.oz?.iz, guv = !(st > 0) || st >= +o.giris; if(guv) st = +o.giris*.75;   // v2.4: bozuk (negatif) stoplu eski islemler icin %25 guvenlik stopu
+    for(const m of (r || [])){ const t = +m[0]; if(t >= son) break; if(+m[3] <= st){ s = { cikis:st, neden:kilit ? "kâr kilidi (başa baş)" : iz && st > +o.giris ? "iz süren stop (kârda)" : iz && st > +o.stop ? "iz süren stop" : guv ? "zarar kes (güvenlik stopu)" : "zarar kes", ct:t }; break; } if(+m[2] >= +o.hedef){ s = { cikis:+o.hedef, neden:"hedef", ct:t }; break; }
+      if(iz){ tepe = Math.max(tepe, +m[2]); st = Math.max(st, tepe - iz.m*iz.atr); }
+      else if(TF[o.alt] && !guv && +m[2] >= +o.giris + .6*(+o.hedef - +o.giris)){ const bb = +o.giris*(1 + (o.oz?.masraf ?? (bist ? MASRAF_BIST : masraf))/100); if(bb > st){ st = bb; kilit = true; } } }
     if(!s && Date.now() > son && r?.length){ const z = r.filter(m => +m[0] < son).pop() || r[r.length - 1]; s = { cikis:+z[4], neden:"süre doldu", ct:son }; }
     if(!s) return; const brut = (s.cikis/o.giris - 1)*100;
     const net = +(brut - (o.oz?.masraf ?? (bist ? MASRAF_BIST : masraf))).toFixed(4); await sb(`piyasa_sanal?id=eq.${o.id}`, "PATCH", { durum:"kapali", cikis:s.cikis, neden:s.neden, ct:new Date(s.ct).toISOString(), net }, { Prefer:"return=minimal" }); kapanan[o.id] = { net, ct:s.ct, neden:s.neden }; bitti++; });
@@ -401,6 +407,7 @@ function kasaIsle(K, kapanan, adaylar, O, ort = {}){ const simdi = ort.simdi || 
   for(const x of adaylar){ if(K.acik.length >= maks || K.acik.some(p => p.k === x.k) || (K.soguk[x.k] || 0) > simdi) continue;
     if(O.gunMaks && K.acik.concat(K.gecmis || []).filter(p => gunOf(p.t) === bugun).length >= O.gunMaks){ K.durum = `bugün ${O.gunMaks} işlem yapıldı: günlük sınır`; break; }
     if(x.agirlik != null && x.agirlik < .5) continue;
+    if(ort.kor && K.acik.some(p => (ort.kor(p.k, x.k) ?? 0) >= .8)) continue;   // v4.3 acik bir islemle cok benzer hareket ediyorsa (30 gunluk korelasyon >= 0,8) ayni riski iki kez alma
     if(x.deneme && K.acik.filter(p => p.deneme).length >= 2) continue;
     if(BUYUK.test(x.k) && K.acik.some(p => BUYUK.test(p.k))) continue;
     if(O.pazarMaks && K.acik.filter(p => String(p.k).split(":")[0] === String(x.k).split(":")[0]).length >= O.pazarMaks) continue;   // v3.2 risk: ayni piyasada yigilma olmasin
@@ -692,7 +699,44 @@ function konseyHesap(R, BR, pazar, ogr){ const n = R.c.length; if(n < 240) retur
   const one = son.V.filter(o => o.w && Math.abs(o.v) >= .6 && kzSg(o.v) === kzSg(son.puan)).sort((a, b) => b.w*Math.abs(b.v) - a.w*Math.abs(a.v)).slice(0, 4).map(o => `${o.ad}: ${o.not}`);
   const lr = []; for(let i = Math.max(1, ic - 120); i <= ic; i++) lr.push(Math.log(R.c[i]/R.c[i - 1])); const mo = lr.reduce((a, b) => a + b, 0)/(lr.length || 1), vol = Math.sqrt(lr.reduce((a, b) => a + (b - mo)**2, 0)/Math.max(1, lr.length - 1))*Math.sqrt(252);
   const r1y = ic >= 252 ? R.c[ic]/R.c[ic - 252] - 1 : ic >= 120 ? Math.pow(R.c[ic]/R.c[ic - 120], 252/120) - 1 : 0;
-  return { f, puan:son.puan, egim:P[ic] - (P[ic - 3] ?? P[ic]), karar:kzKarar(son.puan)[0], plan, karne, uzama, yas, one, atrp:I.atr[ic]/f, rsi:I.rs[ic], vol, r1y }; }
+  let sc = null; try{ sc = scKisa(senaryoKur(R), R); }catch(e){}
+  return { f, puan:son.puan, egim:P[ic] - (P[ic - 3] ?? P[ic]), karar:kzKarar(son.puan)[0], plan, karne, uzama, yas, one, atrp:I.atr[ic]/f, rsi:I.rs[ic], vol, r1y, sc }; }
+/* ---------- v4.3 UZMAN SENARYOSU (analistlerin "su seviyeye kadar duser, alim noktasi burasi, hedef surasi" cizimi) ----------
+   1) ZigZag ile son buyuk dalga bulunur (yukselis: dip->tepe, dusus: tepe->dip).
+   2) Yukselis dalgasindan sonra: ALIM BOLGESI = Fibonacci %50-%61,8 geri cekilme; ayni bolgede baska destekler (eski dipler, 200/50 gunluk ortalama) varsa bolge guclenir.
+      BOZULMA = %78,6 alti (senaryo iptal) · HEDEF 1 = dalganin tepesi · HEDEF 2 = Fib 1,272 uzanti · HEDEF 3 = Fib 1,618 uzanti
+   3) Dusus dalgasindan sonra (tepki senaryosu): tepki hedefleri %38,2 / %50 / %61,8 geri donus, "buraya kadar dusebilir" = dalganin dibi ve 1,272 uzanti
+   4) GECMIS KANITI: ayni kural bu varligin kendi gecmisinde calistirilir: kac kez olustu, kacinda bolgeden donup hedef 1'e ulasti, ortalama kac gunde. */
+function senaryoKur(R, opt){ const c = R.c, h = R.h, l = R.l, n = c.length; if(n < 120) return null; opt = opt || {};
+  const tr = []; for(let i = 1; i < n; i++) tr.push(Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1]))/c[i - 1]); const atrp = tr.slice(-100).reduce((a, b) => a + b, 0)/Math.min(100, tr.length);
+  const esik = Math.max(opt.min || .08, atrp*6); // zigzag esigi: en az %8 ya da 6 gunluk ortalama oynaklik
+  const P = []; let dir = 0, ext = 0, mn = 0, mx = 0;   // pivotlar: { i, f, t:"H"|"L" }
+  for(let i = 1; i < n; i++){
+    if(dir === 0){ if(l[i] < l[mn]) mn = i; if(h[i] > h[mx]) mx = i; if(mn < i && h[i] >= l[mn]*(1 + esik)){ P.push({ i:mn, f:l[mn], t:"L" }); dir = 1; ext = i; } else if(mx < i && l[i] <= h[mx]*(1 - esik)){ P.push({ i:mx, f:h[mx], t:"H" }); dir = -1; ext = i; } continue; }
+    if(dir === 1){ if(h[i] >= h[ext]) ext = i; else if(l[i] <= h[ext]*(1 - esik)){ P.push({ i:ext, f:h[ext], t:"H" }); dir = -1; ext = i; } }
+    else { if(l[i] <= l[ext]) ext = i; else if(h[i] >= l[ext]*(1 + esik)){ P.push({ i:ext, f:l[ext], t:"L" }); dir = 1; ext = i; } } }
+  if(dir === 1) P.push({ i:ext, f:h[ext], t:"H", acik:true }); else if(dir === -1) P.push({ i:ext, f:l[ext], t:"L", acik:true });
+  if(P.length < 2) return null; const sma = k => { if(n < k) return null; let s = 0; for(let i = n - k; i < n; i++) s += c[i]; return s/k; }, s200 = sma(200), s50 = sma(50), f = c[n - 1];
+  // gecmis kaniti: tum yukselis dalgalari icin %50-61,8 bolgesine inip tepeye geri donme orani
+  const kanit = (() => { let say = 0, ok = 0, gun = 0; for(let k = 1; k < P.length - 1; k++){ const a = P[k - 1], b = P[k]; if(a.t !== "L" || b.t !== "H" || b.acik) continue; const d = b.f - a.f, z1 = b.f - .618*d, z2 = b.f - .5*d, boz = b.f - .786*d;
+      let gir = -1, sonuc = null; for(let j = b.i + 1; j < n && j < b.i + 250; j++){ if(gir < 0){ if(h[j] > b.f) break; if(l[j] <= z2 && l[j] >= boz*0.99){ gir = j; } else if(l[j] < boz) break; }
+        else { if(c[j] < boz){ sonuc = 0; break; } if(h[j] >= b.f){ sonuc = 1; gun += j - gir; break; } } }
+      if(gir >= 0 && sonuc != null){ say++; ok += sonuc; } } return { n:say, isabet:say ? ok/say : null, gun:ok ? Math.round(gun/ok) : null }; })();
+  const A = P[P.length - 2], B = P[P.length - 1], d = Math.abs(B.f - A.f), destekler = [];
+  const yakin = (v, lo, hi) => v != null && v >= lo*0.99 && v <= hi*1.01;
+  if(A.t === "L" && B.t === "H"){ // yukselis dalgasi sonrasi geri cekilme senaryosu
+    const z1 = B.f - .618*d, z2 = B.f - .5*d, boz = B.f - .786*d;
+    P.slice(0, -2).filter(p => p.t === "L" && yakin(p.f, z1, z2)).forEach(p => destekler.push("eski dip " + p.f.toPrecision(5)));
+    P.slice(0, -2).filter(p => p.t === "H" && yakin(p.f, z1, z2)).forEach(p => destekler.push("eski tepe (artık destek) " + p.f.toPrecision(5)));
+    if(yakin(s200, z1, z2)) destekler.push("200 günlük ortalama"); if(yakin(s50, z1, z2)) destekler.push("50 günlük ortalama");
+    const durum = f > z2*1.01 ? "bekleniyor" : f >= z1*0.99 ? "bölgede" : f >= boz ? "derin" : "bozuldu";
+    return { tip:"yukselis", A, B, f, alim:[z1, z2], boz, hedef:[B.f, B.f + .272*d, B.f + .618*d], dusebilir:z1, destekler, durum, kanit, esik, P:P.slice(-6) }; }
+  if(A.t === "H" && B.t === "L"){ // dusus dalgasi sonrasi tepki senaryosu
+    const r1 = B.f + .382*d, r2 = B.f + .5*d, r3 = B.f + .618*d, ext = B.f - .272*d;
+    const durum = f < B.f*1.03 ? "dipte" : f < r1 ? "tepki başladı" : f < r3 ? "tepki bölgesinde" : "dalga aşıldı";
+    return { tip:"tepki", A, B, f, alim:[B.f, B.f*1.03], boz:ext, hedef:[r1, r2, r3], dusebilir:ext, destekler, durum, kanit, esik, P:P.slice(-6) }; }
+  return null; }
+const scKisa = (S, R) => S ? { tip:S.tip, durum:S.durum, alim:S.alim.map(v => +v.toPrecision(6)), boz:+S.boz.toPrecision(6), hedef:S.hedef.map(v => +v.toPrecision(6)), dusebilir:+S.dusebilir.toPrecision(6), destekler:S.destekler.slice(0, 3), kanit:S.kanit, A:{ f:+S.A.f.toPrecision(6), t:R.t[S.A.i] }, B:{ f:+S.B.f.toPrecision(6), t:R.t[S.B.i] } } : null;
 /* v4.2 TEMEL KALITE PUANI (0-100): ayni piyasadaki hisselerle kiyasla (yuzdelik sira) · deger 35 · karlilik 30 · saglamlik 15 · buyume 20
    + TAHMINI FIYAT YOLU: 1/3/6/12 ay · beklenen + %10 kotu / %90 iyi senaryo. Beklenen getiri = piyasanin dogal kaymasi (TL'de enflasyon) + trend + Bay Pipo puani + temel kalite; bant = oynaklik. */
 let TEMEL_YIL = null;
@@ -731,14 +775,18 @@ async function oneriler(B, N, C, eski){ const t0 = Date.now(), R = { t:Date.now(
     L.forEach(x => { const a = x.karne.al; x.p = (a.isabet*a.n + pG*m)/(a.n + m); x.ort = (a.ort*a.n + oG*m)/(a.n + m); x.n = a.n; x.baz = x.karne.baz;
       x.edge = x.p - x.baz; delete x.karne; });
     if(pz !== "kripto"){ const V = await temelVeri(pz, L); temelPuanla(L, pz, V); }
+    // v4.3 uzman senaryosu: bu piyasada yontemin genel isabeti (tum varliklarin kendi gecmisinden) + bolgedeki varliga bonus
+    { let n = 0, ok = 0; L.forEach(x => { const k = x.sc?.kanit; if(x.sc?.tip === "yukselis" && k?.n){ n += k.n; ok += k.isabet*k.n; } }); R.scKarne = R.scKarne || {}; R.scKarne[pz] = { n, isabet:n ? +(ok/n).toFixed(3) : null };
+      const genel = n >= 10 ? ok/n : .5; L.forEach(x => { const S = x.sc; if(S?.tip !== "yukselis" || S.durum !== "bölgede") return; const k = S.kanit, isb = k?.n >= 3 ? k.isabet : genel;
+        if(isb >= .55){ x.scBonus = 1.15; x.one = [`📐 Uzman senaryosu: fiyat Fibonacci alım bölgesinde · geçmişte %${Math.round(isb*100)} tuttu`, ...(x.one || [])].slice(0, 5); } }); }
     L.forEach(x => { x.toplam = x.temel ? Math.round(x.puan*.7 + (x.temel.puan - 50)*2*.3) : x.puan; x.tah = tahminYol(x, pz); });
-    R.tum = R.tum || {}; R.tum[pz] = L.map(x => ({ k:x.k, f:x.f, puan:x.puan, toplam:x.toplam, karar:x.karar, eylem:x.plan.eylem, temel:x.temel || null, tah:x.tah, al:x.plan.al, stop:x.plan.stop, H:x.plan.H }));
+    R.tum = R.tum || {}; R.tum[pz] = L.map(x => ({ k:x.k, f:x.f, puan:x.puan, toplam:x.toplam, karar:x.karar, eylem:x.plan.eylem, temel:x.temel || null, tah:x.tah, sc:x.sc || null, al:x.plan.al, stop:x.plan.stop, H:x.plan.H }));
     const esik = ES[pz]?.v ?? 15;
-    const tk = x => 1 + (x.temel ? (x.temel.puan - 50)/200 : 0);   // v4.2 temel kalite siralamaya katilir; cok zayif temel (< 20) AL listesine girmez
+    const tk = x => (1 + (x.temel ? (x.temel.puan - 50)/200 : 0))*(x.scBonus || 1);   // v4.2 temel kalite siralamaya katilir; cok zayif temel (< 20) AL listesine girmez
     const al = L.filter(x => x.puan >= esik && x.plan.eylem === "AL" && x.ort > 0 && x.p > x.baz - .01 && !(x.temel && x.temel.puan < 20)).sort((a, b) => (b.ort*(.5 + b.p)*tk(b)) - (a.ort*(.5 + a.p)*tk(a)));
     const izle = L.filter(x => !al.includes(x) && x.puan >= 0 && x.puan < 15 && x.egim >= 10 && x.ort > 0).sort((a, b) => b.egim - a.egim);
     const kac = L.filter(x => x.puan <= -40).sort((a, b) => a.puan - b.puan);
-    const kisa = x => ({ k:x.k, kod:x.kod, f:x.f, puan:x.puan, toplam:x.toplam, temel:x.temel || null, tah:x.tah, karar:x.karar, eylem:x.plan.eylem, al:x.plan.al, stop:x.plan.stop, H:x.plan.H, rr:+x.plan.rr.toFixed(2), p:+x.p.toFixed(3), ort:+(x.ort*100).toFixed(2), n:x.n, baz:+x.baz.toFixed(3), yas:x.yas, uzama:+x.uzama.toFixed(2), one:x.one, egim:x.egim, rsi:+(x.rsi || 0).toFixed(0) });
+    const kisa = x => ({ k:x.k, kod:x.kod, f:x.f, puan:x.puan, toplam:x.toplam, temel:x.temel || null, tah:x.tah, sc:x.sc || null, karar:x.karar, eylem:x.plan.eylem, al:x.plan.al, stop:x.plan.stop, H:x.plan.H, rr:+x.plan.rr.toFixed(2), p:+x.p.toFixed(3), ort:+(x.ort*100).toFixed(2), n:x.n, baz:+x.baz.toFixed(3), yas:x.yas, uzama:+x.uzama.toFixed(2), one:x.one, egim:x.egim, rsi:+(x.rsi || 0).toFixed(0) });
     R.pazar[pz] = al.slice(0, 10).map(kisa); R.izle[pz] = izle.slice(0, 6).map(kisa); R.kacin[pz] = kac.slice(0, 6).map(kisa); }
   // karne: gunde bir kez her piyasanin ilk 5'ini kaydet, 10 gun sonra hedef/stop/sure sonucuyla kapat
   const kay = (eski?.kayit || []).slice(-600), gun = new Date(Date.now() + 3*3600000).toISOString().slice(0, 10);
@@ -784,6 +832,20 @@ async function ekoTakvim(){ const now = Date.now(), from = new Date(now - 864000
   const L = (r?.result || []).filter(e => e.date && (e.importance >= 0 || ["US", "TR"].includes(e.country))).map(e => ({ t:Date.parse(e.date), u:e.country, ad:tr(e.title || e.indicator || ""), onem:e.importance ?? 0,
       b:sayi(e.forecast), o:sayi(e.previous), g:sayi(e.actual), br:e.unit && e.unit !== "%" ? "" : e.unit === "%" ? "%" : "" })).filter(e => isFinite(e.t)).sort((a, b) => a.t - b.t).slice(0, 220);
   if(!L.length) throw new Error("bos cevap"); return { t:now, L }; }
+/* ---------- v4.3 korelasyon: son 30 gunluk gunluk getirilerden (calisma basina bir kez, sadece aday + acik varliklar) ---------- */
+async function korelasyonKur(K){ const S = [...new Set(K)].slice(0, 60); if(S.length < 2) return null; const G = {};
+  await havuz(S, 6, async k => { try{ const [t, kod] = k.split(":"); const R = t === "KRIPTO" ? kapaliMumlar(await klines(kod + "USDT", "1d", 40)) : kapaliMumlar(await yahoo(t === "BIST" ? kod + ".IS" : kod, "1d", "3mo"));
+      const m = new Map(); for(let i = 1; i < R.c.length; i++) m.set(Math.floor((R.t[i] + 3*3600)/86400), R.c[i]/R.c[i - 1] - 1); G[k] = m; }catch(e){} });
+  const onb = {}; return (a, b) => { if(a === b) return 1; const key = a < b ? a + "|" + b : b + "|" + a; if(key in onb) return onb[key]; const A = G[a], B = G[b]; if(!A || !B) return onb[key] = null;
+    const x = [], y = []; A.forEach((v, g) => { if(B.has(g)){ x.push(v); y.push(B.get(g)); } }); const n = x.length; if(n < 15) return onb[key] = null;
+    const mx = x.reduce((s, v) => s + v, 0)/n, my = y.reduce((s, v) => s + v, 0)/n; let c = 0, vx = 0, vy = 0; for(let i = 0; i < n; i++){ c += (x[i] - mx)*(y[i] - my); vx += (x[i] - mx)**2; vy += (y[i] - my)**2; }
+    return onb[key] = vx && vy ? c/Math.sqrt(vx*vy) : null; }; }
+/* ---------- v4.3 haftalik Bay Pipo raporu (pazar aksami telefona + bot ekranina) ---------- */
+function haftalikRapor(kasa, D){ const hafta = Date.now() - 7*86400000, AD = { karma:"Ana kasa", disiplin:"Disiplinli", trader:"Trader", her:"Piyango", kumar:"Kumar" }, K = {};
+  for(const [k, ad] of Object.entries(AD)){ const X = kasa[k]; if(!X) continue; const G = (X.gecmis || []).filter(g => (g.ct || 0) >= hafta), kz = G.reduce((t, g) => t + (g.kz || 0), 0);
+    K[k] = { ad, n:G.length, kz:Math.round(kz), isabet:G.length ? Math.round(G.filter(g => g.net > 0).length/G.length*100) : null, bakiye:Math.round(X.bakiye), en:G.slice().sort((a, b) => b.net - a.net)[0] || null, kotu:G.slice().sort((a, b) => a.net - b.net)[0] || null }; }
+  const tk = (D.takvim?.L || []).filter(e => e.onem >= 1 && e.t > Date.now() && e.t < Date.now() + 7*86400000).slice(0, 4).map(e => `${new Date(e.t + 3*3600000).toISOString().slice(5, 10).split("-").reverse().join(".")} ${e.ad}`);
+  return { t:Date.now(), K, makro:D.makro ? { puan:D.makro.puan, etiket:D.makro.etiket } : null, ogrenme:D.oneri?.kzW?.degisen ?? null, esik:D.oneri?.esik || null, takvim:tk, aktifSinyal:(D.buyukSinyal?.L || []).filter(b => b.aktif).map(b => b.ad) }; }
 /* ---------- v4.1 BOGA-AYI GOSTERGESI (BofA Bull & Bear mantigi, ucretsiz verilerle) ----------
    0 = herkes korkmus (tarihsel olarak alim firsati) · 10 = herkes acgozlu (tarihsel olarak riskli). Bot 8 ustunde pozisyonlari kucultur, 2 altinda biraz buyutur. */
 const fredSon = async id => { const r = await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}`, { headers:{ "User-Agent":"Mozilla/5.0" } }); if(!r.ok) throw new Error("FRED " + r.status);
@@ -925,6 +987,9 @@ async function bildirimTuru(x){ const eski = x.eskiD?.bildirim || {}, gon = { ..
       if(d != null && d >= 0 && d <= 1 && T.h >= 9) olay.push({ kim:uid, kat:"takvim", key:`tem|${uid}|${k}|${s.tem}`, baslik:`💰 ${String(k).split(":")[1]} temettü hak kesimi ${d === 0 ? "bugün" : "yarın"}`, govde:"O sabah fiyat temettü kadar düşük açılır; kayıp değil, temettü olarak geri gelir.", git:"piyasaDetay:" + k }); });
     if(P.length && T.h >= 18.5 && T.h < 19.5 && T.hafta >= 1 && T.hafta <= 5){ let deg = 0, top = 0; P.forEach(p => { const s = F[p.sembol]; if(!s?.f) return; const kat = /^(NASDAQ|KRIPTO)/.test(p.sembol) || ["MADEN:XAU", "MADEN:XAG", "MADEN:XPT", "MADEN:XPD", "MADEN:HG", "DOVIZ:BRENT"].includes(p.sembol) ? (F["DOVIZ:USDTRY"]?.f || x.usd || 0) : 1, v = s.f*(+p.adet || 0)*kat; top += v; deg += v - v/(1 + (s.deg || 0)/100); });
       if(top) olay.push({ kim:uid, kat:"gunsonu", key:`gs|${uid}|${T.gun}`, baslik:`📊 Gün sonu: portföy ${deg >= 0 ? "+" : ""}${bp(deg, 0)} ₺ (${deg >= 0 ? "+" : ""}${bp(deg/(top - deg)*100, 1)}%)`, govde:`Toplam ${bp(top, 0)} ₺. Ayrıntı için dokun.`, git:"piyasa:portfoy" }); } }
+  // --- haftalik rapor (pazar aksami, herkese)
+  { const H = x.yeniD?.haftalik; if(H?.t && now - H.t < 3*3600000){ const A = H.K?.karma, D = H.K?.disiplin, Tr = H.K?.trader, f = v => `${v >= 0 ? "+" : ""}${bp(v, 0)} ₺`;
+      olay.push({ kat:"rapor", key:`hafta|${new Date(H.t).toISOString().slice(0, 10)}`, baslik:`🗞 Bay Pipo haftalık rapor: Ana kasa ${A ? f(A.kz) : "—"}`, govde:[D ? `Disiplinli ${f(D.kz)} (${D.n} işlem)` : "", Tr ? `Trader ${f(Tr.kz)} (${Tr.n})` : "", H.makro ? `Boğa-Ayı ${H.makro.puan}/10` : "", H.takvim?.length ? `Bu hafta: ${H.takvim.slice(0, 2).join(", ")}` : ""].filter(Boolean).join(" · ").slice(0, 220), git:"piyasa:ekstrem" }); } }
   // --- buyuk sinyaller (yeni aktif olan) + Boga-Ayi asiri bolge
   (x.yeniD?.buyukSinyal?.L || []).filter(b => b.aktif).forEach(b => olay.push({ kat:"sinyal", key:`bs|${b.ad}|${b.tarih || T.gun}`, baslik:`🚨 Büyük sinyal: ${b.ad}`, govde:`${b.not}${b.gecmis ? ` Geçmişte ${b.gecmis.n} kez: ${b.gecmis.gun} gün sonra ort. %${b.gecmis.ort}, isabet %${Math.round(b.gecmis.isabet*100)}.` : ""}`.slice(0, 220), git:"piyasa:ozet" }));
   { const m = x.yeniD?.makro; if(m?.sinyal) olay.push({ kat:"sinyal", key:`mk|${m.etiket}|${T.gun}`, baslik:`🌡️ Boğa-Ayı göstergesi ${m.puan}/10: ${m.etiket}`, govde:m.sinyal, git:"piyasa:ozet" }); }
@@ -975,7 +1040,8 @@ async function bildirimTuru(x){ const eski = x.eskiD?.bildirim || {}, gon = { ..
   for(const k of ["disiplin", "her", "kumar", "trader", "karma"]) if(kasa[k] && kasa[k].bas !== KASA_BAS && !kasa[k].turlar?.some(t => t.bas === KASA_BAS)){ const o = kasa[k]; kasa[k] = { ...kasaYeni(), eski:{ bas:o.bas, son:+(+o.bakiye).toFixed(2), islem:(o.turlar || []).reduce((t, x) => t + (x.islem || 0), 0) + (o.islem || 0), bitis:Date.now() } }; }
   const makro = await makroGosterge(satir?.durum?.makro, ctx).catch(e => { console.log("makro gosterge:", e.message); return satir?.durum?.makro || null; });
   const makroKat = makro?.puan == null ? 1 : makro.puan >= 8 ? .6 : makro.puan >= 7 ? .8 : makro.puan <= 2 ? 1.15 : 1;
-  const ortam = { rejim:RJ.simdi, simdi:Date.now(), makroKat, makroNot:makro?.puan != null ? `Boğa-Ayı göstergesi ${makro.puan}/10 (${makro.etiket}): pozisyonlar ×${makroKat}` : "" };
+  const kor = await korelasyonKur([...disiplinAday, ...traderAday, ...kumarAday, ...herAday].slice(0, 40).map(x => x.k).concat(["disiplin", "trader", "karma", "her", "kumar"].flatMap(k => (kasa[k]?.acik || []).map(p => p.k)))).catch(e => { console.log("korelasyon:", e.message); return null; });
+  const ortam = { kor, rejim:RJ.simdi, simdi:Date.now(), makroKat, makroNot:makro?.puan != null ? `Boğa-Ayı göstergesi ${makro.puan}/10 (${makro.etiket}): pozisyonlar ×${makroKat}` : "" };
   kasa.disiplin = kasaIsle(kasa.disiplin || kasaYeni(), kapanmis, disiplinAday, KASA_AYAR.disiplin, ortam); kasa.her = kasaIsle(kasa.her || kasaYeni(), kapanmis, herAday, KASA_AYAR.her, ortam); kasa.kumar = kasaIsle(kasa.kumar || kasaYeni(), kapanmis, kumarAday, KASA_AYAR.kumar, ortam); kasa.trader = kasaIsle(kasa.trader || kasaYeni(), kapanmis, traderAday, KASA_AYAR.trader, ortam);
   A.meta = await metaOgren(A.meta).catch(e => { console.log("meta model:", e.message); return A.meta || null; });
   const metaGec = x => { const M = A.meta; if(!M?.aktif) return true; const v = metaOz(x.oz); if(!v) return true; const p = tahmin(M, v); x.metaP = +p.toFixed(3); return p >= M.esik; };
@@ -1013,8 +1079,9 @@ async function bildirimTuru(x){ const eski = x.eskiD?.bildirim || {}, gon = { ..
       TEMEL_YIL = eskiD.temel || null; oneri = await oneriler(B, N, C, eskiD.oneri); console.log(`oneri motoru: BIST ${oneri.pazar.bist?.length || 0} · NASDAQ ${oneri.pazar.nasdaq?.length || 0} · kripto ${oneri.pazar.kripto?.length || 0} oneri, karne ${oneri.karne.n} sonuclandi (${oneri.karne.hedef} hedef / ${oneri.karne.stop} stop), ${oneri.sure} sn`); }
     catch(e){ console.log("oneri motoru calismadi:", e.message); oneri = eskiD.oneri || null; } }
   if(ihale?.liste){ const n = await meDetayTamamla(ihale).catch(e => { console.log("ihale detay tamamlama:", e.message); return 0; }); if(n) console.log(`ihale detay: +${n} (toplam ${Object.keys(ihale.detay).length}/${ihale.liste.length})`); }
-  const bildirim = await bildirimTuru({ eskiD, yeniD:{ bistSinyal:bistSin, kriptoSinyal:ksin, nasdaqSinyal:nsin, oneri, takvim, kap, buyukSinyal, makro }, kasa, eskiKasa:eskiKasaAcik, usd:null }).catch(e => { console.log("bildirim turu hatasi:", e.message); return eskiD.bildirim || null; });
-  const kayit = { user_id:UID, algo:A, kasa, son_tarama:new Date().toISOString(), ...(egitildi ? { son_egitim:new Date().toISOString() } : {}), durum:{ rejim:RJ.simdi, btcFark:+(RJ.fark*100).toFixed(2), acikStrateji:[...Object.keys(TF), ...Object.keys(KUMAR)].filter(tf => A[tf]?.aktif || kanit[tf]), bistRejim:RJB?.simdi || 0, bistFark:RJB ? +(RJB.fark*100).toFixed(2) : null, bist:T1.bist, bistSinyal:bistSin, bistFirsat:bistFr || [], kriptoSinyal:ksin, nasdaqSinyal:nsin, ihale, oneri, takvim, bildirim, tefas, kap, temel, makro, buyukSinyal, temelT:(temel !== eskiD.temel ? Date.now() : eskiD.temelT || 0), taranan:T1.taranan, yeni:T1.yeni, acik:S1.acik - S1.bitti, bitti:S1.bitti, sure:Math.round((Date.now() - bas)/1000), masraf } };
+  const haftalik = (() => { const T = new Date(Date.now() + 3*3600000), eski = eskiD.haftalik; return T.getUTCDay() === 0 && T.getUTCHours() >= 19 && (!eski?.t || Date.now() - eski.t > 5*86400000) ? haftalikRapor(kasa, { takvim, makro, buyukSinyal, oneri }) : eski || null; })();
+  const bildirim = await bildirimTuru({ eskiD, yeniD:{ bistSinyal:bistSin, kriptoSinyal:ksin, nasdaqSinyal:nsin, oneri, takvim, kap, buyukSinyal, makro, haftalik }, kasa, eskiKasa:eskiKasaAcik, usd:null }).catch(e => { console.log("bildirim turu hatasi:", e.message); return eskiD.bildirim || null; });
+  const kayit = { user_id:UID, algo:A, kasa, son_tarama:new Date().toISOString(), ...(egitildi ? { son_egitim:new Date().toISOString() } : {}), durum:{ rejim:RJ.simdi, btcFark:+(RJ.fark*100).toFixed(2), acikStrateji:[...Object.keys(TF), ...Object.keys(KUMAR)].filter(tf => A[tf]?.aktif || kanit[tf]), bistRejim:RJB?.simdi || 0, bistFark:RJB ? +(RJB.fark*100).toFixed(2) : null, bist:T1.bist, bistSinyal:bistSin, bistFirsat:bistFr || [], kriptoSinyal:ksin, nasdaqSinyal:nsin, ihale, oneri, takvim, bildirim, tefas, kap, temel, makro, buyukSinyal, haftalik, temelT:(temel !== eskiD.temel ? Date.now() : eskiD.temelT || 0), taranan:T1.taranan, yeni:T1.yeni, acik:S1.acik - S1.bitti, bitti:S1.bitti, sure:Math.round((Date.now() - bas)/1000), masraf } };
   await sb("piyasa_bot?on_conflict=user_id", "POST", kayit, { Prefer:"resolution=merge-duplicates,return=minimal" });
   console.log(`kasa: disiplinli tur ${kasa.disiplin.tur} ${Math.round(kasa.disiplin.bakiye)} TL (${kasa.disiplin.acik.length} acik) · piyango tur ${kasa.her.tur} ${Math.round(kasa.her.bakiye)} TL (${kasa.her.acik.length} acik) · kumar tur ${kasa.kumar.tur} ${Math.round(kasa.kumar.bakiye)} TL (${kasa.kumar.acik.length} acik) · trader tur ${kasa.trader.tur} ${Math.round(kasa.trader.bakiye)} TL (${kasa.trader.acik.length} acik) · ana kasa ${Math.round(kasa.karma.bakiye)} TL (${kasa.karma.acik.length} acik)`);
   console.log(`tamam: ${T1.taranan} coin + ${T1.bist} BIST + ${T1.nasdaq || 0} NASDAQ hissesi tarandi, +${T1.yeni} yeni sanal islem, ${S1.bitti} sonuclandi, acik ${S1.acik - S1.bitti}, algoritma v${A.surum}${egitildi ? " (yeni egitildi)" : ""}, ${Math.round((Date.now() - bas)/1000)} sn`);

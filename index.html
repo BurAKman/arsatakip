@@ -4471,7 +4471,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const app = document.getElementById("app");
 const T = document.getElementById("toast");
-const SURUM_MORDOR = "v 4.2.0";
+const SURUM_MORDOR = "v 4.3.0";
 const SURUM_MELKOR = "v 1.2";
 const SURUM = "v 1.0";          // hata ekrani ve yedek dosyasi icin
 const surumYazi = () => anaTema() === "loca" ? SURUM_MELKOR : SURUM_MORDOR;
@@ -28719,6 +28719,91 @@ function v42SistemHtml(row){ if(!row) return ""; const D = row.durum || {}, A = 
 .v42Sis{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 12px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07);font-size:12px}
 .v42Sis > b{margin-right:4px}.v42Sis span{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:9px;background:rgba(255,255,255,.04)}.v42Sis small{color:#8E8C93}.v42Sis i{width:8px;height:8px;border-radius:50%;background:#555}
 .v42Sis .yes i{background:#4FD08A}.v42Sis .sar i{background:#E8B661}.v42Sis .kir i{background:#FF5A64}`; document.head.appendChild(st); }
+/* ---------- v4.3 UZMAN SENARYOSU (analistlerin "su seviyeye kadar duser, alim noktasi burasi, hedef surasi" cizimi) ----------
+   1) ZigZag ile son buyuk dalga bulunur (yukselis: dip->tepe, dusus: tepe->dip).
+   2) Yukselis dalgasindan sonra: ALIM BOLGESI = Fibonacci %50-%61,8 geri cekilme; ayni bolgede baska destekler (eski dipler, 200/50 gunluk ortalama) varsa bolge guclenir.
+      BOZULMA = %78,6 alti (senaryo iptal) · HEDEF 1 = dalganin tepesi · HEDEF 2 = Fib 1,272 uzanti · HEDEF 3 = Fib 1,618 uzanti
+   3) Dusus dalgasindan sonra (tepki senaryosu): tepki hedefleri %38,2 / %50 / %61,8 geri donus, "buraya kadar dusebilir" = dalganin dibi ve 1,272 uzanti
+   4) GECMIS KANITI: ayni kural bu varligin kendi gecmisinde calistirilir: kac kez olustu, kacinda bolgeden donup hedef 1'e ulasti, ortalama kac gunde. */
+function senaryoKur(R, opt){ const c = R.c, h = R.h, l = R.l, n = c.length; if(n < 120) return null; opt = opt || {};
+  const tr = []; for(let i = 1; i < n; i++) tr.push(Math.max(h[i] - l[i], Math.abs(h[i] - c[i - 1]), Math.abs(l[i] - c[i - 1]))/c[i - 1]); const atrp = tr.slice(-100).reduce((a, b) => a + b, 0)/Math.min(100, tr.length);
+  const esik = Math.max(opt.min || .08, atrp*6); // zigzag esigi: en az %8 ya da 6 gunluk ortalama oynaklik
+  const P = []; let dir = 0, ext = 0, mn = 0, mx = 0;   // pivotlar: { i, f, t:"H"|"L" }
+  for(let i = 1; i < n; i++){
+    if(dir === 0){ if(l[i] < l[mn]) mn = i; if(h[i] > h[mx]) mx = i; if(mn < i && h[i] >= l[mn]*(1 + esik)){ P.push({ i:mn, f:l[mn], t:"L" }); dir = 1; ext = i; } else if(mx < i && l[i] <= h[mx]*(1 - esik)){ P.push({ i:mx, f:h[mx], t:"H" }); dir = -1; ext = i; } continue; }
+    if(dir === 1){ if(h[i] >= h[ext]) ext = i; else if(l[i] <= h[ext]*(1 - esik)){ P.push({ i:ext, f:h[ext], t:"H" }); dir = -1; ext = i; } }
+    else { if(l[i] <= l[ext]) ext = i; else if(h[i] >= l[ext]*(1 + esik)){ P.push({ i:ext, f:l[ext], t:"L" }); dir = 1; ext = i; } } }
+  if(dir === 1) P.push({ i:ext, f:h[ext], t:"H", acik:true }); else if(dir === -1) P.push({ i:ext, f:l[ext], t:"L", acik:true });
+  if(P.length < 2) return null; const sma = k => { if(n < k) return null; let s = 0; for(let i = n - k; i < n; i++) s += c[i]; return s/k; }, s200 = sma(200), s50 = sma(50), f = c[n - 1];
+  // gecmis kaniti: tum yukselis dalgalari icin %50-61,8 bolgesine inip tepeye geri donme orani
+  const kanit = (() => { let say = 0, ok = 0, gun = 0; for(let k = 1; k < P.length - 1; k++){ const a = P[k - 1], b = P[k]; if(a.t !== "L" || b.t !== "H" || b.acik) continue; const d = b.f - a.f, z1 = b.f - .618*d, z2 = b.f - .5*d, boz = b.f - .786*d;
+      let gir = -1, sonuc = null; for(let j = b.i + 1; j < n && j < b.i + 250; j++){ if(gir < 0){ if(h[j] > b.f) break; if(l[j] <= z2 && l[j] >= boz*0.99){ gir = j; } else if(l[j] < boz) break; }
+        else { if(c[j] < boz){ sonuc = 0; break; } if(h[j] >= b.f){ sonuc = 1; gun += j - gir; break; } } }
+      if(gir >= 0 && sonuc != null){ say++; ok += sonuc; } } return { n:say, isabet:say ? ok/say : null, gun:ok ? Math.round(gun/ok) : null }; })();
+  const A = P[P.length - 2], B = P[P.length - 1], d = Math.abs(B.f - A.f), destekler = [];
+  const yakin = (v, lo, hi) => v != null && v >= lo*0.99 && v <= hi*1.01;
+  if(A.t === "L" && B.t === "H"){ // yukselis dalgasi sonrasi geri cekilme senaryosu
+    const z1 = B.f - .618*d, z2 = B.f - .5*d, boz = B.f - .786*d;
+    P.slice(0, -2).filter(p => p.t === "L" && yakin(p.f, z1, z2)).forEach(p => destekler.push("eski dip " + p.f.toPrecision(5)));
+    P.slice(0, -2).filter(p => p.t === "H" && yakin(p.f, z1, z2)).forEach(p => destekler.push("eski tepe (artık destek) " + p.f.toPrecision(5)));
+    if(yakin(s200, z1, z2)) destekler.push("200 günlük ortalama"); if(yakin(s50, z1, z2)) destekler.push("50 günlük ortalama");
+    const durum = f > z2*1.01 ? "bekleniyor" : f >= z1*0.99 ? "bölgede" : f >= boz ? "derin" : "bozuldu";
+    return { tip:"yukselis", A, B, f, alim:[z1, z2], boz, hedef:[B.f, B.f + .272*d, B.f + .618*d], dusebilir:z1, destekler, durum, kanit, esik, P:P.slice(-6) }; }
+  if(A.t === "H" && B.t === "L"){ // dusus dalgasi sonrasi tepki senaryosu
+    const r1 = B.f + .382*d, r2 = B.f + .5*d, r3 = B.f + .618*d, ext = B.f - .272*d;
+    const durum = f < B.f*1.03 ? "dipte" : f < r1 ? "tepki başladı" : f < r3 ? "tepki bölgesinde" : "dalga aşıldı";
+    return { tip:"tepki", A, B, f, alim:[B.f, B.f*1.03], boz:ext, hedef:[r1, r2, r3], dusebilir:ext, destekler, durum, kanit, esik, P:P.slice(-6) }; }
+  return null; }
+
+/* ================= v4.3 istemci: uzman senaryosu grafikte + sade anlatim · bildirim turleri · haftalik rapor · gercek vs sanal ================= */
+V3_BLD_TUR.push(["sinyal", "🚨 Büyük sinyaller & Boğa-Ayı uç bölge", "Altın/ölüm kesişimi, VIX paniği, kredi stresi, aşırı korku/açgözlülük"], ["rapor", "🗞 Haftalık Bay Pipo raporu", "Pazar akşamı: kasalar ne yaptı, bu hafta neler var"]);
+if(typeof PZD !== "undefined" && PZD.katman && PZD.katman.sc == null) PZD.katman.sc = true;
+{ const eski = pzdKatmanCiz; pzdKatmanCiz = function(){ const r = eski.apply(this, arguments); const k = document.getElementById("pzdKatman");
+    if(k && PZD.sekme === "bizim" && !k.querySelector(".scK")) k.insertAdjacentHTML("afterbegin", `<label class="scK ${PZD.katman.sc ? "on" : ""}"><input type="checkbox" ${PZD.katman.sc ? "checked" : ""} onchange="PZD.katman.sc=this.checked;pzdGrafikCiz()">📐 Uzman senaryosu</label>`); return r; }; }
+function v43Metin(S, s){ const p = v => pzPara(v, s?.para), y = v => { const x = (v/S.f - 1)*100; return `${x >= 0 ? "+" : ""}${x.toFixed(1).replace(".", ",")}%`; }, K = S.kanit;
+  const kan = K?.n >= 3 ? `Bu ${pzTur(s.k) === "KRIPTO" ? "kriptoda" : "hissede"} aynı kurulum geçmişte <b>${K.n} kez</b> oluştu, <b>%${Math.round(K.isabet*100)}</b>'inde alım bölgesinden dönüp hedef 1'e ulaştı${K.gun ? ` (ortalama ${K.gun} işlem günü)` : ""}.` : `Bu varlıkta geçmiş örnek az (${K?.n || 0}); senaryoyu tek başına değil, Bay Pipo raporuyla birlikte değerlendir.`;
+  if(S.tip === "yukselis"){ const dur = { "bekleniyor":`Fiyat (${p(S.f)}) henüz alım bölgesinin üstünde. Sabırlı yatırımcı geri çekilmeyi bekler.`, "bölgede":`<b>Fiyat şu an alım bölgesinde.</b> Analistlerin "alım noktası" dediği yer burası.`, "derin":`Fiyat alım bölgesinin altına sarktı ama senaryo henüz bozulmadı; dikkatli ol.`, "bozuldu":`<b>Senaryo bozuldu:</b> fiyat %78,6 seviyesinin altında. Yeni dip oluşması beklenir.` }[S.durum];
+    return `<p>📈 Son büyük yükseliş dalgası <b>${p(S.A.f)} → ${p(S.B.f)}</b> (+${((S.B.f/S.A.f - 1)*100).toFixed(0)}%). ${dur}</p>
+      <ul><li>⬇️ <b>Buraya kadar düşebilir / alım bölgesi:</b> ${p(S.alim[0])} – ${p(S.alim[1])} (${y(S.alim[0])} / ${y(S.alim[1])}) · Fibonacci %50–%61,8${S.destekler.length ? " + " + S.destekler.join(", ") : ""}</li>
+      <li>🎯 <b>Hedefler:</b> H1 ${p(S.hedef[0])} (${y(S.hedef[0])}) · H2 ${p(S.hedef[1])} (${y(S.hedef[1])}) · H3 ${p(S.hedef[2])} (${y(S.hedef[2])})</li>
+      <li>⛔ <b>Senaryo bozulur:</b> ${p(S.boz)} altında kapanış (${y(S.boz)})</li></ul><p class="v43Kan">${kan}</p>`; }
+  return `<p>📉 Son büyük düşüş dalgası <b>${p(S.A.f)} → ${p(S.B.f)}</b> (${((S.B.f/S.A.f - 1)*100).toFixed(0)}%). Tepki senaryosu (durum: ${S.durum}).</p>
+    <ul><li>🎯 <b>Tepki hedefleri:</b> ${p(S.hedef[0])} (${y(S.hedef[0])}) · ${p(S.hedef[1])} (${y(S.hedef[1])}) · ${p(S.hedef[2])} (${y(S.hedef[2])}) · bu bölgeler düşüş trendinde satış baskısıyla karşılaşır</li>
+    <li>⬇️ <b>Düşüş sürerse buraya kadar inebilir:</b> ${p(S.dusebilir)} (${y(S.dusebilir)}) · dalganın %127,2 uzantısı</li></ul><p class="v43Kan">Düşüş trendinde "dipten alım" risklidir; dönüş teyidi (yükselen dip) olmadan büyük pozisyon açılmaz.</p>`; }
+{ const eski = pzdGrafikCiz; pzdGrafikCiz = async function(){ const r = await eski.apply(this, arguments);
+    try{ document.getElementById("v43Sc")?.remove(); if(PZD.sekme !== "bizim" || !PZD.katman.sc || /^(1G|5G)$/.test(PZD.aralik)) return r; const ana = PZD.grafikler[0], s = PZD.s, yard = PZD.cizYard; if(!ana || !s || !yard) return r; const kk = s.k;
+      const R2 = await pzGecmis(s, "2Y").catch(() => null); if(!R2?.c?.length || PZD.grafikler[0] !== ana || PZD.s?.k !== kk) return r; const S = senaryoKur(R2); if(!S) return r; PZD.senaryo = S;
+      const yesil = "rgba(79,208,138,.95)", alt = (f, renk, t, st = 2, w = 2) => yard.createPriceLine({ price:f, color:renk, lineWidth:w, lineStyle:st, axisLabelVisible:true, title:t });
+      if(S.tip === "yukselis"){ alt(S.alim[1], yesil, "📐 Alım bölgesi", 2, 2); alt(S.alim[0], yesil, "", 2, 2); alt(S.boz, "#FF5A64", "Senaryo bozulur", 1, 1); S.hedef.slice(0, 2).forEach((h, i) => alt(h, "rgba(232,182,97,.95)", `📐 Hedef ${i + 1}`, 2, i ? 1 : 2)); }
+      else { S.hedef.forEach((h, i) => alt(h, "rgba(232,182,97,.85)", `Tepki ${["%38", "%50", "%62"][i]}`, 2, 1)); alt(S.dusebilir, "#FF5A64", "Düşebilir", 1, 1); }
+      // dalga ve tahmini yol (analistin cizdigi oklar gibi)
+      const T0 = PZD.R?.t?.length ? PZD.R.t[0] + 3*3600 : 0, tA = R2.t[S.A.i] + 3*3600, tB = R2.t[S.B.i] + 3*3600, tS = R2.t[R2.c.length - 1] + 3*3600, gun = 86400;
+      if(tA >= T0){ const d = ana.addLineSeries({ color:"rgba(255,255,255,.55)", lineWidth:2, lineStyle:0, priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false }); d.setData([{ time:tA, value:S.A.f }, { time:tB, value:S.B.f }]); }
+      const yol = ana.addLineSeries({ color:"rgba(232,182,97,.9)", lineWidth:2, lineStyle:2, priceLineVisible:false, lastValueVisible:false, crosshairMarkerVisible:false }), g2 = Math.max(15, S.kanit?.gun || 30);
+      const P = S.tip === "yukselis" ? (S.durum === "bekleniyor" ? [[0, S.f], [12, (S.alim[0] + S.alim[1])/2], [12 + g2*1.4, S.hedef[0]], [12 + g2*2.4, S.hedef[1]]] : S.durum === "bozuldu" ? [] : [[0, S.f], [g2*1.4, S.hedef[0]], [g2*2.4, S.hedef[1]]]) : [[0, S.f], [20, S.hedef[0]], [40, S.hedef[1]]];
+      if(P.length) yol.setData(P.map(([g, v]) => ({ time:Math.round(tS + g*gun), value:v })));
+      const lej = document.getElementById("v3Ciz") || document.getElementById("pzdLejant"); lej?.insertAdjacentHTML("afterend", `<div class="v43Sc" id="v43Sc"><header><b>📐 Uzman senaryosu</b><small>analistlerin "alım noktası / hedef" çizimi · Fibonacci + destek + bu varlığın kendi geçmişinde test edildi · günlük grafik</small></header>${v43Metin(S, s)}
+        <p class="pzNot">Kesik altın çizgi beklenen yol, beyaz çizgi son büyük dalga. Yatırım tavsiyesi değildir; Bay Pipo bu senaryoyu da hesaba katıyor (alım bölgesindeki ve geçmişte tutan hisseler önerilerde öne çıkar).</p></div>`); }
+    catch(e){ console.log("senaryo", e); } return r; }; }
+// islem defteri: "Bay Pipo'nun islemi" isareti + bot ekraninda gercek vs sanal
+{ const eski = V3_PANEL.defter; V3_PANEL.defter = async function(k){ const r = await eski(k); try{ const b = k.querySelector(".v4DfForm .btn"); if(b && !k.querySelector("#v4DB")) b.insertAdjacentHTML("beforebegin", `<label class="v43Bot" title="Bay Pipo'nun önerdiği/açtığı işlemi gerçek parayla yaptıysan işaretle; sanal sonuçla kıyaslanır"><input type="checkbox" id="v4DB"> 🤖 Bay Pipo işlemi</label>`); }catch(e){} return r; }; }
+{ const eski = v4DfEkle; v4DfEkle = function(){ const bot = document.getElementById("v4DB")?.checked, n0 = v4Df().length, r = eski.apply(this, arguments);
+    if(bot){ setTimeout(() => { const L = v4Df(); if(L.length > n0){ L[L.length - 1].bot = true; v4DfYaz(L); } }, 600); } return r; }; }
+function v43GercekHtml(row){ const L = (PZ.ayar?.v3Defter || []).filter(x => x.bot && x.yon === "al"); if(!L.length) return "";
+  const G = ["karma", "disiplin", "trader"].flatMap(k => (row?.kasa?.[k]?.gecmis || []).concat(row?.kasa?.[k]?.acik || []).map(p => ({ ...p, kasa:k })));
+  const S = L.map(x => { const t = Date.parse(x.t), m = G.filter(p => p.k === x.sembol && Math.abs((p.t || 0) - t) < 2*86400000).sort((a, b) => Math.abs(a.t - t) - Math.abs(b.t - t))[0]; return { x, m }; });
+  const es = S.filter(s => s.m), ort = es.length ? es.reduce((t, s) => t + (s.m.net ?? 0), 0)/es.length : null;
+  return `<details class="v3Rehber" open><summary>🔬 Gerçek vs sanal (${L.length} gerçek işlem, ${es.length} eşleşti)</summary><div class="v3TabloK"><table class="pzT"><thead><tr><th>Tarih</th><th>Varlık</th><th class="sag">Gerçek giriş</th><th>Sanal karşılığı</th><th class="sag">Sanal sonuç</th></tr></thead><tbody>
+    ${S.map(({ x, m }) => `<tr><td>${esc(x.t)}</td><td><b>${esc(pzKod(x.sembol))}</b></td><td class="sag mono">${pzPara(+x.fiyat, x.para)}</td><td>${m ? `${esc(m.kasa)} · ${new Date(m.t).toLocaleDateString("tr-TR")}` : "eşleşmedi"}</td><td class="sag mono ${m?.net != null ? pzYon(m.net) : ""}">${m?.net != null ? pzYuzde(m.net, 2) : m ? "açık" : "—"}</td></tr>`).join("")}</tbody></table></div>
+    <p class="pzNot">Gerçek paraya geçiş testinin son adımı: işlem defterine "🤖 Bay Pipo işlemi" diye işaretlediğin gerçek alımlar, aynı günlerdeki sanal işlemlerle eşleştirilir. 10+ eşleşmede sanal ve gerçek sonuç birbirine yakınsa sistem gerçeğe hazır demektir.${ort != null ? ` Eşleşen sanal işlemlerin ortalaması: ${pzYuzde(ort, 2)}.` : ""}</p></details>`; }
+function v43HaftaHtml(row){ const H = row?.durum?.haftalik; if(!H?.K) return ""; const f = v => `${v >= 0 ? "+" : ""}${nf(v)} ₺`;
+  return `<details class="v3Rehber v43Hf"><summary>🗞 Haftalık rapor · ${new Date(H.t).toLocaleDateString("tr-TR", { day:"numeric", month:"long" })}</summary><div class="v3TabloK"><table class="pzT"><thead><tr><th>Kasa</th><th class="sag">İşlem</th><th class="sag">İsabet</th><th class="sag">Haftalık K/Z</th><th>En iyi</th><th>En kötü</th></tr></thead><tbody>
+    ${Object.values(H.K).map(k => `<tr><td><b>${esc(k.ad)}</b></td><td class="sag mono">${k.n}</td><td class="sag mono">${k.isabet != null ? "%" + k.isabet : "—"}</td><td class="sag mono ${pzYon(k.kz)}">${f(k.kz)}</td><td>${k.en ? `${esc(pzKod(k.en.k))} ${pzYuzde(k.en.net, 1)}` : "—"}</td><td>${k.kotu ? `${esc(pzKod(k.kotu.k))} ${pzYuzde(k.kotu.net, 1)}` : "—"}</td></tr>`).join("")}</tbody></table></div>
+    <p class="pzNot">${H.makro ? `Boğa-Ayı ${H.makro.puan}/10 (${esc(H.makro.etiket)}) · ` : ""}${H.ogrenme != null ? `${H.ogrenme} indikatör ağırlığı güncellendi · ` : ""}${H.aktifSinyal?.length ? "Aktif sinyal: " + H.aktifSinyal.map(esc).join(", ") + " · " : ""}${H.takvim?.length ? "Bu hafta: " + H.takvim.map(esc).join(", ") : ""}</p></details>`; }
+{ const eski = bmCiz; bmCiz = function(){ const r = eski.apply(this, arguments); try{ const k = document.getElementById("bmS"), kr = k?.querySelector(".v41Karne"); if(kr && !k.querySelector(".v43Hf")) kr.insertAdjacentHTML("afterend", v43HaftaHtml(PZ.bot?.row) + v43GercekHtml(PZ.bot?.row)); }catch(e){} return r; }; }
+{ const st = document.createElement("style"); st.textContent = `.v43Sc{margin-top:10px;padding:12px 14px;border-radius:12px;background:linear-gradient(180deg,rgba(79,208,138,.07),rgba(232,182,97,.05));border:1px solid rgba(79,208,138,.35)}
+.v43Sc header{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:6px}.v43Sc header small{color:#8E8C93;font-size:11.5px}.v43Sc p{margin:6px 0;font-size:13px;line-height:1.55}.v43Sc ul{margin:6px 0;padding-left:4px;list-style:none;display:flex;flex-direction:column;gap:5px;font-size:13px;line-height:1.5}
+.v43Kan{padding:7px 10px;border-radius:9px;background:rgba(255,255,255,.04)}.pzdKatman label.scK{border-color:rgba(79,208,138,.6)}.v43Bot{display:flex;align-items:center;gap:6px;font-size:12.5px;color:#D7D5DA;white-space:nowrap}.v43Bot input{width:auto!important}`; document.head.appendChild(st); }
 
 // v3.0 hiz: uygulama acildiktan sonra bos anda grafik kutuphanesi + bot verisi + piyasa listeleri isitilir; Piyasalar ve detay aninda acilir
 setTimeout(() => { const isit = () => { try{ if(!ME?.id || !navigator.onLine) return; pzLib().catch(() => {}); pzBotYukle().catch(() => {});
