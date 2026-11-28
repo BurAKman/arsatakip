@@ -596,7 +596,17 @@ function kzEk(I, R){ const n = R.c.length, mfi = new Float64Array(n).fill(NaN), 
   const k144 = regK(144), k233 = regK(233);
   // v4.5: kripto dongu ustalari (Mayer carpani, Pi Cycle, boga destek bandi) icin uzun ortalamalar
   const s111 = smaS(111), s140 = smaS(140), s350 = smaS(350), e147 = emaA(R.c, 147);
-  return { mfi, cmf, ll20, avw, srsi, uzE, s50, s150, s200, k144, k233, s111, s140, s350, e147 }; }
+  // v4.9.3 HAFTALIK TEYIT: gunluk mumlar haftaliga cevrilir (o gune kadar olan veriyle, ileriye bakmadan); haftalik 10/30 ortalama, haftalik RSI(14), haftalik MACD histogrami
+  const hf = (() => { const N = n, w10 = new Float64Array(N).fill(NaN), w30 = new Float64Array(N).fill(NaN), wr = new Float64Array(N).fill(NaN), wh = new Float64Array(N).fill(NaN), whO = new Float64Array(N).fill(NaN), wn = new Int32Array(N);
+    const T = R.t || [], hafta = i => T[i] != null ? Math.floor((T[i]/86400 + 3)/7) : Math.floor(i/5), a = p => 2/(p + 1);
+    let S = { e10:null, e30:null, e12:null, e26:null, sg:null, ag:null, al:null, onc:null, h:null, say:0 }, hid = null, kap = null;
+    const adim = (S0, c) => { const S1 = { ...S0 }, st = (e, p) => e == null ? c : e + a(p)*(c - e); S1.e10 = st(S0.e10, 10); S1.e30 = st(S0.e30, 30); S1.e12 = st(S0.e12, 12); S1.e26 = st(S0.e26, 26);
+      const m = S1.e12 - S1.e26; S1.sg = S0.sg == null ? m : S0.sg + a(9)*(m - S0.sg); S1.h = m - S1.sg;
+      if(S0.onc != null){ const d = c - S0.onc, g = Math.max(d, 0), l = Math.max(-d, 0); S1.ag = S0.ag == null ? g : (S0.ag*13 + g)/14; S1.al = S0.al == null ? l : (S0.al*13 + l)/14; } S1.onc = c; S1.say = S0.say + 1; return S1; };
+    for(let i = 0; i < N; i++){ const h = hafta(i); if(hid !== null && h !== hid){ S = adim(S, kap); } hid = h; kap = R.c[i];
+      const Q = adim(S, R.c[i]); wn[i] = Q.say; if(Q.say >= 30){ w10[i] = Q.e10; w30[i] = Q.e30; wh[i] = Q.h; whO[i] = S.h ?? NaN; wr[i] = Q.al ? 100 - 100/(1 + Q.ag/Q.al) : 100; } }
+    return { w10, w30, wr, wh, whO, wn }; })();
+  return { mfi, cmf, ll20, avw, srsi, uzE, s50, s150, s200, k144, k233, s111, s140, s350, e147, hf }; }
 const KZ_GRUP = { trend:"Trend", mom:"Momentum", hacim:"Hacim & para akışı", yapi:"Yapı & formasyon", uzman:"Uzman yöntemleri", turev:"Türev piyasa" };
 // tek mumda konsey oylamasi. ayrinti=false iken sadece puan hesaplar (gecmis karne icin)
 // v3.0 OGRENEN KONSEY: her indikatorun oyu, o piyasada gecmiste ne kadar ise yaradigina gore agirlik carpani alir (oneri motorunda gunde bir ogrenilir)
@@ -674,6 +684,9 @@ function kzOyla(I, E, R, i, BM, ayrinti){
   if(isFinite(E.s200?.[i])){ const m = c/E.s200[i]; ekle("Fiyat / 200 gün çarpanı", "uzman", m < .8 ? 1 : m < 1 ? .4 : m > 2.4 ? -1 : m > 1.8 ? -.5 : 0, .8, `fiyat/200 gün = ${f(m, 2)}${m < .8 ? " · tarihsel ucuz bölge" : m > 2.4 ? " · balon bölgesi" : m > 1.8 ? " · ısınmış" : ""}`); }
   if(isFinite(E.s140?.[i]) && isFinite(E.e147?.[i])){ const a = Math.max(E.s140[i], E.e147[i]), b = Math.min(E.s140[i], E.e147[i]);
     ekle("Boğa destek bandı (20/21 hafta)", "uzman", c > a ? 1 : c < b ? -1 : 0, 1, c > a ? "fiyat boğa destek bandının üstünde" : c < b ? "fiyat boğa destek bandının altında · boğa piyasası zayıf" : "fiyat bandın içinde · test ediliyor"); }
+  if(E.hf && isFinite(E.hf.w30[i])){ const H = E.hf, w10 = H.w10[i], w30 = H.w30[i], r = H.wr[i], h = H.wh[i], h0 = H.whO[i];
+    let v = w10 > w30 && c > w10 ? .7 : w10 < w30 && c < w10 ? -.7 : 0; if(isFinite(h0)) v += h > h0 ? .3 : -.3; if(r > 78) v -= .4; else if(r < 28) v += .4; v = Math.max(-1, Math.min(1, v));
+    ekle("Haftalık teyit", "uzman", v, 1.2, `haftalık grafik: ${w10 > w30 ? "10 haftalık ortalama 30 haftalığın üstünde (yükseliş)" : "10 haftalık ortalama 30 haftalığın altında (düşüş)"}, fiyat ${c > w10 ? "üstünde" : "altında"} · haftalık MACD ${h > h0 ? "toparlanıyor" : "zayıflıyor"} · haftalık RSI ${f(r, 0)}${r > 78 ? " (aşırı alım, düzeltme riski)" : r < 28 ? " (aşırı satım, tepki ihtimali)" : ""}`); }
   if(isFinite(E.s350?.[i - 10])){ let kes = 0; for(let j = i - 9; j <= i; j++){ if(E.s111[j] >= 2*E.s350[j] && E.s111[j - 1] < 2*E.s350[j - 1]) kes = -1; } const yak = E.s111[i]/(2*E.s350[i]);
     ekle("Döngü tepe uyarısı", "uzman", kes, 1, kes ? "111 günlük, 350 günlüğün 2 katını yukarı kesti · tarihsel döngü tepesi uyarısı" : `tepe uyarısı yok (oran ${f(yak, 2)}, 1,00'da alarm)`, true); }
   let sw = 0, sv = 0; V.forEach(o => { sw += o.w; sv += o.w*o.v; }); const puan = Math.round(100*sv/(sw || 1));
